@@ -1,0 +1,11 @@
+.env
+.venv
+*.zip
+
+*.tmp.*
+.terraform
+.terraform.lock.hcl
+
+__pycache__
+.pytest_cache
+
