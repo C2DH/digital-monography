@@ -1,10 +1,13 @@
 setup:
-	python -m pip install --upgrade pip && python -m pip install -r .local-requirements.txt
+	. .venv/bin/activate && python -m pip install --upgrade pip && python -m pip install -r .local-requirements.txt 
+
+lint:
+	flake8 src --exclude .venv; mypy src --exclude .venv
 
 apply:
 	cd infra/ && terraform apply --var-file=../secrets/local.tfvars
 
-zip-builder:
+zip:
 	./src/builder/prep_deps.sh
 
 test:
