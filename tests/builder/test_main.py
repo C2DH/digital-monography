@@ -11,7 +11,7 @@ STATICWS_WIP_BUCKET_NAME = "dgtmon-dev-staticws-wip"
 UPLOAD_APKG_BUCKET_NAME = "dgtmon-dev-apkg-upload"
 
 
-def get_aws_client(service: str) -> boto3.session.Session.client:
+def get_aws_client(service: str):
     if IS_LOCAL:
         return boto3.client(
             service,

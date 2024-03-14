@@ -5,7 +5,6 @@ import time
 import typing as t
 import urllib.parse
 
-# s3 = boto3.client("s3")
 try:
     IS_LOCAL = os.environ["PWD"].endswith("dhj-local")
 except KeyError:
@@ -27,9 +26,9 @@ def get_aws_client(service: str) -> t.Any:
             aws_secret_access_key="",
             region_name="eu-central-1",
             endpoint_url="http://localhost:4566",
-        )
+        )  # type: ignore
     else:
-        return boto3.client(service)
+        return boto3.client(service)  # type: ignore
 
 
 def get_s3_client():
