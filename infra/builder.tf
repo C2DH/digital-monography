@@ -1,5 +1,3 @@
-# Comment to triger DevOps pipeline 0.4
-
 resource "aws_s3_bucket" "upload_apkg" {
   bucket        = var.upload_apkg_bucket_name
   force_destroy = true
