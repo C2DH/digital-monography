@@ -33,7 +33,7 @@ def get_aws_client(service: str) -> boto3.session.Session.client:
         return boto3.client(service)
 
 
-def lambda_handler(event, context):
+def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     key = _get_key(event)
     body = _get_object(event, key)
     resp = _put_object(body, key)
@@ -47,6 +47,7 @@ def _get_key(event) -> str:
         )
     except Exception as e:
         logger.error(f"Unable to retrieve object key. Error: {repr(e)}")
+        raise
 
 
 def _get_object(event, key: str) -> bytes:
@@ -57,6 +58,7 @@ def _get_object(event, key: str) -> bytes:
         return resp["Body"].read().decode("utf-8")
     except Exception as e:
         logger.error(f"Error getting object {key} from bucket {src}. Error: {repr(e)}")
+        raise
 
 
 def _put_object(body: bytes, key: str) -> t.Any:
@@ -65,3 +67,4 @@ def _put_object(body: bytes, key: str) -> t.Any:
         return s3.put_object(Body=body, Bucket=dst, Key=key)
     except Exception as e:
         logger.error(f"Put object {key} to bucket {dst} failed. Error: {repr(e)}")
+        raise
