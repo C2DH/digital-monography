@@ -1,3 +1,4 @@
+import time
 import boto3
 import os
 import pathlib
@@ -39,10 +40,19 @@ class TestClass:
         )
 
     def test_s3_upload(self):
-        resp = self.s3.get_object(Bucket=STATICWS_WIP_BUCKET_NAME, Key="index.html")
-        index_object = resp["Body"].read().decode("utf-8")
+        loop = 0
+        expected_val = "<!DOCTYPE html><html><head><title>Testing"
+        while True:
+            resp = self.s3.get_object(Bucket=STATICWS_WIP_BUCKET_NAME, Key="index.html")
+            index_object = resp["Body"].read().decode("utf-8")
+            if index_object.startswith(expected_val):
+                break
+            if loop > 10:
+                break
+            loop += 1
+            time.sleep(0.5)
         assert resp["ResponseMetadata"]["HTTPStatusCode"] == 200
-        assert index_object.startswith("<!DOCTYPE html><html><head><title>Testing")
+        assert index_object.startswith(expected_val)
 
     @classmethod
     def teardown_class(cls):
