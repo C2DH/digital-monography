@@ -8,8 +8,8 @@ except KeyError:
     IS_LOCAL = False
 
 STATICWS_WIP_BUCKET_NAME = "dgtmon-dev-staticws-wip"
-IR_APKG_MD_BUCKET_NAME = "dgtmon-dev-ir-apkg-md"
-# UPLOAD_APKG_BUCKET_NAME = "dgtmon-dev-apkg-upload"
+# IR_APKG_MD_BUCKET_NAME = "dgtmon-dev-ir-apkg-md"
+UPLOAD_APKG_BUCKET_NAME = "dgtmon-dev-apkg-upload"
 
 
 def get_aws_client(service: str):
@@ -33,7 +33,7 @@ class TestClass:
         # trigger s3 event
         fp = pathlib.Path("tests") / "_fixtures" / "new_object.html"
         cls.s3.put_object(
-            Bucket=IR_APKG_MD_BUCKET_NAME,
+            Bucket=UPLOAD_APKG_BUCKET_NAME,
             Key="index.html",
             Body=fp.read_bytes(),
         )

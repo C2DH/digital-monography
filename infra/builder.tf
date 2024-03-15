@@ -14,7 +14,7 @@ data "aws_iam_policy_document" "ir_apkg_policy" {
     ]
     principals {
       type        = "AWS"
-      identifiers = [aws_iam_user.apkg_uploader.arn]
+      identifiers = [aws_iam_user.ir_apkg_md_uploader.arn]
     }
   }
 }
@@ -26,21 +26,21 @@ resource "aws_s3_bucket_policy" "ir_apkg_policy" {
   policy = data.aws_iam_policy_document.ir_apkg_policy.json
 }
 
-resource "aws_iam_user" "apkg_uploader" {
-  name = "apkg-uploader"
+resource "aws_iam_user" "ir_apkg_md_uploader" {
+  name = "ir-apkg-md-uploader"
 }
 
-resource "aws_iam_access_key" "apkg_uploader" {
-  user = aws_iam_user.apkg_uploader.name
+resource "aws_iam_access_key" "ir_apkg_md_uploader" {
+  user = aws_iam_user.ir_apkg_md_uploader.name
 }
 
-output "apkg_uploader_id" {
-  value = aws_iam_access_key.apkg_uploader.id
+output "ir_apkg_md_uploader_id" {
+  value = aws_iam_access_key.ir_apkg_md_uploader.id
 }
 
 ## Lambda (builder)
 
-data "aws_iam_policy_document" "assume_role" {
+data "aws_iam_policy_document" "assume_builder_role" {
   statement {
     effect = "Allow"
     principals {
@@ -51,9 +51,9 @@ data "aws_iam_policy_document" "assume_role" {
   }
 }
 
-resource "aws_iam_role" "iam_for_lambda" {
-  name               = "iam_for_lambda"
-  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+resource "aws_iam_role" "builder_iam" {
+  name               = "builder_iam"
+  assume_role_policy = data.aws_iam_policy_document.assume_builder_role.json
 }
 
 data "aws_iam_policy_document" "builder" {
@@ -97,11 +97,11 @@ resource "aws_iam_policy" "builder" {
 }
 
 resource "aws_iam_role_policy_attachment" "builder" {
-  role       = aws_iam_role.iam_for_lambda.name
+  role       = aws_iam_role.builder_iam.name
   policy_arn = aws_iam_policy.builder.arn
 }
 
-resource "aws_lambda_permission" "allow_bucket" {
+resource "aws_lambda_permission" "allow_ir_apkg_md_to_invoke_lambda" {
   statement_id  = "AllowExecutionFromS3Bucket"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.builder_func.arn
@@ -120,7 +120,7 @@ resource "aws_cloudwatch_log_group" "builder_logs" {
 resource "aws_lambda_function" "builder_func" {
   filename      = "./../src/builder/builder.zip"
   function_name = "builder"
-  role          = aws_iam_role.iam_for_lambda.arn
+  role          = aws_iam_role.builder_iam.arn
   depends_on    = [aws_cloudwatch_log_group.builder_logs]
   handler       = "main.lambda_handler"
   runtime       = "python3.12"
@@ -128,11 +128,11 @@ resource "aws_lambda_function" "builder_func" {
   # memory_size   = 128
 }
 
-resource "aws_s3_bucket_notification" "bucket_notification" {
+resource "aws_s3_bucket_notification" "ir_apkg_md_notification" {
   bucket = aws_s3_bucket.ir_apkg_md.id
   lambda_function {
     lambda_function_arn = aws_lambda_function.builder_func.arn
     events              = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
   }
-  depends_on = [aws_lambda_permission.allow_bucket]
+  depends_on = [aws_lambda_permission.allow_ir_apkg_md_to_invoke_lambda]
 }

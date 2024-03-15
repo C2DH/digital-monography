@@ -1,7 +1,6 @@
 import boto3
 import logging
 import os
-import time
 import typing as t
 import urllib.parse
 
@@ -12,10 +11,6 @@ except KeyError:
 DESTINATION_BUCKET = "dgtmon-dev-staticws-wip"
 
 logger = logging.getLogger(__name__)
-
-
-def timestamp():
-    return int(round(time.time() * 1000))
 
 
 def get_aws_client(service: str) -> t.Any:
@@ -31,11 +26,7 @@ def get_aws_client(service: str) -> t.Any:
         return boto3.client(service)  # type: ignore
 
 
-def get_s3_client():
-    return get_aws_client("s3")
-
-
-s3 = get_s3_client()
+s3 = get_aws_client("s3")
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
