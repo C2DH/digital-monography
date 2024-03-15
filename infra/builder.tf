@@ -1,23 +1,16 @@
-resource "aws_s3_bucket" "upload_apkg" {
-  bucket        = var.upload_apkg_bucket_name
+resource "aws_s3_bucket" "ir_apkg_md" {
+  bucket        = var.ir_apkg_md_bucket_name
   force_destroy = true
 }
 
-# resource "aws_s3_bucket_versioning" "upload_apkg" {
-#   bucket = aws_s3_bucket.upload_apkg.id
-#   versioning_configuration {
-#     status = "Enabled"
-#   }
-# }
-
-data "aws_iam_policy_document" "public_upload_apkg" {
+data "aws_iam_policy_document" "ir_apkg_policy" {
   statement {
     actions = [
-      "s3:*"
+      "s3:*" # TODO: limit
     ]
     resources = [
-      "arn:aws:s3:::${aws_s3_bucket.upload_apkg.bucket}",
-      "arn:aws:s3:::${aws_s3_bucket.upload_apkg.bucket}/*"
+      "arn:aws:s3:::${aws_s3_bucket.ir_apkg_md.bucket}",
+      "arn:aws:s3:::${aws_s3_bucket.ir_apkg_md.bucket}/*"
     ]
     principals {
       type        = "AWS"
@@ -28,9 +21,9 @@ data "aws_iam_policy_document" "public_upload_apkg" {
 
 # Uploader
 
-resource "aws_s3_bucket_policy" "public_upload_apkg" {
-  bucket = aws_s3_bucket.upload_apkg.id
-  policy = data.aws_iam_policy_document.public_upload_apkg.json
+resource "aws_s3_bucket_policy" "ir_apkg_policy" {
+  bucket = aws_s3_bucket.ir_apkg_md.id
+  policy = data.aws_iam_policy_document.ir_apkg_policy.json
 }
 
 resource "aws_iam_user" "apkg_uploader" {
@@ -113,7 +106,7 @@ resource "aws_lambda_permission" "allow_bucket" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.builder_func.arn
   principal     = "s3.amazonaws.com"
-  source_arn    = aws_s3_bucket.upload_apkg.arn
+  source_arn    = aws_s3_bucket.ir_apkg_md.arn
 }
 
 resource "aws_cloudwatch_log_group" "builder_logs" {
@@ -136,7 +129,7 @@ resource "aws_lambda_function" "builder_func" {
 }
 
 resource "aws_s3_bucket_notification" "bucket_notification" {
-  bucket = aws_s3_bucket.upload_apkg.id
+  bucket = aws_s3_bucket.ir_apkg_md.id
   lambda_function {
     lambda_function_arn = aws_lambda_function.builder_func.arn
     events              = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]

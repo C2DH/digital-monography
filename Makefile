@@ -9,9 +9,10 @@ apply:
 
 zip:
 	./src/builder/prep_deps.sh
+	./src/preparer/prep_deps.sh
 
 test:
-	export UPLOAD_APKG_BUCKET_NAME=$(terraform output upload_apkg_bucket_name)
+	# export UPLOAD_APKG_BUCKET_NAME=$(terraform output upload_apkg_bucket_name)
 	python -m pytest tests/
 
 list-logs:
