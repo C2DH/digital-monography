@@ -16,7 +16,7 @@ zip:
 
 test:
 	# export UPLOAD_APKG_BUCKET_NAME=$(terraform output upload_apkg_bucket_name)
-	python -m pytest tests/
+	python -m pytest -vv tests/
 
 list-logs:
 	aws logs describe-log-streams --endpoint-url=http://localhost:4566 --log-group-name /aws/lambda/builder
