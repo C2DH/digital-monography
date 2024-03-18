@@ -4,6 +4,9 @@ setup:
 lint:
 	flake8 src --exclude .venv; mypy src --exclude .venv
 
+plan:
+	cd infra/ && terraform plan --var-file=../secrets/local.tfvars
+
 apply:
 	cd infra/ && terraform apply --var-file=../secrets/local.tfvars
 
