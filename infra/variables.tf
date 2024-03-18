@@ -60,6 +60,10 @@ variable "api_gateway_api_key" {
   }
 }
 
+variable "cidr_block" {
+  type = string
+}
+
 variable "name" {
   description = "Application Name"
   type        = string

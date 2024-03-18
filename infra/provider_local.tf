@@ -32,6 +32,7 @@ provider "aws" {
     ssm              = "http://localhost:4566"
     stepfunctions    = "http://localhost:4566"
     sts              = "http://localhost:4566"
+    # efs              = "http://localhost:4566"
   }
 
   default_tags {

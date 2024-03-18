@@ -13,3 +13,5 @@ ir_apkg_md_bucket_name = "dgtmon-dev-ir-apkg-md"
 staticws_wip_bucket_name = "dgtmon-dev-staticws-wip"
 
 api_gateway_api_key = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+
+cidr_block = "10.10.0.0/16"
