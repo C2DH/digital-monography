@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 rm ./src/preparer/preparer.zip
 mkdir ./src/preparer/package
-pip install --target ./src/preparer/package/ boto3
+python -m pip install --target ./src/preparer/package/ -r ./src/preparer/requirements.txt
 cd src/preparer/package/
 zip -r ../preparer.zip .
 cd ..

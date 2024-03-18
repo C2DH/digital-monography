@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 rm ./src/builder/builder.zip
 mkdir ./src/builder/package
-pip install --target ./src/builder/package/ boto3
+python -m pip install --target ./src/builder/package/ -r ./src/builder/requirements.txt
 cd src/builder/package/
 zip -r ../builder.zip .
 cd ..
