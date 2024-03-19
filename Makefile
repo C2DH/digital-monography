@@ -8,6 +8,8 @@ plan:
 	cd infra/ && terraform plan --var-file=../secrets/local.tfvars
 
 apply:
+	./src/builder/prep_deps.sh
+	./src/preparer/prep_deps.sh
 	cd infra/ && terraform apply --var-file=../secrets/local.tfvars
 
 zip:
@@ -20,6 +22,12 @@ test:
 
 list-logs:
 	aws logs describe-log-streams --endpoint-url=http://localhost:4566 --log-group-name /aws/lambda/builder
+
+list-objects:
+	aws s3api list-objects-v2 --bucket=dgtmon-dev-apkg-upload --endpoint-url=http://localhost:4566
+	# aws s3api list-objects-v2 --bucket=dgtmon-dev-ir-apkg-html --endpoint-url=http://localhost:4566
+	aws s3api list-objects-v2 --bucket=dgtmon-dev-ir-apkg-md --endpoint-url=http://localhost:4566
+	aws s3api list-objects-v2 --bucket=dgtmon-dev-staticws-wip --endpoint-url=http://localhost:4566
 
 get-log:
 	aws logs get-log-events --endpoint-url=http://localhost:4566 --log-group-name /aws/lambda/builder --log-stream-name ${stream} 
