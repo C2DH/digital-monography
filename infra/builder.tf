@@ -124,8 +124,8 @@ resource "aws_lambda_function" "builder_func" {
   depends_on    = [aws_cloudwatch_log_group.builder_logs]
   handler       = "main.lambda_handler"
   runtime       = "python3.12"
-  # timeout       = 30
-  # memory_size   = 128
+  timeout       = 60
+  memory_size   = 256
 }
 
 resource "aws_s3_bucket_notification" "ir_apkg_md_notification" {
