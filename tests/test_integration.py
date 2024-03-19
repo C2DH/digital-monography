@@ -39,7 +39,13 @@ class TestClass:
             Body=fp.read_bytes(),
         )
 
-    def test_s3_upload(self):
+    def test_if_object_was_uploaded_to_irapkghtml_bucket(self):
+        assert 1 == 1
+
+    def test_if_object_was_uploaded_to_irapkgmd_bucket(self):
+        assert 1 == 2
+
+    def test_if_object_was_uploaded_to_staticwswip_bucket(self):
         loop = 0
         expected_val = "<!DOCTYPE html><html><head><title>Testing"
         while True:

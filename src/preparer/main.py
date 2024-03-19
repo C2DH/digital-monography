@@ -1,3 +1,4 @@
+import json
 import boto3
 import logging
 import os
@@ -51,6 +52,9 @@ def _get_object(event, key: str) -> bytes:
         src = event["Records"][0]["s3"]["bucket"]["name"]
         logger.info(f"Proceeding to get an object {key} from bucket {src}.")
         resp = s3.get_object(Bucket=src, Key=key)
+        logger.info(
+            f"Response from s3.get_object(Bucket={src}, Key={key}): " + json.dumps(resp)
+        )
         return resp["Body"].read()
     except Exception as e:
         logger.error(f"Error getting object {key} from bucket {src}. Error: {repr(e)}")
@@ -60,7 +64,11 @@ def _get_object(event, key: str) -> bytes:
 def _put_object(body: bytes, key: str) -> t.Any:
     try:
         dst = DESTINATION_BUCKET
-        return s3.put_object(Body=body.decode("utf-8"), Bucket=dst, Key=key)
+        resp = s3.put_object(Body=body.decode("utf-8"), Bucket=dst, Key=key)
+        logger.info(
+            f"Response from s3.put_object(Bucket={dst}, Key={key}): " + json.dumps(resp)
+        )
+        return resp
     except Exception as e:
         logger.error(f"Put object {key} to bucket {dst} failed. Error: {repr(e)}")
         raise
