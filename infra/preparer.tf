@@ -124,8 +124,8 @@ resource "aws_lambda_function" "preparer_func" {
   depends_on    = [aws_cloudwatch_log_group.preparer_logs]
   handler       = "main.lambda_handler"
   runtime       = "python3.12"
-  timeout       = 60
-  memory_size   = 256
+  timeout       = 900
+  memory_size   = 512
 }
 
 resource "aws_s3_bucket_notification" "upload_apkg_notification" {
