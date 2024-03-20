@@ -8,8 +8,8 @@ plan:
 	cd infra/ && terraform plan --var-file=../secrets/local.tfvars
 
 apply:
-	./src/builder/prep_deps.sh
-	./src/preparer/prep_deps.sh
+	./src/builder/prep_deps.sh && \
+	./src/preparer/prep_deps.sh && \
 	cd infra/ && terraform apply --var-file=../secrets/local.tfvars
 
 zip:
@@ -34,4 +34,3 @@ get-log:
 
 destroy:
 	cd infra/ && terraform destroy --var-file=../secrets/local.tfvars
-
