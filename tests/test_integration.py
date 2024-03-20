@@ -29,18 +29,18 @@ def get_aws_client(service: str):
 class TestClass:
     @classmethod
     def setup_class(cls):
-        cls.logs = get_aws_client("logs")
         cls.s3 = get_aws_client("s3")
         # trigger s3 event
         fp = pathlib.Path("tests") / "_fixtures" / "new_object.html"
-        cls.s3.put_object(
+        resp = cls.s3.put_object(
             Bucket=UPLOAD_APKG_BUCKET_NAME,
             Key="index.html",
             Body=fp.read_bytes(),
         )
+        print(resp)
 
     def test_if_object_was_uploaded_to_irapkghtml_bucket(self):
-        assert 1 == 1
+        assert 1 == 2
 
     def test_if_object_was_uploaded_to_irapkgmd_bucket(self):
         assert 1 == 2
@@ -53,7 +53,7 @@ class TestClass:
             index_object = resp["Body"].read().decode("utf-8")
             if index_object.startswith(expected_val):
                 break
-            if loop > 10:
+            if loop > 20:
                 break
             loop += 1
             time.sleep(0.5)
