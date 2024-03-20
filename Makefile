@@ -25,7 +25,7 @@ list-logs:
 
 list-objects:
 	aws s3api list-objects-v2 --bucket=dgtmon-dev-apkg-upload --endpoint-url=http://localhost:4566
-	# aws s3api list-objects-v2 --bucket=dgtmon-dev-ir-apkg-html --endpoint-url=http://localhost:4566
+	aws s3api list-objects-v2 --bucket=dgtmon-dev-ir-apkg-html --endpoint-url=http://localhost:4566
 	aws s3api list-objects-v2 --bucket=dgtmon-dev-ir-apkg-md --endpoint-url=http://localhost:4566
 	aws s3api list-objects-v2 --bucket=dgtmon-dev-staticws-wip --endpoint-url=http://localhost:4566
 

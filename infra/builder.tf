@@ -1,3 +1,5 @@
+# Intermediate MD S3
+
 resource "aws_s3_bucket" "ir_apkg_md" {
   bucket        = var.ir_apkg_md_bucket_name
   force_destroy = true
@@ -19,12 +21,12 @@ data "aws_iam_policy_document" "ir_apkg_policy" {
   }
 }
 
-# Uploader
-
 resource "aws_s3_bucket_policy" "ir_apkg_policy" {
   bucket = aws_s3_bucket.ir_apkg_md.id
   policy = data.aws_iam_policy_document.ir_apkg_policy.json
 }
+
+# Uploader
 
 resource "aws_iam_user" "ir_apkg_md_uploader" {
   name = "ir-apkg-md-uploader"

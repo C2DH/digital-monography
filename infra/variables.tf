@@ -41,6 +41,11 @@ variable "staticws_wip_bucket_name" {
   description = "Name of the bucket to which static website will be exported. E.g. domain_name."
 }
 
+variable "ir_apkg_html_bucket_name" {
+  type        = string
+  description = "Name of the bucket for intermediate format when transforming .docx into .html"
+}
+
 variable "ir_apkg_md_bucket_name" {
   type        = string
   description = "Name of the bucket for intermediate format when transforming .html into .md"

@@ -9,7 +9,9 @@ try:
     IS_LOCAL = os.environ["PWD"].endswith("dhj-local")
 except KeyError:
     IS_LOCAL = False
-DESTINATION_BUCKET = "dgtmon-dev-ir-apkg-md"
+# DESTINATION_BUCKET = "dgtmon-dev-ir-apkg-md"
+IR_APKG_HTML_BUCKET_NAME = "dgtmon-dev-ir-apkg-html"
+IR_APKG_MD_BUCKET_NAME = "dgtmon-dev-ir-apkg-md"
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -35,7 +37,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info("Preparer Lambda function was successfully invoked.")
     key = _get_key(event)
     body = _get_object(event, key)
-    _put_object(body, key)
+    _put_object(body, IR_APKG_HTML_BUCKET_NAME, key)
+    _put_object(body, IR_APKG_MD_BUCKET_NAME, key)
     return {"statusCode": 200, "body": ""}
 
 
@@ -66,9 +69,9 @@ def _get_object(event, key: str) -> bytes:
         raise
 
 
-def _put_object(body: bytes, key: str) -> t.Any:
+def _put_object(body: bytes, dst: str, key: str) -> t.Any:
     try:
-        dst = DESTINATION_BUCKET
+        # dst = DESTINATION_BUCKET
         resp = s3.put_object(Body=body.decode("utf-8"), Bucket=dst, Key=key)
         logger.info(
             f"Response from s3.put_object(Bucket={dst}, Key={key}): "

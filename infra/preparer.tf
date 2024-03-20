@@ -1,3 +1,5 @@
+# Upload S3
+
 resource "aws_s3_bucket" "upload_apkg" {
   bucket        = var.upload_apkg_bucket_name
   force_destroy = true
@@ -17,6 +19,33 @@ data "aws_iam_policy_document" "public_upload_apkg" {
       identifiers = [aws_iam_user.apkg_uploader.arn]
     }
   }
+}
+
+# Intermediate HTML S3
+
+resource "aws_s3_bucket" "ir_apkg_html" {
+  bucket = var.ir_apkg_html_bucket_name
+}
+
+data "aws_iam_policy_document" "ir_apkg_html_policy" {
+  statement {
+    actions = [
+      "s3:*" # TODO: limit
+    ]
+    resources = [
+      "arn:aws:s3:::${aws_s3_bucket.ir_apkg_html.bucket}",
+      "arn:aws:s3:::${aws_s3_bucket.ir_apkg_html.bucket}/*"
+    ]
+    principals {
+      type        = "AWS"
+      identifiers = [aws_iam_user.apkg_uploader.arn]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "ir_apkg_html_policy" {
+  bucket = aws_s3_bucket.ir_apkg_html.id
+  policy = data.aws_iam_policy_document.ir_apkg_html_policy.json
 }
 
 # # Uploader
