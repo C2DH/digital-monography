@@ -5,6 +5,7 @@ import os
 import typing as t
 import urllib.parse
 
+import bs4
 import mammoth
 
 try:
@@ -54,11 +55,17 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
             """
             result = mammoth.convert_to_html(f, style_map=style_mappings)
             logger.info(f"Result.value: {result.value}")
-
     except Exception as e:
         logger.exception(
             f"Downloading fileobj {key} from {src} failed. Error: {repr(e)}"
         )
+        raise
+
+    try:
+        html_soup = bs4.BeautifulSoup(result.value, "html.parser")
+        logger.info("Html soup: " + str(html_soup))
+    except Exception as e:
+        logger.exception(f"Creation of bs4.BeautifulSoup failed. Error: {repr(e)}")
         raise
 
     # body = _get_object(event, key)
