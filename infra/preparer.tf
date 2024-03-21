@@ -25,6 +25,7 @@ data "aws_iam_policy_document" "public_upload_apkg" {
 
 resource "aws_s3_bucket" "ir_apkg_html" {
   bucket = var.ir_apkg_html_bucket_name
+  force_destroy = true
 }
 
 data "aws_iam_policy_document" "ir_apkg_html_policy" {
