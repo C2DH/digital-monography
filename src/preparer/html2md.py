@@ -2,7 +2,7 @@ import bs4
 import markdownify
 import re
 
-from md_extraction import BookMetadata, AssetDatapoint, AssetMetadata
+from src.preparer.md_extraction import BookMetadata, AssetDatapoint, AssetMetadata
 
 line_beginning_re = re.compile(r"^", re.MULTILINE)
 

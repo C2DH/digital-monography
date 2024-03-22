@@ -1,7 +1,7 @@
 import re
 import bs4
 import typing as t
-from md_extraction import AssetMetadata, BookMetadata
+from src.preparer.md_extraction import AssetMetadata, BookMetadata
 
 
 def replace_assets_with_directives(
