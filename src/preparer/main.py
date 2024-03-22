@@ -8,6 +8,7 @@ import urllib.parse
 import bs4
 import mammoth
 from md_extraction import BookMetadata
+from citations import add_citations_and_bibliography
 
 try:
     IS_LOCAL = os.environ["PWD"].endswith("dhj-local")
@@ -74,7 +75,16 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         logger.info("BookMetadata object created successfully (did it though?).")
         logger.info(str(metadata))
     except Exception as e:
-        logger.exception(f"Creation of bs4.BeautifulSoup failed. Error: {repr(e)}")
+        logger.exception(f"Creation of BookMetadata object failed. Error: {repr(e)}")
+        raise
+
+    try:
+        html_soup = add_citations_and_bibliography(html_soup)
+        logger.info("Html soup with citations and bib: " + str(html_soup))
+    except Exception as e:
+        logger.exception(
+            f"Adding citations and bibliographies failed. Error: {repr(e)}"
+        )
         raise
 
     # body = _get_object(event, key)
