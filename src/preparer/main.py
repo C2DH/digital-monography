@@ -43,6 +43,11 @@ s3 = get_aws_client("s3")
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info("Preparer Lambda function was successfully invoked.")
     key = _get_key(event)
+    if not key.endswith(".docx"):
+        logger.info(
+            "Object {key} is not a `.docx` file. Closing the Preparer Lambda function."
+        )
+        return {"statusCode": 200, "body": ""}
     src = _get_source_bucket(event)
     _download_fileobj(src, key)
     html_str = _convert_to_html(key)
