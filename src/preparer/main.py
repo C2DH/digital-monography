@@ -7,8 +7,9 @@ import urllib.parse
 
 import bs4
 import mammoth
-from md_extraction import BookMetadata
 from citations import add_citations_and_bibliography
+from md_extraction import BookMetadata
+from metadata_extraction import replace_assets_with_directives
 
 try:
     IS_LOCAL = os.environ["PWD"].endswith("dhj-local")
@@ -85,6 +86,13 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         logger.exception(
             f"Adding citations and bibliographies failed. Error: {repr(e)}"
         )
+        raise
+
+    try:
+        html_soup = replace_assets_with_directives(html_soup, metadata)
+        logger.info("Html soup with replaced assets with directives: " + str(html_soup))
+    except Exception as e:
+        logger.exception(f"Replacing assets with directives failed. Error: {repr(e)}")
         raise
 
     # body = _get_object(event, key)
