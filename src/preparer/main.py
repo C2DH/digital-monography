@@ -105,7 +105,13 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
 
     # body = _get_object(event, key)
     # _put_object(body, IR_APKG_HTML_BUCKET_NAME, key)
-    # _put_object(body, IR_APKG_MD_BUCKET_NAME, key)
+
+    try:
+        _put_object(md.encode("utf-8"), IR_APKG_MD_BUCKET_NAME, key)
+    except Exception as e:
+        logger.exception(f"Putting md to s3 bucket failed. Error: {repr(e)}")
+        raise
+
     return {"statusCode": 200, "body": ""}
 
 
@@ -156,5 +162,5 @@ def _put_object(body: bytes, dst: str, key: str) -> t.Any:
         )
         return resp
     except Exception as e:
-        logger.error(f"Put object {key} to bucket {dst} failed. Error: {repr(e)}")
+        logger.exception(f"Put object {key} to bucket {dst} failed. Error: {repr(e)}")
         raise
