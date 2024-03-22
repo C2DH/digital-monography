@@ -103,11 +103,20 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         logger.exception(f"Converting to md failed. Error: {repr(e)}")
         raise
 
-    # body = _get_object(event, key)
-    # _put_object(body, IR_APKG_HTML_BUCKET_NAME, key)
+    try:
+        _put_object(
+            str(html_soup).encode("utf-8"),
+            IR_APKG_HTML_BUCKET_NAME,
+            key.replace(".docx", ".html"),
+        )
+    except Exception as e:
+        logger.exception(f"Putting html to s3 bucket failed. Error: {repr(e)}")
+        raise
 
     try:
-        _put_object(md.encode("utf-8"), IR_APKG_MD_BUCKET_NAME, key)
+        _put_object(
+            md.encode("utf-8"), IR_APKG_MD_BUCKET_NAME, key.replace(".docx", ".md")
+        )
     except Exception as e:
         logger.exception(f"Putting md to s3 bucket failed. Error: {repr(e)}")
         raise
@@ -154,7 +163,6 @@ def _get_object(event, key: str) -> bytes:
 
 def _put_object(body: bytes, dst: str, key: str) -> t.Any:
     try:
-        # dst = DESTINATION_BUCKET
         resp = s3.put_object(Body=body.decode("utf-8"), Bucket=dst, Key=key)
         logger.info(
             f"Response from s3.put_object(Bucket={dst}, Key={key}): "
