@@ -5,6 +5,6 @@ python -m pip install --target ./src/preparer/package/ -r ./src/preparer/require
 cd src/preparer/package/
 zip -r ../preparer.zip .
 cd ..
-zip preparer.zip main.py
+zip preparer.zip main.py md_extraction.py
 rm -r package
 cd ../..

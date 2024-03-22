@@ -7,6 +7,7 @@ import urllib.parse
 
 import bs4
 import mammoth
+from md_extraction import BookMetadata
 
 try:
     IS_LOCAL = os.environ["PWD"].endswith("dhj-local")
@@ -64,6 +65,14 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     try:
         html_soup = bs4.BeautifulSoup(result.value, "html.parser")
         logger.info("Html soup: " + str(html_soup))
+    except Exception as e:
+        logger.exception(f"Creation of bs4.BeautifulSoup failed. Error: {repr(e)}")
+        raise
+
+    try:
+        metadata = BookMetadata()
+        logger.info("BookMetadata object created successfully (did it though?).")
+        logger.info(str(metadata))
     except Exception as e:
         logger.exception(f"Creation of bs4.BeautifulSoup failed. Error: {repr(e)}")
         raise
