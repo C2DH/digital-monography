@@ -1,7 +1,11 @@
 import re
 import bs4
 import typing as t
-from src.preparer.md_extraction import AssetMetadata, BookMetadata
+
+try:
+    from md_extraction import AssetMetadata, BookMetadata
+except ModuleNotFoundError:
+    from src.preparer.md_extraction import AssetMetadata, BookMetadata
 
 
 def replace_assets_with_directives(

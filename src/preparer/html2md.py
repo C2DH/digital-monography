@@ -2,7 +2,11 @@ import bs4
 import markdownify
 import re
 
-from src.preparer.md_extraction import BookMetadata, AssetDatapoint, AssetMetadata
+try:
+    from md_extraction import BookMetadata, AssetDatapoint, AssetMetadata
+except ModuleNotFoundError:
+    from src.preparer.md_extraction import BookMetadata, AssetDatapoint, AssetMetadata
+
 
 line_beginning_re = re.compile(r"^", re.MULTILINE)
 

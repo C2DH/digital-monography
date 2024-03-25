@@ -7,10 +7,18 @@ import urllib.parse
 
 import bs4
 import mammoth
-from citations import add_citations_and_bibliography
-from md_extraction import BookMetadata
-from metadata_extraction import replace_assets_with_directives
-from html2md import convert_to_md
+
+try:
+    from citations import add_citations_and_bibliography
+    from md_extraction import BookMetadata
+    from metadata_extraction import replace_assets_with_directives
+    from html2md import convert_to_md
+except ModuleNotFoundError:
+    from src.preparer.citations import add_citations_and_bibliography
+    from src.preparer.md_extraction import BookMetadata
+    from src.preparer.metadata_extraction import replace_assets_with_directives
+    from src.preparer.html2md import convert_to_md
+
 
 try:
     IS_LOCAL = os.environ["PWD"].endswith("dhj-local")
