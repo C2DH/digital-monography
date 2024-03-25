@@ -111,19 +111,11 @@ resource "aws_lambda_permission" "allow_ir_apkg_md_to_invoke_lambda" {
   source_arn    = aws_s3_bucket.ir_apkg_md.arn
 }
 
-resource "aws_cloudwatch_log_group" "builder_logs" {
-  name              = "/aws/lambda/builder"
-  retention_in_days = 120
-  lifecycle {
-    prevent_destroy = false
-  }
-}
-
 resource "aws_lambda_function" "builder_func" {
   filename      = "./../src/builder/builder.zip"
   function_name = "builder"
   role          = aws_iam_role.builder_iam.arn
-  depends_on    = [aws_cloudwatch_log_group.builder_logs]
+  depends_on    = [aws_cloudwatch_log_group.general_purpose_logs]
   handler       = "main.lambda_handler"
   runtime       = "python3.12"
   timeout       = 900

@@ -21,7 +21,7 @@ test:
 	python -m pytest -vv tests/
 
 list-logs:
-	aws logs describe-log-streams --endpoint-url=http://localhost:4566 --log-group-name /aws/lambda/builder
+	aws logs describe-log-streams --endpoint-url=http://localhost:4566 --log-group-name /aws/dgt-mon/general/local
 
 list-objects:
 	aws s3api list-objects-v2 --bucket=dgtmon-dev-apkg-upload --endpoint-url=http://localhost:4566

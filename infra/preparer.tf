@@ -24,7 +24,7 @@ data "aws_iam_policy_document" "public_upload_apkg" {
 # Intermediate HTML S3
 
 resource "aws_s3_bucket" "ir_apkg_html" {
-  bucket = var.ir_apkg_html_bucket_name
+  bucket        = var.ir_apkg_html_bucket_name
   force_destroy = true
 }
 
@@ -139,19 +139,11 @@ resource "aws_lambda_permission" "allow_upload_apkg_to_invoke_lambda" {
   source_arn    = aws_s3_bucket.upload_apkg.arn
 }
 
-resource "aws_cloudwatch_log_group" "preparer_logs" {
-  name              = "/aws/lambda/preparer"
-  retention_in_days = 120
-  lifecycle {
-    prevent_destroy = false
-  }
-}
-
 resource "aws_lambda_function" "preparer_func" {
   filename      = "./../src/preparer/preparer.zip"
   function_name = "preparer"
   role          = aws_iam_role.preparer_iam.arn
-  depends_on    = [aws_cloudwatch_log_group.preparer_logs]
+  depends_on    = [aws_cloudwatch_log_group.general_purpose_logs]
   handler       = "main.lambda_handler"
   runtime       = "python3.12"
   timeout       = 900
