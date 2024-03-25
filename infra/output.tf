@@ -3,11 +3,11 @@ output "website_url" {
 }
 
 output "gp_log_group_arn" {
-  value = aws_cloudwatch_log_group.general_purpose_logs.arn
+  value = data.aws_cloudwatch_log_group.general_purpose_logs.arn
 }
 
 output "gp_log_group_name" {
-  value = aws_cloudwatch_log_group.general_purpose_logs.name
+  value = data.aws_cloudwatch_log_group.general_purpose_logs.name
 }
 
 output "upload_apkg_bucket_name" {

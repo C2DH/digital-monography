@@ -115,7 +115,7 @@ resource "aws_lambda_function" "builder_func" {
   filename      = "./../src/builder/builder.zip"
   function_name = "builder"
   role          = aws_iam_role.builder_iam.arn
-  depends_on    = [aws_cloudwatch_log_group.general_purpose_logs]
+  depends_on    = [data.aws_cloudwatch_log_group.general_purpose_logs]
   handler       = "main.lambda_handler"
   runtime       = "python3.12"
   timeout       = 900

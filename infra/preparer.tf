@@ -143,7 +143,7 @@ resource "aws_lambda_function" "preparer_func" {
   filename      = "./../src/preparer/preparer.zip"
   function_name = "preparer"
   role          = aws_iam_role.preparer_iam.arn
-  depends_on    = [aws_cloudwatch_log_group.general_purpose_logs]
+  depends_on    = [data.aws_cloudwatch_log_group.general_purpose_logs]
   handler       = "main.lambda_handler"
   runtime       = "python3.12"
   timeout       = 900
