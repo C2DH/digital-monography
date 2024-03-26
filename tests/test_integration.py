@@ -1,7 +1,7 @@
-import time
 import boto3
 import os
 import pathlib
+import time
 
 try:
     IS_LOCAL = os.environ["PWD"].endswith("dhj-local")
@@ -9,7 +9,8 @@ except KeyError:
     IS_LOCAL = False
 
 STATICWS_WIP_BUCKET_NAME = "dgtmon-dev-staticws-wip"
-# IR_APKG_MD_BUCKET_NAME = "dgtmon-dev-ir-apkg-md"
+IR_APKG_HTML_BUCKET_NAME = "dgtmon-dev-ir-apkg-html"
+IR_APKG_MD_BUCKET_NAME = "dgtmon-dev-ir-apkg-md"
 UPLOAD_APKG_BUCKET_NAME = "dgtmon-dev-apkg-upload"
 
 
@@ -41,26 +42,69 @@ class TestClass:
         # )
 
     def test_if_object_was_uploaded_to_irapkghtml_bucket(self):
-        assert 2 == 2
+        loop = 0
+        expected_html = (
+            '<p><sup><a href="#footnote-1" id="footnote-ref-1">[1]</a></sup></p>'
+            + '<ol><li id="footnote-1"><p> <a href="http://www.example.com">Example</a> <a href="#footnote-ref-1">↑</a></p></li></ol>'
+        )
+        while True:
+            try:
+                resp = self.s3.get_object(
+                    Bucket=IR_APKG_HTML_BUCKET_NAME, Key="footnote-hyperlink.html"
+                )
+                contents = resp["Body"].read().decode("utf-8")
+                if contents.startswith(expected_html):
+                    break
+                if loop > 20:
+                    break
+            except:
+                pass
+            loop += 1
+            time.sleep(0.5)
+        assert resp["ResponseMetadata"]["HTTPStatusCode"] == 200
+        assert contents.startswith(expected_html)
 
     def test_if_object_was_uploaded_to_irapkgmd_bucket(self):
-        assert 2 == 2
+        loop = 0
+        expected_md = "[^footnote-ref-1]\n\n[^http://www.example.com]: Example\n"
+        while True:
+            try:
+                resp = self.s3.get_object(
+                    Bucket=IR_APKG_MD_BUCKET_NAME, Key="footnote-hyperlink.md"
+                )
+                contents = resp["Body"].read().decode("utf-8")
+                if contents.startswith(expected_md):
+                    break
+                if loop > 20:
+                    break
+            except:
+                pass
+            loop += 1
+            time.sleep(0.5)
+        assert resp["ResponseMetadata"]["HTTPStatusCode"] == 200
+        assert contents.startswith(expected_md)
 
     def test_if_object_was_uploaded_to_staticwswip_bucket(self):
-        assert 1 == 3
         # loop = 0
         # expected_val = "<!DOCTYPE html><html><head><title>Testing"
         # while True:
-        #     resp = self.s3.get_object(Bucket=STATICWS_WIP_BUCKET_NAME, Key="index.html")
-        #     index_object = resp["Body"].read().decode("utf-8")
-        #     if index_object.startswith(expected_val):
-        #         break
-        #     if loop > 20:
-        #         break
+        #     try:
+        #         resp = self.s3.get_object(
+        #             Bucket=STATICWS_WIP_BUCKET_NAME, Key="footnote-hyperlink.html"
+        #         )
+        #         contents = resp["Body"].read().decode("utf-8")
+        #         if contents.startswith(expected_val):
+        #             break
+        #         if loop > 20:
+        #             break
+        #     except:
+        #         pass
         #     loop += 1
         #     time.sleep(0.5)
+        # print(contents)
+        assert 1 == 2
         # assert resp["ResponseMetadata"]["HTTPStatusCode"] == 200
-        # assert index_object.startswith(expected_val)
+        # assert contents.startswith(expected_val)
 
     @classmethod
     def teardown_class(cls):
