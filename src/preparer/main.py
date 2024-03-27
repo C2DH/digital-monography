@@ -13,7 +13,7 @@ try:
     from md_extraction import BookMetadata
     from metadata_extraction import replace_assets_with_directives
     from html2md import convert_to_md
-except ModuleNotFoundError:
+except ModuleNotFoundError as e:
     from src.preparer.citations import add_citations_and_bibliography
     from src.preparer.md_extraction import BookMetadata
     from src.preparer.metadata_extraction import replace_assets_with_directives

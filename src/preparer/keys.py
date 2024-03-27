@@ -1,6 +1,9 @@
 import typing as t
 
-from .constants import DEFAULT_SFS_DIR
+try:
+    from .constants import DEFAULT_SFS_DIR
+except Exception as e:
+    from constants import DEFAULT_SFS_DIR
 
 
 class InvalidKey(Exception):

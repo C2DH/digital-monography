@@ -84,27 +84,26 @@ class TestClass:
         assert resp["ResponseMetadata"]["HTTPStatusCode"] == 200
         assert contents.startswith(expected_md)
 
-    def test_if_object_was_uploaded_to_staticwswip_bucket(self):
-        # loop = 0
-        # expected_val = "<!DOCTYPE html><html><head><title>Testing"
-        # while True:
-        #     try:
-        #         resp = self.s3.get_object(
-        #             Bucket=STATICWS_WIP_BUCKET_NAME, Key="footnote-hyperlink.html"
-        #         )
-        #         contents = resp["Body"].read().decode("utf-8")
-        #         if contents.startswith(expected_val):
-        #             break
-        #         if loop > 20:
-        #             break
-        #     except:
-        #         pass
-        #     loop += 1
-        #     time.sleep(0.5)
-        # print(contents)
-        assert 1 == 2
-        # assert resp["ResponseMetadata"]["HTTPStatusCode"] == 200
-        # assert contents.startswith(expected_val)
+    # def test_if_object_was_uploaded_to_staticwswip_bucket(self):
+    #     loop = 0
+    #     expected_val = "<!DOCTYPE html><html><head><title>Testing"
+    #     while True:
+    #         try:
+    #             resp = self.s3.get_object(
+    #                 Bucket=STATICWS_WIP_BUCKET_NAME, Key="footnote-hyperlink.html"
+    #             )
+    #             contents = resp["Body"].read().decode("utf-8")
+    #             if contents.startswith(expected_val):
+    #                 break
+    #             if loop > 20:
+    #                 break
+    #         except:
+    #             pass
+    #         loop += 1
+    #         time.sleep(0.5)
+    #     print(contents)
+    #     assert resp["ResponseMetadata"]["HTTPStatusCode"] == 200
+    #     assert contents.startswith(expected_val)
 
     @classmethod
     def teardown_class(cls):
