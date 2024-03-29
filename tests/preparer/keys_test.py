@@ -22,6 +22,19 @@ def test_nested_key():
     assert key.filename == "text.pdf.xml"
 
 
+def test_root_in_mnt():
+    # TODO: implement /mnt/efs/...
+    UNIMPLEMENTED = """
+    key = Key("/mnt/efs/input/slug/file.txt", is_upload=False)
+    assert key.root == "/mnt/efs"  # ?
+    assert key.phase == "input"
+    assert key.slug == "slug"
+    assert key.path == "file.txt"
+    assert key.filename == "file.txt"
+    assert str(key.filepath.parent) == "/mnt/efs/input/slug/"
+    """
+
+
 def test_filepath():
     key = Key("slug/path/to/text.md", is_upload=True)
     assert hasattr(key.filepath, "parent")

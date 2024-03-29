@@ -13,6 +13,7 @@ import bs4
 import mammoth
 
 try:
+    from constants import DEFAULT_SFS_DIR
     from citations import add_citations_and_bibliography
     from md_extraction import BookMetadata
     from metadata_extraction import replace_assets_with_directives
@@ -20,6 +21,7 @@ try:
 
     # from keys import Key
 except ModuleNotFoundError as e:
+    from src.preparer.constants import DEFAULT_SFS_DIR
     from src.preparer.citations import add_citations_and_bibliography
     from src.preparer.md_extraction import BookMetadata
     from src.preparer.metadata_extraction import replace_assets_with_directives
@@ -146,7 +148,7 @@ def _download_fileobj(src: str, key: str):
         # )
         # logging.info('os.path.isdir(f"/tmp/key")=' + str(os.path.isdir(f"/tmp/{key}")))
 
-        with open(f"/tmp/{str(key)}", "wb") as fileobj:
+        with open(f"/{DEFAULT_SFS_DIR}/{str(key)}", "wb") as fileobj:
             resp = s3.download_fileobj(src, str(key), fileobj)
             logger.info(
                 f"Response from s3.download_fileobj(Bucket={src}, Key={str(key)}): "
@@ -171,7 +173,7 @@ def _convert_to_html(key: str) -> str:
         # with process.stdout:
         #     for line in iter(process.stdout.readline, b""):
         #         logging.info(line)
-        with open(f"/tmp/{key}", "rb") as f:
+        with open(f"/{DEFAULT_SFS_DIR}/{key}", "rb") as f:
             style_mappings = """
             p[style-name='Quote'] => blockquote:fresh
             """
