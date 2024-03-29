@@ -1,3 +1,4 @@
+import pathlib
 import typing as t
 
 try:
@@ -28,6 +29,7 @@ class Key:
             self.slug = self._shift_parts()
             self.path = "/".join(self._parts)
             self.filename = self._parts[-1]
+        self.filepath = pathlib.Path(str(self))
 
     def _validate_input_str(self) -> None:
         if self._is_upload and len(self._parts) < 2:
@@ -99,6 +101,18 @@ class Key:
         if suffix:
             return Key(key, is_upload=False).with_suffix(suffix)
         return Key(key, is_upload=False)
+
+    def mkdir(self) -> None:
+        """
+        Using simple Path.mkdir() function with `parents=True` agrugment
+        creates
+        """
+        # self.filepath.parent.mkdir(mode=0o770, parents=True, exist_ok=True)
+        for dir in reversed(self.filepath.parents):
+            dir.mkdir(mode=0o777, exist_ok=True)
+            # dir.mkdir(mode=0o755, exist_ok=True) # works on AWS, but not locally
+            # dir.mkdir(mode=0o777, exist_ok=True) # works great, but causes error in
+            # AWS Lambda /tmp due to strict permission limitations
 
     def __str__(self):
         if self._is_upload:

@@ -22,6 +22,17 @@ def test_nested_key():
     assert key.filename == "text.pdf.xml"
 
 
+def test_filepath():
+    key = Key("slug/path/to/text.md", is_upload=True)
+    assert hasattr(key.filepath, "parent")
+    assert str(key.filepath.parent) == "slug/path/to"
+
+
+# def test_mkdir():
+#     key = Key("/tmp/html/slug/path/to/text.html", is_upload=False)
+#     assert key.mkdir()
+
+
 def test_stringification():
     key = Key("tmp/input/slug/path/to/text.docx", is_upload=False)
     assert str(key) == "tmp/input/slug/path/to/text.docx"

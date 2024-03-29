@@ -31,8 +31,10 @@ class TestClass:
     @classmethod
     def setup_class(cls):
         cls.s3 = get_aws_client("s3")
+        cls.slug = "my-book"
         # trigger s3 event
         fp = pathlib.Path("tests") / "_fixtures" / "footnote-hyperlink.docx"
+        key = fp.name  # f"{cls.slug}/{fp.name}"
         with fp.open(mode="rb") as fileobj:
             cls.s3.upload_fileobj(fileobj, UPLOAD_APKG_BUCKET_NAME, fp.name)
         # cls.s3.put_object(
@@ -49,9 +51,8 @@ class TestClass:
         )
         while True:
             try:
-                resp = self.s3.get_object(
-                    Bucket=IR_APKG_HTML_BUCKET_NAME, Key="footnote-hyperlink.html"
-                )
+                key = f"footnote-hyperlink.html"
+                resp = self.s3.get_object(Bucket=IR_APKG_HTML_BUCKET_NAME, Key=key)
                 contents = resp["Body"].read().decode("utf-8")
                 if contents.startswith(expected_html):
                     break
@@ -69,9 +70,8 @@ class TestClass:
         expected_md = "[^footnote-ref-1]\n\n[^http://www.example.com]: Example\n"
         while True:
             try:
-                resp = self.s3.get_object(
-                    Bucket=IR_APKG_MD_BUCKET_NAME, Key="footnote-hyperlink.md"
-                )
+                key = f"footnote-hyperlink.md"
+                resp = self.s3.get_object(Bucket=IR_APKG_MD_BUCKET_NAME, Key=key)
                 contents = resp["Body"].read().decode("utf-8")
                 if contents.startswith(expected_md):
                     break
