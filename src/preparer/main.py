@@ -1,4 +1,6 @@
 # import pathlib
+import re
+import time
 import boto3
 import json
 import logging
@@ -60,6 +62,7 @@ s3 = get_aws_client("s3")
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info("Preparer Lambda function was successfully invoked.")
+    start = time.time()
     key = _get_key(event)
     # if not key.endswith(".docx"):
     #     logger.info(
@@ -73,9 +76,72 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     metadata = _get_book_metadata()
     html_soup = _add_citations_and_bibliography(html_soup)
     html_soup = _replace_assets_with_directives(html_soup, metadata)
+    _put_html_to_s3(str(html_soup), key)
+
+    # wc
     md = _convert_to_md(html_soup, metadata)
-    _put_html_to_s3(html_soup, key)
+    words = re.findall("[a-zA-Z_]+", md)
+    char_count = len("".join(words))
+    word_count = len(words)
+    end = time.time()
+    delta_in_sec = end - start
+    delta_in_ms = delta_in_sec * 1000  # milliseconds
+    templ = """<!DOCTYPE html><html>
+<head>
+  <title>The title</title>
+</head>
+<body>
+<div id="book-metadata-tbl">
+<p>==========================================</p>
+<table>
+  <caption>
+    Details about the current document (estimates)
+  </caption>
+  <tbody>
+    <tr>
+      <td>
+        Word count:
+      </td>
+      <td>{word_count}</td>
+    </tr>
+    <tr>
+      <td>
+        Characted count:
+      </td>
+      <td>{char_count}</td>
+    </tr>
+    <tr>
+      <td>
+        Execution time (s):
+      </td>
+      <td>{delta_in_sec:.4f} seconds</td>
+    </tr>
+    <tr>
+      <td>
+        Execution time (ms):
+      </td>
+      <td>{delta_in_ms:.2f} milliseconds</td>
+    </tr>
+  </tbody>
+</table>
+<p>==========================================</p>
+</div>
+</body>
+</html>
+""".format(
+        word_count=word_count,
+        char_count=char_count,
+        delta_in_sec=delta_in_sec,
+        delta_in_ms=delta_in_ms,
+    )
+    new_html_soup = bs4.BeautifulSoup(templ, "html.parser")
+    new_html_soup.html.body.append(html_soup)
+    # html_soup.append(bs4.BeautifulSoup(templ, "html.parser"))
+    _put_md_to_s3(str(new_html_soup), key)  # for presentation purposes show raw html
+    THIS_WORKS_DISABLED_FOR_DEMO_PURPOSES = """
+    md = _convert_to_md(html_soup, metadata)
     _put_md_to_s3(md, key)
+    """
     return {"statusCode": 200, "body": ""}
 
 
@@ -178,7 +244,7 @@ def _convert_to_html(key: str) -> str:
             p[style-name='Quote'] => blockquote:fresh
             """
             result = mammoth.convert_to_html(f, style_map=style_mappings)
-            logger.info(f"Result.value: {result.value}")
+            logger.info(f"Converting {key} to html succedded.")
             return result.value
     except Exception as e:
         logger.exception(f"Converting {key} to html failed. Error: {repr(e)}")
@@ -243,10 +309,10 @@ def _put_object(body: bytes, dst: str, key: str) -> t.Any:
         raise
 
 
-def _put_html_to_s3(html_soup: str, key: str) -> None:
+def _put_html_to_s3(contents: str, key: str) -> None:
     try:
         _put_object(
-            str(html_soup).encode("utf-8"),
+            contents.encode("utf-8"),
             IR_APKG_HTML_BUCKET_NAME,
             key.replace(".docx", ".html"),
         )
@@ -255,10 +321,13 @@ def _put_html_to_s3(html_soup: str, key: str) -> None:
         raise
 
 
-def _put_md_to_s3(md: str, key: str) -> None:
+def _put_md_to_s3(contents: str, key: str) -> None:
     try:
         _put_object(
-            md.encode("utf-8"), IR_APKG_MD_BUCKET_NAME, key.replace(".docx", ".md")
+            contents.encode("utf-8"),
+            IR_APKG_MD_BUCKET_NAME,
+            key.replace(".docx", ".html"),
+            # md.encode("utf-8"), IR_APKG_MD_BUCKET_NAME, key.replace(".docx", ".md")
         )
     except Exception as e:
         logger.exception(f"Putting md to s3 bucket failed. Error: {repr(e)}")
