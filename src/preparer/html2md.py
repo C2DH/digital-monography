@@ -110,6 +110,8 @@ class MystMdConverter(markdownify.MarkdownConverter):
             text = inner.text.strip()
             if text.endswith(" ↑"):
                 text = text[:-2]
+            if a is None:
+                return ""
             href = a.get("href", "")
             if href.startswith("#"):
                 href = href[1:]
