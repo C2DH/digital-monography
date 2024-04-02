@@ -1,18 +1,13 @@
-# import pathlib
-import re
-import time
+import bs4
 import boto3
 import json
 import logging
+import mammoth
+import re
 import os
+import time
 import typing as t
 import urllib.parse
-
-# import io
-# from subprocess import Popen, PIPE, STDOUT
-
-import bs4
-import mammoth
 
 try:
     from constants import DEFAULT_SFS_DIR
@@ -20,8 +15,6 @@ try:
     from md_extraction import BookMetadata
     from metadata_extraction import replace_assets_with_directives
     from html2md import convert_to_md
-
-    # from keys import Key
 except ModuleNotFoundError as e:
     from src.preparer.constants import DEFAULT_SFS_DIR
     from src.preparer.citations import add_citations_and_bibliography
@@ -29,14 +22,11 @@ except ModuleNotFoundError as e:
     from src.preparer.metadata_extraction import replace_assets_with_directives
     from src.preparer.html2md import convert_to_md
 
-    # from src.preparer.keys import Key
-
 
 try:
     IS_LOCAL = os.environ["PWD"].endswith("dhj-local")
 except KeyError:
     IS_LOCAL = False
-# DESTINATION_BUCKET = "dgtmon-dev-ir-apkg-md"
 IR_APKG_HTML_BUCKET_NAME = "dgtmon-dev-ir-apkg-html"
 IR_APKG_MD_BUCKET_NAME = "dgtmon-dev-ir-apkg-md"
 
@@ -136,7 +126,6 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     )
     new_html_soup = bs4.BeautifulSoup(templ, "html.parser")
     new_html_soup.html.body.append(html_soup)
-    # html_soup.append(bs4.BeautifulSoup(templ, "html.parser"))
     _put_md_to_s3(str(new_html_soup), key)  # for presentation purposes show raw html
     THIS_WORKS_DISABLED_FOR_DEMO_PURPOSES = """
     md = _convert_to_md(html_soup, metadata)
@@ -151,8 +140,6 @@ def _get_key(event) -> str:
             event["Records"][0]["s3"]["object"]["key"], encoding="utf-8"
         )
         logger.info(f"Key {key_str} was found in the event records.")
-        # key = Key(key_str, is_upload=True)
-        # logger.info(f"Key {str(key)} was created.")
         return key_str
     except Exception as e:
         logger.error(f"Unable to retrieve object key. Error: {repr(e)}")
@@ -171,60 +158,12 @@ def _get_source_bucket(event) -> str:
 
 def _download_fileobj(src: str, key: str):
     try:
-        # logging.info("ls -la /tmp")
-        # process = Popen("ls -la /tmp".split(), stdout=PIPE, stderr=STDOUT)
-        # with process.stdout:
-        #     for line in iter(process.stdout.readline, b""):
-        #         logging.info(line)
-
-        # os.mkdir(f"/tmp/{key.slug}", 0o777)
-        # # os.system(f"chown -R 777 /tmp/{key.slug}")  # this won't work on Windows
-        # key.mkdir()
-
-        # logger.info(f"Do I have to explicitly stringify keys? {key}!")
-
-        # p = pathlib.Path(f"/tmp/{key.slug}")
-        # p.parent.mkdir(exist_ok=True, parents=True)
-
-        # try:
-        #     os.mkdir(f"/tmp/{key.slug}", mode=0x755)
-        # except PermissionError:
-        #     logging.info("Mode 0x755 did not work. Trying 0x777")
-        #     os.mkdir(f"/tmp/{key.slug}", mode=0x777)
-
-        # logging.info("ls -la /tmp")
-        # process = Popen("ls -la /tmp".split(), stdout=PIPE, stderr=STDOUT)
-        # with process.stdout:
-        #     for line in iter(process.stdout.readline, b""):
-        #         logging.info(line)
-
-        # try:
-        #     os.chmod(f"/tmp/{key.slug}", mode=0x777)
-        # except PermissionError:
-        #     logging.info('os.chmod(f"/tmp/key.slug", mode=0x777)')
-
-        # logging.info("ls -la /tmp")
-        # process = Popen("ls -la /tmp".split(), stdout=PIPE, stderr=STDOUT)
-        # with process.stdout:
-        #     for line in iter(process.stdout.readline, b""):
-        #         logging.info(line)
-
-        # logging.info(
-        #     'os.path.isfile(f"/tmp/key")=' + str(os.path.isfile(f"/tmp/{key}"))
-        # )
-        # logging.info('os.path.isdir(f"/tmp/key")=' + str(os.path.isdir(f"/tmp/{key}")))
-
         with open(f"/{DEFAULT_SFS_DIR}/{str(key)}", "wb") as fileobj:
             resp = s3.download_fileobj(src, str(key), fileobj)
             logger.info(
                 f"Response from s3.download_fileobj(Bucket={src}, Key={str(key)}): "
                 + json.dumps(resp, default=str)
             )
-
-            # fileobj = io.BytesIO
-            # s3.download_fileobj(src, str(key), fileobj)
-            # fileobj.seek(0)
-
     except Exception as e:
         logger.exception(
             f"Downloading fileobj {str(key)} from {src} failed. Error: {repr(e)}"
@@ -234,11 +173,6 @@ def _download_fileobj(src: str, key: str):
 
 def _convert_to_html(key: str) -> str:
     try:
-        # logging.info("ls -la /tmp")
-        # process = Popen("ls -la /tmp".split(), stdout=PIPE, stderr=STDOUT)
-        # with process.stdout:
-        #     for line in iter(process.stdout.readline, b""):
-        #         logging.info(line)
         with open(f"/{DEFAULT_SFS_DIR}/{key}", "rb") as f:
             style_mappings = """
             p[style-name='Quote'] => blockquote:fresh
@@ -253,7 +187,6 @@ def _convert_to_html(key: str) -> str:
 
 def _get_html_soup(html: str) -> bs4.BeautifulSoup:
     try:
-        # html_soup = bs4.BeautifulSoup(result.value, "html.parser")
         return bs4.BeautifulSoup(html, "html.parser")
     except Exception as e:
         logger.exception(f"Creation of bs4.BeautifulSoup failed. Error: {repr(e)}")
