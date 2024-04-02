@@ -69,7 +69,12 @@ def _get_object(event, key: str) -> bytes:
 def _put_object(body: bytes, key: str) -> t.Any:
     try:
         dst = DESTINATION_BUCKET
-        resp = s3.put_object(Body=body.decode("utf-8"), Bucket=dst, Key=key)
+        if key.endswith(".html"):
+            resp = s3.put_object(
+                Body=body.decode("utf-8"), Bucket=dst, Key=key, ContentType="text/html"
+            )
+        else:
+            resp = s3.put_object(Body=body.decode("utf-8"), Bucket=dst, Key=key)
         logger.info(
             f"Response from s3.put_object(Bucket={dst}, Key={key}): "
             + json.dumps(resp, default=str)
