@@ -9,7 +9,7 @@ try:
     IS_LOCAL = os.environ["PWD"].endswith("dhj-local")
 except KeyError:
     IS_LOCAL = False
-DESTINATION_BUCKET = "dgtmon-dev-staticws-wip"
+STATICWS_WIP_BUCKET_NAME = "dgtmon-dev-staticws-wip"
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -68,7 +68,7 @@ def _get_object(event, key: str) -> bytes:
 
 def _put_object(body: bytes, key: str) -> t.Any:
     try:
-        dst = DESTINATION_BUCKET
+        dst = STATICWS_WIP_BUCKET_NAME
         if key.endswith(".html"):
             resp = s3.put_object(
                 Body=body.decode("utf-8"), Bucket=dst, Key=key, ContentType="text/html"
