@@ -57,22 +57,32 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logs_list.append("Preparer Lambda function was successfully invoked.")
     start = time.time()
     key = _get_key(event, logs_list)
+    output_logs_to_static_ws(logs_list)
     # if not key.endswith(".docx"):
     #     logger.info(
     #         "Object {key} is not a `.docx` file. Closing the Preparer Lambda function."
     #     )
     #     return {"statusCode": 200, "body": ""}
     src = _get_source_bucket(event, logs_list)
+    output_logs_to_static_ws(logs_list)
     _download_fileobj(src, key, logs_list)
+    output_logs_to_static_ws(logs_list)
     html_str = _convert_to_html(key, logs_list)
+    output_logs_to_static_ws(logs_list)
     html_soup = _get_html_soup(html_str, logs_list)
+    output_logs_to_static_ws(logs_list)
     metadata = _get_book_metadata(logs_list)
+    output_logs_to_static_ws(logs_list)
     html_soup = _add_citations_and_bibliography(html_soup, logs_list)
+    output_logs_to_static_ws(logs_list)
     html_soup = _replace_assets_with_directives(html_soup, metadata, logs_list)
+    output_logs_to_static_ws(logs_list)
     _put_html_to_s3(str(html_soup), key, logs_list)
+    output_logs_to_static_ws(logs_list)
 
     # wc
     md = _convert_to_md(html_soup, metadata, logs_list)
+    output_logs_to_static_ws(logs_list)
     words = re.findall("[a-zA-Z_]+", md)
     char_count = len("".join(words))
     word_count = len(words)
@@ -132,32 +142,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     _put_md_to_s3(
         str(new_html_soup), key, logs_list
     )  # for presentation purposes show raw html
-
-    ##########################
-    # output logs to static_ws
-    logs_tag = "\n".join(f"<li>{log}</li>" for log in logs_list)
-    index_page_with_logs = """<!DOCTYPE html>
-<html>
-<head>
-  <title>Home Page</title>
-</head>
-<body>
-  <h1>Logs</h1>
-  <p>Logs from current runtime:</p>
-  <ul>
-    {logs_tag}
-  </ul>
-</body>
-</html>""".format(
-        logs_tag=logs_tag
-    )
-    _put_object(
-        index_page_with_logs.encode("utf-8"),
-        STATICWS_WIP_BUCKET_NAME,
-        "index.html",
-        logs_list,
-    )
-    logs_list = []
+    output_logs_to_static_ws(logs_list)
     THIS_WORKS_DISABLED_FOR_DEMO_PURPOSES = """
     md = _convert_to_md(html_soup, metadata)
     _put_md_to_s3(md, key)
@@ -326,3 +311,28 @@ def _put_md_to_s3(contents: str, key: str, logs_list) -> None:
         logger.exception(f"Putting md to s3 bucket failed. Error: {repr(e)}")
         logs_list.append(f"Putting md to s3 bucket failed. Error: {repr(e)}")
         raise
+
+
+def output_logs_to_static_ws(logs_list: list[str]):
+    logs_tag = "\n".join(f"<li>{log}</li>" for log in logs_list)
+    index_page_with_logs = """<!DOCTYPE html>
+<html>
+<head>
+  <title>Home Page</title>
+</head>
+<body>
+  <h1>Logs</h1>
+  <p>Logs from current runtime:</p>
+  <ul>
+    {logs_tag}
+  </ul>
+</body>
+</html>""".format(
+        logs_tag=logs_tag
+    )
+    _put_object(
+        index_page_with_logs.encode("utf-8"),
+        STATICWS_WIP_BUCKET_NAME,
+        "index.html",
+        logs_list,
+    )
