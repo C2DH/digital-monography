@@ -31,7 +31,7 @@
 #     uid = 1000
 #   }
 #   root_directory {
-#     path = "/access"
+#     path = "/efs"
 #     creation_info {
 #       owner_gid   = 1000
 #       owner_uid   = 1000

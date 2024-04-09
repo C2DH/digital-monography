@@ -6,5 +6,4 @@
 
 data "aws_cloudwatch_log_group" "general_purpose_logs" {
   name = "/aws/dgt-mon/general/${var.environment}"
-  # depends_on = [aws_cloudwatch_log_group.general_purpose_logs]
 }

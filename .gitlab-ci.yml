@@ -1,0 +1,78 @@
+### Including Terraform AWS Pipeline Template
+### see https://gitlab.com/de-gruyter/ci-pipeline-templates/template-terraform-and-aws for more details
+include:
+  - project: de-gruyter/ci-pipeline-templates/template-terraform-and-aws
+    file:
+      - "development/.gitlab-ci.yml"
+
+### If you want to add stages
+### uncomment "stages:" below
+### and add your stage
+
+# --- STAGES IN TEMPLATE -----
+
+stages:
+  - ".pre"
+  - "plan"
+  - "apply"
+  - "test"
+  - "linter"
+  - "destroy"
+
+### Additional jobs
+
+flake8:
+  stage: "linter"
+  before_script:
+    - python3 -m venv .venv
+    - . .venv/bin/activate
+    - python3 -m pip install flake8==7.0.* --quiet
+  script:
+    - echo "Running flake8"
+    # - flake8 src --exclude .venv
+  allow_failure: true
+  only:
+    changes:
+      - "src/*"
+      - "tests/*"
+
+mypy:
+  stage: "linter"
+  before_script:
+    - python3 -m venv .venv
+    - . .venv/bin/activate
+    - python3 -m pip install mypy==1.9.* --quiet
+  script:
+    - echo "Running mypy"
+    # - mypy src --exclude .venv
+  allow_failure: true
+  only:
+    changes:
+      - "src/*"
+      - "tests/*"
+
+pytest:
+  stage: "test"
+  before_script:
+    - python3 -m venv .venv
+    - . .venv/bin/activate
+    - python3 -m pip install pytest==8.0.*
+  script:
+    - echo "Running pytest"
+    # - python3 -m pytest tests/
+  only:
+    changes:
+      - "src/*"
+      - "tests/*"
+
+####################################################
+############# >>>>>>> IMPORTANT <<<<<< #############
+####################################################
+### UNCOMMENT AND FILL IN THE variables: BELOW ACCORDINGLY ###
+### use "${DELIVERY_ASSUME_ROLE_ARN}" for AWS environment "DELIVERY"
+### use "${ITSM_ASSUME_ROLE_ARN}" for AWS environment "ITSM"
+
+variables:
+  TF_VAR_assume_role_arn: "${ITSM_ASSUME_ROLE_ARN}"
+  ENVIRONMENT_URL: "foo.degruyter.com"
+  ENVIRONMENT_URL_TEST: "foo.test-deg.com"

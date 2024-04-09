@@ -125,6 +125,12 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
       </td>
       <td>{delta_in_ms:.2f} milliseconds</td>
     </tr>
+    <tr>
+      <td>
+        How many logs:
+      </td>
+      <td>{logs_list_len} logs</td>
+    </tr>
   </tbody>
 </table>
 <p>==========================================</p>
@@ -136,6 +142,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         char_count=char_count,
         delta_in_sec=delta_in_sec,
         delta_in_ms=delta_in_ms,
+        logs_list_len=str(len(logs_list)),
     )
     new_html_soup = bs4.BeautifulSoup(templ, "html.parser")
     new_html_soup.html.body.append(html_soup)
