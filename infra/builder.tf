@@ -119,7 +119,7 @@ resource "aws_lambda_function" "builder_func" {
   handler       = "main.lambda_handler"
   runtime       = "python3.12"
   timeout       = 900
-  memory_size   = 512
+  memory_size   = 1024
 }
 
 resource "aws_s3_bucket_notification" "ir_apkg_md_notification" {
