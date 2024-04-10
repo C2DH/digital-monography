@@ -119,16 +119,12 @@ resource "aws_cloudwatch_event_target" "uploads" {
     task_count          = 1
     task_definition_arn = aws_ecs_task_definition.task_def.arn
     network_configuration {
-      security_groups  = [aws_security_group.efs_access_sg.id]
-      subnets          = aws_subnet.efs_public[count.index].id
+      security_groups = [aws_security_group.efs_access_sg.id]
+      subnets         = aws_subnet.efs_public[*].id
+      # subnets = aws_subnet.efs_public[0].id # this would create a task only in the first subnet
       assign_public_ip = false
     }
   }
-  #   network_configuration = {
-  #     security_groups  = [aws_security_group.ecs_tasks.id]
-  #     subnets          = aws_subnet.private.*.id
-  #     assign_public_ip = false
-  #   }
   input_transformer {
     input_paths = {
       s3_bucket = "$.detail.requestParameters.bucketName"
