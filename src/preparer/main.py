@@ -1,3 +1,5 @@
+import io
+import subprocess
 import bs4
 import boto3
 import json
@@ -195,6 +197,17 @@ def _download_fileobj(src: str, key: str, logs_list):
                 f"Response from s3.download_fileobj(Bucket={src}, Key={str(key)}): "
                 + json.dumps(resp, default=str)
             )
+
+        logging.info(f"ls -la /{DEFAULT_SFS_DIR}")
+        process = subprocess.Popen(
+            f"ls -la /{DEFAULT_SFS_DIR}".split(),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        with process.stdout:
+            for line in iter(process.stdout.readline, b""):
+                logging.info(line)
+
     except Exception as e:
         logger.exception(
             f"Downloading fileobj {str(key)} from {src} failed. Error: {repr(e)}"
