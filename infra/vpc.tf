@@ -8,11 +8,6 @@ data "aws_availability_zones" "azs" {
   state = "available"
 }
 
-# locals {
-#   az_names       = data.aws_availability_zones.azs.names
-#   public_sub_ids = aws_subnet.efs_public.*.id
-# }
-
 resource "aws_vpc" "dgtmon_vpc" {
   cidr_block           = var.cidr_block
   enable_dns_hostnames = true
@@ -39,14 +34,6 @@ resource "aws_vpc" "dgtmon_vpc" {
 #   vpc_id = aws_vpc.dgtmon_vpc.id
 # }
 
-# resource "aws_subnet" "efs_public" {
-#   count                   = length(slice(local.az_names, 0, 2))
-#   vpc_id                  = aws_vpc.dgtmon_vpc.id
-#   availability_zone       = local.az_names[count.index]
-#   cidr_block              = cidrsubnet(var.cidr_block, 4, count.index)
-#   map_public_ip_on_launch = true
-# }
-
 # resource "aws_route_table" "efs_publicrt" {
 #   vpc_id = aws_vpc.dgtmon_vpc.id
 #   route {
@@ -59,24 +46,4 @@ resource "aws_vpc" "dgtmon_vpc" {
 #   count          = length(slice(local.az_names, 0, 2))
 #   subnet_id      = aws_subnet.efs_public.*.id[count.index]
 #   route_table_id = aws_route_table.efs_publicrt.id
-# }
-
-# #===========security group for efs==========
-
-# resource "aws_security_group" "efs_access_sg" {
-#   name        = "efs_access_sg"
-#   description = "EFS Access Group"
-#   vpc_id      = aws_vpc.dgtmon_vpc.id
-#   ingress {
-#     from_port   = 2049
-#     to_port     = 2049
-#     protocol    = "tcp"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
-#   egress {
-#     from_port   = 0
-#     to_port     = 0
-#     protocol    = "-1"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
 # }
