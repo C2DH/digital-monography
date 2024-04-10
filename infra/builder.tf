@@ -120,6 +120,10 @@ resource "aws_lambda_function" "builder_func" {
   runtime       = "python3.12"
   timeout       = 900
   memory_size   = 1024
+  logging_config {
+    log_group  = data.aws_cloudwatch_log_group.general_purpose_logs.name
+    log_format = "JSON"
+  }
 }
 
 resource "aws_s3_bucket_notification" "ir_apkg_md_notification" {
