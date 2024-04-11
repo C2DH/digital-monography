@@ -140,15 +140,15 @@ resource "aws_lambda_permission" "allow_upload_apkg_to_invoke_lambda" {
 }
 
 resource "aws_lambda_function" "preparer_func" {
-  filename      = "./../src/preparer/preparer.zip"
-  function_name = "preparer"
-  role          = aws_iam_role.preparer_iam.arn
-  depends_on    = [data.aws_cloudwatch_log_group.general_purpose_logs]
-  handler       = "main.lambda_handler"
-  publish       = true
-  runtime       = "python3.12"
-  timeout       = 900
-  memory_size   = 1024
+  filename         = "./../src/preparer/preparer.zip"
+  function_name    = "preparer"
+  role             = aws_iam_role.preparer_iam.arn
+  source_code_hash = filebase64sha256("./../src/preparer/preparer.zip")
+  depends_on       = [data.aws_cloudwatch_log_group.general_purpose_logs]
+  handler          = "main.lambda_handler"
+  runtime          = "python3.12"
+  timeout          = 900
+  memory_size      = 1024
   logging_config {
     log_group  = data.aws_cloudwatch_log_group.general_purpose_logs.name
     log_format = "JSON"
