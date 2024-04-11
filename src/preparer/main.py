@@ -1,4 +1,5 @@
 import io
+import pathlib
 import subprocess
 import bs4
 import boto3
@@ -161,13 +162,16 @@ def _get_source_bucket(event) -> str:
 
 def _download_fileobj(src: str, key: str):
     try:
-        with open(f"/{DEFAULT_SFS_DIR}/{str(key)}", "wb") as fileobj:
-            resp = s3.download_fileobj(src, str(key), fileobj)
-            logger.info(
-                f"Response from s3.download_fileobj(Bucket={src}, Key={str(key)}): "
-                + json.dumps(resp, default=str)
-            )
+        logging.info(f"{str(pathlib.Path("/tmp"))}.exists(): {str(pathlib.Path("/tmp").exists())}")
+        logging.info(f"{str(pathlib.Path("/efs"))}.exists(): {str(pathlib.Path("/efs").exists())}")
+        logging.info(f"{str(pathlib.Path("/mnt/efs"))}.exists(): {str(pathlib.Path("/mnt/efs").exists())}")
 
+        logging.info(f"ls -la /tmp")
+        process = subprocess.Popen(
+            f"ls -la /tmp".split(),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
         logging.info(f"ls -la /{DEFAULT_SFS_DIR}")
         process = subprocess.Popen(
             f"ls -la /{DEFAULT_SFS_DIR}".split(),
@@ -177,6 +181,13 @@ def _download_fileobj(src: str, key: str):
         with process.stdout:
             for line in iter(process.stdout.readline, b""):
                 logging.info(line)
+
+        with open(f"/tmp/{str(key)}", "wb") as fileobj:
+            resp = s3.download_fileobj(src, str(key), fileobj)
+            logger.info(
+                f"Response from s3.download_fileobj(Bucket={src}, Key={str(key)}): "
+                + json.dumps(resp, default=str)
+            )
 
     except Exception as e:
         logger.exception(
