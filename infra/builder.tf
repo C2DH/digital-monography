@@ -117,6 +117,7 @@ resource "aws_lambda_function" "builder_func" {
   role          = aws_iam_role.builder_iam.arn
   depends_on    = [data.aws_cloudwatch_log_group.general_purpose_logs]
   handler       = "main.lambda_handler"
+  publish       = true
   runtime       = "python3.12"
   timeout       = 900
   memory_size   = 1024
