@@ -172,6 +172,20 @@ def _download_fileobj(src: str, key: str):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
+        with process.stdout:
+            for line in iter(process.stdout.readline, b""):
+                logging.info(line)
+
+        logging.info(f"ls -la /mnt")
+        process = subprocess.Popen(
+            f"ls -la /mnt".split(),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        with process.stdout:
+            for line in iter(process.stdout.readline, b""):
+                logging.info(line)
+
         logging.info(f"ls -la /{DEFAULT_SFS_DIR}")
         process = subprocess.Popen(
             f"ls -la /{DEFAULT_SFS_DIR}".split(),
