@@ -116,14 +116,25 @@ resource "aws_lambda_function" "builder_func" {
   function_name    = "builder"
   role             = aws_iam_role.builder_iam.arn
   source_code_hash = filebase64sha256("./../src/builder/builder.zip")
-  depends_on       = [data.aws_cloudwatch_log_group.general_purpose_logs]
-  handler          = "main.lambda_handler"
-  runtime          = "python3.12"
-  timeout          = 900
-  memory_size      = 1024
+  depends_on = [
+    data.aws_cloudwatch_log_group.general_purpose_logs,
+    aws_efs_mount_target.efs_mount
+  ]
+  handler     = "main.lambda_handler"
+  runtime     = "python3.12"
+  timeout     = 900
+  memory_size = 1024
   logging_config {
     log_group  = data.aws_cloudwatch_log_group.general_purpose_logs.name
     log_format = "JSON"
+  }
+  file_system_config {
+    arn              = aws_efs_access_point.efs_access_point.arn
+    local_mount_path = "/mnt/efs"
+  }
+  vpc_config {
+    subnet_ids         = [aws_subnet.efs_public.id]
+    security_group_ids = [aws_security_group.efs_access_sg.id]
   }
 }
 

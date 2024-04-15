@@ -163,8 +163,9 @@ def _get_source_bucket(event) -> str:
 def _download_fileobj(src: str, key: str):
     try:
         logging.info(f"{str(pathlib.Path("/tmp"))}.exists(): {str(pathlib.Path("/tmp").exists())}")
-        logging.info(f"{str(pathlib.Path("/efs"))}.exists(): {str(pathlib.Path("/efs").exists())}")
+        logging.info(f"{str(pathlib.Path("/mnt"))}.exists(): {str(pathlib.Path("/mnt").exists())}")
         logging.info(f"{str(pathlib.Path("/mnt/efs"))}.exists(): {str(pathlib.Path("/mnt/efs").exists())}")
+        logging.info(f"{str(pathlib.Path("/lambda"))}.exists(): {str(pathlib.Path("/lambda").exists())}")
 
         logging.info(f"ls -la /tmp")
         process = subprocess.Popen(
@@ -186,15 +187,49 @@ def _download_fileobj(src: str, key: str):
             for line in iter(process.stdout.readline, b""):
                 logging.info(line)
 
-        logging.info(f"ls -la /{DEFAULT_SFS_DIR}")
+        logging.info(f"ls -la {DEFAULT_SFS_DIR}")
         process = subprocess.Popen(
-            f"ls -la /{DEFAULT_SFS_DIR}".split(),
+            f"ls -la {DEFAULT_SFS_DIR}".split(),
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
         with process.stdout:
             for line in iter(process.stdout.readline, b""):
                 logging.info(line)
+
+        logging.info(f"ls -la /mnt/efs")
+        process = subprocess.Popen(
+            f"ls -la /mnt/efs".split(),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        with process.stdout:
+            for line in iter(process.stdout.readline, b""):
+                logging.info(line)
+
+        if pathlib.Path("/lambda").exists():
+            logging.info(f"ls -la /lambda")
+            process = subprocess.Popen(
+                f"ls -la /lambda".split(),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+            )
+            with process.stdout:
+                for line in iter(process.stdout.readline, b""):
+                    logging.info(line)
+
+        if pathlib.Path("/mnt/efs/lambda").exists():
+            logging.info(f"ls -la /mnt/efs/lambda")
+            process = subprocess.Popen(
+                f"ls -la /mnt/efs/lambda".split(),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+            )
+            with process.stdout:
+                for line in iter(process.stdout.readline, b""):
+                    logging.info(line)
+
+        ####################################################
 
         with open(f"/tmp/{str(key)}", "wb") as fileobj:
             resp = s3.download_fileobj(src, str(key), fileobj)
@@ -212,7 +247,7 @@ def _download_fileobj(src: str, key: str):
 
 def _convert_to_html(key: str) -> str:
     try:
-        with open(f"/{DEFAULT_SFS_DIR}/{key}", "rb") as f:
+        with open(f"{DEFAULT_SFS_DIR}/{key}", "rb") as f:
             style_mappings = """
             p[style-name='Quote'] => blockquote:fresh
             """

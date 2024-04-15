@@ -27,18 +27,19 @@ locals {
 }
 
 resource "aws_subnet" "efs_public" {
-  count                   = length(slice(local.az_names, 0, 2))
-  vpc_id                  = aws_vpc.dgtmon_vpc.id
-  availability_zone       = local.az_names[count.index]
-  cidr_block              = cidrsubnet(var.cidr_block, 4, count.index)
-  map_public_ip_on_launch = true
+  # count                   = length(slice(local.az_names, 0, 2))
+  # vpc_id                  = aws_vpc.dgtmon_vpc.id
+  # availability_zone       = local.az_names[count.index]
+  # cidr_block              = cidrsubnet(var.cidr_block, 4, count.index)
+  # map_public_ip_on_launch = true
+  vpc_id     = aws_vpc.dgtmon_vpc.id
+  cidr_block = "10.10.0.0/20"
 }
 
 resource "aws_efs_mount_target" "efs_mount" {
-  count           = length(slice(local.az_names, 0, 2))
   file_system_id  = aws_efs_file_system.shared_file_sys.id
-  subnet_id       = aws_subnet.efs_public[count.index].id
-  security_groups = ["${aws_security_group.efs_access_sg.id}"]
+  subnet_id       = aws_subnet.efs_public.id
+  security_groups = [aws_security_group.efs_access_sg.id]
 }
 
 resource "aws_efs_file_system" "shared_file_sys" {
@@ -55,7 +56,7 @@ resource "aws_efs_access_point" "efs_access_point" {
     uid = 1000
   }
   root_directory {
-    path = "/efs"
+    path = "/lambda"
     creation_info {
       owner_gid   = 1000
       owner_uid   = 1000
