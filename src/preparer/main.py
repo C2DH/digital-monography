@@ -231,7 +231,8 @@ def _download_fileobj(src: str, key: str):
 
         ####################################################
 
-        with open(f"/tmp/{str(key)}", "wb") as fileobj:
+        logger.info("Beginning opening a filestream and downloading fileobject.")
+        with open(f"{DEFAULT_SFS_DIR}/{str(key)}", "wb") as fileobj:
             resp = s3.download_fileobj(src, str(key), fileobj)
             logger.info(
                 f"Response from s3.download_fileobj(Bucket={src}, Key={str(key)}): "

@@ -17,6 +17,21 @@ resource "aws_vpc" "dgtmon_vpc" {
   }
 }
 
+resource "aws_vpc_endpoint" "s3_endpoint" {
+  vpc_id          = aws_vpc.dgtmon_vpc.id
+  service_name    = "com.amazonaws.${var.region}.s3"
+  route_table_ids = [aws_route_table.vpc_to_s3_connectivity.id]
+}
+
+resource "aws_route_table" "vpc_to_s3_connectivity" {
+  vpc_id = aws_vpc.dgtmon_vpc.id
+}
+
+resource "aws_route_table_association" "a" {
+  subnet_id      = aws_subnet.efs_public.id
+  route_table_id = aws_route_table.vpc_to_s3_connectivity.id
+}
+
 # locals {
 #   az_names       = data.aws_availability_zones.azs.names
 #   public_sub_ids = aws_subnet.processor_subnet.*.id
