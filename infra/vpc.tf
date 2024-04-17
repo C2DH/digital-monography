@@ -34,9 +34,9 @@ resource "aws_security_group" "efs_access_sg" {
   }
 }
 
-resource "aws_subnet" "efs_public" {
+resource "aws_subnet" "main_subnet" {
   vpc_id     = aws_vpc.dgtmon_vpc.id
-  cidr_block = "10.10.0.0/20"
+  cidr_block = "10.10.8.0/21"
 }
 
 resource "aws_vpc_endpoint" "s3_endpoint" {
@@ -54,7 +54,7 @@ resource "aws_route_table" "vpc_to_s3_connectivity" {
 }
 
 resource "aws_route_table_association" "rt_main_subnet_association" {
-  subnet_id      = aws_subnet.efs_public.id
+  subnet_id      = aws_subnet.main_subnet.id
   route_table_id = aws_route_table.vpc_to_s3_connectivity.id
 }
 

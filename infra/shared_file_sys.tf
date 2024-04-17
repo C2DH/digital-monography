@@ -4,7 +4,7 @@
 
 resource "aws_efs_mount_target" "efs_mount" {
   file_system_id  = aws_efs_file_system.shared_file_sys.id
-  subnet_id       = aws_subnet.efs_public.id
+  subnet_id       = aws_subnet.main_subnet.id
   security_groups = [aws_security_group.efs_access_sg.id]
 }
 

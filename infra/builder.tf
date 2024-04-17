@@ -154,7 +154,7 @@ resource "aws_lambda_function" "builder_func" {
     local_mount_path = "/mnt/efs"
   }
   vpc_config {
-    subnet_ids         = [aws_subnet.efs_public.id]
+    subnet_ids         = [aws_subnet.main_subnet.id]
     security_group_ids = [aws_security_group.efs_access_sg.id]
   }
 }
