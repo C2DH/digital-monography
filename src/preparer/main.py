@@ -56,14 +56,11 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info("Preparer Lambda function was successfully invoked.")
     start = time.time()
     key = _get_key(event)
-    
-    if not key.is_file() and not key.suffix.lower() == '.docx'
-        logger.info(
-            "Object {key} is not a `.docx` file. Closing the Preparer Lambda function."
-        )
-        return {"statusCode": 200, "body": ""}
     src = _get_source_bucket(event)
     _download_fileobj(src, key)
+    if not key.is_file() and not key.suffix.lower() == ".docx":
+        _copy_without_processing(src, key)
+        return {"statusCode": 200, "body": ""}
     html_str = _convert_to_html(key)
     html_soup = _get_html_soup(html_str)
     metadata = _get_book_metadata()
@@ -250,6 +247,29 @@ def _put_object(body: bytes, dst: str, key: pathlib.Path) -> t.Any:
     except Exception as e:
         logger.exception(f"Put object {key} to bucket {dst} failed. Error: {repr(e)}")
         raise
+
+
+def _copy_without_processing(src: str, key: pathlib.Path):
+    logger.info("Object {key} is not a `.docx` file. Copying without any processing.")
+    with open(key, "wb") as fileobj:
+        resp = s3.put_object(
+            Body=fileobj, Bucket=IR_APKG_HTML_BUCKET_NAME, Key=str(key)
+        )
+        logger.info(
+            f"Successfully sent a put {key} request to {IR_APKG_HTML_BUCKET_NAME} bucket."
+        )
+        logger.info(
+            f"Response from s3.put_object(Bucket={IR_APKG_HTML_BUCKET_NAME}, Key={key}): "
+            + json.dumps(resp, default=str)
+        )
+        resp = s3.put_object(Body=fileobj, Bucket=IR_APKG_MD_BUCKET_NAME, Key=str(key))
+        logger.info(
+            f"Successfully sent a put {key} request to {IR_APKG_MD_BUCKET_NAME} bucket."
+        )
+        logger.info(
+            f"Response from s3.put_object(Bucket={IR_APKG_MD_BUCKET_NAME}, Key={key}): "
+            + json.dumps(resp, default=str)
+        )
 
 
 def _put_html_to_s3(contents: str, key: pathlib.Path) -> None:
