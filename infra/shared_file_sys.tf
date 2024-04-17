@@ -4,38 +4,6 @@
 # # https://github.com/hardikpatel29/terraform-lambda-efs-demo/tree/master
 # # https://github.com/terraform-aws-modules/terraform-aws-lambda/tree/v7.2.2/examples/with-efs
 
-resource "aws_security_group" "efs_access_sg" {
-  name   = "efs_access_sg"
-  vpc_id = aws_vpc.dgtmon_vpc.id
-  ingress {
-    from_port   = 2049
-    to_port     = 2049
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-locals {
-  az_names       = data.aws_availability_zones.azs.names
-  public_sub_ids = aws_subnet.efs_public.*.id
-}
-
-resource "aws_subnet" "efs_public" {
-  # count                   = length(slice(local.az_names, 0, 2))
-  # vpc_id                  = aws_vpc.dgtmon_vpc.id
-  # availability_zone       = local.az_names[count.index]
-  # cidr_block              = cidrsubnet(var.cidr_block, 4, count.index)
-  # map_public_ip_on_launch = true
-  vpc_id     = aws_vpc.dgtmon_vpc.id
-  cidr_block = "10.10.0.0/20"
-}
-
 resource "aws_efs_mount_target" "efs_mount" {
   file_system_id  = aws_efs_file_system.shared_file_sys.id
   subnet_id       = aws_subnet.efs_public.id
