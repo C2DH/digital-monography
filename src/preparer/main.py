@@ -161,7 +161,8 @@ def _get_source_bucket(event) -> str:
 def _download_fileobj(src: str, key: pathlib.Path):
     try:
         logger.info(f"Creating directories for {str(key)}.")
-        key.mkdir(parents=True, exist_ok=True)
+        path = key.parent if key.is_file() else key
+        path.mkdir(parents=True, exist_ok=True)
         logger.info("Beginning opening a filestream and downloading fileobject.")
         with open(key, "wb") as fileobj:
             resp = s3.download_fileobj(src, str(key), fileobj)

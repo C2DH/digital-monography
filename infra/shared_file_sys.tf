@@ -1,5 +1,3 @@
-# # This won't work with LocalStack Community.
-# # Untested with LocalStack Pro nor on AWS directly.
 # # References:
 # # https://github.com/hardikpatel29/terraform-lambda-efs-demo/tree/master
 # # https://github.com/terraform-aws-modules/terraform-aws-lambda/tree/v7.2.2/examples/with-efs
