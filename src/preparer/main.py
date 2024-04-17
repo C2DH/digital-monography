@@ -1,6 +1,4 @@
-import io
 import pathlib
-import subprocess
 import bs4
 import boto3
 import json
@@ -58,7 +56,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info("Preparer Lambda function was successfully invoked.")
     start = time.time()
     key = _get_key(event)
-    if not key.endswith(".docx"):
+    
+    if not key.is_file() and not key.suffix.lower() == '.docx'
         logger.info(
             "Object {key} is not a `.docx` file. Closing the Preparer Lambda function."
         )
@@ -138,13 +137,15 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     return {"statusCode": 200, "body": ""}
 
 
-def _get_key(event) -> str:
+def _get_key(event) -> pathlib.Path:
     try:
         key_str = urllib.parse.unquote_plus(
             event["Records"][0]["s3"]["object"]["key"], encoding="utf-8"
         )
         logger.info(f"Key {key_str} was found in the event records.")
-        return key_str
+        key = pathlib.Path(DEFAULT_SFS_DIR) / key_str
+        logger.info(f"Key {str(key)} created.")
+        return key
     except Exception as e:
         logger.error(f"Unable to retrieve object key. Error: {repr(e)}")
         raise
@@ -160,79 +161,12 @@ def _get_source_bucket(event) -> str:
         raise
 
 
-def _download_fileobj(src: str, key: str):
+def _download_fileobj(src: str, key: pathlib.Path):
     try:
-        logging.info(f"{str(pathlib.Path("/tmp"))}.exists(): {str(pathlib.Path("/tmp").exists())}")
-        logging.info(f"{str(pathlib.Path("/mnt"))}.exists(): {str(pathlib.Path("/mnt").exists())}")
-        logging.info(f"{str(pathlib.Path("/mnt/efs"))}.exists(): {str(pathlib.Path("/mnt/efs").exists())}")
-        logging.info(f"{str(pathlib.Path("/lambda"))}.exists(): {str(pathlib.Path("/lambda").exists())}")
-
-        logging.info(f"ls -la /tmp")
-        process = subprocess.Popen(
-            f"ls -la /tmp".split(),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
-        with process.stdout:
-            for line in iter(process.stdout.readline, b""):
-                logging.info(line)
-
-        logging.info(f"ls -la /mnt")
-        process = subprocess.Popen(
-            f"ls -la /mnt".split(),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
-        with process.stdout:
-            for line in iter(process.stdout.readline, b""):
-                logging.info(line)
-
-        logging.info(f"ls -la {DEFAULT_SFS_DIR}")
-        process = subprocess.Popen(
-            f"ls -la {DEFAULT_SFS_DIR}".split(),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
-        with process.stdout:
-            for line in iter(process.stdout.readline, b""):
-                logging.info(line)
-
-        logging.info(f"ls -la /mnt/efs")
-        process = subprocess.Popen(
-            f"ls -la /mnt/efs".split(),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
-        with process.stdout:
-            for line in iter(process.stdout.readline, b""):
-                logging.info(line)
-
-        if pathlib.Path("/lambda").exists():
-            logging.info(f"ls -la /lambda")
-            process = subprocess.Popen(
-                f"ls -la /lambda".split(),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-            )
-            with process.stdout:
-                for line in iter(process.stdout.readline, b""):
-                    logging.info(line)
-
-        if pathlib.Path("/mnt/efs/lambda").exists():
-            logging.info(f"ls -la /mnt/efs/lambda")
-            process = subprocess.Popen(
-                f"ls -la /mnt/efs/lambda".split(),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-            )
-            with process.stdout:
-                for line in iter(process.stdout.readline, b""):
-                    logging.info(line)
-
-        ####################################################
-
+        logger.info(f"Creating directories for {str(key)}.")
+        key.mkdir(parents=True, exist_ok=True)
         logger.info("Beginning opening a filestream and downloading fileobject.")
-        with open(f"{DEFAULT_SFS_DIR}/{str(key)}", "wb") as fileobj:
+        with open(key, "wb") as fileobj:
             resp = s3.download_fileobj(src, str(key), fileobj)
             logger.info(
                 f"Response from s3.download_fileobj(Bucket={src}, Key={str(key)}): "
@@ -246,9 +180,9 @@ def _download_fileobj(src: str, key: str):
         raise
 
 
-def _convert_to_html(key: str) -> str:
+def _convert_to_html(key: pathlib.Path) -> str:
     try:
-        with open(f"{DEFAULT_SFS_DIR}/{key}", "rb") as f:
+        with open(key, "rb") as f:
             style_mappings = """
             p[style-name='Quote'] => blockquote:fresh
             """
@@ -304,10 +238,10 @@ def _convert_to_md(html_soup: bs4.BeautifulSoup, metadata: BookMetadata):
         raise
 
 
-def _put_object(body: bytes, dst: str, key: str) -> t.Any:
+def _put_object(body: bytes, dst: str, key: pathlib.Path) -> t.Any:
     try:
         # TODO: do I have to encode and decode contents?
-        resp = s3.put_object(Body=body.decode("utf-8"), Bucket=dst, Key=key)
+        resp = s3.put_object(Body=body.decode("utf-8"), Bucket=dst, Key=str(key))
         logger.info(
             f"Response from s3.put_object(Bucket={dst}, Key={key}): "
             + json.dumps(resp, default=str)
@@ -318,24 +252,24 @@ def _put_object(body: bytes, dst: str, key: str) -> t.Any:
         raise
 
 
-def _put_html_to_s3(contents: str, key: str) -> None:
+def _put_html_to_s3(contents: str, key: pathlib.Path) -> None:
     try:
         _put_object(
             contents.encode("utf-8"),
             IR_APKG_HTML_BUCKET_NAME,
-            key.replace(".docx", ".html"),
+            key.with_suffix(".html"),
         )
     except Exception as e:
         logger.exception(f"Putting html to s3 bucket failed. Error: {repr(e)}")
         raise
 
 
-def _put_md_to_s3(contents: str, key: str) -> None:
+def _put_md_to_s3(contents: str, key: pathlib.Path) -> None:
     try:
         _put_object(
             contents.encode("utf-8"),
             IR_APKG_MD_BUCKET_NAME,
-            key.replace(".docx", ".html"),
+            key.with_suffix(".md"),
             # md.encode("utf-8"), IR_APKG_MD_BUCKET_NAME, key.replace(".docx", ".md")
         )
     except Exception as e:
