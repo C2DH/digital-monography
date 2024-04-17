@@ -25,9 +25,13 @@ resource "aws_vpc_endpoint" "s3_endpoint" {
 
 resource "aws_route_table" "vpc_to_s3_connectivity" {
   vpc_id = aws_vpc.dgtmon_vpc.id
+  # route {
+  #   cidr_block = "0.0.0.0/0"
+  #   gateway_id = aws_internet_gateway.dgtmon_igw.id
+  # }
 }
 
-resource "aws_route_table_association" "a" {
+resource "aws_route_table_association" "rt_main_subnet_association" {
   subnet_id      = aws_subnet.efs_public.id
   route_table_id = aws_route_table.vpc_to_s3_connectivity.id
 }
@@ -47,18 +51,4 @@ resource "aws_route_table_association" "a" {
 
 # resource "aws_internet_gateway" "dgtmon_igw" {
 #   vpc_id = aws_vpc.dgtmon_vpc.id
-# }
-
-# resource "aws_route_table" "efs_publicrt" {
-#   vpc_id = aws_vpc.dgtmon_vpc.id
-#   route {
-#     cidr_block = "0.0.0.0/0"
-#     gateway_id = aws_internet_gateway.dgtmon_igw.id
-#   }
-# }
-
-# resource "aws_route_table_association" "efs_pub_subnet_association" {
-#   count          = length(slice(local.az_names, 0, 2))
-#   subnet_id      = aws_subnet.efs_public.*.id[count.index]
-#   route_table_id = aws_route_table.efs_publicrt.id
 # }
