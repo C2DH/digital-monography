@@ -1,78 +1,44 @@
-### Including Terraform AWS Pipeline Template
-### see https://gitlab.com/de-gruyter/ci-pipeline-templates/template-terraform-and-aws for more details
-include:
-  - project: de-gruyter/ci-pipeline-templates/template-terraform-and-aws
-    file:
-      - "development/.gitlab-ci.yml"
-
-### If you want to add stages
-### uncomment "stages:" below
-### and add your stage
-
-# --- STAGES IN TEMPLATE -----
-
 stages:
-  - ".pre"
-  - "plan"
-  - "apply"
-  - "test"
-  - "linter"
-  - "destroy"
+  - deploy
+  - destroy
 
-### Additional jobs
-
-flake8:
-  stage: "linter"
-  before_script:
-    - python3 -m venv .venv
-    - . .venv/bin/activate
-    - python3 -m pip install flake8==7.0.* --quiet
-  script:
-    - echo "Running flake8"
-    # - flake8 src --exclude .venv
-  allow_failure: true
+deploy:
+  stage: deploy
   only:
-    changes:
-      - "src/*"
-      - "tests/*"
-
-mypy:
-  stage: "linter"
+    - main
+  image:
+    name: hashicorp/terraform:light
+    entrypoint: [""]
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://gitlab.com
+  variables:
+    TF_ROOT: "infra"
   before_script:
-    - python3 -m venv .venv
-    - . .venv/bin/activate
-    - python3 -m pip install mypy==1.9.* --quiet
+    - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
+    - mkdir ~/.aws
+    - echo -e "[profile oidc]\nrole_arn=${ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
   script:
-    - echo "Running mypy"
-    # - mypy src --exclude .venv
-  allow_failure: true
-  only:
-    changes:
-      - "src/*"
-      - "tests/*"
+    - terraform init -var-file=secrets/dev.tfvars
+    - terraform apply -auto-approve -var-file=secrets/dev.tfvars
 
-pytest:
-  stage: "test"
+destroy:
+  stage: destroy
+  only:
+    - main
+  image:
+    name: hashicorp/terraform:light
+    entrypoint: [""]
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://gitlab.com
+  variables:
+    TF_ROOT: "infra"
   before_script:
-    - python3 -m venv .venv
-    - . .venv/bin/activate
-    - python3 -m pip install pytest==8.0.*
+    - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
+    - mkdir ~/.aws
+    - echo -e "[profile oidc]\nrole_arn=${ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
   script:
-    - echo "Running pytest"
-    # - python3 -m pytest tests/
-  only:
-    changes:
-      - "src/*"
-      - "tests/*"
-
-####################################################
-############# >>>>>>> IMPORTANT <<<<<< #############
-####################################################
-### UNCOMMENT AND FILL IN THE variables: BELOW ACCORDINGLY ###
-### use "${DELIVERY_ASSUME_ROLE_ARN}" for AWS environment "DELIVERY"
-### use "${ITSM_ASSUME_ROLE_ARN}" for AWS environment "ITSM"
-
-variables:
-  TF_VAR_assume_role_arn: "${ITSM_ASSUME_ROLE_ARN}"
-  ENVIRONMENT_URL: "foo.degruyter.com"
-  ENVIRONMENT_URL_TEST: "foo.test-deg.com"
+    - terraform init -var-file=secrets/dev.tfvars -reconfigure
+    - terraform destroy -auto-approve -var-file=secrets/dev.tfvars
+  when: manual

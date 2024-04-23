@@ -1,8 +1,8 @@
 terraform {
   backend "s3" {
-    bucket         = "gitlabtfaws-tfstate"
+    bucket         = "dgtmon-tfstate-backend"
     key            = "statefile.tfstate"
-    dynamodb_table = "gitlabtfaws-state-lock-table"
+    dynamodb_table = "dgtmon-state-lock-table"
     encrypt        = true
     profile        = "oidc"
   }

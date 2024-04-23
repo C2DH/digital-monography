@@ -17,3 +17,7 @@ staticws_wip_bucket_name = "dgtmon-dev-staticws-wip"
 api_gateway_api_key = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 
 cidr_block = "10.10.0.0/16"
+
+builder_repo_name = "dgtmon-dev-builder"
+
+preparer_repo_name = "dgtmon-dev-preparer"
