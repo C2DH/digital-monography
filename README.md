@@ -4,7 +4,7 @@ Platform for scholars of digital humanities to publish their digital work
 
 ## Architecture design
 
-[aws_architecture_diagram](.2024-04-23_architecture.svg)
+[aws_architecture_diagram](./2024-04-23_architecture.svg)
 
 ## Updating code
 
