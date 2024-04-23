@@ -1,37 +1,26 @@
-setup:
-	. .venv/bin/activate && python -m pip install --upgrade pip && python -m pip install -r .local-requirements.txt 
+BUILDER_STABLE_V := $(shell jq -r '.BUILDER_STABLE_V' < .versions.json) 
+PREPARER_STABLE_V := $(shell jq -r '.PREPARER_STABLE_V' < .versions.json) 
+# DOCKER_REGISTRY = '<INSERT_AWS_ACCOUNT_NUMBER>.dkr.ecr.<INSERT_AWS_REGION>.amazonaws.com'
+DOCKER_REGISTRY = c2dhunilu
 
-lint:
-	flake8 src --exclude .venv; mypy src --exclude .venv
 
-plan:
-	cd infra/ && terraform plan --var-file=../secrets/local.tfvars
+login:
+	docker login --username c2dhadmin
 
-apply:
-	./src/builder/prep_deps.sh && \
-	./src/preparer/prep_deps.sh && \
-	cd infra/ && terraform apply --var-file=../secrets/local.tfvars
+preparer/build:
+	docker build -t dgtmon-dev-preparer src/preparer
 
-zip:
-	./src/builder/prep_deps.sh
-	./src/preparer/prep_deps.sh
+preparer/tag:
+	docker tag dgtmon-dev-preparer ${DOCKER_REGISTRY}/dgtmon-dev-preparer:${PREPARER_STABLE_V}
 
-test:
-	# export UPLOAD_APKG_BUCKET_NAME=$(terraform output upload_apkg_bucket_name)
-	. .venv/bin/activate
-	python -m pytest -vv tests/
+preparer/push:
+	docker push ${DOCKER_REGISTRY}/dgtmon-dev-preparer:${PREPARER_STABLE_V}
 
-list-logs:
-	aws logs describe-log-streams --endpoint-url=http://localhost:4566 --log-group-name /aws/dgt-mon/general/local
+builder/build:
+	docker build -t dgtmon-dev-builder src/builder
 
-list-objects:
-	aws s3api list-objects-v2 --bucket=dgtmon-dev-apkg-upload --endpoint-url=http://localhost:4566
-	aws s3api list-objects-v2 --bucket=dgtmon-dev-ir-apkg-html --endpoint-url=http://localhost:4566
-	aws s3api list-objects-v2 --bucket=dgtmon-dev-ir-apkg-md --endpoint-url=http://localhost:4566
-	aws s3api list-objects-v2 --bucket=dgtmon-dev-staticws-wip --endpoint-url=http://localhost:4566
+builder/tag:
+	docker tag dgtmon-dev-builder ${DOCKER_REGISTRY}/dgtmon-dev-builder:${BUILDER_STABLE_V}
 
-get-log:
-	aws logs get-log-events --endpoint-url=http://localhost:4566 --log-group-name /aws/lambda/builder --log-stream-name ${stream} 
-
-destroy:
-	cd infra/ && terraform destroy --var-file=../secrets/local.tfvars
+builder/push:
+	docker push ${DOCKER_REGISTRY}/dgtmon-dev-builder:${BUILDER_STABLE_V}
