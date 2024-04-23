@@ -1,85 +1,69 @@
-import boto3
-import json
+import pathlib
+import subprocess
 import logging
-import os
 import typing as t
 import urllib.parse
+from jupyter_book.cli.main import build
 
-try:
-    IS_LOCAL = os.environ["PWD"].endswith("dhj-local")
-except KeyError:
-    IS_LOCAL = False
-STATICWS_WIP_BUCKET_NAME = "dgtmon-dev-staticws-wip"
+from keys import KeyPath
+from constants import DEFAULT_SFS_DIR, STATICWS_WIP_BUCKET_NAME
+
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-def get_aws_client(service: str) -> t.Any:
-    if IS_LOCAL:
-        return boto3.client(
-            service,
-            aws_access_key_id="",
-            aws_secret_access_key="",
-            region_name="eu-central-1",
-            endpoint_url="http://localhost:4566",
-        )  # type: ignore
-    else:
-        return boto3.client(service)  # type: ignore
-
-
-s3 = get_aws_client("s3")
-
-
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
-    logger.info("Builder Lambda function was successfully invoked.")
     key = _get_key(event)
-    body = _get_object(event, key)
-    _put_object(body, key)
+    (pathlib.Path(DEFAULT_SFS_DIR) / "read").mkdir(exist_ok=True)
+    _build_book(key)
+    _sync_efs_and_s3_with_staticws(key)
+    logging.info("Builder Lambda function finished.")
     return {"statusCode": 200, "body": ""}
 
 
-def _get_key(event) -> str:
+def _get_key(event) -> KeyPath:
     try:
-        key = urllib.parse.unquote_plus(
+        key_str = urllib.parse.unquote_plus(
             event["Records"][0]["s3"]["object"]["key"], encoding="utf-8"
         )
-        logger.info(f"Key {key} was found in the event records.")
-        return key
+        return KeyPath(key_str)
     except Exception as e:
-        logger.error(f"Unable to retrieve object key. Error: {repr(e)}")
+        logging.error(f"Unable to retrieve object key. Error: {repr(e)}")
         raise
 
 
-def _get_object(event, key: str) -> bytes:
+def _build_book(key: KeyPath):
     try:
-        src = event["Records"][0]["s3"]["bucket"]["name"]
-        logger.info(f"Proceeding to get an object {key} from bucket {src}.")
-        resp = s3.get_object(Bucket=src, Key=key)
-        logger.info(
-            f"Response from s3.get_object(Bucket={src}, Key={key}): "
-            + json.dumps(resp, default=str)
+        build.callback(
+            path_source=key.efs_slug_dir,
+            path_output=key.efs_slug_dir,
+            config=key.efs_slug_dir / "_config.yml",
+            toc=key.efs_slug_dir / "_toc.yml",
+            warningiserror=False,
+            nitpick=False,
+            keep_going=False,
+            freshenv=False,
+            builder="html",
+            custom_builder=None,
+            verbose=0,
+            quiet=0,
+            individualpages=False,
         )
-        return resp["Body"].read()
+        logging.info(f"Builder finished building the book at {key.efs_slug_dir}.")
     except Exception as e:
-        logger.error(f"Error getting object {key} from bucket {src}. Error: {repr(e)}")
+        logging.exception(f"Unable to build book. Error: {repr(e)}")
         raise
 
 
-def _put_object(body: bytes, key: str) -> t.Any:
+def _sync_efs_and_s3_with_staticws(key: KeyPath):
     try:
-        dst = STATICWS_WIP_BUCKET_NAME
-        if key.endswith(".html"):
-            resp = s3.put_object(
-                Body=body.decode("utf-8"), Bucket=dst, Key=key, ContentType="text/html"
-            )
-        else:
-            resp = s3.put_object(Body=body.decode("utf-8"), Bucket=dst, Key=key)
-        logger.info(
-            f"Response from s3.put_object(Bucket={dst}, Key={key}): "
-            + json.dumps(resp, default=str)
-        )
-        return resp
+        src = str(key.efs_slug_dir / "_build" / "html")
+        dst = f"s3://{STATICWS_WIP_BUCKET_NAME}/read/{key.slug}"
+        cmd = ["aws", "s3", "sync", "--quiet", src, dst]
+        logging.info(f"Syncing files from {src} to {dst}")
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p.wait()
     except Exception as e:
-        logger.error(f"Put object {key} to bucket {dst} failed. Error: {repr(e)}")
+        logging.error(f"Syncing exception. Error: {repr(e)}")
         raise

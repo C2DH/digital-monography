@@ -18,6 +18,7 @@ zip:
 
 test:
 	# export UPLOAD_APKG_BUCKET_NAME=$(terraform output upload_apkg_bucket_name)
+	. .venv/bin/activate
 	python -m pytest -vv tests/
 
 list-logs:
