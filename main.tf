@@ -6,9 +6,17 @@ terraform {
     encrypt        = true
     profile        = "oidc"
   }
+  required_providers {
+    docker = {
+      source  = "kreuzwerker/docker"
+      version = "~> 3.0.1"
+    }
+  }
 }
 
 provider "aws" {
   profile = "oidc"
   region  = var.region
 }
+
+provider "docker" {}
