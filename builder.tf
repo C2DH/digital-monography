@@ -160,11 +160,10 @@ resource "aws_lambda_permission" "allow_builder_access_s3_via_vpc_endpoint" {
 resource "aws_lambda_function" "builder_func" {
   function_name = "builder"
   package_type  = "Image"
-  image_uri     = "${aws_ecr_repository.book_builder_repo.repository_url}:${local.builder_stable_v}"
+  image_uri     = "${aws_ecr_repository.builder_repo.repository_url}:${local.builder_stable_v}"
   role          = aws_iam_role.builder_iam.arn
   depends_on = [
     data.aws_cloudwatch_log_group.general_purpose_logs,
-    aws_ecr_repository.book_builder_repo,
     aws_efs_mount_target.efs_mount
   ]
   architectures = ["x86_64"]
@@ -193,9 +192,7 @@ resource "aws_s3_bucket_notification" "ir_apkg_md_notification" {
   depends_on = [aws_lambda_permission.allow_ir_apkg_md_to_invoke_lambda]
 }
 
-## Image
-
-resource "aws_ecr_repository" "book_builder_repo" {
+resource "aws_ecr_repository" "builder_repo" {
   name                 = var.builder_repo_name
   image_tag_mutability = "IMMUTABLE"
 }

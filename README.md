@@ -4,7 +4,7 @@ Platform for scholars of digital humanities to publish their digital work
 
 ## Architecture design
 
-[aws_architecture_diagram](./2024-04-23_architecture.svg)
+![aws_architecture_diagram](./2024-04-23_architecture.svg)
 
 ## Updating code
 
@@ -114,5 +114,3 @@ provider "aws" {
 Go to the home page of the GitLab repository, and click on "CI/CD" under the "Settings" dropdown menu on the very bottom of the sidebar. Then click "Expand" on the "Variables" section and click on "Add variable". Have the Key be "ROLE_ARN" and the value be the ARN of the Role created in the step above. Remember to select the option "Protect variable".
 
 Also, add the "AWS_DEFAULT_REGION" variable with value equal to the AWS region selected for the above mentioned resources.
-
-### Update local files
