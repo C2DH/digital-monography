@@ -139,7 +139,6 @@ resource "aws_lambda_function" "preparer_func" {
   role          = aws_iam_role.preparer_iam.arn
   depends_on = [
     data.aws_cloudwatch_log_group.general_purpose_logs,
-    aws_ecr_repository.preparer_repo,
     aws_efs_mount_target.efs_mount
   ]
   architectures = ["x86_64"]
