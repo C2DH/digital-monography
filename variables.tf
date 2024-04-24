@@ -57,19 +57,14 @@ variable "cidr_block" {
   type = string
 }
 
-variable "docker_registry_host" {
+variable "builder_repo_name" {
   type        = string
-  description = "Host of the registry where Docker images are located, e.g. organization name for Docker Hub or '<AWS_ACCOUNT_ID>.dkr.ecr.eu-west-1.amazonaws.com' for AWS ECR"
+  description = "Name of the ECR repository for the book builder image"
 }
 
-variable "builder_img_name" {
+variable "preparer_repo_name" {
   type        = string
-  description = "Name of the image for the book builder"
-}
-
-variable "preparer_img_name" {
-  type        = string
-  description = "Name of the image for the preparer"
+  description = "Name of the ECR repository for the preparer image"
 }
 
 locals {

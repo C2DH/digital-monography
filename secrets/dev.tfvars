@@ -16,8 +16,8 @@ staticws_wip_bucket_name = "cpy-dgtmon-dev-staticws-wip"
 
 cidr_block = "10.10.0.0/16"
 
-builder_img_name = "dgtmon-dev-builder"
+builder_repo_name = "dgtmon-dev-builder"
 
-preparer_img_name = "dgtmon-dev-preparer"
+preparer_repo_name = "dgtmon-dev-preparer"
 
 docker_registry_host = "c2dhunilu"
