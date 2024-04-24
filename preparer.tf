@@ -170,17 +170,3 @@ resource "aws_s3_bucket_notification" "upload_apkg_notification" {
 locals {
   preparer_stable_v = local.versions_data.PREPARER_STABLE_V
 }
-
-resource "docker_image" "nginx" {
-  name         = "nginx:latest"
-  keep_locally = false
-}
-
-resource "docker_container" "nginx" {
-  image = docker_image.nginx.image_id
-  name  = "tutorial"
-  ports {
-    internal = 80
-    external = 8000
-  }
-}
