@@ -12,8 +12,6 @@ deploy:
   id_tokens:
     GITLAB_OIDC_TOKEN:
       aud: https://gitlab.com
-  variables:
-    TF_ROOT: "infra"
   before_script:
     - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
     - mkdir ~/.aws
@@ -32,8 +30,6 @@ destroy:
   id_tokens:
     GITLAB_OIDC_TOKEN:
       aud: https://gitlab.com
-  variables:
-    TF_ROOT: "infra"
   before_script:
     - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
     - mkdir ~/.aws
