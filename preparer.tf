@@ -135,7 +135,7 @@ resource "aws_lambda_permission" "allow_preparer_access_s3_via_vpc_endpoint" {
 resource "aws_lambda_function" "preparer_func" {
   function_name = "preparer"
   package_type  = "Image"
-  image_uri     = "${var.docker_registry_host}/${var.preparer_img_name}:${local.preparer_stable_v}"
+  image_uri     = "docker.io/${var.docker_registry_host}/${var.preparer_img_name}:${local.preparer_stable_v}"
   role          = aws_iam_role.preparer_iam.arn
   depends_on = [
     data.aws_cloudwatch_log_group.general_purpose_logs,
@@ -169,4 +169,18 @@ resource "aws_s3_bucket_notification" "upload_apkg_notification" {
 
 locals {
   preparer_stable_v = local.versions_data.PREPARER_STABLE_V
+}
+
+resource "docker_image" "nginx" {
+  name         = "nginx:latest"
+  keep_locally = false
+}
+
+resource "docker_container" "nginx" {
+  image = docker_image.nginx.image_id
+  name  = "tutorial"
+  ports {
+    internal = 80
+    external = 8000
+  }
 }

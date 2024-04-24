@@ -160,7 +160,7 @@ resource "aws_lambda_permission" "allow_builder_access_s3_via_vpc_endpoint" {
 resource "aws_lambda_function" "builder_func" {
   function_name = "builder"
   package_type  = "Image"
-  image_uri     = "${var.docker_registry_host}/${var.builder_img_name}:${local.builder_stable_v}"
+  image_uri     = "docker.io/${var.docker_registry_host}/${var.builder_img_name}:${local.builder_stable_v}"
   role          = aws_iam_role.builder_iam.arn
   depends_on = [
     data.aws_cloudwatch_log_group.general_purpose_logs,
