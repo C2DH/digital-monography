@@ -1,2 +1,2 @@
 boto3==1.34.*
-# jupyter-book==0.15.*
+jupyter-book==0.15.*

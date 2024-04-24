@@ -4,335 +4,211 @@ import json
 import logging
 import mammoth
 import re
-import os
 import time
 import typing as t
 import urllib.parse
 
 try:
-    from constants import DEFAULT_SFS_DIR
+    from constants import (
+        IR_APKG_HTML_BUCKET_NAME,
+        IR_APKG_MD_BUCKET_NAME,
+    )
     from citations import add_citations_and_bibliography
     from md_extraction import BookMetadata
     from metadata_extraction import replace_assets_with_directives
     from html2md import convert_to_md
+    from keys import KeyPath
 except ModuleNotFoundError as e:
-    from src.preparer.constants import DEFAULT_SFS_DIR
+    from src.preparer.constants import (
+        IR_APKG_HTML_BUCKET_NAME,
+        IR_APKG_MD_BUCKET_NAME,
+    )
     from src.preparer.citations import add_citations_and_bibliography
     from src.preparer.md_extraction import BookMetadata
     from src.preparer.metadata_extraction import replace_assets_with_directives
     from src.preparer.html2md import convert_to_md
+    from src.preparer.keys import KeyPath
 
-
-try:
-    IS_LOCAL = os.environ["PWD"].endswith("dhj-local")
-except KeyError:
-    IS_LOCAL = False
-IR_APKG_HTML_BUCKET_NAME = "dgtmon-dev-ir-apkg-html"
-IR_APKG_MD_BUCKET_NAME = "dgtmon-dev-ir-apkg-md"
-STATICWS_WIP_BUCKET_NAME = "dgtmon-dev-staticws-wip"
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-def get_aws_client(service: str) -> t.Any:
-    if IS_LOCAL:
-        return boto3.client(
-            service,
-            aws_access_key_id="",
-            aws_secret_access_key="",
-            region_name="eu-central-1",
-            endpoint_url="http://localhost:4566",
-        )  # type: ignore
-    else:
-        return boto3.client(service)  # type: ignore
-
-
-s3 = get_aws_client("s3")
+s3 = boto3.client("s3")
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
-    logger.info("Preparer Lambda function was successfully invoked.")
-    logs_list = []
-    logs_list.append("Preparer Lambda function was successfully invoked.")
+    logger.info("Starting Dockerized Lambda.")
     start = time.time()
-    key = _get_key(event, logs_list)
-    output_logs_to_static_ws(logs_list)
-    # if not key.endswith(".docx"):
-    #     logger.info(
-    #         "Object {key} is not a `.docx` file. Closing the Preparer Lambda function."
-    #     )
-    #     return {"statusCode": 200, "body": ""}
-    src = _get_source_bucket(event, logs_list)
-    output_logs_to_static_ws(logs_list)
-    _download_fileobj(src, key, logs_list)
-    output_logs_to_static_ws(logs_list)
-    html_str = _convert_to_html(key, logs_list)
-    output_logs_to_static_ws(logs_list)
-    html_soup = _get_html_soup(html_str, logs_list)
-    output_logs_to_static_ws(logs_list)
-    metadata = _get_book_metadata(logs_list)
-    output_logs_to_static_ws(logs_list)
-    html_soup = _add_citations_and_bibliography(html_soup, logs_list)
-    output_logs_to_static_ws(logs_list)
-    html_soup = _replace_assets_with_directives(html_soup, metadata, logs_list)
-    output_logs_to_static_ws(logs_list)
-    _put_html_to_s3(str(html_soup), key, logs_list)
-    output_logs_to_static_ws(logs_list)
-
-    # wc
-    md = _convert_to_md(html_soup, metadata, logs_list)
-    output_logs_to_static_ws(logs_list)
-    words = re.findall("[a-zA-Z_]+", md)
-    char_count = len("".join(words))
-    word_count = len(words)
-    end = time.time()
-    delta_in_sec = end - start
-    delta_in_ms = delta_in_sec * 1000  # milliseconds
-    templ = """<!DOCTYPE html><html>
-<head>
-  <title>The title</title>
-</head>
-<body>
-<div id="book-metadata-tbl">
-<p>==========================================</p>
-<table>
-  <caption>
-    Details about the current document (estimates)
-  </caption>
-  <tbody>
-    <tr>
-      <td>
-        Word count:
-      </td>
-      <td>{word_count}</td>
-    </tr>
-    <tr>
-      <td>
-        Characted count:
-      </td>
-      <td>{char_count}</td>
-    </tr>
-    <tr>
-      <td>
-        Execution time (s):
-      </td>
-      <td>{delta_in_sec:.4f} seconds</td>
-    </tr>
-    <tr>
-      <td>
-        Execution time (ms):
-      </td>
-      <td>{delta_in_ms:.2f} milliseconds</td>
-    </tr>
-  </tbody>
-</table>
-<p>==========================================</p>
-</div>
-</body>
-</html>
-""".format(
-        word_count=word_count,
-        char_count=char_count,
-        delta_in_sec=delta_in_sec,
-        delta_in_ms=delta_in_ms,
-    )
-    new_html_soup = bs4.BeautifulSoup(templ, "html.parser")
-    new_html_soup.html.body.append(html_soup)
-    _put_md_to_s3(
-        str(new_html_soup), key, logs_list
-    )  # for presentation purposes show raw html
-    output_logs_to_static_ws(logs_list)
-    THIS_WORKS_DISABLED_FOR_DEMO_PURPOSES = """
+    key = _get_key(event)
+    src = _get_source_bucket(event)
+    _download_fileobj(src, key)
+    if not key.suffix.lower() == ".docx":
+        return {"statusCode": 200, "body": ""}
+    html_str = _convert_to_html(key)
+    html_soup = _get_html_soup(html_str)
+    metadata = _get_book_metadata()
+    html_soup = _add_citations_and_bibliography(html_soup)
+    html_soup = _replace_assets_with_directives(html_soup, metadata)
+    _put_html_to_s3(str(html_soup), key)
     md = _convert_to_md(html_soup, metadata)
     _put_md_to_s3(md, key)
-    """
+    _write_processed_md_to_efs(md, key)
+    _log_document_stats(start, md)
     return {"statusCode": 200, "body": ""}
 
 
-def _get_key(event, logs_list) -> str:
+def _get_key(event) -> KeyPath:
     try:
         key_str = urllib.parse.unquote_plus(
             event["Records"][0]["s3"]["object"]["key"], encoding="utf-8"
         )
-        logger.info(f"Key {key_str} was found in the event records.")
-        logs_list.append(f"Key {key_str} was found in the event records.")
-        return key_str
+        return KeyPath(key_str)
     except Exception as e:
         logger.error(f"Unable to retrieve object key. Error: {repr(e)}")
-        logs_list.append(f"Unable to retrieve object key. Error: {repr(e)}")
         raise
 
 
-def _get_source_bucket(event, logs_list) -> str:
+def _get_source_bucket(event) -> str:
     try:
         src = event["Records"][0]["s3"]["bucket"]["name"]
         logger.info(f"Source-bucket {src} was found in the event records.")
-        logs_list.append(f"Source-bucket {src} was found in the event records.")
         return src
     except Exception as e:
         logger.error(f"Unable to retrieve the source-bucket. Error: {repr(e)}")
-        logs_list.append(f"Unable to retrieve the source-bucket. Error: {repr(e)}")
         raise
 
 
-def _download_fileobj(src: str, key: str, logs_list):
+def _download_fileobj(src: str, key: KeyPath):
     try:
-        with open(f"/{DEFAULT_SFS_DIR}/{str(key)}", "wb") as fileobj:
-            resp = s3.download_fileobj(src, str(key), fileobj)
+        key = key.efs_filepath
+        key.parent.mkdir(parents=True, exist_ok=True)
+        with open(key, "wb") as fileobj:
+            s3_key = str(key.s3_key)
+            resp = s3.download_fileobj(src, s3_key, fileobj)
             logger.info(
-                f"Response from s3.download_fileobj(Bucket={src}, Key={str(key)}): "
-                + json.dumps(resp, default=str)
-            )
-            logs_list.append(
-                f"Response from s3.download_fileobj(Bucket={src}, Key={str(key)}): "
+                f"Response from s3.download_fileobj(Bucket={src}, Key={s3_key}): "
                 + json.dumps(resp, default=str)
             )
     except Exception as e:
         logger.exception(
             f"Downloading fileobj {str(key)} from {src} failed. Error: {repr(e)}"
         )
-        logs_list.append(
-            f"Downloading fileobj {str(key)} from {src} failed. Error: {repr(e)}"
-        )
         raise
 
 
-def _convert_to_html(key: str, logs_list) -> str:
+def _convert_to_html(key: KeyPath) -> str:
     try:
-        with open(f"/{DEFAULT_SFS_DIR}/{key}", "rb") as f:
+        key = key.efs_filepath
+        with open(key, "rb") as f:
             style_mappings = """
             p[style-name='Quote'] => blockquote:fresh
             """
             result = mammoth.convert_to_html(f, style_map=style_mappings)
             logger.info(f"Converting {key} to html succedded.")
-            logs_list.append(f"Converting {key} to html succedded.")
             return result.value
     except Exception as e:
         logger.exception(f"Converting {key} to html failed. Error: {repr(e)}")
-        logs_list.append(f"Converting {key} to html failed. Error: {repr(e)}")
         raise
 
 
-def _get_html_soup(html: str, logs_list) -> bs4.BeautifulSoup:
+def _get_html_soup(html: str) -> bs4.BeautifulSoup:
     try:
         return bs4.BeautifulSoup(html, "html.parser")
     except Exception as e:
         logger.exception(f"Creation of bs4.BeautifulSoup failed. Error: {repr(e)}")
-        logs_list.append(f"Creation of bs4.BeautifulSoup failed. Error: {repr(e)}")
         raise
 
 
-def _get_book_metadata(logs_list):
+def _get_book_metadata():
     try:
         return BookMetadata()
     except Exception as e:
         logger.exception(f"Creation of BookMetadata object failed. Error: {repr(e)}")
-        logs_list.append(f"Creation of BookMetadata object failed. Error: {repr(e)}")
         raise
 
 
-def _add_citations_and_bibliography(html_soup: bs4.BeautifulSoup, logs_list):
+def _add_citations_and_bibliography(html_soup: bs4.BeautifulSoup):
     try:
         return add_citations_and_bibliography(html_soup)
     except Exception as e:
         logger.exception(
             f"Adding citations and bibliographies failed. Error: {repr(e)}"
         )
-        logs_list.append(
-            f"Adding citations and bibliographies failed. Error: {repr(e)}"
-        )
         raise
 
 
 def _replace_assets_with_directives(
-    html_soup: bs4.BeautifulSoup, metadata: BookMetadata, logs_list
+    html_soup: bs4.BeautifulSoup, metadata: BookMetadata
 ):
     try:
         return replace_assets_with_directives(html_soup, metadata)
     except Exception as e:
         logger.exception(f"Replacing assets with directives failed. Error: {repr(e)}")
-        logs_list.append(f"Replacing assets with directives failed. Error: {repr(e)}")
         raise
 
 
-def _convert_to_md(html_soup: bs4.BeautifulSoup, metadata: BookMetadata, logs_list):
+def _convert_to_md(html_soup: bs4.BeautifulSoup, metadata: BookMetadata):
     try:
         return convert_to_md(html_soup, metadata)
     except Exception as e:
         logger.exception(f"Converting to md failed. Error: {repr(e)}")
-        logs_list.append(f"Converting to md failed. Error: {repr(e)}")
         raise
 
 
-def _put_object(body: bytes, dst: str, key: str, logs_list) -> t.Any:
+def _put_object(body: bytes, dst: str, key: KeyPath) -> t.Any:
     try:
         # TODO: do I have to encode and decode contents?
-        resp = s3.put_object(Body=body.decode("utf-8"), Bucket=dst, Key=key)
+        resp = s3.put_object(Body=body.decode("utf-8"), Bucket=dst, Key=str(key))
         logger.info(
-            f"Response from s3.put_object(Bucket={dst}, Key={key}): "
-            + json.dumps(resp, default=str)
-        )
-        logs_list.append(
             f"Response from s3.put_object(Bucket={dst}, Key={key}): "
             + json.dumps(resp, default=str)
         )
         return resp
     except Exception as e:
         logger.exception(f"Put object {key} to bucket {dst} failed. Error: {repr(e)}")
-        logs_list.append(f"Put object {key} to bucket {dst} failed. Error: {repr(e)}")
         raise
 
 
-def _put_html_to_s3(contents: str, key: str, logs_list) -> None:
+def _put_html_to_s3(contents: str, key: KeyPath) -> None:
     try:
+        s3_key = key.s3_key.with_suffix(".html")
         _put_object(
             contents.encode("utf-8"),
             IR_APKG_HTML_BUCKET_NAME,
-            key.replace(".docx", ".html"),
-            logs_list,
+            s3_key,
         )
     except Exception as e:
         logger.exception(f"Putting html to s3 bucket failed. Error: {repr(e)}")
-        logs_list.append(f"Putting html to s3 bucket failed. Error: {repr(e)}")
         raise
 
 
-def _put_md_to_s3(contents: str, key: str, logs_list) -> None:
+def _put_md_to_s3(contents: str, key: KeyPath) -> None:
     try:
+        s3_key = key.s3_key.with_suffix(".md")
         _put_object(
             contents.encode("utf-8"),
             IR_APKG_MD_BUCKET_NAME,
-            key.replace(".docx", ".html"),
-            logs_list,
-            # md.encode("utf-8"), IR_APKG_MD_BUCKET_NAME, key.replace(".docx", ".md")
+            s3_key,
         )
     except Exception as e:
         logger.exception(f"Putting md to s3 bucket failed. Error: {repr(e)}")
-        logs_list.append(f"Putting md to s3 bucket failed. Error: {repr(e)}")
         raise
 
 
-def output_logs_to_static_ws(logs_list: list[str]):
-    logs_tag = "\n".join(f"<li>{log}</li>" for log in logs_list)
-    index_page_with_logs = """<!DOCTYPE html>
-<html>
-<head>
-  <title>Home Page</title>
-</head>
-<body>
-  <h1>Logs</h1>
-  <p>Logs from current runtime:</p>
-  <ul>
-    {logs_tag}
-  </ul>
-</body>
-</html>""".format(
-        logs_tag=logs_tag
-    )
-    _put_object(
-        index_page_with_logs.encode("utf-8"),
-        STATICWS_WIP_BUCKET_NAME,
-        "index.html",
-        logs_list,
-    )
+def _write_processed_md_to_efs(md: str, key: KeyPath):
+    new_efs_filepath = key.efs_filepath.with_suffix(".md")
+    with open(new_efs_filepath, "w") as f:
+        f.write(md)
+
+
+def _log_document_stats(start: float, md: str):
+    words = re.findall("[a-zA-Z_]+", md)
+    end = time.time()
+    stats = {
+        "char_count": len("".join(words)),
+        "word_count": len(words),
+        "delta_in_sec": end - start,
+        "delta_in_ms": (end - start) * 1000,
+    }
+    logging.info(json.dumps(stats, default=str))
