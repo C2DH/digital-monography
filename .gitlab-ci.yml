@@ -6,6 +6,7 @@ deploy:
   stage: deploy
   only:
     - main
+    - develop
   image:
     name: hashicorp/terraform:light
     entrypoint: [""]
@@ -24,6 +25,7 @@ destroy:
   stage: destroy
   only:
     - main
+    - develop
   image:
     name: hashicorp/terraform:light
     entrypoint: [""]
