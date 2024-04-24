@@ -5,6 +5,7 @@ DOCKER_HUB = c2dhunilu
 
 
 login:
+	aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin ${DOCKER_ECR}
 	docker login --username c2dhadmin
 
 preparer/build:
@@ -21,12 +22,27 @@ preparer/push:
 
 builder/build:
 	docker build -t dgtmon-dev-builder src/builder
-	docker build -t dgtmon-dev-builder src/builder
 
 builder/tag:
 	docker tag dgtmon-dev-builder ${DOCKER_ECR}/dgtmon-dev-builder:${BUILDER_STABLE_V}
 	docker tag dgtmon-dev-builder ${DOCKER_HUB}/dgtmon-dev-builder:${BUILDER_STABLE_V}
 
 builder/push:
+	docker push ${DOCKER_ECR}/dgtmon-dev-builder:${BUILDER_STABLE_V}
+	docker push ${DOCKER_HUB}/dgtmon-dev-builder:${BUILDER_STABLE_V}
+
+all/build:
+	docker build -t dgtmon-dev-preparer src/preparer
+	docker build -t dgtmon-dev-builder src/builder
+
+all/tag:
+	docker tag dgtmon-dev-preparer ${DOCKER_ECR}/dgtmon-dev-preparer:${PREPARER_STABLE_V}
+	docker tag dgtmon-dev-preparer ${DOCKER_HUB}/dgtmon-dev-preparer:${PREPARER_STABLE_V}
+	docker tag dgtmon-dev-builder ${DOCKER_ECR}/dgtmon-dev-builder:${BUILDER_STABLE_V}
+	docker tag dgtmon-dev-builder ${DOCKER_HUB}/dgtmon-dev-builder:${BUILDER_STABLE_V}
+
+all/push:
+	docker push ${DOCKER_ECR}/dgtmon-dev-preparer:${PREPARER_STABLE_V}
+	docker push ${DOCKER_HUB}/dgtmon-dev-preparer:${PREPARER_STABLE_V}
 	docker push ${DOCKER_ECR}/dgtmon-dev-builder:${BUILDER_STABLE_V}
 	docker push ${DOCKER_HUB}/dgtmon-dev-builder:${BUILDER_STABLE_V}
