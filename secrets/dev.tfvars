@@ -20,4 +20,4 @@ builder_img_name = "dgtmon-dev-builder"
 
 preparer_img_name = "dgtmon-dev-preparer"
 
-docker_registry_host = "docker.io"
+docker_registry_host = "c2dhunilu"

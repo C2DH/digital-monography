@@ -59,7 +59,7 @@ variable "cidr_block" {
 
 variable "docker_registry_host" {
   type        = string
-  description = "Host of the registry where Docker images are located, e.g. 'docker.io' for Docker Hub or '<AWS_ACCOUNT_ID>.dkr.ecr.eu-west-1.amazonaws.com' for AWS ECR"
+  description = "Host of the registry where Docker images are located, e.g. organization name for Docker Hub or '<AWS_ACCOUNT_ID>.dkr.ecr.eu-west-1.amazonaws.com' for AWS ECR"
 }
 
 variable "builder_img_name" {
