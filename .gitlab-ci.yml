@@ -16,6 +16,7 @@ deploy:
   before_script:
     - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
     - mkdir ~/.aws
+    - echo -e "[profile oidc]\nrole_arn=${ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token\nrole_session_name=terraform"
     - echo -e "[profile oidc]\nrole_arn=${ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token\nrole_session_name=terraform" >> ~/.aws/config
     - echo -e "[profile oidc]\nrole_arn=${ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token\nrole_session_name=terraform" >> ~/.aws/credentials
   script:
