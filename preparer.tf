@@ -135,7 +135,7 @@ resource "aws_lambda_permission" "allow_preparer_access_s3_via_vpc_endpoint" {
 resource "aws_lambda_function" "preparer_func" {
   function_name = "preparer"
   package_type  = "Image"
-  image_uri     = "${aws_ecr_repository.preparer_repo.repository_url}:${local.preparer_stable_v}"
+  image_uri     = "${var.docker_registry_host}/${var.preparer_img_name}:${local.preparer_stable_v}"
   role          = aws_iam_role.preparer_iam.arn
   depends_on = [
     data.aws_cloudwatch_log_group.general_purpose_logs,
@@ -166,13 +166,6 @@ resource "aws_s3_bucket_notification" "upload_apkg_notification" {
     events              = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
   }
   depends_on = [aws_lambda_permission.allow_upload_apkg_to_invoke_lambda]
-}
-
-## Image
-
-resource "aws_ecr_repository" "preparer_repo" {
-  name                 = var.preparer_repo_name
-  image_tag_mutability = "IMMUTABLE"
 }
 
 locals {
