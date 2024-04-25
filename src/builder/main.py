@@ -1,4 +1,5 @@
 import pathlib
+import shutil
 import subprocess
 import logging
 import typing as t
@@ -8,6 +9,8 @@ from jupyter_book.cli.main import build
 from keys import KeyPath
 from constants import DEFAULT_SFS_DIR, STATICWS_WIP_BUCKET_NAME
 
+SUPPORTED_ASSET_DIR = ["assets", "images", "videos"]
+
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -16,6 +19,7 @@ logger.setLevel(logging.INFO)
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     key = _get_key(event)
     (pathlib.Path(DEFAULT_SFS_DIR) / "read").mkdir(exist_ok=True)
+    _copy_assets(key)
     _build_book(key)
     _sync_efs_and_s3_with_staticws(key)
     logging.info("Builder Lambda function finished.")
@@ -33,7 +37,18 @@ def _get_key(event) -> KeyPath:
         raise
 
 
-def _build_book(key: KeyPath):
+def _copy_assets(key: KeyPath) -> None:
+    try:
+        for dirname in SUPPORTED_ASSET_DIR:
+            src = key.efs_slug_dir / dirname
+            dst = key.efs_slug_dir / "_build" / "html" / dirname
+            shutil.copytree(src, dst, dirs_exist_ok=True)
+    except Exception as e:
+        logging.exception(f"Unable to copy assets. Error: {repr(e)}")
+        raise
+
+
+def _build_book(key: KeyPath) -> None:
     try:
         build.callback(
             path_source=key.efs_slug_dir,
