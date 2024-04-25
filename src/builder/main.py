@@ -33,7 +33,7 @@ def _get_key(event) -> KeyPath:
         )
         return KeyPath(key_str)
     except Exception as e:
-        logging.error(f"Unable to retrieve object key. Error: {repr(e)}")
+        logging.exception(f"Unable to retrieve object key. Error: {repr(e)}")
         raise
 
 
@@ -42,7 +42,8 @@ def _copy_assets(key: KeyPath) -> None:
         for dirname in SUPPORTED_ASSET_DIR:
             src = key.efs_slug_dir / dirname
             dst = key.efs_slug_dir / "_build" / "html" / dirname
-            shutil.copytree(src, dst, dirs_exist_ok=True)
+            if src.exists():
+                shutil.copytree(src, dst, dirs_exist_ok=True)
     except Exception as e:
         logging.exception(f"Unable to copy assets. Error: {repr(e)}")
         raise
@@ -71,7 +72,7 @@ def _build_book(key: KeyPath) -> None:
         raise
 
 
-def _sync_efs_and_s3_with_staticws(key: KeyPath):
+def _sync_efs_and_s3_with_staticws(key: KeyPath) -> None:
     try:
         src = str(key.efs_slug_dir / "_build" / "html")
         dst = f"s3://{STATICWS_WIP_BUCKET_NAME}/read/{key.slug}"
@@ -80,5 +81,5 @@ def _sync_efs_and_s3_with_staticws(key: KeyPath):
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.wait()
     except Exception as e:
-        logging.error(f"Syncing exception. Error: {repr(e)}")
+        logging.exception(f"Syncing exception. Error: {repr(e)}")
         raise
