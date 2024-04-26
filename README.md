@@ -4,7 +4,13 @@ Platform for scholars of digital humanities to publish their digital work
 
 ## Architecture design
 
+### Simplified diagram
+
 ![aws_architecture_diagram](./2024-04-23_architecture.svg)
+
+### Infrastructure visualization
+
+![terraform_graph_viz](./graphviz.html)
 
 ## Updating code
 
@@ -114,3 +120,16 @@ provider "aws" {
 Go to the home page of the GitLab repository, and click on "CI/CD" under the "Settings" dropdown menu on the very bottom of the sidebar. Then click "Expand" on the "Variables" section and click on "Add variable". Have the Key be "ROLE_ARN" and the value be the ARN of the Role created in the step above. Remember to select the option "Protect variable".
 
 Also, add the "AWS_DEFAULT_REGION" variable with value equal to the AWS region selected for the above mentioned resources.
+
+## Sundry
+
+### Generating infrastrucutre visualisation
+
+To generate a visualization of an infrastructure as defined by .tf IaC files follow these steps:
+
+1. Copy current project directory so that you don't have to migrate state nor reconfigure. E.g. `cp digital-monography tfgraph`.
+1. Initalize terraform locally with `terraform init`.
+1. Run `terraform graph`.
+1. Copy output from terraform graph command to [WebGraphViz](http://www.webgraphviz.com/?tab=map) and select on "Generate Graph".
+1. Save the '<div id="graphviz_svg_div">' tag as "graphviz.html" in the root of the project.
+
