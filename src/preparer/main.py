@@ -52,8 +52,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     html_soup = _replace_assets_with_directives(html_soup, metadata)
     _put_html_to_s3(str(html_soup), key)
     md = _convert_to_md(html_soup, metadata)
-    _put_md_to_s3(md, key)
     _write_processed_md_to_efs(md, key)
+    _put_md_to_s3(md, key)
     _log_document_stats(start, md)
     return {"statusCode": 200, "body": ""}
 
