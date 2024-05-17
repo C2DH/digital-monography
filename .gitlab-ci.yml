@@ -10,7 +10,7 @@ init:
     - develop
   image: google/cloud-sdk
   before_script:
-    - apt-get update && apt-get install -y curl gnupg
+    - apt-get update && apt-get install -y curl gnupg jq
     - curl -qsL https://github.com/mozilla/sops/releases/download/v3.5.0/sops-v3.5.0.linux -o /usr/local/bin/sops
     - chmod +x /usr/local/bin/sops
     - cat $PGP_KEY | gpg --batch --import
