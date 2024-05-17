@@ -16,8 +16,8 @@ init:
     - cat $PGP_KEY | gpg --batch --import
     - echo $PGP_PASSPHRASE | gpg --batch --always-trust --yes --passphrase-fd 0 --pinentry-mode=loopback -s $(mktemp)
   script:
-    - sops -d secrets/dev.tfvars > secrets/dev.tfvars
-    - cat secrets/dev.tfvars # TODO: remove
+    - sops -d secrets/dev.tfvars.json | jq '.data' > dev.tfvars.json
+    - cat secrets/dev.tfvars.json # TODO: remove
 
 deploy:
   stage: deploy
@@ -35,8 +35,8 @@ deploy:
     - mkdir ~/.aws
     - echo -e "[profile oidc]\nrole_arn=${ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
   script:
-    - terraform init -var-file=secrets/dev.tfvars
-    - terraform apply -auto-approve -var-file=secrets/dev.tfvars
+    - terraform init -var-file=secrets/dev.tfvars.json
+    - terraform apply -auto-approve -var-file=secrets/dev.tfvars.json
 
 destroy:
   stage: destroy
@@ -54,6 +54,6 @@ destroy:
     - mkdir ~/.aws
     - echo -e "[profile oidc]\nrole_arn=${ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
   script:
-    - terraform init -var-file=secrets/dev.tfvars -reconfigure
-    - terraform destroy -auto-approve -var-file=secrets/dev.tfvars
+    - terraform init -var-file=secrets/dev.tfvars.json -reconfigure
+    - terraform destroy -auto-approve -var-file=secrets/dev.tfvars.json
   when: manual
