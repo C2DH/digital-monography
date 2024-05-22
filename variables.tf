@@ -70,3 +70,8 @@ variable "preparer_repo_name" {
 locals {
   versions_data = jsondecode(file("${path.root}/.versions.json"))
 }
+
+variable "github_api_token" {
+  type        = string
+  description = "Authentication token for sending GitHub API requests"
+}
