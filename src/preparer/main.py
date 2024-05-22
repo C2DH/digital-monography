@@ -40,11 +40,16 @@ secretsmanager = boto3.client("secretsmanager")
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info("Starting Dockerized Lambda.")
-    resp = secretsmanager.get_secret_value(SecretId="dgtmon-dev-github-api-token")
-    logger.info(
-        f"Response from secretsmanager.get_secret_value: "
-        + json.dumps(resp, default=str)
-    )
+    try:
+        resp = secretsmanager.get_secret_value(SecretId="dgtmon-dev-github-api-token")
+        logger.info(
+            f"Response from secretsmanager.get_secret_value: "
+            + json.dumps(resp, default=str)
+        )
+    except Exception as e:
+        logger.exception(f"Failed getting secret value. Error: {repr(e)}")
+        raise
+
     return {"statusCode": 200, "body": ""}
 
     start = time.time()
