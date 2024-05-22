@@ -26,6 +26,6 @@ output "staticws_wip_bucket_name" {
   value = aws_s3_bucket.staticws_wip.bucket
 }
 
-output "github_api_token_name" {
-  value = aws_secretsmanager_secret_version.github_api_token.secret_string
+output "github_api_token" {
+  value = data.aws_secretsmanager_secret_version.github_api_token.secret_string
 }
