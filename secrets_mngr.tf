@@ -1,5 +1,6 @@
 resource "aws_secretsmanager_secret" "github_api_token" {
-  name = "Authentication token for sending GitHub API requests"
+  name        = "github_api_token"
+  description = "Authentication token for sending GitHub API requests"
 }
 
 resource "aws_secretsmanager_secret_version" "github_api_token" {
