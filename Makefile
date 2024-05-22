@@ -47,6 +47,3 @@ all/push:
 	docker push ${DOCKER_HUB}/dgtmon-dev-preparer:${PREPARER_STABLE_V}
 	docker push ${DOCKER_ECR}/dgtmon-dev-builder:${BUILDER_STABLE_V}
 	docker push ${DOCKER_HUB}/dgtmon-dev-builder:${BUILDER_STABLE_V}
-
-encrypt:
-	sops --kms ${AWS_KMS_ARN} -e $(file) > $(file)
