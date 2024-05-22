@@ -27,5 +27,6 @@ output "staticws_wip_bucket_name" {
 }
 
 output "github_api_token" {
-  value = data.aws_secretsmanager_secret_version.github_api_token.secret_string
+  value     = data.aws_secretsmanager_secret_version.github_api_token.secret_string
+  sensitive = true
 }
