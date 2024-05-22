@@ -41,6 +41,16 @@ Changes to the Terraform Infrastructure as Code will be updated automatically af
 
 See `.gitlab-ci.yml` for details.
 
+## Encrypting secret files
+
+To encrypt a file, use the sops tool.
+
+```sh
+sops -e secrets/dev.tfvars.json > secrets/dev.tfvars.enc.json
+```
+
+To set up sops, you can follow the [official instructions](https://github.com/getsops/sops) or [unofficials guides](https://dev.to/stack-labs/manage-your-secrets-in-git-with-sops-g0a).
+
 ## AWS setup for development
 
 Steps to configure the platform __for development__ on your own AWS account.
