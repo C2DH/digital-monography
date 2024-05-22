@@ -34,6 +34,7 @@ deploy:
     - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
     - mkdir ~/.aws
     - echo -e "[profile oidc]\nrole_arn=${ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
+    - cat secrets/dev.tfvars.json
   script:
     - terraform init -var-file=secrets/dev.tfvars.json
     - terraform apply -auto-approve -var-file=secrets/dev.tfvars.json
