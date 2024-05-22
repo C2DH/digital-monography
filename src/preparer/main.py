@@ -35,10 +35,18 @@ logger.setLevel(logging.INFO)
 
 
 s3 = boto3.client("s3")
+secretsmanager = boto3.client("secretsmanager")
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info("Starting Dockerized Lambda.")
+    resp = secretsmanager.get_secret_value(SecretId="dgtmon-dev-github-api-token")
+    logger.info(
+        f"Response from secretsmanager.get_secret_value: "
+        + json.dumps(resp, default=str)
+    )
+    return {"statusCode": 200, "body": ""}
+
     start = time.time()
     key = _get_key(event)
     src = _get_source_bucket(event)
