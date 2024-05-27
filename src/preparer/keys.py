@@ -36,5 +36,13 @@ class KeyPath(type(pathlib.Path())):
             return KeyPath(self)
 
     @cached_property
+    def github_path(self) -> "KeyPath":
+        """Returns path/to/file.txt (without my-slug)"""
+        try:
+            return KeyPath(self.relative_to(pathlib.Path(self._abs_root) / self.slug))
+        except ValueError:
+            return KeyPath(self)
+
+    @cached_property
     def slug(self) -> str:
         return self.s3_key.parts[0]
