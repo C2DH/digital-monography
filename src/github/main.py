@@ -12,13 +12,14 @@ try:
         GITHUB_ORG,
         GITHUB_TOKEN,  # TODO: fetch from AWS Secrets Manager
     )
+    from keys import KeyPath
 except ModuleNotFoundError as e:
     from src.github.constants import (
         ARCHIVE_APKG_ALL,
         GITHUB_ORG,
         GITHUB_TOKEN,  # TODO: fetch from AWS Secrets Manager
     )
-from src.github.keys import KeyPath
+    from src.github.keys import KeyPath
 
 
 logger = logging.getLogger()
