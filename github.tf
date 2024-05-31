@@ -1,0 +1,133 @@
+## Archive S3
+
+resource "aws_s3_bucket" "archive_apkg_all" {
+  bucket        = var.archive_apkg_all_bucket_name
+  force_destroy = true
+}
+
+data "aws_iam_policy_document" "archive_apkg_all_policy" {
+  statement {
+    actions = [
+      "s3:*" # TODO: limit
+    ]
+    resources = [
+      "arn:aws:s3:::${aws_s3_bucket.archive_apkg_all.bucket}",
+      "arn:aws:s3:::${aws_s3_bucket.archive_apkg_all.bucket}/*"
+    ]
+    principals {
+      type        = "AWS"
+      identifiers = [aws_iam_user.apkg_uploader.arn]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "archive_apkg_all_policy" {
+  bucket = aws_s3_bucket.archive_apkg_all.id
+  policy = data.aws_iam_policy_document.archive_apkg_all_policy.json
+}
+
+## Lambda (github)
+
+data "aws_iam_policy_document" "assume_github_role" {
+  statement {
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+resource "aws_iam_role" "github_iam" {
+  name               = "github_iam"
+  assume_role_policy = data.aws_iam_policy_document.assume_github_role.json
+}
+
+data "aws_iam_policy_document" "github" {
+  statement {
+    sid       = "AllowS3Permissions"
+    effect    = "Allow"
+    resources = ["*"] # TODO: limit
+    actions = [
+      "s3:PutObject",
+      "s3:PutObjectAcl",
+      "s3:GetObject",
+      "s3:GetObjectAcl",
+    ]
+  }
+  statement {
+    sid       = "AllowInvokingLambdas"
+    effect    = "Allow"
+    resources = ["arn:aws:lambda:${var.region}:*:function:*"]
+    actions   = ["lambda:InvokeFunction"]
+  }
+  statement {
+    sid       = "AllowCreatingLogGroups"
+    effect    = "Allow"
+    resources = ["arn:aws:logs:${var.region}:*:*"]
+    actions   = ["logs:CreateLogGroup"]
+  }
+  statement {
+    sid       = "AllowWritingLogs"
+    effect    = "Allow"
+    resources = ["arn:aws:logs:${var.region}:*:log-group:/aws/*:*"]
+    actions = [
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+    ]
+  }
+}
+
+resource "aws_iam_policy" "github" {
+  name   = "github_policy"
+  policy = data.aws_iam_policy_document.github.json
+}
+
+resource "aws_iam_role_policy_attachment" "github" {
+  role       = aws_iam_role.github_iam.name
+  policy_arn = aws_iam_policy.github.arn
+}
+
+resource "aws_lambda_permission" "allow_archive_apkg_all_to_invoke_lambda" {
+  statement_id  = "AllowExecutionFromS3Bucket"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.github_func.arn
+  principal     = "s3.amazonaws.com"
+  source_arn    = aws_s3_bucket.archive_apkg_all.arn
+}
+
+resource "aws_lambda_function" "github_func" {
+  function_name = "github"
+  package_type  = "Image"
+  image_uri     = "${aws_ecr_repository.github_repo.repository_url}:${local.github_stable_v}"
+  role          = aws_iam_role.github_iam.arn
+  depends_on = [
+    data.aws_cloudwatch_log_group.general_purpose_logs,
+  ]
+  architectures = ["x86_64"]
+  timeout       = 900
+  memory_size   = 1024
+  logging_config {
+    log_group  = data.aws_cloudwatch_log_group.general_purpose_logs.name
+    log_format = "JSON"
+  }
+}
+
+resource "aws_s3_bucket_notification" "archive_apkg_all_notification" {
+  bucket = aws_s3_bucket.archive_apkg_all.id
+  lambda_function {
+    lambda_function_arn = aws_lambda_function.github_func.arn
+    events              = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
+  }
+  depends_on = [aws_lambda_permission.allow_archive_apkg_all_to_invoke_lambda]
+}
+
+resource "aws_ecr_repository" "github_repo" {
+  name                 = var.github_repo_name
+  image_tag_mutability = "IMMUTABLE"
+}
+
+locals {
+  github_stable_v = local.versions_data.GITHUB_STABLE_V
+}

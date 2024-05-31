@@ -22,6 +22,10 @@ output "ir_apkg_md_bucket_name" {
   value = aws_s3_bucket.ir_apkg_md.bucket
 }
 
+output "archive_apkg_all_bucket_name" {
+  value = aws_s3_bucket.archive_apkg_all.bucket
+}
+
 output "staticws_wip_bucket_name" {
   value = aws_s3_bucket.staticws_wip.bucket
 }

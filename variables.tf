@@ -32,6 +32,11 @@ variable "ir_apkg_md_bucket_name" {
   description = "Name of the bucket for intermediate format when transforming .html into .md"
 }
 
+variable "archive_apkg_all_bucket_name" {
+  type        = string
+  description = "Name of the bucket for intermediate format when transforming .html into .md"
+}
+
 variable "upload_apkg_bucket_name" {
   type        = string
   description = "Name of the bucket for uploading authors' packages (apkg) to AWS cloud."
@@ -65,6 +70,11 @@ variable "builder_repo_name" {
 variable "preparer_repo_name" {
   type        = string
   description = "Name of the ECR repository for the preparer image"
+}
+
+variable "github_repo_name" {
+  type        = string
+  description = "Name of the ECR repository for the github-caller image"
 }
 
 locals {
