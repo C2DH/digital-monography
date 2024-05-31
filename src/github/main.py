@@ -169,7 +169,7 @@ def _put_to_github_repo(
         "X-GitHub-Api-Version": "2022-11-28",
     }
     data = {
-        "message": f"{eventSource}:{eventName} to {key.s3_key} on {eventTime} id {requestId}",  # TODO: improve commit message
+        "message": f"{eventTime} [{requestId}] Perform action {eventSource}:{eventName} on '{key.s3_key}'",
         "content": b64content,
         # "committer": { # TODO: figure out how to extract data of the commiter & author
         #     "name": "",

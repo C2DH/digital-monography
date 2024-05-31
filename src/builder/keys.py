@@ -1,7 +1,14 @@
 import pathlib
 from functools import cached_property
 
-DEFAULT_SFS_DIR = "/mnt/efs"
+try:
+    from .constants import DEFAULT_SFS_DIR
+except Exception as e:
+    from constants import DEFAULT_SFS_DIR
+
+
+class InvalidKey(Exception):
+    pass
 
 
 class KeyPath(type(pathlib.Path())):
