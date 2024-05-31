@@ -47,11 +47,11 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     # logger.info("Contents: " + contents)
     ###
 
-    # _create_github_repo(key)
-    new_obj = _get_obj_from_archive_s3(key)
-    # r = _get_from_github_repo(key)
-    # prev_v_sha = r.json().get("sha", None)
-    # _put_to_github_repo(key, prev_v_sha, event, context)
+    _create_github_repo(key)
+    new_str = _get_obj_from_archive_s3(key)
+    prev_obj = _get_from_github_repo(key)
+    prev_v_sha = prev_obj.json().get("sha", None)
+    _put_to_github_repo(key, new_str, prev_v_sha, event, context)
     return {"statusCode": 200, "body": ""}
 
 
@@ -145,15 +145,14 @@ def _get_from_github_repo(key: KeyPath) -> requests.Response:
 
 
 def _put_to_github_repo(
-    key: KeyPath, prev_v_sha: t.Optional[str], event, context
+    key: KeyPath, contents: str, prev_v_sha: t.Optional[str], event, context
 ) -> requests.Response:
     """
     Creates a new file or replaces an existing file in a repository.
     See API docs here:
     https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28#create-or-update-file-contents
     """
-    with open(key.efs_filepath, "rb") as fileobj:
-        b64content = base64.b64encode(fileobj.read()).decode()
+    b64content = base64.b64encode(contents).decode()
     try:
         logger.info("s3 event: " + json.dumps(event, default=str))
         logger.info("s3 context: " + json.dumps(context, default=str))
