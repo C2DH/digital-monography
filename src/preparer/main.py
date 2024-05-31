@@ -200,11 +200,13 @@ def _put_md_to_s3(contents: str, key: KeyPath) -> None:
         raise
 
 
-def _put_to_archive_s3(key: KeyPath, contents: t.Optional[str]) -> None:
+def _put_to_archive_s3(key: KeyPath, contents: t.Optional[str] = None) -> None:
     try:
         if contents is None:
             with open(key.efs_filepath, "r") as f:
                 contents = f.read()
+            logger.info(f"Contents: " + contents)
+
         _put_object(
             contents.encode("utf-8"),
             ARCHIVE_APKG_ALL,
