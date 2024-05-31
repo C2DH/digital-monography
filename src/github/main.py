@@ -35,7 +35,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info("Starting GitHub Lambda.")
     # naively try to create without checking if the repo exists
     key = _get_key(event)
-    logger.info("Key: " + key)
+    logger.info("Key: " + str(key))
+    logger.info("Key.efs_filepath: " + str(key.efs_filepath))
 
     with open(key.efs_filepath, "r") as f:
         contents = f.read()
