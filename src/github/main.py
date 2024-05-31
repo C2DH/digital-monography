@@ -111,7 +111,7 @@ def _get_obj_from_archive_s3(key: KeyPath) -> str:
     try:
         resp = s3.get_object(
             Bucket=ARCHIVE_APKG_ALL,
-            Key=key.s3_key,
+            Key=str(key.s3_key),
         )
         logger.info(
             f"Response from s3.get_object(Bucket={ARCHIVE_APKG_ALL}, Key={key.s3_key}): "
