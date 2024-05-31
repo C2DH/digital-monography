@@ -40,9 +40,12 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info("Key: " + str(key))
     logger.info("Key.efs_filepath: " + str(key.efs_filepath))
 
-    with open(key.efs_filepath, "r") as f:
-        contents = f.read()
-    logger.info("Contents: " + contents)
+    ###
+    # does not work, [Errno 2] No such file or directory: '/tmp/examples/_config.yml'
+    # with open(key.efs_filepath, "r") as f:
+    #     contents = f.read()
+    # logger.info("Contents: " + contents)
+    ###
 
     # _create_github_repo(key)
     new_obj = _get_obj_from_archive_s3(key)
