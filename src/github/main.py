@@ -33,8 +33,8 @@ s3 = boto3.client("s3")
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info("Starting GitHub Lambda.")
-    logger.info(json.dumps(event), default=str)
-    logger.info(json.dumps(context), default=str)
+    logger.info(json.dumps(event, default=str))
+    logger.info(json.dumps(context, default=str))
     # naively try to create without checking if the repo exists
     key = _get_key(event)
     logger.info("Key: " + str(key))
@@ -95,7 +95,7 @@ def _create_github_repo(key: KeyPath) -> requests.Response:
             json=data,
             headers=headers,
         )
-        logger.info(json.dumps(res.json()), default=str)
+        logger.info(json.dumps(res.json(), default=str))
         return res
     except Exception as e:
         logging.exception(
@@ -132,7 +132,7 @@ def _get_from_github_repo(key: KeyPath) -> requests.Response:
         res = requests.get(
             f"https://api.github.com/repos/{GITHUB_ORG}/{key.slug}/contents/{key.github_path}",
         )
-        logger.info(json.dumps(res.json()), default=str)
+        logger.info(json.dumps(res.json(), default=str))
         return res
     except Exception as e:
         logger.error(
@@ -186,7 +186,7 @@ def _put_to_github_repo(
             json=data,
             headers=headers,
         )
-        logger.info(json.dumps(res.json()), default=str)
+        logger.info(json.dumps(res.json(), default=str))
         return res
     except Exception as e:
         logging.exception(
