@@ -1,11 +1,9 @@
-import base64
 import bs4
 import boto3
 import json
 import logging
 import mammoth
 import re
-import requests
 import time
 import typing as t
 import urllib.parse
@@ -16,8 +14,6 @@ try:
         IR_APKG_HTML_BUCKET_NAME,
         IR_APKG_MD_BUCKET_NAME,
         IR_APKG_MD_BUCKET_NAME,
-        GITHUB_ORG,
-        GITHUB_TOKEN,  # TODO: fetch from AWS Secrets Manager
     )
     from citations import add_citations_and_bibliography
     from md_extraction import BookMetadata
@@ -29,8 +25,6 @@ except ModuleNotFoundError as e:
         ARCHIVE_APKG_ALL,
         IR_APKG_HTML_BUCKET_NAME,
         IR_APKG_MD_BUCKET_NAME,
-        GITHUB_ORG,
-        GITHUB_TOKEN,  # TODO: fetch from AWS Secrets Manager
     )
     from src.preparer.citations import add_citations_and_bibliography
     from src.preparer.md_extraction import BookMetadata
@@ -44,8 +38,6 @@ logger.setLevel(logging.INFO)
 
 
 s3 = boto3.client("s3")
-# secretsmanager = boto3.client("secretsmanager")
-# resp = secretsmanager.get_secret_value(SecretId="dgtmon-dev-github-api-token")
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
@@ -53,17 +45,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     key = _get_key(event)
     src = _get_source_bucket(event)
     _download_fileobj(src, key)
-    # Github api calls work locally, but on VPC raise ConnectTimeout error.
-    ## Log date: 2024-05-28T09:37:07Z
-    ## Message:
-    ### Error while sending request to update github repo: ConnectTimeout(MaxRetryError(\"HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /orgs/organization-for-attestation/repos (Caused by ConnectTimeoutError(<urllib3.connection.HTTPSConnection object at 0x7f6741da9610>, 'Connection to api.github.com timed out. (connect timeout=None)'))\"))
-    ## TODO: figure out why and enable
-    # _create_github_repo(key)
     if not key.suffix.lower() == ".docx":
         _put_to_archive_s3(key)
-        # r = _get_from_github_repo(key)
-        # prev_v_sha = r.json().get("sha", None)
-        # _put_to_github_repo(key, prev_v_sha, event, context)
         return {"statusCode": 200, "body": ""}
     html_str = _convert_to_html(key)
     html_soup = _get_html_soup(html_str)
@@ -75,10 +58,6 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     _write_processed_md_to_efs(md, key)
     # _put_md_to_s3(md, key) # TODO: restore
     _put_to_archive_s3(key.s3_key.with_suffix(".md"), md)
-
-    # r = _get_from_github_repo(key)
-    # prev_v_sha = r.json().get("sha", None)
-    # _put_to_github_repo(key.efs_filepath.with_suffix(".md"), prev_v_sha, event, context)
     _log_document_stats(start, md)
     return {"statusCode": 200, "body": ""}
 
@@ -240,120 +219,6 @@ def _write_processed_md_to_efs(md: str, key: KeyPath):
     new_efs_filepath = key.efs_filepath.with_suffix(".md")
     with open(new_efs_filepath, "w") as f:
         f.write(md)
-
-
-# def _create_github_repo(key: KeyPath) -> requests.Response:
-#     """
-#     Creates a new repository in the specified organization.
-#     Note that the GitHub API token must have the write "Administration" repo permissions.
-#     If the repository already exists, the repository creation will fail with a message
-#     "name already exists on this account".
-#     See API docs here:
-#     https://docs.github.com/en/rest/repos/repos?apiVersion=2022-11-28#create-an-organization-repository
-#     """
-#     data = {
-#         "name": key.slug,
-#         # "description": "",  # TODO: get a desc from `key.efs_slug_dir / "_config.yml"`
-#         # "homepage": "",  # TODO: link to the digital version of the book
-#         "private": False,
-#         "visibility": "public",
-#         "security_and_analysis": None,
-#         "has_issues": True,
-#         "has_projects": False,
-#         "has_wiki": False,
-#         "is_template": False,
-#     }
-#     headers = {
-#         "Accept": "application/vnd.github+json",
-#         "Authorization": f"Bearer {GITHUB_TOKEN}",
-#         "X-GitHub-Api-Version": "2022-11-28",
-#     }
-#     try:
-#         res = requests.post(
-#             f"https://api.github.com/orgs/{GITHUB_ORG}/repos",
-#             json=data,
-#             headers=headers,
-#         )
-#         logger.info(json.dumps(res.json()), default=str)
-#         return res
-#     except Exception as e:
-#         logging.exception(
-#             f"Error while sending request to update github repo: {repr(e)}"
-#         )
-#         raise
-
-
-# def _get_from_github_repo(key: KeyPath) -> requests.Response:
-#     """
-#     Gets the contents of a file in a repository.
-#     See API docs here:
-#     https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28#get-repository-content
-#     """
-#     try:
-#         res = requests.get(
-#             f"https://api.github.com/repos/{GITHUB_ORG}/{key.slug}/contents/{key.github_path}",
-#         )
-#         logger.info(json.dumps(res.json()), default=str)
-#         return res
-#     except Exception as e:
-#         logger.error(
-#             f"Unable to retrieve the previous version of the {key.s3_key} file. Error: {repr(e)}"
-#         )
-#         raise
-
-
-# def _put_to_github_repo(
-#     key: KeyPath, prev_v_sha: t.Optional[str], event, context
-# ) -> requests.Response:
-#     """
-#     Creates a new file or replaces an existing file in a repository.
-#     See API docs here:
-#     https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28#create-or-update-file-contents
-#     """
-#     with open(key.efs_filepath, "rb") as fileobj:
-#         b64content = base64.b64encode(fileobj.read()).decode()
-#     try:
-#         logger.info("s3 event: " + json.dumps(event, default=str))
-#         logger.info("s3 context: " + json.dumps(context, default=str))
-#         eventSource = event["Records"][0]["eventSource"]
-#         eventName = event["Records"][0]["eventName"]
-#         eventTime = event["Records"][0]["eventTime"]
-#         requestId = event["Records"][0]["responseElements"]["x-amz-request-id"]
-#     except Exception as e:
-#         logger.error(f"Unable to retrieve the event data. Error: {repr(e)}")
-#         raise
-#     headers = {
-#         "Accept": "application/vnd.github+json",
-#         "Authorization": f"Bearer {GITHUB_TOKEN}",
-#         "X-GitHub-Api-Version": "2022-11-28",
-#     }
-#     data = {
-#         "message": f"{eventSource}:{eventName} to {key.s3_key} on {eventTime} id {requestId}",  # TODO: improve commit message
-#         "content": b64content,
-#         # "committer": { # TODO: figure out how to extract data of the commiter & author
-#         #     "name": "",
-#         #     "email": "",
-#         # },
-#         # "author": {
-#         #     "name": "",
-#         #     "email": "",
-#         # },
-#     }
-#     if prev_v_sha:
-#         data.update({"sha": prev_v_sha})
-#     try:
-#         res = requests.put(
-#             f"https://api.github.com/repos/{GITHUB_ORG}/{key.slug}/contents/{key.github_path}",
-#             json=data,
-#             headers=headers,
-#         )
-#         logger.info(json.dumps(res.json()), default=str)
-#         return res
-#     except Exception as e:
-#         logging.exception(
-#             f"Error while sending request to update github repo: {repr(e)}"
-#         )
-#         raise
 
 
 def _log_document_stats(start: float, md: str):

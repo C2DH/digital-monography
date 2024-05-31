@@ -26,6 +26,8 @@ logger.setLevel(logging.INFO)
 
 
 s3 = boto3.client("s3")
+# secretsmanager = boto3.client("secretsmanager")
+# resp = secretsmanager.get_secret_value(SecretId="dgtmon-dev-github-api-token")
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
