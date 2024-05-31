@@ -154,8 +154,6 @@ def _put_to_github_repo(
     """
     b64content = base64.b64encode(contents).decode()
     try:
-        logger.info("s3 event: " + json.dumps(event, default=str))
-        logger.info("s3 context: " + json.dumps(context, default=str))
         eventSource = event["Records"][0]["eventSource"]
         eventName = event["Records"][0]["eventName"]
         eventTime = event["Records"][0]["eventTime"]

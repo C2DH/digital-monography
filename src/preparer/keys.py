@@ -39,7 +39,10 @@ class KeyPath(type(pathlib.Path())):
     def github_path(self) -> "KeyPath":
         """Returns path/to/file.txt (without my-slug)"""
         try:
-            return KeyPath(self.relative_to(pathlib.Path(self._abs_root) / self.slug))
+            for i, part in enumerate(self.parts):
+                if part == self.slug:
+                    return KeyPath(*self.parts[i + 1 :])
+            return KeyPath(self)
         except ValueError:
             return KeyPath(self)
 
