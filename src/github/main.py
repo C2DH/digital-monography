@@ -48,10 +48,10 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     ###
 
     _create_github_repo(key)
-    new_str = _get_obj_from_archive_s3(key)
+    new_bytes = _get_obj_from_archive_s3(key)
     prev_obj = _get_from_github_repo(key)
     prev_v_sha = prev_obj.json().get("sha", None)
-    _put_to_github_repo(key, new_str, prev_v_sha, event, context)
+    _put_to_github_repo(key, new_bytes, prev_v_sha, event, context)
     return {"statusCode": 200, "body": ""}
 
 
@@ -107,7 +107,7 @@ def _create_github_repo(key: KeyPath) -> requests.Response:
         raise
 
 
-def _get_obj_from_archive_s3(key: KeyPath) -> str:
+def _get_obj_from_archive_s3(key: KeyPath) -> bytes:
     try:
         resp = s3.get_object(
             Bucket=ARCHIVE_APKG_ALL,
@@ -117,8 +117,8 @@ def _get_obj_from_archive_s3(key: KeyPath) -> str:
             f"Response from s3.get_object(Bucket={ARCHIVE_APKG_ALL}, Key={key.s3_key}): "
             + json.dumps(resp, default=str)
         )
-        contents = resp["Body"].read().decode("utf-8")
-        logger.info(f"Retrieved object: " + contents)
+        contents = resp["Body"].read()
+        logger.info(f"Retrieved object as str: " + contents.decode("utf-8"))
         return contents
     except Exception as e:
         logging.exception(f"Error while getting object from s3: {repr(e)}")
@@ -145,7 +145,7 @@ def _get_from_github_repo(key: KeyPath) -> requests.Response:
 
 
 def _put_to_github_repo(
-    key: KeyPath, contents: str, prev_v_sha: t.Optional[str], event, context
+    key: KeyPath, contents: bytes, prev_v_sha: t.Optional[str], event, context
 ) -> requests.Response:
     """
     Creates a new file or replaces an existing file in a repository.
