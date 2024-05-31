@@ -33,6 +33,8 @@ s3 = boto3.client("s3")
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info("Starting GitHub Lambda.")
+    logger.info(json.dumps(event), default=str)
+    logger.info(json.dumps(context), default=str)
     # naively try to create without checking if the repo exists
     key = _get_key(event)
     logger.info("Key: " + str(key))
@@ -43,6 +45,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info("Contents: " + contents)
 
     # _create_github_repo(key)
+    new_obj = _get_obj_from_archive_s3(key)
     # r = _get_from_github_repo(key)
     # prev_v_sha = r.json().get("sha", None)
     # _put_to_github_repo(key, prev_v_sha, event, context)
@@ -98,6 +101,24 @@ def _create_github_repo(key: KeyPath) -> requests.Response:
         logging.exception(
             f"Error while sending request to update github repo: {repr(e)}"
         )
+        raise
+
+
+def _get_obj_from_archive_s3(key: KeyPath) -> str:
+    try:
+        resp = s3.get_object(
+            Bucket=ARCHIVE_APKG_ALL,
+            Key=key.s3_key,
+        )
+        logger.info(
+            f"Response from s3.get_object(Bucket={ARCHIVE_APKG_ALL}, Key={key.s3_key}): "
+            + json.dumps(resp, default=str)
+        )
+        contents = resp["Body"].read().decode("utf-8")
+        logger.info(f"Retrieved object: " + contents)
+        return contents
+    except Exception as e:
+        logging.exception(f"Error while getting object from s3: {repr(e)}")
         raise
 
 
