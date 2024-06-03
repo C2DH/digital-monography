@@ -80,7 +80,7 @@ data "aws_iam_policy_document" "github" {
   statement {
     sid       = "AllowSecretsFetching"
     effect    = "Allow"
-    resources = ["arn:aws:secretsmanager:${var.region}:*:secret:dgtmon-${var.environment}-github-api-token-*"]
+    resources = ["arn:aws:secretsmanager:${var.region}:*:secret:dgtmon-${var.environment}-github-api-secrets*"]
     actions = [
       "secretsmanager:DescribeSecret",
       "secretsmanager:GetResourcePolicy",
