@@ -1,5 +1,5 @@
 data "aws_secretsmanager_secret" "github_api_token" {
-  name = "dgtmon-dev-github-api-token"
+  name = "dgtmon-dev-github-api-secrets"
 }
 
 data "aws_secretsmanager_secret_version" "github_api_token" {
