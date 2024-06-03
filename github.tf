@@ -77,6 +77,16 @@ data "aws_iam_policy_document" "github" {
       "logs:PutLogEvents",
     ]
   }
+  statement {
+    sid       = "AllowSecretsFetching"
+    effect    = "Allow"
+    resources = ["arn:aws:secretsmanager:${var.region}:*:secret:dgtmon-${var.environment}-github-api-token-*"]
+    actions = [
+      "secretsmanager:DescribeSecret",
+      "secretsmanager:GetResourcePolicy",
+      "secretsmanager:GetSecretValue",
+    ]
+  }
 }
 
 resource "aws_iam_policy" "github" {
