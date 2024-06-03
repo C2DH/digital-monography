@@ -27,14 +27,28 @@ logger.setLevel(logging.INFO)
 
 
 s3 = boto3.client("s3")
-# secretsmanager = boto3.client("secretsmanager")
-# resp = secretsmanager.get_secret_value(SecretId="dgtmon-dev-github-api-token")
+secretsmanager = boto3.client("secretsmanager")
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info("Starting GitHub Lambda.")
     logger.info(json.dumps(event, default=str))
     logger.info(json.dumps(context, default=str))
+
+    try:
+        logger.info("Pre get_secret_value")
+        resp = secretsmanager.get_secret_value(SecretId="dgtmon-dev-github-api-token")
+        logger.info("Post get_secret_value")
+        logger.info(
+            "secretsmanager.get_secret_value response: " + json.dumps(resp, default=str)
+        )
+        api_key = resp["SecretString"]
+        logger.info("api_key" + api_key)
+    except Exception as e:
+        logging.exception(f"Error while getting secret value: {repr(e)}")
+        raise
+
+    return {"statusCode": 200, "body": ""}
     # naively try to create without checking if the repo exists
     key = _get_key(event)
     logger.info("Key: " + str(key))
