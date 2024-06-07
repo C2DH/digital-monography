@@ -56,7 +56,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     _put_html_to_s3(str(html_soup), key)
     md = _convert_to_md(html_soup, metadata)
     _write_processed_md_to_efs(md, key)
-    # _put_md_to_s3(md, key) # TODO: restore
+    _put_md_to_s3(md, key)
     _put_to_archive_s3(key.s3_key.with_suffix(".md"), md)
     _log_document_stats(start, md)
     return {"statusCode": 200, "body": ""}
