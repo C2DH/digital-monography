@@ -1,18 +1,21 @@
+import boto3
 import pathlib
 import time
-import boto3
+import typing as t
 
 BOOK_PATH = "/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/thinkering-with-memorecord"
 BOOK_PATH = "/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/guidelines-for-drafting-manuscripts"
-BOOK_PATH = "/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/examples"
+BOOK_PATH = (
+    "/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/examples"
+)
 DST = "cpy-dgtmon-dev-apkg-upload"  # TODO: read from .tfvars
 
 
 s3 = boto3.client("s3")
 
-if __name__ == "__main__":
+
+def listen_for_updates(book_path: pathlib.Path, func_on_update: t.Callable) -> None:
     last_modified = {}
-    book_path = pathlib.Path(BOOK_PATH)
     while True:
         for fp in book_path.glob("**/*"):
             if not fp.exists() or fp.is_dir():
@@ -23,9 +26,18 @@ if __name__ == "__main__":
                 last_modified[fp] = 0
             if fp.stat().st_mtime > last_modified[fp]:
                 key = str(fp.relative_to(book_path.parent))
-                with fp.open(mode="rb") as fileobj:
-                    resp = s3.upload_fileobj(fileobj, DST, key)
+                func_on_update(fp, key)
                 last_modified[fp] = fp.stat().st_mtime
                 print(f"Uploaded {key}.")
             time.sleep(0.1)
             print("...")
+
+
+if __name__ == "__main__":
+    book_path = pathlib.Path(BOOK_PATH)
+
+    def upload_to_s3(fp: pathlib.Path, key: str):
+        with fp.open(mode="rb") as fileobj:
+            resp = s3.upload_fileobj(fileobj, DST, key)
+
+    listen_for_updates(book_path, upload_to_s3)

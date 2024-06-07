@@ -28,11 +28,11 @@ class S3Faker:
         In the faker, it just copies the object data/input/... source to the
         /tmp/efs/... target (or wherever target was defined in constants.py).
         """
-        source_fn = pathlib.Path("data") / "input"
+        source_fp = pathlib.Path("/tmp") / "dgtmon_input"
         key = KeyPath(Key)
         for keypart in key.parts:
-            source_fn = source_fn / keypart
-        with open(source_fn, mode="rb") as source_file:
+            source_fp = source_fp / keypart
+        with open(source_fp, mode="rb") as source_file:
             Fileobj.write(source_file.read())
 
     def put_object(self, Body: bytes, Bucket: str, Key: str):

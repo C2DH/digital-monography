@@ -51,6 +51,19 @@ sops -e secrets/dev.tfvars.json > secrets/dev.tfvars.enc.json
 
 To set up sops, you can follow the [official instructions](https://github.com/getsops/sops) or [unofficials guides](https://dev.to/stack-labs/manage-your-secrets-in-git-with-sops-g0a).
 
+## Local development
+
+```sh
+source .venv/bin/activate
+DGTMON_DEBUG=1 python scripts/preparer.py book_path=path/to/a/dir
+```
+
+For example
+
+```sh
+DGTMON_DEBUG=1 python scripts/preparer.py book_path="/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/examples"
+```
+
 ## AWS setup for development
 
 Steps to configure the platform __for development__ on your own AWS account.
