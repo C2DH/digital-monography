@@ -14,30 +14,37 @@ try:
         IR_APKG_HTML_BUCKET_NAME,
         IR_APKG_MD_BUCKET_NAME,
         IR_APKG_MD_BUCKET_NAME,
+        IS_DEBUG,
     )
     from citations import add_citations_and_bibliography
     from md_extraction import BookMetadata
     from metadata_extraction import replace_assets_with_directives
     from html2md import convert_to_md
     from keys import KeyPath
+    from fakers import Faker
 except ModuleNotFoundError as e:
     from src.preparer.constants import (
         ARCHIVE_APKG_ALL,
         IR_APKG_HTML_BUCKET_NAME,
         IR_APKG_MD_BUCKET_NAME,
+        IS_DEBUG,
     )
     from src.preparer.citations import add_citations_and_bibliography
     from src.preparer.md_extraction import BookMetadata
     from src.preparer.metadata_extraction import replace_assets_with_directives
     from src.preparer.html2md import convert_to_md
     from src.preparer.keys import KeyPath
+    from src.preparer.fakers import Faker
 
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-s3 = boto3.client("s3")
+if IS_DEBUG:
+    s3 = Faker("s3")
+else:
+    s3 = boto3.client("s3")
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
