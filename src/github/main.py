@@ -39,6 +39,9 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info(json.dumps(context, default=str))
 
     key = _get_key(event)
+    if key.suffix not in [".md", ".MD", ".ipynb", ".IPYNB"]:
+        return {"statusCode": 200, "body": ""}
+
     secret = _get_api_key(GITHUB_SECRET_ID)
 
     # naively try to create repo without checking if it exists
