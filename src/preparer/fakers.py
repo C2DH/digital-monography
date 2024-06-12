@@ -28,7 +28,7 @@ class S3Faker:
         In the faker, it just copies the object data/input/... source to the
         /tmp/efs/... target (or wherever target was defined in constants.py).
         """
-        source_fp = pathlib.Path("/tmp") / "dgtmon_input"
+        source_fp = pathlib.Path("/tmp") / "efs" / "_INPUT"
         key = KeyPath(Key)
         for keypart in key.parts:
             source_fp = source_fp / keypart
@@ -37,9 +37,15 @@ class S3Faker:
 
     def put_object(self, Body: bytes, Bucket: str, Key: str):
         """
-        In boto3, put_object adds an object to a bucket.
-        Here it just returns the same response.
+        In boto3, put_object adds an object to a bucket. Here it copies
+        the file to /tmp/efs/<bucket_name> and returns a fake response.
         """
+        target_fp = pathlib.Path("/tmp") / "efs" / f"_{Bucket}"
+        for key_part in pathlib.Path(Key).parts:
+            target_fp = target_fp / key_part
+        target_fp.parent.mkdir(parents=True, exist_ok=True)
+        with open(target_fp, mode="w") as f:
+            f.write(Body)
         return {
             "ResponseMetadata": {
                 "RequestId": "ABCDEFGHIJKLMNOP",

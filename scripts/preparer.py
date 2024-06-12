@@ -53,7 +53,7 @@ DEFAULT_EVENT = {
 
 
 def cpy_to_tmp_and_call_handler(fp: pathlib.Path, key: str):
-    target_fp = pathlib.Path("/tmp") / "dgtmon_input"
+    target_fp = pathlib.Path("/tmp") / "efs" / "_INPUT"
     for key_part in pathlib.Path(key).parts:
         target_fp = target_fp / key_part
     target_fp.parent.mkdir(parents=True, exist_ok=True)

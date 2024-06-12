@@ -13,7 +13,6 @@ try:
         ARCHIVE_APKG_ALL,
         IR_APKG_HTML_BUCKET_NAME,
         IR_APKG_MD_BUCKET_NAME,
-        IR_APKG_MD_BUCKET_NAME,
         IS_DEBUG,
     )
     from citations import add_citations_and_bibliography
