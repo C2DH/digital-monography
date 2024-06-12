@@ -4,17 +4,19 @@ import time
 import typing as t
 
 BOOK_PATH = "/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/thinkering-with-memorecord"
-BOOK_PATH = "/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/guidelines-for-drafting-manuscripts"
-BOOK_PATH = (
-    "/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/examples"
-)
+# BOOK_PATH = "/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/guidelines-for-drafting-manuscripts"
+# BOOK_PATH = ("/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/examples")
 DST = "cpy-dgtmon-dev-apkg-upload"  # TODO: read from .tfvars
 
 
 s3 = boto3.client("s3")
 
 
-def listen_for_updates(book_path: pathlib.Path, func_on_update: t.Callable) -> None:
+def listen_for_updates(
+    book_path: pathlib.Path,
+    func_on_update: t.Callable,
+    # func_after_loop: t.Optional[t.Callable] = None,
+) -> None:
     last_modified = {}
     while True:
         for fp in book_path.glob("**/*"):
@@ -31,6 +33,8 @@ def listen_for_updates(book_path: pathlib.Path, func_on_update: t.Callable) -> N
                 print(f"Uploaded {key}.")
             time.sleep(0.1)
             print("...")
+        # if func_after_loop:
+        #     func_after_loop(book_path)
 
 
 if __name__ == "__main__":

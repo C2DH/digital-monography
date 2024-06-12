@@ -2,15 +2,20 @@ import argparse
 import copy
 import pathlib
 import shutil
+import subprocess
 import sys
 import os
+import threading
+import time
 
 # Get the parent directory and add it to sys.path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
-from src.preparer.main import lambda_handler
+from src.preparer.main import lambda_handler as preparer_handler
+from src.builder.main import _get_key, _mkdir_read, _copy_assets, _build_book
+from src.builder.keys import KeyPath
 from scripts.sync import listen_for_updates
 
 
@@ -61,7 +66,38 @@ def cpy_to_tmp_and_call_handler(fp: pathlib.Path, key: str):
     event = copy.deepcopy(DEFAULT_EVENT)
     event["Records"][0]["s3"]["object"]["key"] = key
     context = {}
-    lambda_handler(event, context)
+    # preparing
+    preparer_handler(event, context)
+    # pre-building phase
+    key = _get_key(event)
+    _mkdir_read()
+    _copy_assets(key)
+
+
+class BackgroundTasks(threading.Thread):
+    def run(self, *args, **kwargs):
+        time.sleep(3)
+        args = parser.parse_args()
+        book_path_arg = args.book_path.split("=")
+        assert len(book_path_arg) == 2
+        book_path = pathlib.Path(book_path_arg[1])
+        jb_path = KeyPath(pathlib.Path("/tmp") / "efs" / book_path.parts[-1])
+        subprocess.Popen(
+            [
+                "jupyter-book",
+                "build",
+                jb_path.efs_slug_dir,
+                "--path-output",
+                jb_path.efs_slug_dir,
+                "--config",
+                jb_path.efs_slug_dir / "_config.yml",
+                "--toc",
+                jb_path.efs_slug_dir / "_toc.yml",
+                "--keep-going",  # do not stop the build on the first warning
+                "--builder",
+                "html",
+            ]
+        )
 
 
 if __name__ == "__main__":
@@ -69,4 +105,6 @@ if __name__ == "__main__":
     book_path_arg = args.book_path.split("=")
     assert len(book_path_arg) == 2
     book_path = pathlib.Path(book_path_arg[1])
+    t = BackgroundTasks()
+    t.start()
     listen_for_updates(book_path, cpy_to_tmp_and_call_handler)

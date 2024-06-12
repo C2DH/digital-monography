@@ -6,8 +6,13 @@ import typing as t
 import urllib.parse
 from jupyter_book.cli.main import build
 
-from keys import KeyPath
-from constants import DEFAULT_SFS_DIR, STATICWS_WIP_BUCKET_NAME
+try:
+    from keys import KeyPath
+    from constants import DEFAULT_SFS_DIR, STATICWS_WIP_BUCKET_NAME
+except ModuleNotFoundError:
+    from src.builder.keys import KeyPath
+    from src.builder.constants import DEFAULT_SFS_DIR, STATICWS_WIP_BUCKET_NAME
+
 
 SUPPORTED_ASSET_DIR = ["assets", "images", "videos"]
 
@@ -18,7 +23,7 @@ logger.setLevel(logging.INFO)
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     key = _get_key(event)
-    (pathlib.Path(DEFAULT_SFS_DIR) / "read").mkdir(exist_ok=True)
+    _mkdir_read()
     _copy_assets(key)
     _build_book(key)
     _sync_efs_and_s3_with_staticws(key)
@@ -35,6 +40,12 @@ def _get_key(event) -> KeyPath:
     except Exception as e:
         logging.exception(f"Unable to retrieve object key. Error: {repr(e)}")
         raise
+
+
+def _mkdir_read():
+    new_path = pathlib.Path(DEFAULT_SFS_DIR) / "read"
+    if not new_path.exists():
+        new_path.mkdir(exist_ok=True)
 
 
 def _copy_assets(key: KeyPath) -> None:
