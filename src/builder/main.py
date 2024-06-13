@@ -8,10 +8,14 @@ from jupyter_book.cli.main import build
 
 try:
     from keys import KeyPath
-    from constants import DEFAULT_SFS_DIR, STATICWS_WIP_BUCKET_NAME
+    from constants import IS_DEBUG, DEFAULT_SFS_DIR, STATICWS_WIP_BUCKET_NAME
 except ModuleNotFoundError:
     from src.builder.keys import KeyPath
-    from src.builder.constants import DEFAULT_SFS_DIR, STATICWS_WIP_BUCKET_NAME
+    from src.builder.constants import (
+        IS_DEBUG,
+        DEFAULT_SFS_DIR,
+        STATICWS_WIP_BUCKET_NAME,
+    )
 
 
 SUPPORTED_ASSET_DIR = ["assets", "images", "videos"]
@@ -62,21 +66,28 @@ def _copy_assets(key: KeyPath) -> None:
 
 def _build_book(key: KeyPath) -> None:
     try:
-        build.callback(
-            path_source=key.efs_slug_dir,
-            path_output=key.efs_slug_dir,
-            config=key.efs_slug_dir / "_config.yml",
-            toc=key.efs_slug_dir / "_toc.yml",
-            warningiserror=False,
-            nitpick=False,
-            keep_going=False,
-            freshenv=False,
-            builder="html",
-            custom_builder=None,
-            verbose=0,
-            quiet=0,
-            individualpages=False,
-        )
+        params = {
+            "path_source": key.efs_slug_dir,
+            "path_output": key.efs_slug_dir,
+            "config": key.efs_slug_dir / "_config.yml",
+            "toc": key.efs_slug_dir / "_toc.yml",
+            "warningiserror": False,
+            "nitpick": False,
+            "keep_going": False,
+            "freshenv": False,
+            "builder": "html",
+            "custom_builder": None,
+            "verbose": 0,
+            "quiet": 0,
+            "individualpages": False,
+        }
+        if IS_DEBUG:
+            params["nitpick"] = True
+            params["keep_going"] = True
+            # not sure, but it seems verbose can have levels ranging from 0 to 2
+            # https://github.com/sphinx-doc/sphinx/blob/4fbd3682d5cdf606159630f7daf6f818d58de05e/tests/test_util/test_util_logging.py#L56
+            params["verbose"] = 2
+        build.callback(**params)
         logging.info(f"Builder finished building the book at {key.efs_slug_dir}.")
     except Exception as e:
         logging.exception(f"Unable to build book. Error: {repr(e)}")
@@ -84,6 +95,8 @@ def _build_book(key: KeyPath) -> None:
 
 
 def _sync_efs_and_s3_with_staticws(key: KeyPath) -> None:
+    if IS_DEBUG:
+        return
     try:
         src = str(key.efs_slug_dir / "_build" / "html")
         dst = f"s3://{STATICWS_WIP_BUCKET_NAME}/read/{key.slug}"
