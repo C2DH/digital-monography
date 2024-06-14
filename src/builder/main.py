@@ -66,6 +66,16 @@ def _copy_assets(key: KeyPath) -> None:
 
 def _build_book(key: KeyPath) -> None:
     try:
+        if not (key.efs_slug_dir / "_config.yml").exists():
+            logging.info(
+                f"{key.efs_slug_dir / '_config.yml'} was not found. Skipping build."
+            )
+            return
+        if not (key.efs_slug_dir / "_toc.yml").exists():
+            logging.info(
+                f"{key.efs_slug_dir / '_toc.yml'} was not found. Skipping build."
+            )
+            return
         params = {
             "path_source": key.efs_slug_dir,
             "path_output": key.efs_slug_dir,
