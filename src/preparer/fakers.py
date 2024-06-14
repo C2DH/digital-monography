@@ -26,7 +26,7 @@ class S3Faker:
         In boto3, download_fileobj has to download an object from S3 to a
         file-like object in the shared file system (/mnt/efs/...).
         In the faker, it just copies the object data/input/... source to the
-        /tmp/efs/... target (or wherever target was defined in constants.py).
+        /tmp/efs/_INPUT dir (or wherever target was defined in constants.py).
         """
         source_fp = pathlib.Path("/tmp") / "efs" / "_INPUT"
         key = KeyPath(Key)

@@ -4,13 +4,29 @@ Platform for scholars of digital humanities to publish their digital work
 
 ## Architecture design
 
-### Simplified diagram
-
 ![aws_architecture_diagram](./2024-04-23_architecture.svg)
 
-### Infrastructure visualization
+For the full architecture see [the instructions on generating an infrastrucutre visualisation](#generating-infrastrucutre-visualisation) and open the produced `graphviz.html` file.
 
-![terraform_graph_viz](./graphviz.html)
+## Local development
+
+You can check the basic workflow of the platform by running local scripts. To do that, follow these steps:
+
+1. Make sure that you have Python version 3.12.
+1. Prepare Python virtual environment `python -m venv .venv`
+1. Activate the virtual environment (e.g. `source .venv/bin/activate`)
+1. Install dependencies `python -m pip install -r requirements.txt`
+1. Run `DGTMON_DEBUG=1 python scripts/prepare_and_build.py book_path=path/to/a/dir`
+
+For example 
+
+```sh
+DGTMON_DEBUG=1 python scripts/prepare_and_build.py book_path="/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/examples"
+```
+
+Few things to keep in mind:
+- Remember to set the `DGTMON_DEBUG=1` environment variable.
+- The local script uses only part of the actual workflow. Please consider testing on the cloud.
 
 ## Updating code
 
@@ -50,19 +66,6 @@ sops -e secrets/dev.tfvars.json > secrets/dev.tfvars.enc.json
 ```
 
 To set up sops, you can follow the [official instructions](https://github.com/getsops/sops) or [unofficials guides](https://dev.to/stack-labs/manage-your-secrets-in-git-with-sops-g0a).
-
-## Local development
-
-```sh
-source .venv/bin/activate
-DGTMON_DEBUG=1 python scripts/preparer.py book_path=path/to/a/dir
-```
-
-For example
-
-```sh
-DGTMON_DEBUG=1 python scripts/preparer.py book_path="/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/examples"
-```
 
 ## AWS setup for development
 
@@ -155,4 +158,3 @@ To generate a visualization of an infrastructure as defined by .tf IaC files fol
 1. Run `terraform graph`.
 1. Copy output from terraform graph command to [WebGraphViz](http://www.webgraphviz.com/?tab=map) and select on "Generate Graph".
 1. Save the '<div id="graphviz_svg_div">' tag as "graphviz.html" in the root of the project.
-
