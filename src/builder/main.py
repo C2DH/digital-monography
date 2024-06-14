@@ -89,6 +89,8 @@ def _build_book(key: KeyPath) -> None:
             params["verbose"] = 2
         build.callback(**params)
         logging.info(f"Builder finished building the book at {key.efs_slug_dir}.")
+    except RuntimeError as e:
+        logging.exception(f"Unable to build book. Error: {repr(e)}")
     except Exception as e:
         logging.exception(f"Unable to build book. Error: {repr(e)}")
         raise
