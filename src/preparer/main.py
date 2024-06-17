@@ -1,3 +1,6 @@
+import datetime
+import os
+import pathlib
 import bs4
 import boto3
 import json
@@ -36,6 +39,16 @@ except ModuleNotFoundError as e:
     from src.preparer.fakers import Faker
 
 
+if IS_DEBUG:
+    today = datetime.date.today().isoformat()
+    log_target = pathlib.Path(f"/tmp/efs/_LOGS/{today}.log")
+    log_target.parent.mkdir(parents=True, exist_ok=True)
+    logging.basicConfig(
+        filename=log_target,
+        encoding="utf-8",
+        level=logging.DEBUG,
+        format="%(asctime)s::%(name)s::%(levelname)s::%(message)s",
+    )
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 

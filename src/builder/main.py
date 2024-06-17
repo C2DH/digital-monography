@@ -1,7 +1,8 @@
-import pathlib
+import datetime
 import shutil
 import subprocess
 import logging
+import pathlib
 import typing as t
 import urllib.parse
 from jupyter_book.cli.main import build
@@ -21,6 +22,16 @@ except ModuleNotFoundError:
 SUPPORTED_ASSET_DIR = ["assets", "images", "videos"]
 
 
+if IS_DEBUG:
+    today = datetime.date.today().isoformat()
+    log_target = pathlib.Path(f"/tmp/efs/_LOGS/{today}.log")
+    log_target.parent.mkdir(parents=True, exist_ok=True)
+    logging.basicConfig(
+        filename=log_target,
+        encoding="utf-8",
+        level=logging.DEBUG,
+        format="%(asctime)s::%(name)s::%(levelname)s::%(message)s",
+    )
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
@@ -46,6 +57,7 @@ def _get_key(event) -> KeyPath:
         raise
 
 
+# TODO: Check if this is necessary. If not, remove.
 def _mkdir_read():
     new_path = pathlib.Path(DEFAULT_SFS_DIR) / "read"
     if not new_path.exists():
