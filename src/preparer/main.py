@@ -209,9 +209,12 @@ def _put_md_to_s3(contents: str, key: KeyPath) -> None:
 def _put_to_archive_s3(key: KeyPath, contents: t.Optional[str] = None) -> None:
     try:
         if contents is None:
-            with open(key.efs_filepath, "r") as f:
-                contents = f.read()
-            logger.info(f"Contents: " + contents)
+            try:
+                with open(key.efs_filepath, "r") as f:
+                    contents = f.read()
+            except UnicodeDecodeError as e:
+                with open(key.efs_filepath, "rb") as f:
+                    contents = f.read().decode("utf-8", "ignore")
 
         _put_object(
             contents.encode("utf-8"),
