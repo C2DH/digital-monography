@@ -1,4 +1,6 @@
 -r src/preparer/requirements.txt
 -r src/builder/requirements.txt
 -r src/github/requirements.txt
+-r src/verifier/requirements.txt
 
+pytest==7.4.*

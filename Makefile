@@ -6,6 +6,9 @@ DOCKER_ECR = 367031255351.dkr.ecr.eu-west-1.amazonaws.com
 DOCKER_HUB = c2dhunilu
 
 
+test:
+	python -m pytest tests/verifier/
+
 login:
 	aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin ${DOCKER_ECR}
 	docker login --username c2dhadmin
