@@ -158,3 +158,12 @@ To generate a visualization of an infrastructure as defined by .tf IaC files fol
 1. Run `terraform graph`.
 1. Copy output from terraform graph command to [WebGraphViz](http://www.webgraphviz.com/?tab=map) and select on "Generate Graph".
 1. Save the '<div id="graphviz_svg_div">' tag as "graphviz.html" in the root of the project.
+
+### Changing guidelines github repo 
+
+One way to upload changes to the guidelines repository is to clone the github remote repo to your local machine, apply your update and push your changes. You can use the following command to point to the ssh private key that is used by github user.
+
+```sh
+git config --add --local core.sshCommand 'ssh -i ~/.ssh/filename'
+```
+
