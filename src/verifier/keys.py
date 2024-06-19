@@ -1,0 +1,51 @@
+import pathlib
+from functools import cached_property
+
+try:
+    from .constants import DEFAULT_SFS_DIR
+except Exception as e:
+    from constants import DEFAULT_SFS_DIR
+
+
+class InvalidKey(Exception):
+    pass
+
+
+class KeyPath(type(pathlib.Path())):
+    _abs_root = DEFAULT_SFS_DIR
+
+    def __new__(cls, *pathsegments):
+        return super().__new__(cls, *pathsegments)
+
+    @property
+    def efs_filepath(self) -> "KeyPath":
+        """Returns /mnt/efs/my-slug/path/to/file.txt"""
+        return KeyPath(self._abs_root) / self
+
+    @cached_property
+    def efs_slug_dir(self) -> "KeyPath":
+        """Returns /mnt/efs/my-slug"""
+        return KeyPath(pathlib.Path(self._abs_root) / self.slug)
+
+    @cached_property
+    def s3_key(self) -> "KeyPath":
+        """Returns my-slug/path/to/file.txt"""
+        try:
+            return KeyPath(self.relative_to(self._abs_root))
+        except ValueError:
+            return KeyPath(self)
+
+    @cached_property
+    def github_path(self) -> "KeyPath":
+        """Returns path/to/file.txt (without my-slug)"""
+        try:
+            for i, part in enumerate(self.parts):
+                if part == self.slug:
+                    return KeyPath(*self.parts[i + 1 :])
+            return KeyPath(self)
+        except ValueError:
+            return KeyPath(self)
+
+    @cached_property
+    def slug(self) -> str:
+        return self.s3_key.parts[0]
