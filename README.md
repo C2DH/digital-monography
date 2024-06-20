@@ -167,3 +167,13 @@ One way to upload changes to the guidelines repository is to clone the github re
 git config --add --local core.sshCommand 'ssh -i ~/.ssh/filename'
 ```
 
+### TODO
+
+* limit permissions linked to the AWS Role connected to the CI/CD pipeline
+* change python-mammoth from being a wheel file to being installed from github fork
+* utilities like keys.KeyPath should be installed from a dir shared accross all Lambdas (easier for testing)
+* more unit tests
+* add integration testing
+* add e2e cloud testing on actual Lambdas
+* mypy type checking
+* flake8 linting
