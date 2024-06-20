@@ -7,7 +7,8 @@ DOCKER_HUB = c2dhunilu
 
 
 test:
-	python -m pytest tests/verifier/
+	DGTMON_DEBUG=1 python -m pytest tests/preparer/
+	DGTMON_DEBUG=1 python -m pytest tests/verifier/
 
 login:
 	aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin ${DOCKER_ECR}
