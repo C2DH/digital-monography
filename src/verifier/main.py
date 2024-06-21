@@ -75,9 +75,9 @@ def _get_key(event) -> KeyPath:
 def _put_json_to_s3(body: str, key: KeyPath) -> None:
     try:
         s3_key = key.s3_key.with_suffix(".json")
-        resp = s3.put_object(Body=body, Bucket=VERIFIER_MSGS, Key=s3_key)
+        resp = s3.put_object(Body=body, Bucket=VERIFIER_MSGS, Key=str(s3_key))
         logger.info(
-            f"Response from s3.put_object(Bucket={VERIFIER_MSGS}, Key={s3_key}): "
+            f"Response from s3.put_object(Bucket={VERIFIER_MSGS}, Key={str(s3_key)}): "
             + json.dumps(resp, default=str)
         )
     except Exception as e:
