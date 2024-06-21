@@ -50,12 +50,14 @@ class VerifierMessage:
         problem: str,
         recommend: str,
         elem: bs4.element.Tag,
+        timestamp: datetime.datetime,
         fn: str,
         tags: list[str],
     ) -> None:
         self.problem = problem
         self.recommend = recommend
         self.elem = elem
+        self.timestamp = timestamp
         self.fn = fn
         self.tags = tags
         self.line = elem.sourceline
@@ -67,6 +69,7 @@ class VerifierMessage:
             "recommend": self.recommend,
             "fn": self.fn,
             "html": str(self.elem),
+            "timestamp": self.timestamp.isoformat(),
             "tags": self.tags,
             "line": self.line,
             "pos": self.pos,
@@ -83,6 +86,7 @@ class VerifierMessages:
         recommend: str,
         elem: bs4.element.Tag,
         fn: str,
+        timestamp: datetime.datetime,
         tags: list[str],
     ) -> None:
         self._messages.append(
@@ -90,6 +94,7 @@ class VerifierMessages:
                 problem=problem,
                 recommend=recommend,
                 elem=elem,
+                timestamp=timestamp,
                 fn=fn,
                 tags=tags,
             )
@@ -113,8 +118,11 @@ class HtmlVerifier:
     def stats(self):
         pass
 
-    def verify(self, html: str, fp: pathlib.Path) -> VerifierMessages:
+    def verify(
+        self, html: str, fp: pathlib.Path, timestamp: datetime.datetime
+    ) -> VerifierMessages:
         self._fp = fp
+        self._timestamp = timestamp
         soup = bs4.BeautifulSoup(html, "html.parser")
         self._mark_html_elements_recursively(soup)
         self._apply_heading_verification()
@@ -157,6 +165,7 @@ class HtmlVerifier:
                     recommend=f"Consider changing the heading '{tag.text}' to '{tag.text.title()}'.",
                     elem=tag,
                     fn=self._fp.name,
+                    timestamp=self._timestamp,
                     tags=[HEADINGS],
                 )
             if self._check_h_no_trailing_dot(tag):
@@ -165,6 +174,7 @@ class HtmlVerifier:
                     recommend=f"Consider removing the '.' character at the end of the heading.",
                     elem=tag,
                     fn=self._fp.name,
+                    timestamp=self._timestamp,
                     tags=[HEADINGS],
                 )
 

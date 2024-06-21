@@ -47,13 +47,15 @@ else:
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     key = _get_key(event)
-    logger.info(json.dumps(event, default=str))
+    timestamp = _get_timestamp(event)
     if key.suffix.lower() == ".html":
         with open(key.efs_slug_html_path.with_suffix(".html"), "r") as f:
             html = f.read()
         verifer = HtmlVerifier()
         result = verifer.verify(
-            html, key.efs_slug_html_path.with_suffix(".html")
+            html,
+            key.efs_slug_html_path.with_suffix(".html"),
+            timestamp=timestamp,
         ).to_json()
         logger.info(json.dumps(result, default=str))
         _put_json_to_s3(json.dumps(result, default=str), key)
@@ -69,6 +71,16 @@ def _get_key(event) -> KeyPath:
         return KeyPath(key_str)
     except Exception as e:
         logger.error(f"Unable to retrieve object key. Error: {repr(e)}")
+        raise
+
+
+def _get_timestamp(event) -> datetime.datetime:
+    try:
+        return datetime.datetime.fromtimestamp(event["Records"][0]["eventTime"])
+    except Exception as e:
+        logger.error(
+            f"Unable to retrieve event time. Event: " + json.dumps(event, default=str)
+        )
         raise
 
 
