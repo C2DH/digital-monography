@@ -1,5 +1,4 @@
 import datetime
-import os
 import pathlib
 import bs4
 import boto3
@@ -72,7 +71,9 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     metadata = _get_book_metadata()
     html_soup = _add_citations_and_bibliography(html_soup)
     html_soup = _replace_assets_with_directives(html_soup, metadata)
-    _put_html_to_s3(str(html_soup), key)
+    html_soup_str = str(html_soup)
+    _write_processed_html_to_efs(html_soup_str, key)
+    _put_html_to_s3(html_soup_str, key)
     md = _convert_to_md(html_soup, metadata)
     _write_processed_md_to_efs(md, key)
     _put_md_to_s3(md, key)
@@ -237,6 +238,13 @@ def _put_to_archive_s3(key: KeyPath, contents: t.Optional[str] = None) -> None:
     except Exception as e:
         logger.exception(f"Putting file to archive s3 bucket failed. Error: {repr(e)}")
         raise
+
+
+def _write_processed_html_to_efs(html: str, key: KeyPath):
+    new_efs_filepath = key.efs_slug_html_path.with_suffix(".html")
+    new_efs_filepath.parent.mkdir(exist_ok=True)
+    with open(new_efs_filepath, "w") as f:
+        f.write(html)
 
 
 def _write_processed_md_to_efs(md: str, key: KeyPath):

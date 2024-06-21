@@ -49,10 +49,12 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     key = _get_key(event)
     logger.info(json.dumps(event, default=str))
     if key.suffix.lower() == ".html":
-        with open(key.efs_filepath, "r") as f:
+        with open(key.efs_slug_html_path.with_suffix(".html"), "r") as f:
             html = f.read()
         verifer = HtmlVerifier()
-        result = verifer.verify(html, key.efs_filepath).to_json()
+        result = verifer.verify(
+            html, key.efs_slug_html_path.with_suffix(".html")
+        ).to_json()
         logger.info(json.dumps(result, default=str))
         _put_json_to_s3(json.dumps(result, default=str), key)
         return {"statusCode": 200, "body": ""}
