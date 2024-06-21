@@ -130,6 +130,11 @@ class HtmlVerifier:
         return self._messages
 
     def _mark_html_elements_recursively(self, node, lvl=0):
+        """
+        Before applying the verification, this function traverses the tree and
+        puts relevant bs4.Tag elements inside respective lists.
+        Verification is then applied on the elements from the lists.
+        """
         if not hasattr(node, "children"):
             return
         for child in node.children:
