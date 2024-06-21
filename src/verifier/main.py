@@ -79,7 +79,10 @@ def _get_timestamp(event) -> datetime.datetime:
         return datetime.datetime.fromtimestamp(event["Records"][0]["eventTime"])
     except Exception as e:
         logger.error(
-            f"Unable to retrieve event time. Event: " + json.dumps(event, default=str)
+            f"Unable to retrieve event time. Event: "
+            + json.dumps(event, default=str)
+            + ". Exception: "
+            + repr(e)
         )
         raise
 
