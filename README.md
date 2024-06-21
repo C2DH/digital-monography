@@ -8,6 +8,14 @@ Platform for scholars of digital humanities to publish their digital work
 
 For the full architecture see [the instructions on generating an infrastrucutre visualisation](#generating-infrastrucutre-visualisation) and open the produced `graphviz.html` file.
 
+The architecture attempts to follow the pattern of `... -> s3 upload -> Lambda invoke -> s3 upload -> ...`. Sometimes an upload to s3 can and should invoke multiple Lambda functions. It can be also advantageous to have an SQS queue as a part of the chain. This allows for a modular design, which brings some benefits with it.
+
+The platform consists of the following modules (Lambda functions):
+* **preparer** - processes the author package.
+* **verifier** - checks the author package against the verification rules.
+* **github** - pushes the processed documents to GitHub remote repository.
+* **builder** - runs Jupyter Book to build a book out of processed documents.
+
 ## Local development
 
 You can check the basic workflow of the platform by running local scripts. To do that, follow these steps:
@@ -146,6 +154,19 @@ provider "aws" {
 Go to the home page of the GitLab repository, and click on "CI/CD" under the "Settings" dropdown menu on the very bottom of the sidebar. Then click "Expand" on the "Variables" section and click on "Add variable". Have the Key be "ROLE_ARN" and the value be the ARN of the Role created in the step above. Remember to select the option "Protect variable".
 
 Also, add the "AWS_DEFAULT_REGION" variable with value equal to the AWS region selected for the above mentioned resources.
+
+## Adding a new Lambda function
+
+When adding a new Lambda function (a new module), please follow these steps:
+1. Add the module code to the `src/ ` directory.
+1. Add the test code to the `tests/ ` directory.
+1. Copy and modify one of the `.tf` files that define a Lambda function. Usually you can reuse all of the IaC code changing only the <old-function-name> to <new-function-name>.
+1. Update the `Makefile`.
+1. Update the `.versions.json`.
+1. Update the `secrets/dev.tfvars.enc.json` (remember to use the `sops` tool) and `variables.tf`.
+1. Push the git repository to remote
+1. Build, tag and push the new image to the container registry (see `Makefile`).
+1. Retry the GitLab job.
 
 ## Sundry
 
