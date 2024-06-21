@@ -48,4 +48,10 @@ class KeyPath(type(pathlib.Path())):
 
     @cached_property
     def slug(self) -> str:
+        """Returns my-slug"""
         return self.s3_key.parts[0]
+
+    @cached_property
+    def efs_slug_html_path(self) -> "KeyPath":
+        """Adds '_html' in slug, /mnt/efs/my-slug/_html/path/to/file.txt"""
+        return self.efs_slug_dir / "_html" / self.github_path

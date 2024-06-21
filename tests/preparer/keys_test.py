@@ -26,6 +26,10 @@ def test_short_slug():
     assert key.slug == "myslug"
 
 
+def test_short_efs_slug_html_path():
+    key = KeyPath("myslug/text.md")
+
+
 def test_long_n_nested_efs_filepath():
     key = KeyPath("myslug/path/to/text.pdf.xmld")
     assert key.efs_filepath == KeyPath("/tmp/efs/myslug/path/to/text.pdf.xmld")
@@ -51,6 +55,10 @@ def test_long_n_nested_slug():
     assert key.slug == "myslug"
 
 
+def test_long_n_nested_efs_slug_html_path():
+    key = KeyPath("myslug/path/to/text.pdf.xmld")
+
+
 def test_tmprootpath_efs_filepath():
     key = KeyPath("/tmp/efs/myslug/path/to/text.pdf.xmld")
     assert key.efs_filepath == KeyPath("/tmp/efs/myslug/path/to/text.pdf.xmld")
@@ -74,3 +82,7 @@ def test_tmprootpath_github_path():
 def test_tmprootpath_slug():
     key = KeyPath("/tmp/efs/myslug/path/to/text.pdf.xmld")
     assert key.slug == "myslug"
+
+
+def test_tmprootpath_efs_slug_html_path():
+    key = KeyPath("/tmp/efs/myslug/path/to/text.pdf.xmld")
