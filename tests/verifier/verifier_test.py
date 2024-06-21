@@ -1,8 +1,8 @@
 import collections
 import pathlib
 
-from src.verifier.verifier import HtmlVerifier
-from src.verifier.verifier import MSG_PROBLEMS, HEADINGS
+from src.verifier.html_verifier import HtmlVerifier
+from src.verifier.html_verifier import MSG_PROBLEMS, HEADINGS
 
 
 class TestFileBreakingVerificationRules:
