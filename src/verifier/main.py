@@ -1,4 +1,4 @@
-import bs4
+import json
 import boto3
 import datetime
 import logging
@@ -8,23 +8,21 @@ import urllib.parse
 
 try:
     from constants import (
-        # ARCHIVE_APKG_ALL,
-        # IR_APKG_HTML_BUCKET_NAME,
-        # IR_APKG_MD_BUCKET_NAME,
         IS_DEBUG,
+        VERIFIER_MSGS,
     )
+    from html_verifier import HtmlVerifier
     from fakers import Faker
     from keys import KeyPath
 
 except ModuleNotFoundError as e:
-    from src.preparer.constants import (
-        # ARCHIVE_APKG_ALL,
-        # IR_APKG_HTML_BUCKET_NAME,
-        # IR_APKG_MD_BUCKET_NAME,
+    from src.verifier.constants import (
         IS_DEBUG,
+        VERIFIER_MSGS,
     )
-    from src.preparer.fakers import Faker
-    from src.preparer.keys import KeyPath
+    from src.verifier.html_verifier import HtmlVerifier
+    from src.verifier.fakers import Faker
+    from src.verifier.keys import KeyPath
 
 
 if IS_DEBUG:
@@ -49,7 +47,14 @@ else:
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     key = _get_key(event)
-    if key.suffix.lower() == ".md":
+    logger.info(json.dumps(event, default=str))
+    if key.suffix.lower() == ".html":
+        with open(key.efs_filepath, "r") as f:
+            html = f.read()
+        verifer = HtmlVerifier()
+        result = verifer.verify(html, key.efs_filepath).to_json()
+        logger.info(json.dumps(result, default=str))
+        _put_json_to_s3(json.dumps(result, default=str), key)
         return {"statusCode": 200, "body": ""}
     return {"statusCode": 200, "body": ""}
 
@@ -65,9 +70,14 @@ def _get_key(event) -> KeyPath:
         raise
 
 
-def _get_html_soup(html: str) -> bs4.BeautifulSoup:
+def _put_json_to_s3(body: str, key: KeyPath) -> None:
     try:
-        return bs4.BeautifulSoup(html, "html.parser")
+        s3_key = key.s3_key.with_suffix(".json")
+        resp = s3.put_object(Body=body, Bucket=VERIFIER_MSGS, Key=s3_key)
+        logger.info(
+            f"Response from s3.put_object(Bucket={VERIFIER_MSGS}, Key={s3_key}): "
+            + json.dumps(resp, default=str)
+        )
     except Exception as e:
-        logger.exception(f"Creation of bs4.BeautifulSoup failed. Error: {repr(e)}")
+        logger.exception(f"Putting json to s3 bucket failed. Error: {repr(e)}")
         raise

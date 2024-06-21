@@ -11,12 +11,12 @@ class TestFileBreakingVerificationRules:
     @classmethod
     def setup_class(cls):
         with open(cls.fp, "r") as f:
-            md = f.read()
-        # print(md)
+            html = f.read()
+        # print(html)
         cls.warnings = collections.defaultdict(list)
         verifer = HtmlVerifier()
-        cls.result = verifer.verify(md, cls.fp)
-        cls.res_json = verifer.to_json()
+        result = verifer.verify(html, cls.fp)
+        cls.res_json = result.to_json()
         for war in cls.res_json:
             if HEADINGS in war["tags"]:
                 cls.warnings[HEADINGS].append(war)

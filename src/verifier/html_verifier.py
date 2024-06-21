@@ -107,16 +107,13 @@ class HtmlVerifier:
         self._tables = []
         self._messages = VerifierMessages()
 
-    def to_json(self) -> list[dict]:
-        return self._messages.to_json()
-
     def summary(self):
         pass
 
     def stats(self):
         pass
 
-    def verify(self, html: str, fp: pathlib.Path) -> list[VerifierMessage]:
+    def verify(self, html: str, fp: pathlib.Path) -> VerifierMessages:
         self._fp = fp
         soup = bs4.BeautifulSoup(html, "html.parser")
         self._mark_html_elements_recursively(soup)
