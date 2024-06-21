@@ -1,22 +1,29 @@
-resource "aws_s3_bucket" "upload_apkg" {
-  bucket        = var.upload_apkg_bucket_name
+# S3 for outputting verifier messages
+
+resource "aws_s3_bucket" "verification_msg" {
+  bucket        = var.verification_msgs_bucket_name
   force_destroy = true
 }
 
-data "aws_iam_policy_document" "public_upload_apkg" {
+data "aws_iam_policy_document" "verification_msg_policy" {
   statement {
     actions = [
       "s3:*" # TODO: limit
     ]
     resources = [
-      "arn:aws:s3:::${aws_s3_bucket.upload_apkg.bucket}",
-      "arn:aws:s3:::${aws_s3_bucket.upload_apkg.bucket}/*"
+      "arn:aws:s3:::${aws_s3_bucket.verification_msg.bucket}",
+      "arn:aws:s3:::${aws_s3_bucket.verification_msg.bucket}/*"
     ]
     principals {
       type        = "AWS"
       identifiers = [aws_iam_user.apkg_uploader.arn]
     }
   }
+}
+
+resource "aws_s3_bucket_policy" "verification_msg_policy" {
+  bucket = aws_s3_bucket.verification_msg.id
+  policy = data.aws_iam_policy_document.verification_msg_policy.json
 }
 
 ## Lambda (verifier)
