@@ -85,6 +85,6 @@ resource "aws_s3_bucket_policy" "public_staticws_wip" {
 resource "aws_s3_object" "index_html" {
   bucket       = aws_s3_bucket.staticws_wip.id
   key          = "index.html"
-  source       = "./staticws/index.html"
+  source       = "./staticws/reader/index.html"
   content_type = "text/html"
 }
