@@ -1,5 +1,6 @@
 import datetime
 import pathlib
+import uuid
 import bs4
 import re
 import logging
@@ -49,26 +50,34 @@ class VerifierMessage:
         self,
         problem: str,
         recommend: str,
-        elem: bs4.element.Tag,
+        prev_elem: t.Optional[bs4.element.Tag],
+        curr_elem: bs4.element.Tag,
+        next_elem: t.Optional[bs4.element.Tag],
         timestamp: datetime.datetime,
         fn: str,
         tags: list[str],
     ) -> None:
+        self.id = uuid.uuid4().hex[:8]
         self.problem = problem
         self.recommend = recommend
-        self.elem = elem
+        self.prev_elem = prev_elem
+        self.curr_elem = curr_elem
+        self.next_elem = next_elem
         self.timestamp = timestamp
         self.fn = fn
         self.tags = tags
-        self.line = elem.sourceline
-        self.pos = elem.sourcepos
+        self.line = curr_elem.sourceline
+        self.pos = curr_elem.sourcepos
 
     def to_json(self) -> VerifierMessageJson:
         return {
+            "id": self.id,
             "problem": self.problem,
             "recommend": self.recommend,
             "fn": self.fn,
-            "html": str(self.elem),
+            "prev_elem": str(self.prev_elem),
+            "curr_elem": str(self.curr_elem),
+            "next_elem": str(self.next_elem),
             "timestamp": self.timestamp.isoformat(),
             "tags": self.tags,
             "line": self.line,
@@ -84,7 +93,9 @@ class VerifierMessages:
         self,
         problem: str,
         recommend: str,
-        elem: bs4.element.Tag,
+        prev_elem: t.Optional[bs4.element.Tag],
+        curr_elem: bs4.element.Tag,
+        next_elem: t.Optional[bs4.element.Tag],
         fn: str,
         timestamp: datetime.datetime,
         tags: list[str],
@@ -93,7 +104,9 @@ class VerifierMessages:
             VerifierMessage(
                 problem=problem,
                 recommend=recommend,
-                elem=elem,
+                prev_elem=prev_elem,
+                curr_elem=curr_elem,
+                next_elem=next_elem,
                 timestamp=timestamp,
                 fn=fn,
                 tags=tags,
@@ -163,7 +176,9 @@ class HtmlVerifier:
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[HEADINGS]["check_h_for_title_case"],
                     recommend=f"Consider changing the heading '{tag.text}' to '{tag.text.title()}'.",
-                    elem=tag,
+                    prev_elem=tag.previous_sibling,
+                    curr_elem=tag,
+                    next_elem=tag.next_sibling,
                     fn=self._fp.name,
                     timestamp=self._timestamp,
                     tags=[HEADINGS],
@@ -172,7 +187,9 @@ class HtmlVerifier:
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[HEADINGS]["check_h_no_trailing_dot"],
                     recommend=f"Consider removing the '.' character at the end of the heading.",
-                    elem=tag,
+                    prev_elem=tag.previous_sibling,
+                    curr_elem=tag,
+                    next_elem=tag.next_sibling,
                     fn=self._fp.name,
                     timestamp=self._timestamp,
                     tags=[HEADINGS],
