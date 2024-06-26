@@ -50,9 +50,7 @@ class VerifierMessage:
         self,
         problem: str,
         recommend: str,
-        prev_elem: t.Optional[bs4.element.Tag],
-        curr_elem: bs4.element.Tag,
-        next_elem: t.Optional[bs4.element.Tag],
+        elem: bs4.element.Tag,
         timestamp: datetime.datetime,
         fn: str,
         tags: list[str],
@@ -60,14 +58,42 @@ class VerifierMessage:
         self.id = uuid.uuid4().hex[:8]
         self.problem = problem
         self.recommend = recommend
-        self.prev_elem = prev_elem
-        self.curr_elem = curr_elem
-        self.next_elem = next_elem
+        self.prev_elem = self._find_prev_elem(elem)
+        self.curr_elem = elem
+        self.next_elem = self._find_next_elem(elem)
         self.timestamp = timestamp
         self.fn = fn
         self.tags = tags
-        self.line = curr_elem.sourceline
-        self.pos = curr_elem.sourcepos
+        self.line = elem.sourceline
+        self.pos = elem.sourcepos
+
+    def _find_prev_elem(
+        self, elem: bs4.element.Tag
+    ) -> t.Optional[bs4.element.PageElement]:
+        """
+        Find previous_sibling, ommiting empty ones.
+        """
+        prev = elem.previous_sibling
+        for i in range(5):  # don't look for more than 5 siblings
+            if hasattr(prev, "text") and prev.text.isspace():
+                prev = prev.previous_sibling
+            else:
+                break
+        return prev
+
+    def _find_next_elem(
+        self, elem: bs4.element.Tag
+    ) -> t.Optional[bs4.element.PageElement]:
+        """
+        Find next_sibling, ommiting empty ones.
+        """
+        next = elem.next_sibling
+        for i in range(5):  # don't look for more than 5 siblings
+            if hasattr(next, "text") and next.text.isspace():
+                next = next.next_sibling
+            else:
+                break
+        return next
 
     def to_json(self) -> VerifierMessageJson:
         return {
@@ -93,9 +119,7 @@ class VerifierMessages:
         self,
         problem: str,
         recommend: str,
-        prev_elem: t.Optional[bs4.element.Tag],
-        curr_elem: bs4.element.Tag,
-        next_elem: t.Optional[bs4.element.Tag],
+        elem: bs4.element.Tag,
         fn: str,
         timestamp: datetime.datetime,
         tags: list[str],
@@ -104,9 +128,7 @@ class VerifierMessages:
             VerifierMessage(
                 problem=problem,
                 recommend=recommend,
-                prev_elem=prev_elem,
-                curr_elem=curr_elem,
-                next_elem=next_elem,
+                elem=elem,
                 timestamp=timestamp,
                 fn=fn,
                 tags=tags,
@@ -176,9 +198,7 @@ class HtmlVerifier:
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[HEADINGS]["check_h_for_title_case"],
                     recommend=f"Consider changing the heading '{tag.text}' to '{tag.text.title()}'.",
-                    prev_elem=tag.previous_sibling,
-                    curr_elem=tag,
-                    next_elem=tag.next_sibling,
+                    elem=tag,
                     fn=self._fp.name,
                     timestamp=self._timestamp,
                     tags=[HEADINGS],
@@ -187,9 +207,7 @@ class HtmlVerifier:
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[HEADINGS]["check_h_no_trailing_dot"],
                     recommend=f"Consider removing the '.' character at the end of the heading.",
-                    prev_elem=tag.previous_sibling,
-                    curr_elem=tag,
-                    next_elem=tag.next_sibling,
+                    elem=tag,
                     fn=self._fp.name,
                     timestamp=self._timestamp,
                     tags=[HEADINGS],

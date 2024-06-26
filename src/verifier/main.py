@@ -75,10 +75,14 @@ def _get_key(event) -> KeyPath:
         raise
 
 
+def _fromtimestamp(event_time: str) -> datetime.datetime:
+    return datetime.datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S.%f%z")
+
+
 def _get_timestamp(event) -> datetime.datetime:
     try:
-        eventTime = event["Records"][0]["eventTime"]
-        return datetime.datetime.strptime(eventTime, "%Y-%m-%dT%H:%M:%S.%f%z")
+        event_time = event["Records"][0]["eventTime"]
+        return _fromtimestamp(event_time)
     except Exception as e:
         logger.error(
             f"Unable to retrieve event time. Event: "
