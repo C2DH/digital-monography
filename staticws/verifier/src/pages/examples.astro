@@ -1,0 +1,236 @@
+---
+import Layout from "../layouts/Layout.astro";
+import MsgsPerFile from "../components/MsgsPerFile.jsx";
+
+const slug = "examples";
+---
+
+<Layout title="Warnings raised by the verifier.">
+    <div class="container">
+        <h1>
+            mono<span class="text-gradient">[</span>graph<span
+                class="text-gradient">]</span
+            >
+        </h1>
+        <p class="instructions">Find below warnings for {slug}.</p>
+        <MsgsPerFile msgs={["Task 1", "Task 2", "Task 3"]} />
+        <input type="hidden" id="hidden-json" value="[]" />
+        <ul class="list-group">
+            <li class="list-group-item">An item</li>
+            <li class="list-group-item">A second item</li>
+            <li class="list-group-item">A third item</li>
+            <li class="list-group-item">A fourth item</li>
+            <li class="list-group-item">And a fifth one</li>
+        </ul>
+        <div>
+            <ul id="verifier-msgs-ul" class="list-group"></ul>
+        </div>
+        <div>
+            <div id="verifier-msgs-accordion" class="accordion"></div>
+            <div class="accordion" id="accordionPanelsStayOpenExample">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button
+                            class="accordion-button"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#panelsStayOpen-collapseOne"
+                            aria-expanded="true"
+                            aria-controls="panelsStayOpen-collapseOne"
+                        >
+                            Accordion Item #1
+                        </button>
+                    </h2>
+                    <div
+                        id="panelsStayOpen-collapseOne"
+                        class="accordion-collapse collapse show"
+                    >
+                        <div class="accordion-body">
+                            <strong
+                                >This is the first item's accordion body.</strong
+                            > It is shown by default, until the collapse plugin adds
+                            the appropriate classes that we use to style each element.
+                            These classes control the overall appearance, as well
+                            as the showing and hiding via CSS transitions. You can
+                            modify any of this with custom CSS or overriding our
+                            default variables. It's also worth noting that just about
+                            any HTML can go within the <code
+                                >.accordion-body</code
+                            >, though the transition does limit overflow.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button
+                            class="accordion-button collapsed"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#panelsStayOpen-collapseTwo"
+                            aria-expanded="false"
+                            aria-controls="panelsStayOpen-collapseTwo"
+                        >
+                            Accordion Item #2
+                        </button>
+                    </h2>
+                    <div
+                        id="panelsStayOpen-collapseTwo"
+                        class="accordion-collapse collapse"
+                    >
+                        <div class="accordion-body">
+                            <strong
+                                >This is the second item's accordion body.</strong
+                            > It is hidden by default, until the collapse plugin
+                            adds the appropriate classes that we use to style each
+                            element. These classes control the overall appearance,
+                            as well as the showing and hiding via CSS transitions.
+                            You can modify any of this with custom CSS or overriding
+                            our default variables. It's also worth noting that just
+                            about any HTML can go within the <code
+                                >.accordion-body</code
+                            >, though the transition does limit overflow.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button
+                            class="accordion-button collapsed"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#panelsStayOpen-collapseThree"
+                            aria-expanded="false"
+                            aria-controls="panelsStayOpen-collapseThree"
+                        >
+                            Accordion Item #3
+                        </button>
+                    </h2>
+                    <div
+                        id="panelsStayOpen-collapseThree"
+                        class="accordion-collapse collapse"
+                    >
+                        <div class="accordion-body">
+                            <strong
+                                >This is the third item's accordion body.</strong
+                            > It is hidden by default, until the collapse plugin
+                            adds the appropriate classes that we use to style each
+                            element. These classes control the overall appearance,
+                            as well as the showing and hiding via CSS transitions.
+                            You can modify any of this with custom CSS or overriding
+                            our default variables. It's also worth noting that just
+                            about any HTML can go within the <code
+                                >.accordion-body</code
+                            >, though the transition does limit overflow.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            console.log("Warnings raised by the verifier");
+            const jsonDataList = [];
+            async function fetchJsonFiles() {
+                try {
+                    let fileNames = import.meta.glob(
+                        "/public/msgs/examples/*.json",
+                    );
+                    for (const fileName of Object.keys(fileNames)) {
+                        const response = await fetch(fileName);
+                        const jsonData = await response.json();
+                        jsonDataList.push(...jsonData);
+                    }
+                    console.log(jsonDataList);
+                    let hiddenJson = document.getElementById("hidden-json");
+                    let verifierMsgsUl =
+                        document.getElementById("verifier-msgs-ul");
+                    let verifierMsgsAccordion = document.getElementById(
+                        "verifier-msgs-accordion",
+                    );
+                    if (hiddenJson) {
+                        console.log(
+                            "elem.textContent = JSON.stringify(jsonDataList);",
+                        );
+                        hiddenJson.textContent = JSON.stringify(jsonDataList);
+                    }
+                    console.log("jsonDataList.length", jsonDataList.length);
+                    if (verifierMsgsUl) {
+                        for (let i = 0; i < jsonDataList.length; i++) {
+                            let msg = jsonDataList[i];
+                            verifierMsgsUl.insertAdjacentHTML(
+                                "afterend",
+                                `<li class="list-group-item">
+                                <p>
+                                    <strong
+                                        >${msg["problem"]}</strong
+                                    >
+                                    ${msg["recommend"]}
+                                    <button
+                                        class="btn btn-primary btn-sm"
+                                        type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#collapse-msg-${msg["id"]}"
+                                        aria-expanded="false"
+                                        aria-controls="collapse-msg-${msg["id"]}"
+                                    >
+                                        Show
+                                    </button>
+                                </p>
+                                <div class="collapse" id="collapse-msg-${msg["id"]}">
+                                    <div class="card card-body">
+                                        <samp>
+                                            ${msg["prev_elem"]}
+                                            ${msg["curr_elem"]}
+                                            ${msg["next_elem"]}
+                                        </samp>
+                                    </div>
+                                </div>
+                            </li>`,
+                            );
+                        }
+                    }
+                    if (verifierMsgsAccordion) {
+                        for (let i = 0; i < jsonDataList.length; i++) {
+                            let msg = jsonDataList[i];
+                            verifierMsgsAccordion.insertAdjacentHTML(
+                                "afterend",
+                                `<div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button
+                                        class="accordion-button"
+                                        type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#panel-${msg["id"]}"
+                                        aria-expanded="true"
+                                        aria-controls="panel-${msg["id"]}"
+                                    >
+                                    <strong
+                                        >${msg["problem"]}</strong
+                                    >
+                                    ${msg["recommend"]}
+                                    </button>
+                                </h2>
+                                <div
+                                    id="panel-${msg["id"]}"
+                                    class="accordion-collapse collapse show"
+                                >
+                                    <div class="accordion-body">
+                                        <samp>
+                                            ${msg["prev_elem"]}
+                                            ${msg["curr_elem"]}
+                                            ${msg["next_elem"]}
+                                        </samp>
+                                    </div>
+                                </div>
+                            </div>`,
+                            );
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error fetching JSON files:", error);
+                }
+            }
+            fetchJsonFiles();
+        </script>
+        <style></style>
+    </div>
+</Layout>

@@ -10,7 +10,12 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/react": "^3.6.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
     "astro": "^4.11.0",
-    "fs.promises": "^0.1.2"
+    "aws-sdk": "^2.1648.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   }
 }

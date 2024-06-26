@@ -198,3 +198,12 @@ git config --add --local core.sshCommand 'ssh -i ~/.ssh/filename'
 * add e2e cloud testing on actual Lambdas
 * mypy type checking
 * flake8 linting
+
+### Tech stack for the frontend
+
+- React - as ui framework
+- Bootstrap - for ui components
+- Astro - for static site generation
+- AWS Amplify - tiny backend for authentication and AWS integration (this is a similar to Firebase or Supabase)
+
+https://github.com/aws-samples/amplify-authentication-for-astro
