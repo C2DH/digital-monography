@@ -79,7 +79,6 @@ def _get_timestamp(event) -> datetime.datetime:
     try:
         eventTime = event["Records"][0]["eventTime"]
         return datetime.datetime.strptime(eventTime, "%Y-%m-%dT%H:%M:%S.%f%z")
-        # return datetime.datetime.fromtimestamp(eventTime)
     except Exception as e:
         logger.error(
             f"Unable to retrieve event time. Event: "
