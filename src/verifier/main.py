@@ -1,4 +1,5 @@
 import json
+import sys
 import boto3
 import datetime
 import logging
@@ -46,6 +47,7 @@ else:
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
+    logger.info("sys.version: " + str(sys.version))
     key = _get_key(event)
     timestamp = _get_timestamp(event)
     if key.suffix.lower() == ".html":
@@ -77,7 +79,9 @@ def _get_key(event) -> KeyPath:
 def _get_timestamp(event) -> datetime.datetime:
     try:
         eventTime = event["Records"][0]["eventTime"]
-        return datetime.datetime.fromtimestamp(eventTime)
+        logger.info("eventTime: " + eventTime)
+        return datetime.datetime.strptime(eventTime, "%Y-%m-%dT%H:%M:%S.%f%z")
+        # return datetime.datetime.fromtimestamp(eventTime)
     except Exception as e:
         logger.error(
             f"Unable to retrieve event time. Event: "
