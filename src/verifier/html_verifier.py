@@ -21,6 +21,7 @@ MSG_PROBLEMS = {
         "check_h_for_title_case": "All headings should be title cased.",
         "check_h_no_trailing_dot": "Headings should not end with a trailing dot.",
         "check_h_no_footnotes": "Headings must not contain any footnotes.",
+        "check_h_if_gte_6": "Heading of level 6 and above are not supported.",
         "check_h_for_duplicates": "Duplicate headings found.",
     }
 }
@@ -226,6 +227,15 @@ class HtmlVerifier:
                     timestamp=self._timestamp,
                     tags=[HEADINGS, FOOTNOTES],
                 )
+            if self._check_h_if_gte_6(tag):
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[HEADINGS]["check_h_if_gte_6"],
+                    recommend=f"Consider changing the style of '{tag.text}' to Heading 5 or lower.",
+                    elem=tag,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
+                    tags=[HEADINGS],
+                )
             if self._check_h_for_duplicates(tag):
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[HEADINGS]["check_h_for_duplicates"],
@@ -251,6 +261,12 @@ class HtmlVerifier:
             for a in sup.find_all("a"):
                 if "footnote" in str(a):
                     return True
+        return False
+
+    def _check_h_if_gte_6(self, tag: bs4.element.Tag):
+        nums = re.findall(r"\d+", tag.name)
+        if nums and int(nums[0]) >= 6:
+            return True
         return False
 
     def _check_h_for_duplicates(self, tag: bs4.element.Tag):

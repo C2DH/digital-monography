@@ -61,6 +61,16 @@ class TestFileBreakingVerificationRules:
         assert warning
         assert warning["fn"] == "verification_breaks.html"
 
+    def test_check_h_if_gte_6(self):
+        warning = next(
+            w
+            for w in self.warnings[HEADINGS]
+            if "Heading 6" in w["curr_elem"]
+            and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_if_gte_6"]
+        )
+        assert warning
+        assert warning["fn"] == "verification_breaks.html"
+
     def test_check_h_for_duplicates(self):
         warning = next(
             w
