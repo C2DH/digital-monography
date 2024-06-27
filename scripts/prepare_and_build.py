@@ -12,6 +12,8 @@ sys.path.append(parent_dir)
 
 from src.preparer.main import lambda_handler as preparer_handler
 from src.builder.main import lambda_handler as builder_handler
+from src.verifier.main import lambda_handler as verifier_handler
+from src.verifier.keys import KeyPath
 from scripts.sync import listen_for_updates
 
 parser = argparse.ArgumentParser(description="...")
@@ -61,9 +63,16 @@ def cpy_to_tmp_and_call_handler(fp: pathlib.Path, key: str):
     event = copy.deepcopy(DEFAULT_EVENT)
     event["Records"][0]["s3"]["object"]["key"] = key
     context = {}
-    # lambda handlers
+    # preparer
     preparer_handler(event, context)
-    builder_handler(event, context)
+    # verifier
+    if key.endswith("docx"):
+        event["Records"][0]["s3"]["object"]["key"] = str(
+            KeyPath(key).with_suffix(".html")
+        )
+    verifier_handler(event, context)
+    # builder
+    # builder_handler(event, context)
 
 
 if __name__ == "__main__":
