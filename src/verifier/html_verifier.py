@@ -19,6 +19,7 @@ MSG_PROBLEMS = {
     HEADINGS: {
         "check_h_for_title_case": "All headings should be title cased.",
         "check_h_no_trailing_dot": "Headings should not end with a trailing dot.",
+        "check_h_no_footnotes": "Headings must not contain any footnotes.",
     }
 }
 
@@ -159,6 +160,7 @@ class HtmlVerifier:
         self._fp = fp
         self._timestamp = timestamp
         soup = bs4.BeautifulSoup(html, "html.parser")
+        print(soup)
         self._mark_html_elements_recursively(soup)
         self._apply_heading_verification()
         self._apply_atags_verification()
@@ -194,6 +196,7 @@ class HtmlVerifier:
 
     def _apply_heading_verification(self):
         for tag in self._headings:
+            print("tag", tag)
             if self._check_h_for_title_case(tag):
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[HEADINGS]["check_h_for_title_case"],
@@ -212,12 +215,32 @@ class HtmlVerifier:
                     timestamp=self._timestamp,
                     tags=[HEADINGS],
                 )
+            if self._check_h_no_footnotes(tag):
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[HEADINGS]["check_h_no_footnotes"],
+                    recommend=f"Please remove the footnote from the heading '{tag.text}'.",
+                    elem=tag,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
+                    tags=[HEADINGS],
+                )
 
     def _check_h_for_title_case(self, tag: bs4.element.Tag):
         return tag.text != tag.text.title() and IS_HEADING_TITLE_CASED_REQUIRED
 
     def _check_h_no_trailing_dot(self, tag: bs4.element.Tag):
         return tag.text.strip().endswith(".")
+
+    def _check_h_no_footnotes(self, tag: bs4.element.Tag):
+        """
+        Check for an anchor tag in a superscript tag. E.g.:
+        <h1>No Footnotes In Headings<sup><a href="#footnote-1" id="footnote-ref-1">[1]</a></sup></h1>
+        """
+        for sup in tag.find_all("sup"):
+            for a in sup.find_all("a"):
+                if "footnote" in str(a):
+                    return True
+        return False
 
     # anchor tags
 

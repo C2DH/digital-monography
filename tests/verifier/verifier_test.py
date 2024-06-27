@@ -1,5 +1,6 @@
 import collections
 import pathlib
+from pprint import pprint
 
 from src.verifier.html_verifier import HtmlVerifier
 from src.verifier.html_verifier import MSG_PROBLEMS, HEADINGS
@@ -12,11 +13,11 @@ class TestFileBreakingVerificationRules:
     @classmethod
     def setup_class(cls):
         with open(cls.fp, "r") as f:
-            html = f.read()
+            cls.html = f.read()
         cls.warnings = collections.defaultdict(list)
         verifer = HtmlVerifier()
         timestamp = _fromtimestamp("2024-06-26T09:53:49.380Z")
-        result = verifer.verify(html, cls.fp, timestamp)
+        result = verifer.verify(cls.html, cls.fp, timestamp)
         cls.res_json = result.to_json()
         for war in cls.res_json:
             if HEADINGS in war["tags"]:
@@ -49,3 +50,24 @@ class TestFileBreakingVerificationRules:
         assert warning["next_elem"].startswith(
             "<h4>Heading 4. Where is level 3?",
         )
+
+    def test_check_h_no_footnotes(self):
+        warning = next(
+            w
+            for w in self.warnings[HEADINGS]
+            if "No Footnotes In Headings" in w["curr_elem"]
+            and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_no_footnotes"]
+        )
+        assert warning
+        assert warning["fn"] == "verification_breaks.html"
+
+    def test_testing(self):
+        print(self.html)
+        # pprint(self.warnings[HEADINGS])
+        print("-" * 50)
+        for w in self.warnings[HEADINGS]:
+            print("curr_elem \t", w["curr_elem"])
+            print("problem \t", w["problem"])
+            print("recommend \t", w["recommend"])
+            print("-" * 50)
+        assert 1 == 2
