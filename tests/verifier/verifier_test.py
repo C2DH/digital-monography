@@ -8,7 +8,7 @@ from src.verifier.main import _fromtimestamp
 
 
 class TestFileBreakingVerificationRules:
-    fp = pathlib.Path("tests") / "_fixtures" / "verification_breaks.html"
+    fp = pathlib.Path("tests") / "_fixtures" / "heading_verification.html"
 
     @classmethod
     def setup_class(cls):
@@ -33,7 +33,7 @@ class TestFileBreakingVerificationRules:
             and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_no_h1_at_start"]
         )
         assert warning
-        assert warning["fn"] == "verification_breaks.html"
+        assert warning["fn"] == "heading_verification.html"
 
     def test_check_h_first_h_not_h1(self):
         warning = next(
@@ -43,7 +43,7 @@ class TestFileBreakingVerificationRules:
             and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_first_h_not_h1"]
         )
         assert warning
-        assert warning["fn"] == "verification_breaks.html"
+        assert warning["fn"] == "heading_verification.html"
 
     def test_check_h_h1_after_start__1(self):
         warning = next(
@@ -54,7 +54,7 @@ class TestFileBreakingVerificationRules:
             and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_h1_after_start"]
         )
         assert warning
-        assert warning["fn"] == "verification_breaks.html"
+        assert warning["fn"] == "heading_verification.html"
 
     def test_check_h_h1_after_start__2(self):
         warning = next(
@@ -64,7 +64,7 @@ class TestFileBreakingVerificationRules:
             and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_h1_after_start"]
         )
         assert warning
-        assert warning["fn"] == "verification_breaks.html"
+        assert warning["fn"] == "heading_verification.html"
 
     def test_check_h_not_sequential__1(self):
         warning = next(
@@ -74,7 +74,7 @@ class TestFileBreakingVerificationRules:
             and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_not_sequential"]
         )
         assert warning
-        assert warning["fn"] == "verification_breaks.html"
+        assert warning["fn"] == "heading_verification.html"
 
     def test_check_h_not_sequential__2(self):
         warning = next(
@@ -84,7 +84,7 @@ class TestFileBreakingVerificationRules:
             and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_not_sequential"]
         )
         assert warning
-        assert warning["fn"] == "verification_breaks.html"
+        assert warning["fn"] == "heading_verification.html"
 
     def test_check_h_no_title_case(self):
         warning = next(
@@ -93,7 +93,7 @@ class TestFileBreakingVerificationRules:
             if w["curr_elem"].startswith("<h2>Oh no, the first Heading is level 2")
             and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_no_title_case"]
         )
-        assert warning["fn"] == "verification_breaks.html"
+        assert warning["fn"] == "heading_verification.html"
         assert warning["next_elem"].startswith("<h4>Heading 4. Where is level 3?")
         assert warning["prev_elem"].startswith(
             "<p>The file should always start with Heading 1"
@@ -106,7 +106,7 @@ class TestFileBreakingVerificationRules:
             if w["curr_elem"].endswith(".</h2>")
             and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_with_trailing_dot"]
         )
-        assert warning["fn"] == "verification_breaks.html"
+        assert warning["fn"] == "heading_verification.html"
         assert warning["prev_elem"].startswith(
             "<p>The file should always start with Heading 1.",
         )
@@ -122,7 +122,7 @@ class TestFileBreakingVerificationRules:
             and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_with_footnotes"]
         )
         assert warning
-        assert warning["fn"] == "verification_breaks.html"
+        assert warning["fn"] == "heading_verification.html"
 
     def test_check_h_if_gte_6(self):
         warning = next(
@@ -132,7 +132,7 @@ class TestFileBreakingVerificationRules:
             and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_if_gte_6"]
         )
         assert warning
-        assert warning["fn"] == "verification_breaks.html"
+        assert warning["fn"] == "heading_verification.html"
 
     def test_check_h_for_duplicates(self):
         warning = next(
@@ -142,7 +142,7 @@ class TestFileBreakingVerificationRules:
             and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_for_duplicates"]
         )
         assert warning
-        assert warning["fn"] == "verification_breaks.html"
+        assert warning["fn"] == "heading_verification.html"
 
     def test_testing(self):
         print(self.html)

@@ -205,7 +205,7 @@ class HtmlVerifier:
                     #   captions.append(child)
             self._mark_html_elements_recursively(child, lvl + 1)
 
-    # headings
+    # headings ##########################################################################
 
     def _apply_heading_verification(self):
         self._unique_headings = []
@@ -343,7 +343,7 @@ class HtmlVerifier:
         self._unique_headings.append(tag.text)
         return False
 
-    # anchor tags
+    # anchor tags ######################################################################
 
     def _apply_atags_verification(self):
         pass
