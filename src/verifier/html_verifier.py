@@ -18,9 +18,10 @@ HEADINGS = "headings"
 FOOTNOTES = "footnotes"
 MSG_PROBLEMS = {
     HEADINGS: {
-        "check_h_for_title_case": "All headings should be title cased.",
-        "check_h_no_trailing_dot": "Headings should not end with a trailing dot.",
-        "check_h_no_footnotes": "Headings must not contain any footnotes.",
+        "check_h_no_title_case": "All headings should be title cased.",
+        "check_h_with_trailing_dot": "Headings should not end with a trailing dot.",
+        "check_h_with_footnotes": "Headings must not contain any footnotes.",
+        "check_h_no_h1_at_start": "Every file should start with Heading of level 1.",
         "check_h_if_gte_6": "Heading of level 6 and above are not supported.",
         "check_h_for_duplicates": "Duplicate headings found.",
     }
@@ -174,7 +175,7 @@ class HtmlVerifier:
         self._apply_hyperlinks_verification()
         return self._messages
 
-    def _mark_html_elements_recursively(self, node, lvl=0):
+    def _mark_html_elements_recursively(self, node: bs4.element.PageElement, lvl=0):
         """
         Before applying the verification, this function traverses the tree and
         puts relevant bs4.Tag elements inside respective lists.
@@ -200,27 +201,27 @@ class HtmlVerifier:
     def _apply_heading_verification(self):
         self._unique_headings = []
         for tag in self._headings:
-            if self._check_h_for_title_case(tag):
+            if self._check_h_no_title_case(tag):
                 self._messages.add_msg(
-                    problem=MSG_PROBLEMS[HEADINGS]["check_h_for_title_case"],
+                    problem=MSG_PROBLEMS[HEADINGS]["check_h_no_title_case"],
                     recommend=f"Consider changing the heading '{tag.text}' to '{tag.text.title()}'.",
                     elem=tag,
                     fn=self._fp.name,
                     timestamp=self._timestamp,
                     tags=[HEADINGS],
                 )
-            if self._check_h_no_trailing_dot(tag):
+            if self._check_h_with_trailing_dot(tag):
                 self._messages.add_msg(
-                    problem=MSG_PROBLEMS[HEADINGS]["check_h_no_trailing_dot"],
+                    problem=MSG_PROBLEMS[HEADINGS]["check_h_with_trailing_dot"],
                     recommend=f"Consider removing the '.' character at the end of the heading.",
                     elem=tag,
                     fn=self._fp.name,
                     timestamp=self._timestamp,
                     tags=[HEADINGS],
                 )
-            if self._check_h_no_footnotes(tag):
+            if self._check_h_with_footnotes(tag):
                 self._messages.add_msg(
-                    problem=MSG_PROBLEMS[HEADINGS]["check_h_no_footnotes"],
+                    problem=MSG_PROBLEMS[HEADINGS]["check_h_with_footnotes"],
                     recommend=f"Please remove the footnote from the heading '{tag.text}'.",
                     elem=tag,
                     fn=self._fp.name,
@@ -246,13 +247,13 @@ class HtmlVerifier:
                     tags=[HEADINGS],
                 )
 
-    def _check_h_for_title_case(self, tag: bs4.element.Tag):
+    def _check_h_no_title_case(self, tag: bs4.element.Tag):
         return tag.text != tag.text.title() and IS_HEADING_TITLE_CASED_REQUIRED
 
-    def _check_h_no_trailing_dot(self, tag: bs4.element.Tag):
+    def _check_h_with_trailing_dot(self, tag: bs4.element.Tag):
         return tag.text.strip().endswith(".")
 
-    def _check_h_no_footnotes(self, tag: bs4.element.Tag):
+    def _check_h_with_footnotes(self, tag: bs4.element.Tag):
         """
         Check for an anchor tag in a superscript tag. E.g.:
         <h1>No Footnotes In Headings<sup><a href="#footnote-1" id="footnote-ref-1">[1]</a></sup></h1>

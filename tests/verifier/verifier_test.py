@@ -23,12 +23,12 @@ class TestFileBreakingVerificationRules:
             if HEADINGS in war["tags"]:
                 cls.warnings[HEADINGS].append(war)
 
-    def test_check_h_for_title_case(self):
+    def test_check_h_no_title_case(self):
         warning = next(
             w
             for w in self.warnings[HEADINGS]
             if w["curr_elem"].startswith("<h2>Oh no, the first Heading is level 2")
-            and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_for_title_case"]
+            and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_no_title_case"]
         )
         assert warning["fn"] == "verification_breaks.html"
         assert warning["next_elem"].startswith("<h4>Heading 4. Where is level 3?")
@@ -36,12 +36,12 @@ class TestFileBreakingVerificationRules:
             "<p>The file should always start with Heading 1"
         )
 
-    def test_check_h_no_trailing_dot(self):
+    def test_check_h_with_trailing_dot(self):
         warning = next(
             w
             for w in self.warnings[HEADINGS]
             if w["curr_elem"].endswith(".</h2>")
-            and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_no_trailing_dot"]
+            and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_with_trailing_dot"]
         )
         assert warning["fn"] == "verification_breaks.html"
         assert warning["prev_elem"].startswith(
@@ -51,12 +51,12 @@ class TestFileBreakingVerificationRules:
             "<h4>Heading 4. Where is level 3?",
         )
 
-    def test_check_h_no_footnotes(self):
+    def test_check_h_with_footnotes(self):
         warning = next(
             w
             for w in self.warnings[HEADINGS]
             if "No Footnotes In Headings" in w["curr_elem"]
-            and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_no_footnotes"]
+            and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_with_footnotes"]
         )
         assert warning
         assert warning["fn"] == "verification_breaks.html"
