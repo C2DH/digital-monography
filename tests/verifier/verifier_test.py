@@ -35,6 +35,57 @@ class TestFileBreakingVerificationRules:
         assert warning
         assert warning["fn"] == "verification_breaks.html"
 
+    def test_check_h_first_h_not_h1(self):
+        warning = next(
+            w
+            for w in self.warnings[HEADINGS]
+            if w["curr_elem"].startswith("<h2>Oh no, the first Heading is level 2.")
+            and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_first_h_not_h1"]
+        )
+        assert warning
+        assert warning["fn"] == "verification_breaks.html"
+
+    def test_check_h_h1_after_start__1(self):
+        warning = next(
+            w
+            for w in self.warnings[HEADINGS]
+            if "Heading 1 Should Be At The Beginning Of The File Only!"
+            in w["curr_elem"]
+            and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_h1_after_start"]
+        )
+        assert warning
+        assert warning["fn"] == "verification_breaks.html"
+
+    def test_check_h_h1_after_start__2(self):
+        warning = next(
+            w
+            for w in self.warnings[HEADINGS]
+            if "There Should Be Only One Heading 1" in w["curr_elem"]
+            and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_h1_after_start"]
+        )
+        assert warning
+        assert warning["fn"] == "verification_breaks.html"
+
+    def test_check_h_not_sequential__1(self):
+        warning = next(
+            w
+            for w in self.warnings[HEADINGS]
+            if "Heading 4. Where is level 3?" in w["curr_elem"]
+            and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_not_sequential"]
+        )
+        assert warning
+        assert warning["fn"] == "verification_breaks.html"
+
+    def test_check_h_not_sequential__2(self):
+        warning = next(
+            w
+            for w in self.warnings[HEADINGS]
+            if "Heading 6. Where 5?" in w["curr_elem"]
+            and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_not_sequential"]
+        )
+        assert warning
+        assert warning["fn"] == "verification_breaks.html"
+
     def test_check_h_no_title_case(self):
         warning = next(
             w
