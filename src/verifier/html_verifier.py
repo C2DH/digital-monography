@@ -226,28 +226,9 @@ class HtmlVerifier:
             )
         for i in range(len(self._headings)):
             tag = self._headings[i]
-            # if self._headings_stack
-            # h_nums = re.findall(r"\d+", tag.name)
-            # if h_nums and int(h_nums[0]) == 1:
-            # self._headings_stack.append((h_num, tag.text))
-            # h_num = int(re.findall(r"\d+", tag.name)[0])
-            # while stack and stack[-1] > nums[i]:
-            #     stack.pop()
-            # if stack and nums[i] - stack[-1] > 1:
-            #     print(nums[i], f"Increments more than one level. There is {str(nums[i])} after {str(stack[-1])}")
-            # if len(stack) == 0 and nums[i] != 1:
-            #     print(nums[i], "The first heading must be of level 1.")
-            # if i > 1 and nums[i] == 1:
-            #     print(nums[i], "You can place heading level 1 only at the start")
-            # stack.append(nums[i])
-            # self._verify_h_hierarchy_rules(i)
             while self._h_stack and self._h_stack[-1] > self._headings_lvls[i]:
                 self._h_stack.pop()
             if self._h_stack and self._headings_lvls[i] - self._h_stack[-1] > 1:
-                # print(
-                #     self._headings[i],
-                #     f"Increments more than one level. There is {str(self._headings[i])} after {str(self._h_stack[-1])}",
-                # )
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[HEADINGS]["check_h_not_sequential"],
                     recommend=f"Heading {str(self._headings_lvls[i])} ('{tag.text}') is placed after heading level {str(self._h_stack[-1])}. Consider changing the former to style 'Heading {str(self._h_stack[-1] + 1)}'.",
@@ -257,7 +238,6 @@ class HtmlVerifier:
                     tags=[HEADINGS],
                 )
             if len(self._h_stack) == 0 and self._headings_lvls[i] != 1:
-                # print(self._headings[i], "The first heading must be of level 1.")
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[HEADINGS]["check_h_first_h_not_h1"],
                     recommend=f"Consider changing the style of '{tag.text}' or '{self._first_tag.text}' to 'Heading 1'.",
@@ -267,9 +247,6 @@ class HtmlVerifier:
                     tags=[HEADINGS],
                 )
             if i > 1 and self._headings_lvls[i] == 1:
-                # print(
-                #     self._headings[i], "You can place heading level 1 only at the start"
-                # )
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[HEADINGS]["check_h_h1_after_start"],
                     recommend=f"Consider changing level of '{tag.text}' or splitting file into two as there should be only one top level heading per file.",
@@ -325,24 +302,6 @@ class HtmlVerifier:
                     timestamp=self._timestamp,
                     tags=[HEADINGS],
                 )
-
-    # def _verify_h_hierarchy_rules(self, i: int):
-    #     # h_nums = re.findall(r"\d+", tag.name)
-    #     # if h_nums and int(h_nums[0]) == 1:
-    #     # self._headings_stack.append((h_num, tag.text))
-    #     # h_num = int(re.findall(r"\d+", tag.name)[0])
-    #     while self._h_stack and self._h_stack[-1] > self._headings[i]:
-    #         self._h_stack.pop()
-    #     if self._h_stack and self._headings[i] - self._h_stack[-1] > 1:
-    #         print(
-    #             self._headings[i],
-    #             f"Increments more than one level. There is {str(self._headings[i])} after {str(self._h_stack[-1])}",
-    #         )
-    #     if len(self._h_stack) == 0 and self._headings[i] != 1:
-    #         print(self._headings[i], "The first heading must be of level 1.")
-    #     if i > 1 and self._headings[i] == 1:
-    #         print(self._headings[i], "You can place heading level 1 only at the start")
-    #     self._h_stack.append(self._headings[i])
 
     def _check_h_no_h1_at_start(self, tag: bs4.element.Tag):
         try:
