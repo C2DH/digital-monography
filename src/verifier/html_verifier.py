@@ -15,11 +15,13 @@ except Exception as e:
 
 IS_HEADING_TITLE_CASED_REQUIRED = True
 HEADINGS = "headings"
+FOOTNOTES = "footnotes"
 MSG_PROBLEMS = {
     HEADINGS: {
         "check_h_for_title_case": "All headings should be title cased.",
         "check_h_no_trailing_dot": "Headings should not end with a trailing dot.",
         "check_h_no_footnotes": "Headings must not contain any footnotes.",
+        "check_h_for_duplicates": "Duplicate headings found.",
     }
 }
 
@@ -195,8 +197,8 @@ class HtmlVerifier:
     # headings
 
     def _apply_heading_verification(self):
+        self._unique_headings = []
         for tag in self._headings:
-            print("tag", tag)
             if self._check_h_for_title_case(tag):
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[HEADINGS]["check_h_for_title_case"],
@@ -222,6 +224,15 @@ class HtmlVerifier:
                     elem=tag,
                     fn=self._fp.name,
                     timestamp=self._timestamp,
+                    tags=[HEADINGS, FOOTNOTES],
+                )
+            if self._check_h_for_duplicates(tag):
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[HEADINGS]["check_h_for_duplicates"],
+                    recommend=f"There should be no two headings with the same text. Please rephrase '{tag.text}'.",
+                    elem=tag,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
                     tags=[HEADINGS],
                 )
 
@@ -240,6 +251,12 @@ class HtmlVerifier:
             for a in sup.find_all("a"):
                 if "footnote" in str(a):
                     return True
+        return False
+
+    def _check_h_for_duplicates(self, tag: bs4.element.Tag):
+        if tag.text in self._unique_headings:
+            return True
+        self._unique_headings.append(tag.text)
         return False
 
     # anchor tags
