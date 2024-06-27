@@ -23,6 +23,18 @@ class TestFileBreakingVerificationRules:
             if HEADINGS in war["tags"]:
                 cls.warnings[HEADINGS].append(war)
 
+    def test_check_h_no_h1_at_start(self):
+        warning = next(
+            w
+            for w in self.warnings[HEADINGS]
+            if w["curr_elem"].startswith(
+                "<p>The file should always start with Heading 1"
+            )
+            and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_no_h1_at_start"]
+        )
+        assert warning
+        assert warning["fn"] == "verification_breaks.html"
+
     def test_check_h_no_title_case(self):
         warning = next(
             w

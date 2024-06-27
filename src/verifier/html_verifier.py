@@ -18,10 +18,10 @@ HEADINGS = "headings"
 FOOTNOTES = "footnotes"
 MSG_PROBLEMS = {
     HEADINGS: {
+        "check_h_no_h1_at_start": "Every file should start with Heading of level 1.",
         "check_h_no_title_case": "All headings should be title cased.",
         "check_h_with_trailing_dot": "Headings should not end with a trailing dot.",
         "check_h_with_footnotes": "Headings must not contain any footnotes.",
-        "check_h_no_h1_at_start": "Every file should start with Heading of level 1.",
         "check_h_if_gte_6": "Heading of level 6 and above are not supported.",
         "check_h_for_duplicates": "Duplicate headings found.",
     }
@@ -161,11 +161,12 @@ class HtmlVerifier:
     def verify(
         self, html: str, fp: pathlib.Path, timestamp: datetime.datetime
     ) -> VerifierMessages:
+        self._first_tag = None
         self._fp = fp
         self._timestamp = timestamp
-        soup = bs4.BeautifulSoup(html, "html.parser")
-        print(soup)
-        self._mark_html_elements_recursively(soup)
+        self.soup = bs4.BeautifulSoup(html, "html.parser")
+        print(self.soup)
+        self._mark_html_elements_recursively(self.soup)
         self._apply_heading_verification()
         self._apply_atags_verification()
         # self._apply_assets_verification()
@@ -178,13 +179,16 @@ class HtmlVerifier:
     def _mark_html_elements_recursively(self, node: bs4.element.PageElement, lvl=0):
         """
         Before applying the verification, this function traverses the tree and
-        puts relevant bs4.Tag elements inside respective lists.
-        Verification is then applied on the elements from the lists.
+        puts relevant bs4.Tag elements inside respective lists
+        or marks those elements as first html elements in the file.
+        Verification is then applied on the marked elements.
         """
         if not hasattr(node, "children"):
             return
         for child in node.children:
             if isinstance(child, bs4.element.Tag):
+                if self._first_tag is None:
+                    self._first_tag = child
                 if re.match(r"^h[0-9]*$", child.name):
                     self._headings.append(child)
                 elif child.name == "a":
@@ -200,6 +204,20 @@ class HtmlVerifier:
 
     def _apply_heading_verification(self):
         self._unique_headings = []
+        if self._check_h_no_h1_at_start(self._first_tag):
+            kurz_text = (
+                self._first_tag.text[:25]
+                if len(self._first_tag.text) > 25
+                else self._first_tag.text
+            )
+            self._messages.add_msg(
+                problem=MSG_PROBLEMS[HEADINGS]["check_h_no_h1_at_start"],
+                recommend=f"Here, it begins with '{kurz_text}...' which does not have a Heading 1 style.",
+                elem=self._first_tag,
+                fn=self._fp.name,
+                timestamp=self._timestamp,
+                tags=[HEADINGS],
+            )
         for tag in self._headings:
             if self._check_h_no_title_case(tag):
                 self._messages.add_msg(
@@ -246,6 +264,17 @@ class HtmlVerifier:
                     timestamp=self._timestamp,
                     tags=[HEADINGS],
                 )
+
+    def _check_h_no_h1_at_start(self, tag: bs4.element.Tag):
+        try:
+            is_heading = re.match(r"^h[0-9]*$", tag.name)
+            tag_nums = re.findall(r"\d+", tag.name)
+            if is_heading and tag_nums and int(tag_nums[0]) == 1:
+                return False
+        except ValueError as e:
+            return False
+        else:
+            return True
 
     def _check_h_no_title_case(self, tag: bs4.element.Tag):
         return tag.text != tag.text.title() and IS_HEADING_TITLE_CASED_REQUIRED
