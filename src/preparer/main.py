@@ -66,7 +66,9 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     if not key.suffix.lower() == ".docx":
         _put_to_archive_s3(key)
         return {"statusCode": 200, "body": ""}
-    html_str = _convert_to_html(key)
+    html_str = _convert_to_html(key.efs_filepath)
+    print("-" * 50)
+    print(html_str)
     html_soup = _get_html_soup(html_str)
     metadata = _get_book_metadata()
     html_soup = _add_citations_and_bibliography(html_soup)
@@ -75,6 +77,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     _write_processed_html_to_efs(html_soup_str, key)
     _put_html_to_s3(html_soup_str, key)
     md = _convert_to_md(html_soup, metadata)
+    print("-" * 50)
+    print(md)
     _write_processed_md_to_efs(md, key)
     _put_md_to_s3(md, key)
     _put_to_archive_s3(key.s3_key.with_suffix(".md"), md)
@@ -123,10 +127,10 @@ def _download_fileobj(src: str, key: KeyPath):
 
 def _convert_to_html(key: KeyPath) -> str:
     try:
-        key = key.efs_filepath
         with open(key, "rb") as f:
             style_mappings = """
             p[style-name='Quote'] => blockquote:fresh
+            p[style-name='Caption'] => p.dgt-mon-caption:fresh
             """
             result = mammoth.convert_to_html(f, style_map=style_mappings)
             logger.info(f"Converting {key} to html succedded.")
