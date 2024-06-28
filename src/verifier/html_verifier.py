@@ -16,6 +16,7 @@ except Exception as e:
 IS_HEADING_TITLE_CASED_REQUIRED = True
 HEADINGS = "headings"
 FOOTNOTES = "footnotes"
+CAPTIONS = "captions"
 MSG_PROBLEMS = {
     HEADINGS: {
         "check_h_no_h1_at_start": "Every file should start with Heading of level 1.",
@@ -27,7 +28,10 @@ MSG_PROBLEMS = {
         "check_h_with_footnotes": "Headings must not contain any footnotes.",
         "check_h_if_gte_6": "Heading of level 6 and above are not supported.",
         "check_h_for_duplicates": "Duplicate headings found.",
-    }
+    },
+    CAPTIONS: {
+        "check_cap_no_end_dot": "Captions must end with a trailing dot.",
+    },
 }
 
 
@@ -176,7 +180,7 @@ class HtmlVerifier:
         # self._apply_assets_verification()
         self._apply_metadatatables_verification()
         self._apply_tables_verification()
-        # self._apply_captions_verification()
+        self._apply_captions_verification()
         self._apply_hyperlinks_verification()
         return self._messages
 
@@ -200,9 +204,8 @@ class HtmlVerifier:
                     self._atags.append(child)
                 elif child.name == "table":
                     self._tables.append(child)
-                    # TODO: add caption verification
-                    # elif beginning of the string matches "Figure <num>: text" or later maybe <caption>
-                    #   captions.append(child)
+                elif "dgt-mon-caption" in child.attrs.get("class", []):
+                    self._captions.append(child)
             self._mark_html_elements_recursively(child, lvl + 1)
 
     # headings ##########################################################################
@@ -357,8 +360,24 @@ class HtmlVerifier:
     def _apply_tables_verification(self):
         pass
 
-    # def _apply_captions_verification(self):
-    #     pass
+    # captions ##########################################################################
+
+    def _apply_captions_verification(self):
+        for caption in self._captions:
+            if self._check_cap_no_end_dot(caption):
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[CAPTIONS]["check_cap_no_end_dot"],
+                    recommend=f"Add a dot after '{caption.text}'.",
+                    elem=caption,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
+                    tags=[CAPTIONS],
+                )
+
+    def _check_cap_no_end_dot(self, tag: bs4.element.Tag):
+        return not tag.text.strip().endswith(".")
+
+    #####################################################################################
 
     def _apply_hyperlinks_verification(self):
         pass

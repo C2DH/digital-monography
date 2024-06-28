@@ -3,7 +3,7 @@ import pathlib
 from pprint import pprint
 
 from src.verifier.html_verifier import HtmlVerifier
-from src.verifier.html_verifier import MSG_PROBLEMS, HEADINGS
+from src.verifier.html_verifier import MSG_PROBLEMS, HEADINGS, CAPTIONS
 from src.verifier.main import _fromtimestamp
 
 
@@ -15,13 +15,17 @@ class TestFileBreakingVerificationRules:
         with open(cls.fp, "r") as f:
             cls.html = f.read()
         cls.warnings = collections.defaultdict(list)
-        verifer = HtmlVerifier()
+        cls.verifer = HtmlVerifier()
         timestamp = _fromtimestamp("2024-06-26T09:53:49.380Z")
-        result = verifer.verify(cls.html, cls.fp, timestamp)
+        result = cls.verifer.verify(cls.html, cls.fp, timestamp)
         cls.res_json = result.to_json()
         for war in cls.res_json:
             if HEADINGS in war["tags"]:
                 cls.warnings[HEADINGS].append(war)
+            if CAPTIONS in war["tags"]:
+                cls.warnings[CAPTIONS].append(war)
+
+    # headings ########################################################################
 
     def test_check_h_no_h1_at_start(self):
         warning = next(
@@ -144,13 +148,31 @@ class TestFileBreakingVerificationRules:
         assert warning
         assert warning["fn"] == "heading_verification.html"
 
+    # captions ########################################################################
+
+    def test_check_cap_no_end_dot(self):
+        warning = next(
+            w
+            for w in self.warnings[CAPTIONS]
+            if "Figure 2 second caption" in w["curr_elem"]
+            and w["problem"] == MSG_PROBLEMS[CAPTIONS]["check_cap_no_end_dot"]
+        )
+        assert warning
+        assert warning["fn"] == "heading_verification.html"
+
+    ###################################################################################
+
     def test_testing(self):
         print(self.html)
         # pprint(self.warnings[HEADINGS])
         print("-" * 50)
-        for w in self.warnings[HEADINGS]:
-            print("curr_elem \t", w["curr_elem"])
-            print("problem \t", w["problem"])
-            print("recommend \t", w["recommend"])
-            print("-" * 50)
+        for tag, warnings in self.warnings.items():
+            for w in warnings:
+                print("tags \t\t", w["tags"])
+                print("curr_elem \t", w["curr_elem"])
+                print("problem \t", w["problem"])
+                print("recommend \t", w["recommend"])
+                print("-" * 50)
+        print("=" * 50)
+        pprint(self.verifer._captions)
         assert 1 == 2

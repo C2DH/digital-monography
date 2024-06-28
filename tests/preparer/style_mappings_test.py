@@ -1,10 +1,6 @@
 import bs4
-import mammoth
 import pathlib
 
-# from src.preparer.citations import add_citations_and_bibliography
-# from src.preparer.html2md import convert_to_md
-# from src.preparer.md_extraction import BookMetadata
 from src.preparer.main import _convert_to_html
 from src.preparer.keys import KeyPath
 
