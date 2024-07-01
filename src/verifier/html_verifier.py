@@ -188,7 +188,6 @@ class HtmlVerifier:
         self._mark_html_elements_recursively(self.soup)
         self._apply_heading_verification()
         # self._apply_assets_verification()
-        self._apply_metadatatables_verification()
         self._apply_tables_verification()
         self._apply_captions_verification()
         self._apply_links_verification()
@@ -356,16 +355,12 @@ class HtmlVerifier:
         self._unique_headings.append(tag.text)
         return False
 
-    # anchor tags ######################################################################
-
-    def _apply_links_verification(self):
-        pass
+    # assets ###########################################################################
 
     # def _apply_assets_verification(self):
     #     pass
 
-    def _apply_metadatatables_verification(self):
-        pass
+    # tables ############################################################################
 
     def _apply_tables_verification(self):
         pass
@@ -490,7 +485,7 @@ class HtmlVerifier:
             if self._check_a_not_archived(href):
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[LINKS]["check_a_not_archived"],
-                    recommend=f"Go to 'https://wayback-api.archive.org/' and replace '{href}' in your manuscript with the archived link. This way you can capture a web page at a given time for use as a trusted citation in the future.",
+                    recommend=f"Go to 'https://wayback-api.archive.org/' and replace '{href}' in your manuscript with the archived link.",
                     elem=link,
                     fn=self._fp.name,
                     timestamp=self._timestamp,
