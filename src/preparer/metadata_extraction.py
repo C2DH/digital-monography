@@ -1,3 +1,4 @@
+import json
 import re
 import bs4
 import typing as t
@@ -31,6 +32,14 @@ def replace_assets_with_directives(
                 p = html_soup.new_tag("p")
                 p.string = "\n% :::{dgt-mon-asset} " + asset_meta.uuid
                 table.replace_with(p)
+                # table["hidden"] = "hidden"
                 if asset_meta.delete_prev and asset_meta.digital_fp:
                     prev_el.extract()
+
+    json_elem = html_soup.new_tag("script")
+    json_elem["type"] = "application/json"
+    json_elem["class"] = "dgt-mon-hidden-metadata"
+    json_elem["hidden"] = "hidden"
+    json_elem.string = json.dumps(metadata.assets_as_dicts(), default=str)
+    html_soup.append(json_elem)
     return html_soup
