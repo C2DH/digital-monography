@@ -1,10 +1,11 @@
-import datetime
-import pathlib
-import uuid
+import collections
 import bs4
-import re
+import datetime
 import logging
+import pathlib
+import re
 import typing as t
+import uuid
 
 
 try:
@@ -34,6 +35,8 @@ MSG_PROBLEMS = {
         "check_cap_no_number": "Second word in a caption must be a number.",
         "check_cap_no_bold": "Captions should start with bolded text.",
         "check_cap_no_end_dot": "Captions must end with a trailing dot.",
+        "check_cap_dupl_num": "A caption with repeated numbering was found.",
+        "check_cap_nonsequantial_num": "Caption numbering is not sequential.",
     },
 }
 
@@ -366,7 +369,17 @@ class HtmlVerifier:
     # captions ##########################################################################
 
     def _apply_captions_verification(self):
+        self._caption_numbers = collections.defaultdict(list)
         for caption in self._captions:
+            item = number = None
+            caption_match = re.match(r"(^\w+) (\d+):\s*", caption.text)
+            if caption_match is not None:
+                item = caption_match.group(1)
+                number = (
+                    int(caption_match.group(2))
+                    if caption_match.group(2).isdigit()
+                    else None
+                )
             if self._check_cap_no_colon(caption):
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[CAPTIONS]["check_cap_no_colon"],
@@ -403,6 +416,26 @@ class HtmlVerifier:
                     timestamp=self._timestamp,
                     tags=[CAPTIONS],
                 )
+            if self._check_cap_dupl_num(item, number):
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[CAPTIONS]["check_cap_dupl_num"],
+                    recommend=f"Check your captions for duplicated numbers. If you are using MS Word 'Insert Caption' option (as you should), you can update all dynamic fields in a document by pressing Ctrl+A and then F9.",
+                    elem=caption,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
+                    tags=[CAPTIONS],
+                )
+            if self._check_cap_nonsequantial_num(item, number):
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[CAPTIONS]["check_cap_nonsequantial_num"],
+                    recommend=f"Check if your caption numbering is in order. If you are using MS Word 'Insert Caption' option (as you should), you can update all dynamic fields in a document by pressing Ctrl+A and then F9.",
+                    elem=caption,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
+                    tags=[CAPTIONS],
+                )
+            if item is not None and number is not None:
+                self._caption_numbers[item].append(number)
 
     def _check_cap_no_colon(self, tag: bs4.element.Tag) -> bool:
         return ":" not in tag.text
@@ -419,6 +452,22 @@ class HtmlVerifier:
 
     def _check_cap_no_end_dot(self, tag: bs4.element.Tag) -> bool:
         return not tag.text.strip().endswith(".")
+
+    def _check_cap_dupl_num(
+        self, item: t.Optional[str], number: t.Optional[int]
+    ) -> bool:
+        if item is None or number is None:
+            return False
+        return number in self._caption_numbers[item]
+
+    def _check_cap_nonsequantial_num(
+        self, item: t.Optional[str], number: t.Optional[int]
+    ) -> bool:
+        if item is None or number is None:
+            return False
+        if len(self._caption_numbers[item]) >= 1:
+            return self._caption_numbers[item][-1] - 1 != number
+        return False
 
     #####################################################################################
 

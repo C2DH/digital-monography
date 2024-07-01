@@ -204,6 +204,31 @@ class TestFileBreakingVerificationRules:
         assert warning
         assert warning["fn"] == "heading_verification.html"
 
+    def test_check_cap_dupl_num(self):
+        warning = next(
+            w
+            for w in self.warnings[CAPTIONS]
+            if "Duplicated caption number" in w["curr_elem"]
+            and w["problem"] == MSG_PROBLEMS[CAPTIONS]["check_cap_dupl_num"]
+        )
+        assert warning
+
+    def test_check_cap_nonsequantial_num(self):
+        warning = next(
+            w
+            for w in self.warnings[CAPTIONS]
+            if "Almost correct caption" in w["curr_elem"]
+            and w["problem"] == MSG_PROBLEMS[CAPTIONS]["check_cap_nonsequantial_num"]
+        )
+        assert warning
+        warning = next(
+            w
+            for w in self.warnings[CAPTIONS]
+            if "Duplicated caption number" in w["curr_elem"]
+            and w["problem"] == MSG_PROBLEMS[CAPTIONS]["check_cap_nonsequantial_num"]
+        )
+        assert warning
+
     ###################################################################################
 
     def test_testing(self):
