@@ -15,10 +15,12 @@ except Exception as e:
 
 
 IS_HEADING_TITLE_CASED_REQUIRED = True
-HEADINGS = "headings"
-FOOTNOTES = "footnotes"
+ASSETS = "assets"
 CAPTIONS = "captions"
+FOOTNOTES = "footnotes"
+HEADINGS = "headings"
 LINKS = "links"
+TABLES = "tables"
 MSG_PROBLEMS = {
     HEADINGS: {
         "check_h_no_h1_at_start": "Every file should start with Heading of level 1.",
