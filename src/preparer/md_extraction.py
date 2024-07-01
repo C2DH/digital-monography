@@ -112,7 +112,9 @@ class AssetMetadata:
         return bool(self._datapoints)
 
     def to_dict(self) -> dict[str, t.Union[str, bool, pathlib.Path]]:
-        return {dp.key: dp.val for dp in self._datapoints}
+        res = {dp.key: dp.val for dp in self._datapoints}
+        res["uuid"] = self.uuid
+        return res
 
     def get(self, key: str, default: t.Any = None) -> t.Any:
         try:
