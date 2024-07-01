@@ -150,6 +150,16 @@ class TestFileBreakingVerificationRules:
 
     # captions ########################################################################
 
+    def test_check_cap_no_colon(self):
+        warning = next(
+            w
+            for w in self.warnings[CAPTIONS]
+            if "Figure 2 second caption" in w["curr_elem"]
+            and w["problem"] == MSG_PROBLEMS[CAPTIONS]["check_cap_no_colon"]
+        )
+        assert warning
+        assert warning["fn"] == "heading_verification.html"
+
     def test_check_cap_no_end_dot(self):
         warning = next(
             w

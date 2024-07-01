@@ -30,6 +30,7 @@ MSG_PROBLEMS = {
         "check_h_for_duplicates": "Duplicate headings found.",
     },
     CAPTIONS: {
+        "check_cap_no_colon": "Captions must contain a colon.",
         "check_cap_no_end_dot": "Captions must end with a trailing dot.",
     },
 }
@@ -364,6 +365,15 @@ class HtmlVerifier:
 
     def _apply_captions_verification(self):
         for caption in self._captions:
+            if self._check_cap_no_colon(caption):
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[CAPTIONS]["check_cap_no_colon"],
+                    recommend=f"Add ':' character, e.g. 'Figure 1: Text.'.",
+                    elem=caption,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
+                    tags=[CAPTIONS],
+                )
             if self._check_cap_no_end_dot(caption):
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[CAPTIONS]["check_cap_no_end_dot"],
@@ -373,6 +383,9 @@ class HtmlVerifier:
                     timestamp=self._timestamp,
                     tags=[CAPTIONS],
                 )
+
+    def _check_cap_no_colon(self, tag: bs4.element.Tag):
+        return ":" not in tag.text
 
     def _check_cap_no_end_dot(self, tag: bs4.element.Tag):
         return not tag.text.strip().endswith(".")
