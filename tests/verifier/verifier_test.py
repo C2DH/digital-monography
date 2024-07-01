@@ -154,17 +154,34 @@ class TestFileBreakingVerificationRules:
         warning = next(
             w
             for w in self.warnings[CAPTIONS]
-            if "Figure 2 second caption" in w["curr_elem"]
+            if "Figure VII second caption" in w["curr_elem"]
             and w["problem"] == MSG_PROBLEMS[CAPTIONS]["check_cap_no_colon"]
         )
         assert warning
         assert warning["fn"] == "heading_verification.html"
 
+    def test_check_cap_no_number(self):
+        is_incorrect_warning = None
+        is_correct_no_warning = None
+        for w in self.warnings[CAPTIONS]:
+            if (
+                "Figure VII second caption" in w["curr_elem"]
+                and w["problem"] == MSG_PROBLEMS[CAPTIONS]["check_cap_no_number"]
+            ):
+                is_incorrect_warning = w
+            if (
+                "Figure 3: Almost correct caption." in w["curr_elem"]
+                and w["problem"] == MSG_PROBLEMS[CAPTIONS]["check_cap_no_number"]
+            ):
+                is_correct_no_warning = w
+        assert is_incorrect_warning
+        assert is_correct_no_warning is None
+
     def test_check_cap_no_end_dot(self):
         warning = next(
             w
             for w in self.warnings[CAPTIONS]
-            if "Figure 2 second caption" in w["curr_elem"]
+            if "Figure VII second caption" in w["curr_elem"]
             and w["problem"] == MSG_PROBLEMS[CAPTIONS]["check_cap_no_end_dot"]
         )
         assert warning

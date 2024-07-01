@@ -31,6 +31,7 @@ MSG_PROBLEMS = {
     },
     CAPTIONS: {
         "check_cap_no_colon": "Captions must contain a colon.",
+        "check_cap_no_number": "Second word in a caption must be a number.",
         "check_cap_no_end_dot": "Captions must end with a trailing dot.",
     },
 }
@@ -374,6 +375,15 @@ class HtmlVerifier:
                     timestamp=self._timestamp,
                     tags=[CAPTIONS],
                 )
+            if self._check_cap_no_number(caption):
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[CAPTIONS]["check_cap_no_number"],
+                    recommend=f"Add a number, so that your caption has a structure similar to this example: 'Figure 1: Text.'.",
+                    elem=caption,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
+                    tags=[CAPTIONS],
+                )
             if self._check_cap_no_end_dot(caption):
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[CAPTIONS]["check_cap_no_end_dot"],
@@ -386,6 +396,10 @@ class HtmlVerifier:
 
     def _check_cap_no_colon(self, tag: bs4.element.Tag):
         return ":" not in tag.text
+
+    def _check_cap_no_number(self, tag: bs4.element.Tag):
+        # return not tag.text.split()[1].isdigit()
+        return re.match(r"^\w+ \d+", tag.text) is None
 
     def _check_cap_no_end_dot(self, tag: bs4.element.Tag):
         return not tag.text.strip().endswith(".")
