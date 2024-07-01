@@ -3,7 +3,7 @@ import pathlib
 from pprint import pprint
 
 from src.verifier.html_verifier import HtmlVerifier
-from src.verifier.html_verifier import MSG_PROBLEMS, HEADINGS, CAPTIONS
+from src.verifier.html_verifier import MSG_PROBLEMS, HEADINGS, CAPTIONS, LINKS
 from src.verifier.main import _fromtimestamp
 
 
@@ -24,6 +24,8 @@ class TestFileBreakingVerificationRules:
                 cls.warnings[HEADINGS].append(war)
             if CAPTIONS in war["tags"]:
                 cls.warnings[CAPTIONS].append(war)
+            if LINKS in war["tags"]:
+                cls.warnings[LINKS].append(war)
 
     # headings ########################################################################
 
@@ -231,6 +233,40 @@ class TestFileBreakingVerificationRules:
 
     ###################################################################################
 
+    def test_check_a_is_http(self):
+        is_incorrect_warning = None
+        is_correct_no_warning = None
+        for w in self.warnings[LINKS]:
+            if (
+                "http://example.com/" in w["curr_elem"]
+                and w["problem"] == MSG_PROBLEMS[LINKS]["check_a_is_http"]
+            ):
+                is_incorrect_warning = w
+            if (
+                "https://web.archive.org" in w["curr_elem"]
+                and w["problem"] == MSG_PROBLEMS[LINKS]["check_a_is_http"]
+            ):
+                is_correct_no_warning = w
+        assert is_incorrect_warning
+        assert is_correct_no_warning is None
+
+    def test_check_a_not_archived(self):
+        is_incorrect_warning = None
+        is_correct_no_warning = None
+        for w in self.warnings[LINKS]:
+            if (
+                "http://example.com/" in w["curr_elem"]
+                and w["problem"] == MSG_PROBLEMS[LINKS]["check_a_not_archived"]
+            ):
+                is_incorrect_warning = w
+            if (
+                "https://web.archive.org" in w["curr_elem"]
+                and w["problem"] == MSG_PROBLEMS[LINKS]["check_a_not_archived"]
+            ):
+                is_correct_no_warning = w
+        assert is_incorrect_warning
+        assert is_correct_no_warning is None
+
     def test_testing(self):
         print(self.html)
         # pprint(self.warnings[HEADINGS])
@@ -243,5 +279,5 @@ class TestFileBreakingVerificationRules:
                 print("recommend \t", w["recommend"])
                 print("-" * 50)
         print("=" * 50)
-        pprint(self.verifer._captions)
+        pprint(self.verifer._links)
         assert 1 == 2

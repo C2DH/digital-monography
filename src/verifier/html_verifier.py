@@ -18,6 +18,7 @@ IS_HEADING_TITLE_CASED_REQUIRED = True
 HEADINGS = "headings"
 FOOTNOTES = "footnotes"
 CAPTIONS = "captions"
+LINKS = "links"
 MSG_PROBLEMS = {
     HEADINGS: {
         "check_h_no_h1_at_start": "Every file should start with Heading of level 1.",
@@ -37,6 +38,10 @@ MSG_PROBLEMS = {
         "check_cap_no_end_dot": "Captions must end with a trailing dot.",
         "check_cap_dupl_num": "A caption with repeated numbering was found.",
         "check_cap_nonsequantial_num": "Caption numbering is not sequential.",
+    },
+    LINKS: {
+        "check_a_is_http": "Links should point to websites using secure https over http.",
+        "check_a_not_archived": "Links should point to websites archived using the Internet Archive.",
     },
 }
 
@@ -159,7 +164,7 @@ class VerifierMessages:
 
 class HtmlVerifier:
     def __init__(self) -> None:
-        self._atags = []
+        self._links = []
         self._captions = []
         self._headings = []
         self._headings_lvls = []
@@ -182,12 +187,11 @@ class HtmlVerifier:
         print(self.soup)
         self._mark_html_elements_recursively(self.soup)
         self._apply_heading_verification()
-        self._apply_atags_verification()
         # self._apply_assets_verification()
         self._apply_metadatatables_verification()
         self._apply_tables_verification()
         self._apply_captions_verification()
-        self._apply_hyperlinks_verification()
+        self._apply_links_verification()
         return self._messages
 
     def _mark_html_elements_recursively(self, node: bs4.element.PageElement, lvl=0):
@@ -207,7 +211,7 @@ class HtmlVerifier:
                     self._headings.append(child)
                     self._headings_lvls.append(int(re.findall(r"\d+", child.name)[0]))
                 elif child.name == "a":
-                    self._atags.append(child)
+                    self._links.append(child)
                 elif child.name == "table":
                     self._tables.append(child)
                 elif "dgt-mon-caption" in child.attrs.get("class", []):
@@ -354,7 +358,7 @@ class HtmlVerifier:
 
     # anchor tags ######################################################################
 
-    def _apply_atags_verification(self):
+    def _apply_links_verification(self):
         pass
 
     # def _apply_assets_verification(self):
@@ -469,7 +473,36 @@ class HtmlVerifier:
             return self._caption_numbers[item][-1] - 1 != number
         return False
 
-    #####################################################################################
+    # links #############################################################################
 
-    def _apply_hyperlinks_verification(self):
-        pass
+    def _apply_links_verification(self):
+        for link in self._links:
+            href = link.get("href", "")
+            if self._check_a_is_http(href):
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[LINKS]["check_a_is_http"],
+                    recommend=f"If possible, change '{href}' to '{href.replace('http:', 'https:', 1)}'.",
+                    elem=link,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
+                    tags=[LINKS],
+                )
+            if self._check_a_not_archived(href):
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[LINKS]["check_a_not_archived"],
+                    recommend=f"Go to 'https://wayback-api.archive.org/' and replace '{href}' in your manuscript with the archived link. This way you can capture a web page at a given time for use as a trusted citation in the future.",
+                    elem=link,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
+                    tags=[LINKS],
+                )
+
+    def _check_a_is_http(self, href: str) -> bool:
+        return href.startswith("http://")
+
+    def _check_a_not_archived(self, href: str) -> bool:
+        return href.startswith("http") and not href.startswith(
+            "https://web.archive.org/"
+        )
+
+    #####################################################################################
