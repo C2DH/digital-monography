@@ -32,6 +32,7 @@ MSG_PROBLEMS = {
     CAPTIONS: {
         "check_cap_no_colon": "Captions must contain a colon.",
         "check_cap_no_number": "Second word in a caption must be a number.",
+        "check_cap_no_bold": "Captions should start with bolded text.",
         "check_cap_no_end_dot": "Captions must end with a trailing dot.",
     },
 }
@@ -308,7 +309,7 @@ class HtmlVerifier:
                     tags=[HEADINGS],
                 )
 
-    def _check_h_no_h1_at_start(self, tag: bs4.element.Tag):
+    def _check_h_no_h1_at_start(self, tag: bs4.element.Tag) -> bool:
         try:
             is_heading = re.match(r"^h[0-9]*$", tag.name)
             tag_nums = re.findall(r"\d+", tag.name)
@@ -319,13 +320,13 @@ class HtmlVerifier:
         else:
             return True
 
-    def _check_h_no_title_case(self, tag: bs4.element.Tag):
+    def _check_h_no_title_case(self, tag: bs4.element.Tag) -> bool:
         return tag.text != tag.text.title() and IS_HEADING_TITLE_CASED_REQUIRED
 
-    def _check_h_with_trailing_dot(self, tag: bs4.element.Tag):
+    def _check_h_with_trailing_dot(self, tag: bs4.element.Tag) -> bool:
         return tag.text.strip().endswith(".")
 
-    def _check_h_with_footnotes(self, tag: bs4.element.Tag):
+    def _check_h_with_footnotes(self, tag: bs4.element.Tag) -> bool:
         """
         Check for an anchor tag in a superscript tag. E.g.:
         <h1>No Footnotes In Headings<sup><a href="#footnote-1" id="footnote-ref-1">[1]</a></sup></h1>
@@ -336,13 +337,13 @@ class HtmlVerifier:
                     return True
         return False
 
-    def _check_h_if_gte_6(self, tag: bs4.element.Tag):
+    def _check_h_if_gte_6(self, tag: bs4.element.Tag) -> bool:
         nums = re.findall(r"\d+", tag.name)
         if nums and int(nums[0]) >= 6:
             return True
         return False
 
-    def _check_h_for_duplicates(self, tag: bs4.element.Tag):
+    def _check_h_for_duplicates(self, tag: bs4.element.Tag) -> bool:
         if tag.text in self._unique_headings:
             return True
         self._unique_headings.append(tag.text)
@@ -384,6 +385,15 @@ class HtmlVerifier:
                     timestamp=self._timestamp,
                     tags=[CAPTIONS],
                 )
+            if self._check_cap_no_bold(caption):
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[CAPTIONS]["check_cap_no_bold"],
+                    recommend=f"For example, if your caption is 'Figure 1: Text.' bold the 'Figure 1:' (including a colon).",
+                    elem=caption,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
+                    tags=[CAPTIONS],
+                )
             if self._check_cap_no_end_dot(caption):
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[CAPTIONS]["check_cap_no_end_dot"],
@@ -394,14 +404,20 @@ class HtmlVerifier:
                     tags=[CAPTIONS],
                 )
 
-    def _check_cap_no_colon(self, tag: bs4.element.Tag):
+    def _check_cap_no_colon(self, tag: bs4.element.Tag) -> bool:
         return ":" not in tag.text
 
-    def _check_cap_no_number(self, tag: bs4.element.Tag):
-        # return not tag.text.split()[1].isdigit()
+    def _check_cap_no_number(self, tag: bs4.element.Tag) -> bool:
         return re.match(r"^\w+ \d+", tag.text) is None
 
-    def _check_cap_no_end_dot(self, tag: bs4.element.Tag):
+    def _check_cap_no_bold(self, tag: bs4.element.Tag) -> bool:
+        try:
+            bolded = tag.find_all("strong")[0]
+            return re.match(r"^\w+ \d+:", bolded.text) is None
+        except IndexError:
+            return True
+
+    def _check_cap_no_end_dot(self, tag: bs4.element.Tag) -> bool:
         return not tag.text.strip().endswith(".")
 
     #####################################################################################
