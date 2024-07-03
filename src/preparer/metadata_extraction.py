@@ -32,7 +32,6 @@ def replace_assets_with_directives(
                 p = html_soup.new_tag("p")
                 p.string = "\n% :::{dgt-mon-asset} " + asset_meta.uuid
                 table.replace_with(p)
-                # table["hidden"] = "hidden"
                 if asset_meta.delete_prev and asset_meta.digital_fp:
                     prev_el.extract()
 

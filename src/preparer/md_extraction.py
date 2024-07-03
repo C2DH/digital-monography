@@ -5,33 +5,31 @@ import typing as t
 import uuid
 
 
-# Only the first item is the final key,
-# the others are valid but will be mapped to the first item
-
-# TODO: isn't source a separate field?
-METADATA_MAPPING_PAPER_SRC = ["papersrc", "papersource", "src", "source"]
-METADATA_MAPPING_DIGITAL_SRC = ["digitalsrc", "digitalsource"]
-METADATA_MAPPING_DEL_PREV = [
-    "deleteprev",
-    "deleteprevious",
-    "removeprev",
-    "removeprevious",
-]
-METADATA_MAPPING_TAKEN_FROM = ["from", "takenfrom"]
-# Type cast values based on the keys
-KEY_FOR_BOOLEANS = [*METADATA_MAPPING_DEL_PREV]
-# To normalize table keys create a mapping {"oldkey": "normalizedkey"}
-METADATA_MAPPING = {}
-for mapping in [
-    METADATA_MAPPING_PAPER_SRC,
-    METADATA_MAPPING_DIGITAL_SRC,
-    METADATA_MAPPING_DEL_PREV,
-    METADATA_MAPPING_TAKEN_FROM,
-]:
-    METADATA_MAPPING.update({old: mapping[0] for old in mapping[1:]})
+try:
+    from .constants import (
+        METADATA_FIELDS,
+        FIELD_DIGITAL_SOURCE,
+        FIELD_PAPER_SOURCE,
+        FIELD_DELETE_PREVIOUS,
+    )
+except Exception as e:
+    from constants import (
+        METADATA_FIELDS,
+        FIELD_DIGITAL_SOURCE,
+        FIELD_PAPER_SOURCE,
+        FIELD_DELETE_PREVIOUS,
+    )
 
 
-type AcceptedValues = t.Union[str, bool, pathlib.Path]  # TODO: upgrade to Python 3.12
+type AcceptedValues = t.Union[str, bool, pathlib.Path]
+
+
+class FieldTypeRecord(t.TypedDict):
+    key: str
+    is_bool: bool
+    is_required: bool
+    aliases: list[str]
+    desc: str
 
 
 @dataclasses.dataclass
@@ -40,10 +38,12 @@ class AssetDatapoint:
     _val: str
     key: str = dataclasses.field(init=False)
     val: AcceptedValues = dataclasses.field(init=False)
+    field: t.Optional[FieldTypeRecord] = dataclasses.field(init=False)
 
     def __post_init__(self):
         self.key = self._normalize_key(self._key)
-        if self.key in KEY_FOR_BOOLEANS:
+        self.field = next((f for f in METADATA_FIELDS if f["key"] == self.key), None)
+        if self.field is not None and self.field["is_bool"]:
             self.val = self._val_to_bool(self._val)
         elif self._looks_like_a_potential_filepath(self._val):
             fp = pathlib.Path(self._val)
@@ -63,8 +63,9 @@ class AssetDatapoint:
         while " " in s:
             s = s.replace(" ", "")
         s = s.lower().strip().replace("_", "").replace("-", "").replace("#", "")
-        if s in METADATA_MAPPING:
-            return METADATA_MAPPING[s]
+        for field in METADATA_FIELDS:
+            if s in field["aliases"]:
+                return field["key"]
         return s
 
     def _val_to_bool(self, _v: str) -> bool:
@@ -124,12 +125,12 @@ class AssetMetadata:
 
     def add(self, key: str, val: str) -> None:
         datapoint = AssetDatapoint(_key=key, _val=val)
-        if datapoint.key in METADATA_MAPPING_DEL_PREV:
+        if datapoint.key == FIELD_DELETE_PREVIOUS:
             self.delete_prev = datapoint.val
         elif isinstance(datapoint.val, pathlib.Path):
-            if datapoint.key in METADATA_MAPPING_PAPER_SRC:
+            if datapoint.key == FIELD_PAPER_SOURCE:
                 self.paper_fp = datapoint.val
-            elif datapoint.key in METADATA_MAPPING_DIGITAL_SRC:
+            elif datapoint.key == FIELD_DIGITAL_SOURCE:
                 self.digital_fp = datapoint.val
         self._datapoints.append(datapoint)
         self.__dict__[datapoint.key] = datapoint.val
