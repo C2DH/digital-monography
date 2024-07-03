@@ -7,6 +7,8 @@ import uuid
 
 # Only the first item is the final key,
 # the others are valid but will be mapped to the first item
+
+# TODO: isn't source a separate field?
 METADATA_MAPPING_PAPER_SRC = ["papersrc", "papersource", "src", "source"]
 METADATA_MAPPING_DIGITAL_SRC = ["digitalsrc", "digitalsource"]
 METADATA_MAPPING_DEL_PREV = [
@@ -23,14 +25,13 @@ METADATA_MAPPING = {}
 for mapping in [
     METADATA_MAPPING_PAPER_SRC,
     METADATA_MAPPING_DIGITAL_SRC,
-    # METADATA_MAPPING_GENERAL_SRC,
     METADATA_MAPPING_DEL_PREV,
     METADATA_MAPPING_TAKEN_FROM,
 ]:
     METADATA_MAPPING.update({old: mapping[0] for old in mapping[1:]})
 
 
-# type AcceptedValues = t.Union[str, bool, pathlib.Path] # TODO: upgrade to Python 3.12
+type AcceptedValues = t.Union[str, bool, pathlib.Path]  # TODO: upgrade to Python 3.12
 
 
 @dataclasses.dataclass
@@ -38,28 +39,27 @@ class AssetDatapoint:
     _key: str
     _val: str
     key: str = dataclasses.field(init=False)
-    val: t.Union[str, bool, pathlib.Path] = dataclasses.field(init=False)
+    val: AcceptedValues = dataclasses.field(init=False)
 
     def __post_init__(self):
-        self.key = self._normalize_key()
+        self.key = self._normalize_key(self._key)
         if self.key in KEY_FOR_BOOLEANS:
-            self.val = self._val_to_bool()
-        elif self._looks_like_a_potential_filepath():
+            self.val = self._val_to_bool(self._val)
+        elif self._looks_like_a_potential_filepath(self._val):
             fp = pathlib.Path(self._val)
             self.val = fp
         # TODO: consider adding an url handler
         else:
             self.val = self._val.strip()
 
-    def _looks_like_a_potential_filepath(self):
+    def _looks_like_a_potential_filepath(self, v: str) -> bool:
         # TODO: after clarity on the asset storage, change this naive
         # logic into `if fp.exists() and not fp.is_dir()` or similar
-        if self._val.startswith("./"):
+        if v.startswith("./"):
             return True
         return False
 
-    def _normalize_key(self) -> str:
-        s = self._key
+    def _normalize_key(self, s: str) -> str:
         while " " in s:
             s = s.replace(" ", "")
         s = s.lower().strip().replace("_", "").replace("-", "").replace("#", "")
@@ -67,8 +67,8 @@ class AssetDatapoint:
             return METADATA_MAPPING[s]
         return s
 
-    def _val_to_bool(self) -> bool:
-        v = self._val.strip().lower()
+    def _val_to_bool(self, _v: str) -> bool:
+        v = _v.strip().lower()
         if v in [
             "0",
             "no",
@@ -105,13 +105,13 @@ class AssetMetadata:
         self.digital_fp = None
         self.delete_prev = False
 
-    def __getitem__(self, key: str) -> t.Union[str, bool, pathlib.Path]:
+    def __getitem__(self, key: str) -> AcceptedValues:
         return self.__dict__[key]
 
     def __nonzero__(self):
         return bool(self._datapoints)
 
-    def to_dict(self) -> dict[str, t.Union[str, bool, pathlib.Path]]:
+    def to_dict(self) -> dict[str, AcceptedValues]:
         res = {dp.key: dp.val for dp in self._datapoints}
         res["uuid"] = self.uuid
         return res
@@ -164,7 +164,7 @@ class BookMetadata:
         self._metadata[asset_meta.uuid] = asset_meta
         self.assets.append(asset_meta)
 
-    def assets_as_dicts(self) -> list[dict[str, t.Union[str, bool, pathlib.Path]]]:
+    def assets_as_dicts(self) -> list[dict[str, AcceptedValues]]:
         return [am.to_dict() for am in self.assets]
 
     def __str__(self) -> str:
