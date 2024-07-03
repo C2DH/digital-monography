@@ -16,6 +16,7 @@ login:
 	docker login --username c2dhadmin
 
 preparer/build:
+	cp src/_common/constants.py src/preparer/constants.py
 	docker build -t dgtmon-dev-preparer src/preparer
 
 preparer/tag:
@@ -27,6 +28,7 @@ preparer/push:
 	docker push ${DOCKER_HUB}/dgtmon-dev-preparer:${PREPARER_STABLE_V}
 
 builder/build:
+	cp src/_common/constants.py src/builder/constants.py
 	docker build -t dgtmon-dev-builder src/builder
 
 builder/tag:
@@ -38,6 +40,7 @@ builder/push:
 	docker push ${DOCKER_HUB}/dgtmon-dev-builder:${BUILDER_STABLE_V}
 
 github/build:
+	cp src/_common/constants.py src/github/constants.py
 	docker build -t dgtmon-dev-github src/github
 
 github/tag:
@@ -49,6 +52,7 @@ github/push:
 	docker push ${DOCKER_HUB}/dgtmon-dev-github:${GITHUB_STABLE_V}
 
 verifier/build:
+	cp src/_common/constants.py src/verifier/constants.py
 	docker build -t dgtmon-dev-verifier src/verifier
 
 verifier/tag:

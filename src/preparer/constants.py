@@ -1,3 +1,11 @@
+# ===== IMPORTANT =====
+# Remember, the only source of truth for constants are ones defined in
+# `src/_common/constants.py`. Constants defined in other directories in
+# the src/ folder should be replaced with `src/_common/constants.py` before
+# building the image. We advise that you always build the containers
+# using Makefile commands, as the copy command is already included.
+# ======================
+
 import os
 
 IS_DEBUG = bool(int(os.environ.get("DGTMON_DEBUG", 0)))
@@ -9,6 +17,8 @@ ARCHIVE_APKG_ALL = "cpy-dgtmon-dev-archive-apkg-all"
 IR_APKG_HTML_BUCKET_NAME = "cpy-dgtmon-dev-ir-apkg-html"
 IR_APKG_MD_BUCKET_NAME = "cpy-dgtmon-dev-ir-apkg-md"
 STATICWS_WIP_BUCKET_NAME = "cpy-dgtmon-dev-staticws-wip"
+VERIFIER_MSGS = "cpy-dgtmon-dev-verifier-msgs"
+GITHUB_SECRET_ID = "dgtmon-dev-github-api-secrets"
 
 FIELD_DIGITAL_SOURCE = "digitalsrc"
 FIELD_PAPER_SOURCE = "papersrc"
