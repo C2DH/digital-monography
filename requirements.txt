@@ -4,3 +4,6 @@
 -r src/verifier/requirements.txt
 
 pytest==7.4.*
+# TODO: consider adding linting and type checking
+# flake8==7.0.*
+# mypy==1.9.*
