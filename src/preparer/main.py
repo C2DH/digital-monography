@@ -20,6 +20,7 @@ try:
     from citations import add_citations_and_bibliography
     from md_extraction import BookMetadata
     from metadata_extraction import replace_assets_with_directives
+    from remove_empty_tables import remove_empty_tables
     from html2md import convert_to_md
     from keys import KeyPath
     from fakers import Faker
@@ -33,6 +34,7 @@ except ModuleNotFoundError as e:
     from src.preparer.citations import add_citations_and_bibliography
     from src.preparer.md_extraction import BookMetadata
     from src.preparer.metadata_extraction import replace_assets_with_directives
+    from src.preparer.remove_empty_tables import remove_empty_tables
     from src.preparer.html2md import convert_to_md
     from src.preparer.keys import KeyPath
     from src.preparer.fakers import Faker
@@ -73,6 +75,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     metadata = _get_book_metadata()
     html_soup = _add_citations_and_bibliography(html_soup)
     html_soup = _replace_assets_with_directives(html_soup, metadata)
+    html_soup = _remove_empty_tables(html_soup)
     html_soup_str = str(html_soup)
     _write_processed_html_to_efs(html_soup_str, key)
     _put_html_to_s3(html_soup_str, key)
@@ -148,7 +151,7 @@ def _get_html_soup(html: str) -> bs4.BeautifulSoup:
         raise
 
 
-def _get_book_metadata():
+def _get_book_metadata() -> BookMetadata:
     try:
         return BookMetadata()
     except Exception as e:
@@ -156,7 +159,7 @@ def _get_book_metadata():
         raise
 
 
-def _add_citations_and_bibliography(html_soup: bs4.BeautifulSoup):
+def _add_citations_and_bibliography(html_soup: bs4.BeautifulSoup) -> bs4.BeautifulSoup:
     try:
         return add_citations_and_bibliography(html_soup)
     except Exception as e:
@@ -168,7 +171,7 @@ def _add_citations_and_bibliography(html_soup: bs4.BeautifulSoup):
 
 def _replace_assets_with_directives(
     html_soup: bs4.BeautifulSoup, metadata: BookMetadata
-):
+) -> bs4.BeautifulSoup:
     try:
         return replace_assets_with_directives(html_soup, metadata)
     except Exception as e:
@@ -176,7 +179,15 @@ def _replace_assets_with_directives(
         raise
 
 
-def _convert_to_md(html_soup: bs4.BeautifulSoup, metadata: BookMetadata):
+def _remove_empty_tables(html_soup: bs4.BeautifulSoup) -> bs4.BeautifulSoup:
+    try:
+        return remove_empty_tables(html_soup)
+    except Exception as e:
+        logger.exception(f"Removing empty tables failed. Error: {repr(e)}")
+        raise
+
+
+def _convert_to_md(html_soup: bs4.BeautifulSoup, metadata: BookMetadata) -> str:
     try:
         return convert_to_md(html_soup, metadata)
     except Exception as e:

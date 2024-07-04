@@ -30,6 +30,7 @@ def replace_assets_with_directives(
                 # comment = bs4.Comment("% :::{dgt-mon-asset} " + asset_meta.uuid)
                 # table.replace_with(comment)
                 p = html_soup.new_tag("p")
+                p["class"] = "dgt-mon-asset-comment"
                 p.string = "\n% :::{dgt-mon-asset} " + asset_meta.uuid
                 table.replace_with(p)
                 if asset_meta.delete_prev and asset_meta.digital_fp:
