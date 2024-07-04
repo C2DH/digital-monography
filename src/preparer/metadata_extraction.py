@@ -26,15 +26,15 @@ def replace_assets_with_directives(
                     asset_meta.add(key, val)
             if asset_meta:
                 metadata.add_asset_metadata(asset_meta)
-                prev_el = table.previous_sibling
+                if asset_meta.delete_prev and asset_meta.digital_fp:
+                    prev_el = _find_described_object(table)
+                    prev_el.extract()
                 # comment = bs4.Comment("% :::{dgt-mon-asset} " + asset_meta.uuid)
                 # table.replace_with(comment)
                 p = html_soup.new_tag("p")
                 p["class"] = "dgt-mon-asset-comment"
                 p.string = "\n% :::{dgt-mon-asset} " + asset_meta.uuid
                 table.replace_with(p)
-                if asset_meta.delete_prev and asset_meta.digital_fp:
-                    prev_el.extract()
 
     json_elem = html_soup.new_tag("script")
     json_elem["type"] = "application/json"
@@ -43,3 +43,14 @@ def replace_assets_with_directives(
     json_elem.string = json.dumps(metadata.assets_as_dicts(), default=str)
     html_soup.append(json_elem)
     return html_soup
+
+
+def _find_described_object(
+    metadata_table: bs4.element.PageElement,
+) -> t.Optional[bs4.element.Tag]:
+    prev = metadata_table.previous_sibling
+    while type(prev) != bs4.element.Tag:
+        if not hasattr(prev, "previous_sibling"):
+            return None
+        prev = prev.previous_sibling
+    return prev
