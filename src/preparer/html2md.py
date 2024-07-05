@@ -141,7 +141,11 @@ class MystMdConverter(markdownify.MarkdownConverter):
             return "\n"
         return super().convert_script(el, text, convert_as_inline)
 
-    # def convert_table(self, el, text, convert_as_inline):
+    def convert_table(self, el, text, convert_as_inline):
+        if el.get("hidden"):
+            return ""
+        return super().convert_table(el, text, convert_as_inline)
+
     #     if "##" in text:
     #         asset_meta = AssetMetadata()
     #         key, val = "", ""
