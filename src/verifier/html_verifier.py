@@ -2,6 +2,7 @@ import collections
 import bs4
 import datetime
 import logging
+import json
 import pathlib
 import re
 import typing as t
@@ -9,9 +10,19 @@ import uuid
 
 
 try:
-    from .constants import IS_DEBUG
+    from .constants import (
+        IS_DEBUG,
+        METADATA_FIELDS_KEYS,
+        CLS_METADATA_TABLE,
+        CLS_METADATA_TABLE_JSONDATA,
+    )
 except Exception as e:
-    from constants import IS_DEBUG
+    from src.verifier.constants import (
+        IS_DEBUG,
+        METADATA_FIELDS_KEYS,
+        CLS_METADATA_TABLE,
+        CLS_METADATA_TABLE_JSONDATA,
+    )
 
 
 IS_HEADING_TITLE_CASED_REQUIRED = True
@@ -21,6 +32,7 @@ FOOTNOTES = "footnotes"
 HEADINGS = "headings"
 LINKS = "links"
 TABLES = "tables"
+METADATA_TABLES = "metadata_tables"
 MSG_PROBLEMS = {
     HEADINGS: {
         "check_h_no_h1_at_start": "Every file should start with Heading of level 1.",
@@ -44,6 +56,14 @@ MSG_PROBLEMS = {
     LINKS: {
         "check_a_is_http": "Links should point to websites using secure https over http.",
         "check_a_not_archived": "Links should point to websites archived using the Internet Archive.",
+    },
+    TABLES: {
+        "check_tbl_unrecognized": "Fields used in metadata tables can only be selected from the allowed list.",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
     },
 }
 
@@ -75,7 +95,9 @@ class VerifierMessage:
         self,
         problem: str,
         recommend: str,
+        prev_elem: t.Optional[bs4.element.Tag],
         elem: bs4.element.Tag,
+        next_elem: t.Optional[bs4.element.Tag],
         timestamp: datetime.datetime,
         fn: str,
         tags: list[str],
@@ -83,18 +105,17 @@ class VerifierMessage:
         self.id = uuid.uuid4().hex[:8]
         self.problem = problem
         self.recommend = recommend
-        self.prev_elem = self._find_prev_elem(elem)
+        self.prev_elem = prev_elem if prev_elem else self.find_prev_elem(elem)
         self.curr_elem = elem
-        self.next_elem = self._find_next_elem(elem)
+        self.next_elem = next_elem if next_elem else self.find_next_elem(elem)
         self.timestamp = timestamp
         self.fn = fn
         self.tags = tags
         self.line = elem.sourceline
         self.pos = elem.sourcepos
 
-    def _find_prev_elem(
-        self, elem: bs4.element.Tag
-    ) -> t.Optional[bs4.element.PageElement]:
+    @staticmethod
+    def find_prev_elem(elem: bs4.element.Tag) -> t.Optional[bs4.element.PageElement]:
         """
         Find previous_sibling, ommiting empty ones.
         """
@@ -106,9 +127,8 @@ class VerifierMessage:
                 break
         return prev
 
-    def _find_next_elem(
-        self, elem: bs4.element.Tag
-    ) -> t.Optional[bs4.element.PageElement]:
+    @staticmethod
+    def find_next_elem(elem: bs4.element.Tag) -> t.Optional[bs4.element.PageElement]:
         """
         Find next_sibling, ommiting empty ones.
         """
@@ -148,12 +168,16 @@ class VerifierMessages:
         fn: str,
         timestamp: datetime.datetime,
         tags: list[str],
+        prev_elem: t.Optional[bs4.element.Tag] = None,
+        next_elem: t.Optional[bs4.element.Tag] = None,
     ) -> None:
         self._messages.append(
             VerifierMessage(
                 problem=problem,
                 recommend=recommend,
+                prev_elem=prev_elem,
                 elem=elem,
+                next_elem=next_elem,
                 timestamp=timestamp,
                 fn=fn,
                 tags=tags,
@@ -171,6 +195,9 @@ class HtmlVerifier:
         self._headings = []
         self._headings_lvls = []
         self._tables = []
+        self._metadata_tables = []
+        self._metadata_tables_records = []
+        self._comments = {}
         self._messages = VerifierMessages()
 
     def summary(self):
@@ -189,13 +216,16 @@ class HtmlVerifier:
         print(self.soup)
         self._mark_html_elements_recursively(self.soup)
         self._apply_heading_verification()
-        # self._apply_assets_verification()
-        self._apply_tables_verification()
         self._apply_captions_verification()
         self._apply_links_verification()
+        # self._apply_assets_verification()
+        self._apply_tables_verification()
+        self._apply_metadatatables_verification()
         return self._messages
 
-    def _mark_html_elements_recursively(self, node: bs4.element.PageElement, lvl=0):
+    def _mark_html_elements_recursively(
+        self, node: bs4.element.PageElement, lvl=0
+    ) -> None:
         """
         Before applying the verification, this function traverses the tree and
         puts relevant bs4.Tag elements inside respective lists
@@ -213,15 +243,24 @@ class HtmlVerifier:
                     self._headings_lvls.append(int(re.findall(r"\d+", child.name)[0]))
                 elif child.name == "a":
                     self._links.append(child)
-                elif child.name == "table":
-                    self._tables.append(child)
                 elif "dgt-mon-caption" in child.attrs.get("class", []):
                     self._captions.append(child)
+                elif child.name == "table" and CLS_METADATA_TABLE in child.attrs.get(
+                    "class", []
+                ):
+                    self._metadata_tables.append(child)
+                elif child.name == "table":
+                    self._tables.append(child)
+                elif (
+                    child.name == "script"
+                    and CLS_METADATA_TABLE_JSONDATA in child.attrs.get("class", [])
+                ):
+                    self._metadata_tables_records += json.loads(child.text)
             self._mark_html_elements_recursively(child, lvl + 1)
 
     # headings ##########################################################################
 
-    def _apply_heading_verification(self):
+    def _apply_heading_verification(self) -> None:
         self._unique_headings = []
         self._h_stack = []
         if self._check_h_no_h1_at_start(self._first_tag):
@@ -357,19 +396,9 @@ class HtmlVerifier:
         self._unique_headings.append(tag.text)
         return False
 
-    # assets ###########################################################################
-
-    # def _apply_assets_verification(self):
-    #     pass
-
-    # tables ############################################################################
-
-    def _apply_tables_verification(self):
-        pass
-
     # captions ##########################################################################
 
-    def _apply_captions_verification(self):
+    def _apply_captions_verification(self) -> None:
         self._caption_numbers = collections.defaultdict(list)
         for caption in self._captions:
             item = number = None
@@ -472,7 +501,7 @@ class HtmlVerifier:
 
     # links #############################################################################
 
-    def _apply_links_verification(self):
+    def _apply_links_verification(self) -> None:
         for link in self._links:
             href = link.get("href", "")
             if self._check_a_is_http(href):
@@ -502,4 +531,61 @@ class HtmlVerifier:
             "https://web.archive.org/"
         )
 
+    # assets ###########################################################################
+
+    # def _apply_assets_verification(self):
+    #     pass
+
+    # tables ############################################################################
+
+    def _apply_tables_verification(self):
+        pass
+
+    # metadata tables ###################################################################
+
+    def _apply_metadatatables_verification(self) -> None:
+        for elem in self._metadata_tables:
+            uuid = elem.get("id")
+            raw_data = next(
+                mdtbl
+                for mdtbl in self._metadata_tables_records
+                if mdtbl["uuid"] == uuid
+            )
+            for key, val in raw_data.items():
+                if self._check_tbl_unrecognized(key):
+                    self._messages.add_msg(
+                        problem=MSG_PROBLEMS[TABLES]["check_tbl_unrecognized"],
+                        recommend=f"Field {key} does not match any of the recognized names: {METADATA_FIELDS_KEYS}.",
+                        elem=elem,
+                        fn=self._fp.name,
+                        timestamp=self._timestamp,
+                        tags=[TABLES, METADATA_TABLES],
+                    )
+                # if self._check_tbl_
+
+    def _check_tbl_unrecognized(self, key: str) -> bool:
+        return key not in METADATA_FIELDS_KEYS
+
     #####################################################################################
+
+
+# Traceback (most recent call last):
+#   File "/home/ubuntu/Projects/digital-monography/scripts/prepare_and_build.py", line 83, in <module>
+#     listen_for_updates(book_path, cpy_to_tmp_and_call_handler)
+#   File "/home/ubuntu/Projects/digital-monography/scripts/sync.py", line 31, in listen_for_updates
+#     func_on_update(fp, key)
+#   File "/home/ubuntu/Projects/digital-monography/scripts/prepare_and_build.py", line 73, in cpy_to_tmp_and_call_handler
+#     verifier_handler(event, context)
+#   File "/home/ubuntu/Projects/digital-monography/src/verifier/main.py", line 57, in lambda_handler
+#     result = verifer.verify(
+#              ^^^^^^^^^^^^^^^
+#   File "/home/ubuntu/Projects/digital-monography/src/verifier/html_verifier.py", line 208, in verify
+#     self._apply_metadatatables_verification()
+#   File "/home/ubuntu/Projects/digital-monography/src/verifier/html_verifier.py", line 535, in _apply_metadatatables_verification
+#     elem = self._comments[mdtbl["uuid"]]
+#            ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+# KeyError: '277fa15f-35bc-4089-b271-367f6570bd09'
+
+# % :::{dgt-mon-asset} 277fa15f-35bc-4089-b271-367f6570bd09</p>
+# <script class=CLS_METADATA_TABLE_JSONDATA hidden="hidden" type="application/json">[{"digitalsrc": "assets/tiny-picture.png", "papersrc": "assets/tiny-picture.png", "alttext": "Small red square", "uuid": "277fa15f-35bc-4089-b271-367f6570bd09"}]</script>
+# <p>The file should always start with Heading 1.</p><h2>Oh no, the first Heading is level 2. Also, dot at the end.</h2><h4>Heading 4. Where is level 3?</h4><h6>Heading 6. Where 5?</h6><p>Content.</p><p>:::{important}   <br/>Admonition example.<br/>:::</p><h3>Heading 3. No Footnotes In Headings<sup><a href="#footnote-1" id="footnote-ref-1">[1]</a></sup></h3><p class="dgt-mon-caption"><strong>Figure 1:</strong> Correct caption.</p><p class="dgt-mon-caption">Figure 3: Almost correct caption.</p><p class="dgt-mon-caption">Figure VII second caption</p><p class="dgt-mon-caption">Figure 3: Duplicated caption number.</p><p><img alt="The

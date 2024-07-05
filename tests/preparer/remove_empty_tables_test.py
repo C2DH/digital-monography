@@ -1,9 +1,10 @@
 import bs4
 
 from src.preparer.remove_empty_tables import remove_empty_tables
+from src.preparer.constants import CLS_METADATA_TABLE_JSONDATA
 
 
-HTML_STR = """<p class="dgt-mon-caption">Table 1: An empty table.</p>
+HTML_STR = f"""<p class="dgt-mon-caption">Table 1: An empty table.</p>
 <table>
   <tr>
     <td></td>
@@ -45,7 +46,7 @@ HTML_STR = """<p class="dgt-mon-caption">Table 1: An empty table.</p>
     </td>
   </tr>
 </table>
-<script class="dgt-mon-hidden-metadata" hidden="hidden" type="application/json">[]</script>"""
+<script class="{CLS_METADATA_TABLE_JSONDATA}" hidden="hidden" type="application/json">[]</script>"""
 
 
 class TestRemovingEmptyTables:

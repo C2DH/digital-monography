@@ -3,7 +3,15 @@ import pathlib
 from pprint import pprint
 
 from src.verifier.html_verifier import HtmlVerifier
-from src.verifier.html_verifier import MSG_PROBLEMS, HEADINGS, CAPTIONS, LINKS
+from src.verifier.html_verifier import (
+    MSG_PROBLEMS,
+    ASSETS,
+    CAPTIONS,
+    # FOOTNOTES,
+    HEADINGS,
+    LINKS,
+    TABLES,
+)
 from src.verifier.main import _fromtimestamp
 
 
@@ -270,35 +278,60 @@ class TestHeadingsLinksAndCaptionsBreakingVerificationRules:
     ###################################################################################
 
 
-# class TestHeadingsLinksAndCaptionsBreakingVerificationRules:
-#     fp = pathlib.Path("tests") / "_fixtures" / ""
+class TestTablesAndAssetsBreakingVerificationRules:
+    fp = pathlib.Path("tests") / "_fixtures" / "verify_tables_assets.html"
 
-#     @classmethod
-#     def setup_class(cls):
-#         with open(cls.fp, "r") as f:
-#             cls.html = f.read()
-#         cls.warnings = collections.defaultdict(list)
-#         cls.verifer = HtmlVerifier()
-#         timestamp = _fromtimestamp("2024-06-26T09:53:49.380Z")
-#         result = cls.verifer.verify(cls.html, cls.fp, timestamp)
-#         for war in result.to_json():
-#             if HEADINGS in war["tags"]:
-#                 cls.warnings[HEADINGS].append(war)
-#             if CAPTIONS in war["tags"]:
-#                 cls.warnings[CAPTIONS].append(war)
-#             if LINKS in war["tags"]:
-#                 cls.warnings[LINKS].append(war)
+    @classmethod
+    def setup_class(cls):
+        with open(cls.fp, "r") as f:
+            cls.html = f.read()
+        cls.warnings = collections.defaultdict(list)
+        cls.verifer = HtmlVerifier()
+        timestamp = _fromtimestamp("2024-06-26T09:53:49.380Z")
+        result = cls.verifer.verify(cls.html, cls.fp, timestamp)
+        for war in result.to_json():
+            if ASSETS in war["tags"]:
+                cls.warnings[ASSETS].append(war)
+            if TABLES in war["tags"]:
+                cls.warnings[TABLES].append(war)
 
-#     def test_testing(self):
-#         print(self.html)
-#         print("-" * 50)
-#         for tag, warnings in self.warnings.items():
-#             for w in warnings:
-#                 print("tags \t\t", w["tags"])
-#                 print("curr_elem \t", w["curr_elem"])
-#                 print("problem \t", w["problem"])
-#                 print("recommend \t", w["recommend"])
-#                 print("-" * 50)
-#         print("=" * 50)
-#         pprint(self.verifer._tables)
-#         assert 1 == 2
+    def test_check_tbl_unrecognized(self):
+        is_incorrect_warning = None
+        is_correct_no_warning = None
+        for w in self.warnings[TABLES]:
+            if (
+                "## Lol-Rotfl" in w["curr_elem"]
+                and w["problem"] == MSG_PROBLEMS[TABLES]["check_tbl_unrecognized"]
+            ):
+                is_incorrect_warning = w
+            if (
+                "## Digital source" in w["curr_elem"]
+                and w["problem"] == MSG_PROBLEMS[TABLES]["check_tbl_unrecognized"]
+            ):
+                is_correct_no_warning = w
+        assert is_incorrect_warning
+        assert is_correct_no_warning is None
+
+    def test_testing(self):
+        print(self.html)
+        print("-" * 50)
+        print("self.warnings")
+        pprint(self.warnings)
+        print("-" * 50)
+        for tag, warnings in self.warnings.items():
+            for w in warnings:
+                print("tags \t\t", w["tags"])
+                print("prev_elem \t", w["prev_elem"])
+                print("curr_elem \t", w["curr_elem"])
+                print("next_elem \t", w["next_elem"])
+                print("problem \t", w["problem"])
+                print("recommend \t", w["recommend"])
+                print("-" * 50)
+        print("=" * 50)
+        print("-" * 25, "_tables")
+        pprint(self.verifer._tables)
+        print("-" * 25, "_metadata_tables")
+        pprint(self.verifer._metadata_tables)
+        print("-" * 25, "_metadata_tables_records")
+        pprint(self.verifer._metadata_tables_records)
+        assert 1 == 2
