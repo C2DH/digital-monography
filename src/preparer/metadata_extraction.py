@@ -4,24 +4,23 @@ import bs4
 import typing as t
 
 try:
-    from md_extraction import AssetMetadata, BookMetadata
+    from md_extraction import AssetMetadata, DocumentMetadata
 except ModuleNotFoundError:
-    from src.preparer.md_extraction import AssetMetadata, BookMetadata
+    from src.preparer.md_extraction import AssetMetadata, DocumentMetadata
 
 
 def replace_assets_with_directives(
-    html_soup: bs4.BeautifulSoup, metadata: BookMetadata
+    html_soup: bs4.BeautifulSoup, document_metadata: DocumentMetadata
 ) -> bs4.BeautifulSoup:
     """
-    Find and hide metadata tables.
-    In addition, add a comment with an uuid before each metadata table.
-    Later on in the document processing, this comment will be replaced with the
-    object that the matadata table describes (e.g. an <img> html tag in a
-    digital version).
+    Find, hide and add UUID to metadata tables.
+    In addition, hide all document metadata in a hidden script at the end of
+    a file. Hidden tables will be replaced with uuid-comment during
+    transformation to markdown.
     """
     for table in html_soup.find_all(["table"]):
         if "##" in table.text:
-            asset_meta = AssetMetadata()
+            asset_metadata = AssetMetadata()
             key, val = "", ""
             for tr in table.find_all(["tr"]):
                 for descendent in tr.find_all():
@@ -30,23 +29,21 @@ def replace_assets_with_directives(
                     else:
                         val = descendent.text
                 if key:
-                    asset_meta.add(key, val)
-            if asset_meta:
-                metadata.add_asset_metadata(asset_meta)
-                prev_el = _find_described_object(table)
-                if asset_meta.delete_prev and asset_meta.digital_fp:
+                    asset_metadata.add(key, val)
+            if asset_metadata:
+                document_metadata.add_asset_metadata(asset_metadata)
+                if asset_metadata.delete_prev and asset_metadata.digital_fp:
+                    prev_el = _find_described_object(table)
                     prev_el.extract()
                 table["hidden"] = "hidden"
-                p = html_soup.new_tag("p")
-                p["class"] = "dgt-mon-asset-comment"
-                p.string = "\n% :::{dgt-mon-asset} " + asset_meta.uuid
-                prev_el.append(p)
+                table["class"] = "dgt-mon-metadata-table"
+                table["id"] = asset_metadata.uuid
 
     json_elem = html_soup.new_tag("script")
     json_elem["type"] = "application/json"
     json_elem["class"] = "dgt-mon-hidden-metadata"
     json_elem["hidden"] = "hidden"
-    json_elem.string = json.dumps(metadata.assets_as_dicts(), default=str)
+    json_elem.string = json.dumps(document_metadata.assets_as_dicts(), default=str)
     html_soup.append(json_elem)
     return html_soup
 

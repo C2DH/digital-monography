@@ -4,7 +4,7 @@ import pathlib
 
 from src.preparer.citations import add_citations_and_bibliography
 from src.preparer.html2md import convert_to_md
-from src.preparer.md_extraction import BookMetadata
+from src.preparer.md_extraction import DocumentMetadata
 
 
 class TestHtml2MdFootnotes:
@@ -16,7 +16,7 @@ class TestHtml2MdFootnotes:
             result = mammoth.convert_to_html(f)
         cls.html_soup = bs4.BeautifulSoup(result.value, "html.parser")
         cls.html_soup = add_citations_and_bibliography(cls.html_soup)
-        metadata = BookMetadata()
+        metadata = DocumentMetadata()
         cls.md = convert_to_md(cls.html_soup, metadata)
 
     def test_footnote_ref_properly_converted_to_myst_syntax(self):

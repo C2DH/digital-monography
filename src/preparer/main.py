@@ -18,7 +18,7 @@ try:
         IS_DEBUG,
     )
     from citations import add_citations_and_bibliography
-    from md_extraction import BookMetadata
+    from md_extraction import DocumentMetadata
     from metadata_extraction import replace_assets_with_directives
     from remove_empty_tables import remove_empty_tables
     from html2md import convert_to_md
@@ -32,7 +32,7 @@ except ModuleNotFoundError as e:
         IS_DEBUG,
     )
     from src.preparer.citations import add_citations_and_bibliography
-    from src.preparer.md_extraction import BookMetadata
+    from src.preparer.md_extraction import DocumentMetadata
     from src.preparer.metadata_extraction import replace_assets_with_directives
     from src.preparer.remove_empty_tables import remove_empty_tables
     from src.preparer.html2md import convert_to_md
@@ -151,9 +151,9 @@ def _get_html_soup(html: str) -> bs4.BeautifulSoup:
         raise
 
 
-def _get_book_metadata() -> BookMetadata:
+def _get_book_metadata() -> DocumentMetadata:
     try:
-        return BookMetadata()
+        return DocumentMetadata()
     except Exception as e:
         logger.exception(f"Creation of BookMetadata object failed. Error: {repr(e)}")
         raise
@@ -170,7 +170,7 @@ def _add_citations_and_bibliography(html_soup: bs4.BeautifulSoup) -> bs4.Beautif
 
 
 def _replace_assets_with_directives(
-    html_soup: bs4.BeautifulSoup, metadata: BookMetadata
+    html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata
 ) -> bs4.BeautifulSoup:
     try:
         return replace_assets_with_directives(html_soup, metadata)
@@ -187,7 +187,7 @@ def _remove_empty_tables(html_soup: bs4.BeautifulSoup) -> bs4.BeautifulSoup:
         raise
 
 
-def _convert_to_md(html_soup: bs4.BeautifulSoup, metadata: BookMetadata) -> str:
+def _convert_to_md(html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata) -> str:
     try:
         return convert_to_md(html_soup, metadata)
     except Exception as e:

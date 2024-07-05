@@ -6,7 +6,7 @@ from pprint import pprint
 from src.preparer.citations import add_citations_and_bibliography
 from src.preparer.metadata_extraction import replace_assets_with_directives
 from src.preparer.html2md import convert_to_md
-from src.preparer.md_extraction import BookMetadata
+from src.preparer.md_extraction import DocumentMetadata
 
 
 class TestHtml2MdMetadataExtraction:
@@ -17,7 +17,7 @@ class TestHtml2MdMetadataExtraction:
         with open(cls.fp, "rb") as f:
             result = mammoth.convert_to_html(f)
         cls.html_soup = bs4.BeautifulSoup(result.value, "html.parser")
-        cls.metadata = BookMetadata()
+        cls.metadata = DocumentMetadata()
         cls.html_soup = add_citations_and_bibliography(cls.html_soup)
         cls.html_soup = replace_assets_with_directives(cls.html_soup, cls.metadata)
         cls.md = convert_to_md(cls.html_soup, cls.metadata)

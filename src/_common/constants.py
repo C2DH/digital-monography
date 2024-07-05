@@ -49,7 +49,7 @@ METADATA_FIELDS = [
         "key": "original",
         "is_bool": False,
         "is_required": False,
-        "aliases": ["orig", "og"],
+        "aliases": ["orig", "og", "origin"],
         "desc": "",
     },
     {

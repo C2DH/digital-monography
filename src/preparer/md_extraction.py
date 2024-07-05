@@ -153,7 +153,7 @@ class AssetMetadata:
         return len(self._datapoints)
 
 
-class BookMetadata:
+class DocumentMetadata:
     def __init__(self) -> None:
         self.assets = []
         self._metadata = {}
