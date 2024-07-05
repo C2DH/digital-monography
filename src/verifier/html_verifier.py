@@ -12,6 +12,7 @@ import uuid
 try:
     from .constants import (
         IS_DEBUG,
+        METADATA_FIELDS,
         METADATA_FIELDS_KEYS,
         CLS_METADATA_TABLE,
         CLS_METADATA_TABLE_JSONDATA,
@@ -19,6 +20,7 @@ try:
 except Exception as e:
     from src.verifier.constants import (
         IS_DEBUG,
+        METADATA_FIELDS,
         METADATA_FIELDS_KEYS,
         CLS_METADATA_TABLE,
         CLS_METADATA_TABLE_JSONDATA,
@@ -59,7 +61,7 @@ MSG_PROBLEMS = {
     },
     TABLES: {
         "check_tbl_unrecognized": "Fields used in metadata tables can only be selected from the allowed list.",
-        "": "",
+        "check_tbl_missing_fields": "Your metadata table is missing required fields.",
         "": "",
         "": "",
         "": "",
@@ -551,20 +553,46 @@ class HtmlVerifier:
                 for mdtbl in self._metadata_tables_records
                 if mdtbl["uuid"] == uuid
             )
+            # whole metadata table verification
+            missing_req_fields = self._check_tbl_missing_fields(raw_data)
+            if missing_req_fields:
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[TABLES]["check_tbl_missing_fields"],
+                    recommend=f"The following obligatory metadata fields are missing: {missing_req_fields}.",
+                    elem=elem,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
+                    tags=[TABLES, METADATA_TABLES],
+                )
+            # single field verification
             for key, val in raw_data.items():
                 if self._check_tbl_unrecognized(key):
                     self._messages.add_msg(
                         problem=MSG_PROBLEMS[TABLES]["check_tbl_unrecognized"],
-                        recommend=f"Field {key} does not match any of the recognized names: {METADATA_FIELDS_KEYS}.",
+                        recommend=f"Field {key} does not match any of the recognized names: {[field['key'] for field in METADATA_FIELDS]}.",
                         elem=elem,
                         fn=self._fp.name,
                         timestamp=self._timestamp,
                         tags=[TABLES, METADATA_TABLES],
                     )
-                # if self._check_tbl_
 
     def _check_tbl_unrecognized(self, key: str) -> bool:
         return key not in METADATA_FIELDS_KEYS
+
+    def _check_tbl_missing_fields(self, mdtbl: dict[str, str]) -> list[str]:
+        missing = []
+        is_missing = False
+        for field in METADATA_FIELDS:
+            if field["is_required"]:
+                if field["key"] not in mdtbl.keys():
+                    is_missing = True
+                    for alias in field["aliases"]:
+                        if alias in mdtbl.keys():
+                            is_missing = False
+                if is_missing:
+                    missing.append(field["key"])
+            is_missing = False
+        return missing
 
     #####################################################################################
 

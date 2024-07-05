@@ -171,37 +171,37 @@ class TestHeadingsLinksAndCaptionsBreakingVerificationRules:
         assert warning["fn"] == "verify_h_a_cap.html"
 
     def test_check_cap_no_number(self):
-        is_incorrect_warning = None
+        is_incorrect_raise_warning = None
         is_correct_no_warning = None
         for w in self.warnings[CAPTIONS]:
             if (
                 "Figure VII second caption" in w["curr_elem"]
                 and w["problem"] == MSG_PROBLEMS[CAPTIONS]["check_cap_no_number"]
             ):
-                is_incorrect_warning = w
+                is_incorrect_raise_warning = w
             if (
                 "Figure 3: Almost correct caption." in w["curr_elem"]
                 and w["problem"] == MSG_PROBLEMS[CAPTIONS]["check_cap_no_number"]
             ):
                 is_correct_no_warning = w
-        assert is_incorrect_warning
+        assert is_incorrect_raise_warning
         assert is_correct_no_warning is None
 
     def test_check_cap_no_bold(self):
-        is_incorrect_warning = None
+        is_incorrect_raise_warning = None
         is_correct_no_warning = None
         for w in self.warnings[CAPTIONS]:
             if (
                 "Figure 3: Almost correct caption." in w["curr_elem"]
                 and w["problem"] == MSG_PROBLEMS[CAPTIONS]["check_cap_no_bold"]
             ):
-                is_incorrect_warning = w
+                is_incorrect_raise_warning = w
             if (
                 "Correct caption" in w["curr_elem"]
                 and w["problem"] == MSG_PROBLEMS[CAPTIONS]["check_cap_no_bold"]
             ):
                 is_correct_no_warning = w
-        assert is_incorrect_warning
+        assert is_incorrect_raise_warning
         assert is_correct_no_warning is None
 
     def test_check_cap_no_end_dot(self):
@@ -242,37 +242,37 @@ class TestHeadingsLinksAndCaptionsBreakingVerificationRules:
     # links ###########################################################################
 
     def test_check_a_is_http(self):
-        is_incorrect_warning = None
+        is_incorrect_raise_warning = None
         is_correct_no_warning = None
         for w in self.warnings[LINKS]:
             if (
                 "http://example.com/" in w["curr_elem"]
                 and w["problem"] == MSG_PROBLEMS[LINKS]["check_a_is_http"]
             ):
-                is_incorrect_warning = w
+                is_incorrect_raise_warning = w
             if (
                 "https://web.archive.org" in w["curr_elem"]
                 and w["problem"] == MSG_PROBLEMS[LINKS]["check_a_is_http"]
             ):
                 is_correct_no_warning = w
-        assert is_incorrect_warning
+        assert is_incorrect_raise_warning
         assert is_correct_no_warning is None
 
     def test_check_a_not_archived(self):
-        is_incorrect_warning = None
+        is_incorrect_raise_warning = None
         is_correct_no_warning = None
         for w in self.warnings[LINKS]:
             if (
                 "http://example.com/" in w["curr_elem"]
                 and w["problem"] == MSG_PROBLEMS[LINKS]["check_a_not_archived"]
             ):
-                is_incorrect_warning = w
+                is_incorrect_raise_warning = w
             if (
                 "https://web.archive.org" in w["curr_elem"]
                 and w["problem"] == MSG_PROBLEMS[LINKS]["check_a_not_archived"]
             ):
                 is_correct_no_warning = w
-        assert is_incorrect_warning
+        assert is_incorrect_raise_warning
         assert is_correct_no_warning is None
 
     ###################################################################################
@@ -295,21 +295,52 @@ class TestTablesAndAssetsBreakingVerificationRules:
             if TABLES in war["tags"]:
                 cls.warnings[TABLES].append(war)
 
+    def test_check_tbl_missing_fields(self):
+        is_incorrect_raise_warning = None
+        is_correct_no_warning = None
+        for w in self.warnings[TABLES]:
+            if (
+                "## Lol-Rotfl" in w["curr_elem"]
+                and w["problem"] == MSG_PROBLEMS[TABLES]["check_tbl_missing_fields"]
+            ):
+                is_incorrect_raise_warning = w
+            # verifier should match "## Digital" with "## Digital source"
+            # and not raise a warning about the missing required field
+            if (
+                "## Digital" in w["curr_elem"]
+                and w["problem"] == MSG_PROBLEMS[TABLES]["check_tbl_missing_fields"]
+            ):
+                is_correct_no_warning = w
+        assert is_incorrect_raise_warning
+        assert "digitalsource" in is_incorrect_raise_warning["recommend"]
+        assert "papersource" not in is_incorrect_raise_warning["recommend"]
+        assert is_correct_no_warning is None
+        assert (
+            len(
+                [
+                    w
+                    for w in self.warnings[TABLES]
+                    if w["problem"] == MSG_PROBLEMS[TABLES]["check_tbl_missing_fields"]
+                ]
+            )
+            == 1
+        )
+
     def test_check_tbl_unrecognized(self):
-        is_incorrect_warning = None
+        is_incorrect_raise_warning = None
         is_correct_no_warning = None
         for w in self.warnings[TABLES]:
             if (
                 "## Lol-Rotfl" in w["curr_elem"]
                 and w["problem"] == MSG_PROBLEMS[TABLES]["check_tbl_unrecognized"]
             ):
-                is_incorrect_warning = w
+                is_incorrect_raise_warning = w
             if (
                 "## Digital source" in w["curr_elem"]
                 and w["problem"] == MSG_PROBLEMS[TABLES]["check_tbl_unrecognized"]
             ):
                 is_correct_no_warning = w
-        assert is_incorrect_warning
+        assert is_incorrect_raise_warning
         assert is_correct_no_warning is None
 
     def test_testing(self):
@@ -317,7 +348,7 @@ class TestTablesAndAssetsBreakingVerificationRules:
         print("-" * 50)
         print("self.warnings")
         pprint(self.warnings)
-        print("-" * 50)
+        print("=" * 50)
         for tag, warnings in self.warnings.items():
             for w in warnings:
                 print("tags \t\t", w["tags"])

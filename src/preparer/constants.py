@@ -80,7 +80,7 @@ METADATA_FIELDS = [
     {
         "key": FIELD_DELETE_PREVIOUS,
         "is_bool": True,
-        "required": False,
+        "is_required": False,
         "aliases": [
             "deleteprev",
             "removeprev",
@@ -91,7 +91,7 @@ METADATA_FIELDS = [
     {
         "key": "uuid",
         "is_bool": False,
-        "required": False,
+        "is_required": False,
         "aliases": [],
         "desc": "Automatic UUID of the metadata table.",
     },
@@ -100,4 +100,3 @@ METADATA_FIELDS_KEYS = []
 for field in METADATA_FIELDS:
     METADATA_FIELDS_KEYS.append(field["key"])
     METADATA_FIELDS_KEYS.extend(field["aliases"])
-# METADATA_FIELDS_KEYS = [field["key"] for field in METADATA_FIELDS]
