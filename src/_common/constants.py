@@ -20,29 +20,29 @@ STATICWS_WIP_BUCKET_NAME = "cpy-dgtmon-dev-staticws-wip"
 VERIFIER_MSGS = "cpy-dgtmon-dev-verifier-msgs"
 GITHUB_SECRET_ID = "dgtmon-dev-github-api-secrets"
 
-FIELD_DIGITAL_SOURCE = "digitalsrc"
-FIELD_PAPER_SOURCE = "papersrc"
-FIELD_DELETE_PREVIOUS = "deleteprev"
+FIELD_DIGITAL_SOURCE = "digitalsource"
+FIELD_PAPER_SOURCE = "papersource"
+FIELD_DELETE_PREVIOUS = "deleteprevious"
 METADATA_FIELDS = [
     {
         "key": "author",
         "is_bool": False,
         "is_required": False,
-        "aliases": ["authors"],
+        "aliases": ["authors", "autor", "autors"],
         "desc": "",
     },
     {
         "key": FIELD_DIGITAL_SOURCE,
         "is_bool": False,
         "is_required": True,
-        "aliases": ["digitalsource"],
+        "aliases": ["digitalsrc", "digital"],
         "desc": "",
     },
     {
         "key": FIELD_PAPER_SOURCE,
         "is_bool": False,
         "is_required": True,
-        "aliases": ["papersource"],
+        "aliases": ["papersrc", "paper"],
         "desc": "",
     },
     {
@@ -78,10 +78,11 @@ METADATA_FIELDS = [
         "is_bool": True,
         "required": False,
         "aliases": [
-            "deleteprevious",
+            "deleteprev",
             "removeprev",
             "removeprevious",
         ],
         "desc": "",
     },
 ]
+METADATA_FIELDS_KEYS = [field["key"] for field in METADATA_FIELDS]
