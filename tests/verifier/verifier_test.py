@@ -343,6 +343,27 @@ class TestTablesAndAssetsBreakingVerificationRules:
         assert is_incorrect_raise_warning
         assert is_correct_no_warning is None
 
+    def test_check_tbl_empty_field(self):
+        is_incorrect_raise_warning = None
+        for w in self.warnings[TABLES]:
+            if (
+                "## Alt text" in w["curr_elem"]
+                and w["problem"] == MSG_PROBLEMS[TABLES]["check_tbl_empty_field"]
+            ):
+                is_incorrect_raise_warning = w
+        assert is_incorrect_raise_warning
+        assert "alttext" in is_incorrect_raise_warning["recommend"]
+        assert (
+            len(
+                [
+                    w
+                    for w in self.warnings[TABLES]
+                    if w["problem"] == MSG_PROBLEMS[TABLES]["check_tbl_empty_field"]
+                ]
+            )
+            == 1
+        )
+
     def test_testing(self):
         print(self.html)
         print("-" * 50)

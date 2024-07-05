@@ -62,7 +62,7 @@ MSG_PROBLEMS = {
     TABLES: {
         "check_tbl_unrecognized": "Fields used in metadata tables can only be selected from the allowed list.",
         "check_tbl_missing_fields": "Your metadata table is missing required fields.",
-        "": "",
+        "check_tbl_empty_field": "Make sure that all your metadata table fields are filled.",
         "": "",
         "": "",
         "": "",
@@ -575,6 +575,15 @@ class HtmlVerifier:
                         timestamp=self._timestamp,
                         tags=[TABLES, METADATA_TABLES],
                     )
+                if self._check_tbl_empty_field(val):
+                    self._messages.add_msg(
+                        problem=MSG_PROBLEMS[TABLES]["check_tbl_empty_field"],
+                        recommend=f"Field {key} is empty.",
+                        elem=elem,
+                        fn=self._fp.name,
+                        timestamp=self._timestamp,
+                        tags=[TABLES, METADATA_TABLES],
+                    )
 
     def _check_tbl_unrecognized(self, key: str) -> bool:
         return key not in METADATA_FIELDS_KEYS
@@ -593,6 +602,9 @@ class HtmlVerifier:
                     missing.append(field["key"])
             is_missing = False
         return missing
+
+    def _check_tbl_empty_field(self, val: str) -> bool:
+        return val == "" or re.match(r"^\s+$", val)
 
     #####################################################################################
 
