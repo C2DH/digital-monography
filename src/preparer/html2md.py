@@ -3,13 +3,13 @@ import markdownify
 import re
 
 try:
-    from md_extraction import DocumentMetadata, AssetDatapoint, AssetMetadata
+    from md_extraction import DocumentMetadata
+    from constants import CLS_METADATA_TABLE
 except ModuleNotFoundError:
     from src.preparer.md_extraction import (
         DocumentMetadata,
-        AssetDatapoint,
-        AssetMetadata,
     )
+    from src.preparer.constants import CLS_METADATA_TABLE
 
 
 line_beginning_re = re.compile(r"^", re.MULTILINE)
@@ -146,7 +146,7 @@ class MystMdConverter(markdownify.MarkdownConverter):
         return super().convert_script(el, text, convert_as_inline)
 
     def convert_table(self, el, text, convert_as_inline):
-        if el.get("hidden") and el.get("class") == "dgt-mon-metadata-table":
+        if el.get("hidden") and el.get("class") == CLS_METADATA_TABLE:
             return "\n% :::{dgt-mon-asset} " + el.get("id") + "\n"
         return super().convert_table(el, text, convert_as_inline)
 

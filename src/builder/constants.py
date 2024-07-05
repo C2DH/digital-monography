@@ -13,13 +13,17 @@ if IS_DEBUG:
     DEFAULT_SFS_DIR = "/tmp/efs"  # local execution
 else:
     DEFAULT_SFS_DIR = "/mnt/efs"  # AWS EFS
+GITHUB_SECRET_ID = "dgtmon-dev-github-api-secrets"
+# S3 bucket names
 ARCHIVE_APKG_ALL = "cpy-dgtmon-dev-archive-apkg-all"
 IR_APKG_HTML_BUCKET_NAME = "cpy-dgtmon-dev-ir-apkg-html"
 IR_APKG_MD_BUCKET_NAME = "cpy-dgtmon-dev-ir-apkg-md"
 STATICWS_WIP_BUCKET_NAME = "cpy-dgtmon-dev-staticws-wip"
 VERIFIER_MSGS = "cpy-dgtmon-dev-verifier-msgs"
-GITHUB_SECRET_ID = "dgtmon-dev-github-api-secrets"
-
+# html classes
+CLS_METADATA_TABLE = "dgt-mon-metadata-table"
+CLS_METADATA_TABLE_JSONDATA = "dgt-mon-hidden-metadata"
+# metadata fields
 FIELD_DIGITAL_SOURCE = "digitalsource"
 FIELD_PAPER_SOURCE = "papersource"
 FIELD_DELETE_PREVIOUS = "deleteprevious"
@@ -84,5 +88,16 @@ METADATA_FIELDS = [
         ],
         "desc": "",
     },
+    {
+        "key": "uuid",
+        "is_bool": False,
+        "required": False,
+        "aliases": [],
+        "desc": "Automatic UUID of the metadata table.",
+    },
 ]
-METADATA_FIELDS_KEYS = [field["key"] for field in METADATA_FIELDS]
+METADATA_FIELDS_KEYS = []
+for field in METADATA_FIELDS:
+    METADATA_FIELDS_KEYS.append(field["key"])
+    METADATA_FIELDS_KEYS.extend(field["aliases"])
+# METADATA_FIELDS_KEYS = [field["key"] for field in METADATA_FIELDS]

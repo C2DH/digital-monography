@@ -5,8 +5,10 @@ import typing as t
 
 try:
     from md_extraction import AssetMetadata, DocumentMetadata
+    from constants import CLS_METADATA_TABLE, CLS_METADATA_TABLE_JSONDATA
 except ModuleNotFoundError:
     from src.preparer.md_extraction import AssetMetadata, DocumentMetadata
+    from src.preparer.constants import CLS_METADATA_TABLE, CLS_METADATA_TABLE_JSONDATA
 
 
 def replace_assets_with_directives(
@@ -36,12 +38,12 @@ def replace_assets_with_directives(
                     prev_el = _find_described_object(table)
                     prev_el.extract()
                 table["hidden"] = "hidden"
-                table["class"] = "dgt-mon-metadata-table"
+                table["class"] = CLS_METADATA_TABLE
                 table["id"] = asset_metadata.uuid
 
     json_elem = html_soup.new_tag("script")
     json_elem["type"] = "application/json"
-    json_elem["class"] = "dgt-mon-hidden-metadata"
+    json_elem["class"] = CLS_METADATA_TABLE_JSONDATA
     json_elem["hidden"] = "hidden"
     json_elem.string = json.dumps(document_metadata.assets_as_dicts(), default=str)
     html_soup.append(json_elem)
