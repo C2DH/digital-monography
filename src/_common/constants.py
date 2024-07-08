@@ -27,6 +27,7 @@ CLS_METADATA_TABLE_JSONDATA = "dgt-mon-hidden-metadata"
 FIELD_DIGITAL_SOURCE = "digitalsource"
 FIELD_PAPER_SOURCE = "papersource"
 FIELD_DELETE_PREVIOUS = "deleteprevious"
+FIELD_LICENSE_NAME = "licensename"
 METADATA_FIELDS = [
     {
         "key": "author",
@@ -57,7 +58,7 @@ METADATA_FIELDS = [
         "desc": "",
     },
     {
-        "key": "licensename",
+        "key": FIELD_LICENSE_NAME,
         "is_bool": False,
         "is_required": True,
         "aliases": ["license"],
