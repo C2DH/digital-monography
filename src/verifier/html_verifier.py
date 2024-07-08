@@ -16,7 +16,9 @@ try:
         METADATA_FIELDS_KEYS,
         CLS_METADATA_TABLE,
         CLS_METADATA_TABLE_JSONDATA,
+        FIELD_LICENSE_NAME,
     )
+    from .local_constants import RECOGNIZED_LICENSE_NAMES
 except Exception as e:
     from src.verifier.constants import (
         IS_DEBUG,
@@ -24,7 +26,10 @@ except Exception as e:
         METADATA_FIELDS_KEYS,
         CLS_METADATA_TABLE,
         CLS_METADATA_TABLE_JSONDATA,
+        FIELD_LICENSE_NAME,
+        RECOGNIZED_LICENSE_NAMES,
     )
+    from src.verifier.local_constants import RECOGNIZED_LICENSE_NAMES
 
 
 IS_HEADING_TITLE_CASED_REQUIRED = True
@@ -60,10 +65,10 @@ MSG_PROBLEMS = {
         "check_a_not_archived": "Links should point to websites archived using the Internet Archive.",
     },
     TABLES: {
-        "check_tbl_unrecognized": "Fields used in metadata tables can only be selected from the allowed list.",
+        "check_tbl_unrecognized_field": "Fields used in metadata tables can only be selected from the allowed list.",
         "check_tbl_missing_fields": "Your metadata table is missing required fields.",
         "check_tbl_empty_field": "Make sure that all your metadata table fields are filled.",
-        "": "",
+        "check_tbl_unrecognized_license": "The license name should a valid [an SPDX Identifier](https://spdx.org/licenses/).",
         "": "",
         "": "",
     },
@@ -566,9 +571,9 @@ class HtmlVerifier:
                 )
             # single field verification
             for key, val in raw_data.items():
-                if self._check_tbl_unrecognized(key):
+                if self.check_tbl_unrecognized_field(key):
                     self._messages.add_msg(
-                        problem=MSG_PROBLEMS[TABLES]["check_tbl_unrecognized"],
+                        problem=MSG_PROBLEMS[TABLES]["check_tbl_unrecognized_field"],
                         recommend=f"Field {key} does not match any of the recognized names: {[field['key'] for field in METADATA_FIELDS]}.",
                         elem=elem,
                         fn=self._fp.name,
@@ -584,8 +589,17 @@ class HtmlVerifier:
                         timestamp=self._timestamp,
                         tags=[TABLES, METADATA_TABLES],
                     )
+                if self._check_tbl_unrecognized_license(key, val):
+                    self._messages.add_msg(
+                        problem=MSG_PROBLEMS[TABLES]["check_tbl_unrecognized_license"],
+                        recommend=f"Name '{val}' does not match any of the recognized License Identifiers.",
+                        elem=elem,
+                        fn=self._fp.name,
+                        timestamp=self._timestamp,
+                        tags=[TABLES, METADATA_TABLES],
+                    )
 
-    def _check_tbl_unrecognized(self, key: str) -> bool:
+    def check_tbl_unrecognized_field(self, key: str) -> bool:
         return key not in METADATA_FIELDS_KEYS
 
     def _check_tbl_missing_fields(self, mdtbl: dict[str, str]) -> list[str]:
@@ -603,29 +617,15 @@ class HtmlVerifier:
             is_missing = False
         return missing
 
+    def _check_tbl_for_duplicated_fields(self, table: bs4.element.Tag) -> bool:
+        pass
+
     def _check_tbl_empty_field(self, val: str) -> bool:
         return val == "" or re.match(r"^\s+$", val)
 
+    def _check_tbl_unrecognized_license(self, key: str, val: str) -> bool:
+        if key != FIELD_LICENSE_NAME:
+            return False
+        return val.strip().lower() not in RECOGNIZED_LICENSE_NAMES
+
     #####################################################################################
-
-
-# Traceback (most recent call last):
-#   File "/home/ubuntu/Projects/digital-monography/scripts/prepare_and_build.py", line 83, in <module>
-#     listen_for_updates(book_path, cpy_to_tmp_and_call_handler)
-#   File "/home/ubuntu/Projects/digital-monography/scripts/sync.py", line 31, in listen_for_updates
-#     func_on_update(fp, key)
-#   File "/home/ubuntu/Projects/digital-monography/scripts/prepare_and_build.py", line 73, in cpy_to_tmp_and_call_handler
-#     verifier_handler(event, context)
-#   File "/home/ubuntu/Projects/digital-monography/src/verifier/main.py", line 57, in lambda_handler
-#     result = verifer.verify(
-#              ^^^^^^^^^^^^^^^
-#   File "/home/ubuntu/Projects/digital-monography/src/verifier/html_verifier.py", line 208, in verify
-#     self._apply_metadatatables_verification()
-#   File "/home/ubuntu/Projects/digital-monography/src/verifier/html_verifier.py", line 535, in _apply_metadatatables_verification
-#     elem = self._comments[mdtbl["uuid"]]
-#            ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
-# KeyError: '277fa15f-35bc-4089-b271-367f6570bd09'
-
-# % :::{dgt-mon-asset} 277fa15f-35bc-4089-b271-367f6570bd09</p>
-# <script class=CLS_METADATA_TABLE_JSONDATA hidden="hidden" type="application/json">[{"digitalsrc": "assets/tiny-picture.png", "papersrc": "assets/tiny-picture.png", "alttext": "Small red square", "uuid": "277fa15f-35bc-4089-b271-367f6570bd09"}]</script>
-# <p>The file should always start with Heading 1.</p><h2>Oh no, the first Heading is level 2. Also, dot at the end.</h2><h4>Heading 4. Where is level 3?</h4><h6>Heading 6. Where 5?</h6><p>Content.</p><p>:::{important}   <br/>Admonition example.<br/>:::</p><h3>Heading 3. No Footnotes In Headings<sup><a href="#footnote-1" id="footnote-ref-1">[1]</a></sup></h3><p class="dgt-mon-caption"><strong>Figure 1:</strong> Correct caption.</p><p class="dgt-mon-caption">Figure 3: Almost correct caption.</p><p class="dgt-mon-caption">Figure VII second caption</p><p class="dgt-mon-caption">Figure 3: Duplicated caption number.</p><p><img alt="The

@@ -326,18 +326,18 @@ class TestTablesAndAssetsBreakingVerificationRules:
             == 1
         )
 
-    def test_check_tbl_unrecognized(self):
+    def test_check_tbl_unrecognized_field(self):
         is_incorrect_raise_warning = None
         is_correct_no_warning = None
         for w in self.warnings[TABLES]:
             if (
                 "## Lol-Rotfl" in w["curr_elem"]
-                and w["problem"] == MSG_PROBLEMS[TABLES]["check_tbl_unrecognized"]
+                and w["problem"] == MSG_PROBLEMS[TABLES]["check_tbl_unrecognized_field"]
             ):
                 is_incorrect_raise_warning = w
             if (
                 "## Digital source" in w["curr_elem"]
-                and w["problem"] == MSG_PROBLEMS[TABLES]["check_tbl_unrecognized"]
+                and w["problem"] == MSG_PROBLEMS[TABLES]["check_tbl_unrecognized_field"]
             ):
                 is_correct_no_warning = w
         assert is_incorrect_raise_warning
@@ -363,6 +363,25 @@ class TestTablesAndAssetsBreakingVerificationRules:
             )
             == 1
         )
+
+    def test_check_tbl_unrecognized_license(self):
+        is_incorrect_raise_warning = None
+        is_correct_no_warning = None
+        for w in self.warnings[TABLES]:
+            if (
+                "This is not a recognized license name" in w["curr_elem"]
+                and w["problem"]
+                == MSG_PROBLEMS[TABLES]["check_tbl_unrecognized_license"]
+            ):
+                is_incorrect_raise_warning = w
+            if (
+                "BSD-3-Clause-no-nuclear-license" in w["curr_elem"]
+                and w["problem"]
+                == MSG_PROBLEMS[TABLES]["check_tbl_unrecognized_license"]
+            ):
+                is_correct_no_warning = w
+        assert is_incorrect_raise_warning
+        assert is_correct_no_warning is None
 
     def test_testing(self):
         print(self.html)
