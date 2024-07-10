@@ -57,6 +57,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         result = verifer.verify(
             html,
             key.efs_slug_html_path.with_suffix(".html"),
+            slug=key.slug,
             timestamp=timestamp,
         ).to_json()
         logger.info(json.dumps(result, default=str))

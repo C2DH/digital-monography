@@ -17,8 +17,12 @@ try:
         CLS_METADATA_TABLE,
         CLS_METADATA_TABLE_JSONDATA,
         FIELD_LICENSE_NAME,
+        FIELD_DIGITAL_SOURCE,
+        FIELD_PAPER_SOURCE,
     )
     from .local_constants import RECOGNIZED_LICENSE_NAMES
+    from .md_extraction import AssetDatapoint
+    from .path_handler import PathHandler
 except Exception as e:
     from src.verifier.constants import (
         IS_DEBUG,
@@ -28,8 +32,12 @@ except Exception as e:
         CLS_METADATA_TABLE_JSONDATA,
         FIELD_LICENSE_NAME,
         RECOGNIZED_LICENSE_NAMES,
+        FIELD_DIGITAL_SOURCE,
+        FIELD_PAPER_SOURCE,
     )
     from src.verifier.local_constants import RECOGNIZED_LICENSE_NAMES
+    from src.verifier.md_extraction import AssetDatapoint
+    from src.verifier.path_handler import PathHandler
 
 
 IS_HEADING_TITLE_CASED_REQUIRED = True
@@ -69,6 +77,13 @@ MSG_PROBLEMS = {
         "check_tbl_missing_fields": "Your metadata table is missing required fields.",
         "check_tbl_empty_field": "Make sure that all your metadata table fields are filled.",
         "check_tbl_unrecognized_license": "The license name should a valid [an SPDX Identifier](https://spdx.org/licenses/).",
+        # "check_tbl_invalid_pathname": "Path to a file is incorrect.",
+        "check_tbl_not_in_assets": "Valid file paths must start with `assets` folder.",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
         "": "",
         "": "",
     },
@@ -214,10 +229,11 @@ class HtmlVerifier:
         pass
 
     def verify(
-        self, html: str, fp: pathlib.Path, timestamp: datetime.datetime
+        self, html: str, fp: pathlib.Path, slug: str, timestamp: datetime.datetime
     ) -> VerifierMessages:
         self._first_tag = None
         self._fp = fp
+        self._slug = slug
         self._timestamp = timestamp
         self.soup = bs4.BeautifulSoup(html, "html.parser")
         print(self.soup)
@@ -571,6 +587,10 @@ class HtmlVerifier:
                 )
             # single field verification
             for key, val in raw_data.items():
+                if key in (FIELD_DIGITAL_SOURCE, FIELD_PAPER_SOURCE):
+                    vpath = PathHandler(val, self._slug)
+                else:
+                    vpath = None
                 if self.check_tbl_unrecognized_field(key):
                     self._messages.add_msg(
                         problem=MSG_PROBLEMS[TABLES]["check_tbl_unrecognized_field"],
@@ -598,6 +618,15 @@ class HtmlVerifier:
                         timestamp=self._timestamp,
                         tags=[TABLES, METADATA_TABLES],
                     )
+                if self._check_tbl_not_in_assets(vpath):
+                    self._messages.add_msg(
+                        problem=MSG_PROBLEMS[TABLES]["check_tbl_not_in_assets"],
+                        recommend=f"{val} does not correctly point to this directory. Valid path looks closer to `./assets/path/to/a/file.txt`.",
+                        elem=elem,
+                        fn=self._fp.name,
+                        timestamp=self._timestamp,
+                        tags=[TABLES, METADATA_TABLES],
+                    )
 
     def check_tbl_unrecognized_field(self, key: str) -> bool:
         return key not in METADATA_FIELDS_KEYS
@@ -617,9 +646,6 @@ class HtmlVerifier:
             is_missing = False
         return missing
 
-    def _check_tbl_for_duplicated_fields(self, table: bs4.element.Tag) -> bool:
-        pass
-
     def _check_tbl_empty_field(self, val: str) -> bool:
         return val == "" or re.match(r"^\s+$", val)
 
@@ -627,5 +653,10 @@ class HtmlVerifier:
         if key != FIELD_LICENSE_NAME:
             return False
         return val.strip().lower() not in RECOGNIZED_LICENSE_NAMES
+
+    def _check_tbl_not_in_assets(self, vpath: t.Optional[PathHandler]) -> bool:
+        if vpath is None:
+            return False
+        return not vpath.is_in_asset_dir()
 
     #####################################################################################

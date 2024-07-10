@@ -1,0 +1,66 @@
+import pathlib
+from functools import cached_property
+
+try:
+    from constants import DEFAULT_SFS_DIR
+except ModuleNotFoundError:
+    from src.verifier.constants import DEFAULT_SFS_DIR
+
+
+SUPPORTED_SUFFIXES = (
+    # img formats
+    ".jpg",
+    ".jpeg",
+    ".tiff",
+    ".png",
+    # audio/video formats
+    ".mp4",
+    # web formats
+    ".js",
+    ".css",
+    # data formats
+    ".json",
+    ".csv",
+    ".xls",
+    ".xlsx",
+)
+
+
+class PathHandler:
+    def __init__(self, fp: str, slug: str):
+        self._fp = fp
+        self.slug = slug
+        _windows_path = pathlib.PureWindowsPath(fp)
+        _posix_path = pathlib.PurePosixPath(fp)
+        if len(_windows_path.parts) != len(_posix_path.parts):
+            self.fp = pathlib.Path(*_windows_path.parts)
+        else:
+            self.fp = pathlib.Path(fp)
+
+    def is_relative(self) -> bool:
+        # use in conjunction with is_valid()
+        return not self.fp.is_absolute()
+
+    def is_dir(self) -> bool:
+        # use in conjunction with exists()
+        return self.fp.is_dir()
+
+    def exists(self) -> bool:
+        return self.fp.exists()
+
+    def is_in_asset_dir(self) -> bool:
+        return self.fp.is_relative_to("assets")
+
+    def is_suffix_supported(self) -> bool:
+        # use in conjunction with ~is_dir()
+        return self.fp.suffix.lower() in SUPPORTED_SUFFIXES
+
+    @cached_property
+    def efs_slug_filepath(self) -> pathlib.Path:
+        fp = pathlib.Path(DEFAULT_SFS_DIR) / self.slug
+        for part in self.fp.parts:
+            fp = fp / part
+        return fp
+
+    def __str__(self) -> str:
+        return str(self.fp)

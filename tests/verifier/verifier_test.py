@@ -13,6 +13,7 @@ from src.verifier.html_verifier import (
     TABLES,
 )
 from src.verifier.main import _fromtimestamp
+from src.verifier.path_handler import PathHandler
 
 
 class TestHeadingsLinksAndCaptionsBreakingVerificationRules:
@@ -24,8 +25,9 @@ class TestHeadingsLinksAndCaptionsBreakingVerificationRules:
             cls.html = f.read()
         cls.warnings = collections.defaultdict(list)
         cls.verifer = HtmlVerifier()
+        slug = "examples"
         timestamp = _fromtimestamp("2024-06-26T09:53:49.380Z")
-        result = cls.verifer.verify(cls.html, cls.fp, timestamp)
+        result = cls.verifer.verify(cls.html, cls.fp, slug, timestamp)
         cls.res_json = result.to_json()
         for war in cls.res_json:
             if HEADINGS in war["tags"]:
@@ -287,8 +289,9 @@ class TestTablesAndAssetsBreakingVerificationRules:
             cls.html = f.read()
         cls.warnings = collections.defaultdict(list)
         cls.verifer = HtmlVerifier()
+        slug = "examples"
         timestamp = _fromtimestamp("2024-06-26T09:53:49.380Z")
-        result = cls.verifer.verify(cls.html, cls.fp, timestamp)
+        result = cls.verifer.verify(cls.html, cls.fp, slug, timestamp)
         for war in result.to_json():
             if ASSETS in war["tags"]:
                 cls.warnings[ASSETS].append(war)
@@ -312,6 +315,7 @@ class TestTablesAndAssetsBreakingVerificationRules:
             ):
                 is_correct_no_warning = w
         assert is_incorrect_raise_warning
+        assert "alttext" in is_incorrect_raise_warning["recommend"]
         assert "digitalsource" in is_incorrect_raise_warning["recommend"]
         assert "papersource" not in is_incorrect_raise_warning["recommend"]
         assert is_correct_no_warning is None
@@ -382,6 +386,33 @@ class TestTablesAndAssetsBreakingVerificationRules:
                 is_correct_no_warning = w
         assert is_incorrect_raise_warning
         assert is_correct_no_warning is None
+        assert (
+            len(
+                [
+                    w
+                    for w in self.warnings[TABLES]
+                    if w["problem"]
+                    == MSG_PROBLEMS[TABLES]["check_tbl_unrecognized_license"]
+                ]
+            )
+            == 1
+        )
+
+    def test_check_tbl_not_in_assets__in_assets(self):
+        vpath = PathHandler("./assets/path/file.jpg", "myslug")
+        assert vpath.is_in_asset_dir()
+
+    def test_check_tbl_not_in_assets__win_in_assets(self):
+        vpath = PathHandler("assets\\path\\file.jpg", "myslug")
+        assert vpath.is_in_asset_dir()
+
+    def test_check_tbl_not_in_assets__not_in_assets(self):
+        vpath = PathHandler("./this/path/does/not/exist", "myslug")
+        assert vpath.is_in_asset_dir() == False
+
+    def test_check_tbl_not_in_assets__abs_win_path(self):
+        vpath = PathHandler(r"C:\Users\Joe.Doe\OneDrive\project\file.xml", "myslug")
+        assert vpath.is_in_asset_dir() == False
 
     def test_testing(self):
         print(self.html)
