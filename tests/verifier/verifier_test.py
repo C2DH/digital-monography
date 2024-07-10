@@ -444,6 +444,16 @@ class TestTablesAndAssetsBreakingVerificationRules:
             str(vpath.efs_slug_filepath) == "/tmp/efs/myslug/this/path/does/not/exist"
         )
 
+    def test_is_file(self):
+        vpath = PathHandler(self.fp, "myslug")
+        assert vpath.is_dir() == False
+
+    def test_is_dir(self):
+        fp = pathlib.Path("tests") / "_fixtures"
+        vpath = PathHandler(fp, "myslug")
+        assert vpath.fp.exists()
+        assert vpath.fp.is_dir()
+
     def test_testing(self):
         print(self.html)
         print("-" * 50)

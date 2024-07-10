@@ -41,8 +41,7 @@ class PathHandler:
         return not self.fp.is_absolute() and not self._windows_path.is_absolute()
 
     def is_dir(self) -> bool:
-        # use in conjunction with exists()
-        return self.fp.is_dir()
+        return self.exists() and self.fp.is_dir()
 
     def exists(self) -> bool:
         return self.efs_slug_filepath.exists()
