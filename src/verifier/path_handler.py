@@ -30,16 +30,15 @@ class PathHandler:
     def __init__(self, fp: str, slug: str):
         self._fp = fp
         self.slug = slug
-        _windows_path = pathlib.PureWindowsPath(fp)
-        _posix_path = pathlib.PurePosixPath(fp)
-        if len(_windows_path.parts) != len(_posix_path.parts):
-            self.fp = pathlib.Path(*_windows_path.parts)
+        self._windows_path = pathlib.PureWindowsPath(fp)
+        self._posix_path = pathlib.PurePosixPath(fp)
+        if len(self._windows_path.parts) != len(self._posix_path.parts):
+            self.fp = pathlib.Path(*self._windows_path.parts)
         else:
             self.fp = pathlib.Path(fp)
 
     def is_relative(self) -> bool:
-        # use in conjunction with is_valid()
-        return not self.fp.is_absolute()
+        return not self.fp.is_absolute() and not self._windows_path.is_absolute()
 
     def is_dir(self) -> bool:
         # use in conjunction with exists()

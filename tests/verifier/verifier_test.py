@@ -414,6 +414,26 @@ class TestTablesAndAssetsBreakingVerificationRules:
         vpath = PathHandler(r"C:\Users\Joe.Doe\OneDrive\project\file.xml", "myslug")
         assert vpath.is_in_asset_dir() == False
 
+    def test_check_tbl_non_relative_path__relative1(self):
+        vpath = PathHandler("./this/path/does/not/exist", "myslug")
+        assert vpath.is_relative()
+
+    def test_check_tbl_non_relative_path__relative2(self):
+        vpath = PathHandler("./assets/path/file.jpg", "myslug")
+        assert vpath.is_relative()
+
+    def test_check_tbl_non_relative_path__absolute_windows(self):
+        vpath = PathHandler(r"C:\Users\Joe.Doe\OneDrive\project\file.xml", "myslug")
+        assert vpath.is_relative() == False
+
+    def test_check_tbl_non_relative_path__absolute_linux1(self):
+        vpath = PathHandler("/mnt/c/Users/Joe.Doe/OneDrive/project/file.jpg", "myslug")
+        assert vpath.is_relative() == False
+
+    def test_check_tbl_non_relative_path__absolute_linux2(self):
+        vpath = PathHandler("mnt/c/Users/Joe.Doe/OneDrive/project/file.jpg", "myslug")
+        assert vpath.is_relative()
+
     def test_testing(self):
         print(self.html)
         print("-" * 50)

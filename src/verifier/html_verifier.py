@@ -21,7 +21,6 @@ try:
         FIELD_PAPER_SOURCE,
     )
     from .local_constants import RECOGNIZED_LICENSE_NAMES
-    from .md_extraction import AssetDatapoint
     from .path_handler import PathHandler
 except Exception as e:
     from src.verifier.constants import (
@@ -36,7 +35,6 @@ except Exception as e:
         FIELD_PAPER_SOURCE,
     )
     from src.verifier.local_constants import RECOGNIZED_LICENSE_NAMES
-    from src.verifier.md_extraction import AssetDatapoint
     from src.verifier.path_handler import PathHandler
 
 
@@ -79,7 +77,7 @@ MSG_PROBLEMS = {
         "check_tbl_unrecognized_license": "The license name should a valid [an SPDX Identifier](https://spdx.org/licenses/).",
         # "check_tbl_invalid_pathname": "Path to a file is incorrect.",
         "check_tbl_not_in_assets": "Valid file paths must start with `assets` folder.",
-        "": "",
+        "check_tbl_non_relative_path": "Paths to files must be relative.",
         "": "",
         "": "",
         "": "",
@@ -627,6 +625,15 @@ class HtmlVerifier:
                         timestamp=self._timestamp,
                         tags=[TABLES, METADATA_TABLES],
                     )
+                if self._check_tbl_non_relative_path(vpath):
+                    self._messages.add_msg(
+                        problem=MSG_PROBLEMS[TABLES]["check_tbl_non_relative_path"],
+                        recommend=f"{val} is not a correct relative path. Valid path looks closer to `./assets/path/to/a/file.txt` (note the `./assets` at the beginning).",
+                        elem=elem,
+                        fn=self._fp.name,
+                        timestamp=self._timestamp,
+                        tags=[TABLES, METADATA_TABLES],
+                    )
 
     def check_tbl_unrecognized_field(self, key: str) -> bool:
         return key not in METADATA_FIELDS_KEYS
@@ -658,5 +665,10 @@ class HtmlVerifier:
         if vpath is None:
             return False
         return not vpath.is_in_asset_dir()
+
+    def _check_tbl_non_relative_path(self, vpath: t.Optional[PathHandler]) -> bool:
+        if vpath is None:
+            return False
+        return not vpath.is_relative()
 
     #####################################################################################
