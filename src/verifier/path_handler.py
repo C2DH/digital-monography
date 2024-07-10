@@ -45,7 +45,7 @@ class PathHandler:
         return self.fp.is_dir()
 
     def exists(self) -> bool:
-        return self.fp.exists()
+        return self.efs_slug_filepath.exists()
 
     def is_in_asset_dir(self) -> bool:
         return self.fp.is_relative_to("assets")

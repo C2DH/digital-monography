@@ -434,6 +434,16 @@ class TestTablesAndAssetsBreakingVerificationRules:
         vpath = PathHandler("mnt/c/Users/Joe.Doe/OneDrive/project/file.jpg", "myslug")
         assert vpath.is_relative()
 
+    def test_efs_slug_filepath_1(self):
+        vpath = PathHandler("./assets/path/file.jpg", "myslug")
+        assert str(vpath.efs_slug_filepath) == "/tmp/efs/myslug/assets/path/file.jpg"
+
+    def test_efs_slug_filepath_2(self):
+        vpath = PathHandler("./this/path/does/not/exist", "myslug")
+        assert (
+            str(vpath.efs_slug_filepath) == "/tmp/efs/myslug/this/path/does/not/exist"
+        )
+
     def test_testing(self):
         print(self.html)
         print("-" * 50)
