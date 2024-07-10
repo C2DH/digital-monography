@@ -1,13 +1,11 @@
 import collections
 import pathlib
-from pprint import pprint
 
 from src.verifier.html_verifier import HtmlVerifier
 from src.verifier.html_verifier import (
     MSG_PROBLEMS,
     ASSETS,
     CAPTIONS,
-    # FOOTNOTES,
     HEADINGS,
     LINKS,
     TABLES,
@@ -484,27 +482,3 @@ class TestTablesAndAssetsBreakingVerificationRules:
     def test_check_tbl_non_supported_suffix_2(self):
         vpath = PathHandler("./assets/path/file.exe", "myslug")
         assert vpath.is_suffix_supported() == False
-
-    def test_testing(self):
-        print(self.html)
-        print("-" * 50)
-        print("self.warnings")
-        pprint(self.warnings)
-        print("=" * 50)
-        for tag, warnings in self.warnings.items():
-            for w in warnings:
-                print("tags \t\t", w["tags"])
-                print("prev_elem \t", w["prev_elem"])
-                print("curr_elem \t", w["curr_elem"])
-                print("next_elem \t", w["next_elem"])
-                print("problem \t", w["problem"])
-                print("recommend \t", w["recommend"])
-                print("-" * 50)
-        print("=" * 50)
-        print("-" * 25, "_tables")
-        pprint(self.verifer._tables)
-        print("-" * 25, "_metadata_tables")
-        pprint(self.verifer._metadata_tables)
-        print("-" * 25, "_metadata_tables_records")
-        pprint(self.verifer._metadata_tables_records)
-        assert 1 == 2
