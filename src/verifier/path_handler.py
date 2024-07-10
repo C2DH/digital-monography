@@ -50,7 +50,6 @@ class PathHandler:
         return self.fp.is_relative_to("assets")
 
     def is_suffix_supported(self) -> bool:
-        # use in conjunction with ~is_dir()
         return self.fp.suffix.lower() in SUPPORTED_SUFFIXES
 
     @cached_property

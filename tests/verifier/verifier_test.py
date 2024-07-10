@@ -454,6 +454,14 @@ class TestTablesAndAssetsBreakingVerificationRules:
         assert vpath.fp.exists()
         assert vpath.fp.is_dir()
 
+    def test_check_tbl_non_supported_suffix_1(self):
+        vpath = PathHandler("./assets/path/file.jpg", "myslug")
+        assert vpath.is_suffix_supported()
+
+    def test_check_tbl_non_supported_suffix_2(self):
+        vpath = PathHandler("./assets/path/file.exe", "myslug")
+        assert vpath.is_suffix_supported() == False
+
     def test_testing(self):
         print(self.html)
         print("-" * 50)

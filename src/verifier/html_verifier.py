@@ -80,7 +80,7 @@ MSG_PROBLEMS = {
         "check_tbl_non_relative_path": "Paths to files must be relative.",
         "check_tbl_no_file": "Failed to find one of the files.",
         "check_tbl_is_dir": "File paths must refer to a file, not to directory.",
-        "": "",
+        "check_tbl_non_supported_suffix": "",
         "": "",
         "": "",
         "": "",
@@ -652,6 +652,15 @@ class HtmlVerifier:
                         timestamp=self._timestamp,
                         tags=[TABLES, METADATA_TABLES],
                     )
+                if self._check_tbl_non_supported_suffix(vpath):
+                    self._messages.add_msg(
+                        problem=MSG_PROBLEMS[TABLES]["check_tbl_non_supported_suffix"],
+                        recommend=f"Consider conversion of the '{val}' to one of supported file extensions.",
+                        elem=elem,
+                        fn=self._fp.name,
+                        timestamp=self._timestamp,
+                        tags=[TABLES, METADATA_TABLES],
+                    )
 
     def check_tbl_unrecognized_field(self, key: str) -> bool:
         return key not in METADATA_FIELDS_KEYS
@@ -698,5 +707,10 @@ class HtmlVerifier:
         if vpath is None:
             return False
         return vpath.is_dir()
+
+    def _check_tbl_non_supported_suffix(self, vpath: t.Optional[PathHandler]) -> bool:
+        if vpath is None or vpath.is_dir():
+            return False
+        return not vpath.is_suffix_supported()
 
     #####################################################################################
