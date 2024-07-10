@@ -21,7 +21,7 @@ try:
         FIELD_PAPER_SOURCE,
     )
     from .local_constants import RECOGNIZED_LICENSE_NAMES
-    from .path_handler import PathHandler
+    from .path_handler import PathHandler, SUPPORTED_SUFFIXES
 except Exception as e:
     from src.verifier.constants import (
         IS_DEBUG,
@@ -35,7 +35,7 @@ except Exception as e:
         FIELD_PAPER_SOURCE,
     )
     from src.verifier.local_constants import RECOGNIZED_LICENSE_NAMES
-    from src.verifier.path_handler import PathHandler
+    from src.verifier.path_handler import PathHandler, SUPPORTED_SUFFIXES
 
 
 IS_HEADING_TITLE_CASED_REQUIRED = True
@@ -73,6 +73,7 @@ MSG_PROBLEMS = {
     TABLES: {
         "check_tbl_unrecognized_field": "Fields used in metadata tables can only be selected from the allowed list.",
         "check_tbl_missing_fields": "Your metadata table is missing required fields.",
+        "check_tbl_for_duplicated_fields": "Metadata tables shouldn't contain duplicated fields.",
         "check_tbl_empty_field": "Make sure that all your metadata table fields are filled.",
         "check_tbl_unrecognized_license": "The license name should a valid [an SPDX Identifier](https://spdx.org/licenses/).",
         # "check_tbl_invalid_pathname": "Path to a file is incorrect.",
@@ -80,10 +81,7 @@ MSG_PROBLEMS = {
         "check_tbl_non_relative_path": "Paths to files must be relative.",
         "check_tbl_no_file": "Failed to find one of the files.",
         "check_tbl_is_dir": "File paths must refer to a file, not to directory.",
-        "check_tbl_non_supported_suffix": "",
-        "": "",
-        "": "",
-        "": "",
+        "check_tbl_non_supported_suffix": "Unsupported file extension found.",
     },
 }
 
@@ -583,13 +581,23 @@ class HtmlVerifier:
                     timestamp=self._timestamp,
                     tags=[TABLES, METADATA_TABLES],
                 )
+            duplicated_fields = self._check_tbl_for_duplicated_fields(elem)
+            if duplicated_fields:
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[TABLES]["check_tbl_for_duplicated_fields"],
+                    recommend=f"The following metadata fields are used more than once: {duplicated_fields}.",
+                    elem=elem,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
+                    tags=[TABLES, METADATA_TABLES],
+                )
             # single field verification
             for key, val in raw_data.items():
                 if key in (FIELD_DIGITAL_SOURCE, FIELD_PAPER_SOURCE):
                     vpath = PathHandler(val, self._slug)
                 else:
                     vpath = None
-                if self.check_tbl_unrecognized_field(key):
+                if self._check_tbl_unrecognized_field(key):
                     self._messages.add_msg(
                         problem=MSG_PROBLEMS[TABLES]["check_tbl_unrecognized_field"],
                         recommend=f"Field {key} does not match any of the recognized names: {[field['key'] for field in METADATA_FIELDS]}.",
@@ -655,14 +663,14 @@ class HtmlVerifier:
                 if self._check_tbl_non_supported_suffix(vpath):
                     self._messages.add_msg(
                         problem=MSG_PROBLEMS[TABLES]["check_tbl_non_supported_suffix"],
-                        recommend=f"Consider conversion of the '{val}' to one of supported file extensions.",
+                        recommend=f"Consider conversion of the '{val}' to one of supported file suffixes: {SUPPORTED_SUFFIXES}.",
                         elem=elem,
                         fn=self._fp.name,
                         timestamp=self._timestamp,
                         tags=[TABLES, METADATA_TABLES],
                     )
 
-    def check_tbl_unrecognized_field(self, key: str) -> bool:
+    def _check_tbl_unrecognized_field(self, key: str) -> bool:
         return key not in METADATA_FIELDS_KEYS
 
     def _check_tbl_missing_fields(self, mdtbl: dict[str, str]) -> list[str]:
@@ -679,6 +687,19 @@ class HtmlVerifier:
                     missing.append(field["key"])
             is_missing = False
         return missing
+
+    def _check_tbl_for_duplicated_fields(self, table: bs4.element.Tag) -> list[str]:
+        unique_keys = []
+        duplicated_keys = []
+        for tr in table.find_all(["tr"]):
+            for descendent in tr.find_all():
+                if re.match(r"^\s*##\s*\w+", descendent.text):
+                    key = descendent.text
+            if key and key in unique_keys:
+                duplicated_keys.append(key)
+            else:
+                unique_keys.append(key)
+        return duplicated_keys
 
     def _check_tbl_empty_field(self, val: str) -> bool:
         return val == "" or re.match(r"^\s+$", val)

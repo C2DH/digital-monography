@@ -330,6 +330,29 @@ class TestTablesAndAssetsBreakingVerificationRules:
             == 1
         )
 
+    def test_check_tbl_for_duplicated_fields(self):
+        is_incorrect_raise_warning = None
+        for w in self.warnings[TABLES]:
+            if (
+                "This is not an url" in w["curr_elem"]
+                and w["problem"]
+                == MSG_PROBLEMS[TABLES]["check_tbl_for_duplicated_fields"]
+            ):
+                is_incorrect_raise_warning = w
+        assert is_incorrect_raise_warning
+        assert "## License url" in is_incorrect_raise_warning["recommend"]
+        assert (
+            len(
+                [
+                    w
+                    for w in self.warnings[TABLES]
+                    if w["problem"]
+                    == MSG_PROBLEMS[TABLES]["check_tbl_for_duplicated_fields"]
+                ]
+            )
+            == 1
+        )
+
     def test_check_tbl_unrecognized_field(self):
         is_incorrect_raise_warning = None
         is_correct_no_warning = None
