@@ -1,17 +1,14 @@
 import collections
 import bs4
 import datetime
-import logging
 import json
 import pathlib
 import re
 import typing as t
-import uuid
 
 
 try:
     from .constants import (
-        IS_DEBUG,
         METADATA_FIELDS,
         METADATA_FIELDS_KEYS,
         CLS_METADATA_TABLE,
@@ -22,9 +19,9 @@ try:
     )
     from .local_constants import RECOGNIZED_LICENSE_NAMES
     from .path_handler import PathHandler, SUPPORTED_SUFFIXES
+    from .warnings import VerifierMessages
 except Exception as e:
     from src.verifier.constants import (
-        IS_DEBUG,
         METADATA_FIELDS,
         METADATA_FIELDS_KEYS,
         CLS_METADATA_TABLE,
@@ -36,6 +33,7 @@ except Exception as e:
     )
     from src.verifier.local_constants import RECOGNIZED_LICENSE_NAMES
     from src.verifier.path_handler import PathHandler, SUPPORTED_SUFFIXES
+    from src.verifier.warnings import VerifierMessages
 
 
 IS_HEADING_TITLE_CASED_REQUIRED = True
@@ -76,7 +74,6 @@ MSG_PROBLEMS = {
         "check_tbl_for_duplicated_fields": "Metadata tables shouldn't contain duplicated fields.",
         "check_tbl_empty_field": "Make sure that all your metadata table fields are filled.",
         "check_tbl_unrecognized_license": "The license name should a valid [an SPDX Identifier](https://spdx.org/licenses/).",
-        # "check_tbl_invalid_pathname": "Path to a file is incorrect.",
         "check_tbl_not_in_assets": "Valid file paths must start with `assets` folder.",
         "check_tbl_non_relative_path": "Paths to files must be relative.",
         "check_tbl_no_file": "Failed to find one of the files.",
@@ -86,124 +83,124 @@ MSG_PROBLEMS = {
 }
 
 
-if IS_DEBUG:
-    today = datetime.date.today().isoformat()
-    log_target = pathlib.Path(f"/tmp/efs/_LOGS/{today}.log")
-    log_target.parent.mkdir(parents=True, exist_ok=True)
-    logging.basicConfig(
-        filename=log_target,
-        encoding="utf-8",
-        level=logging.DEBUG,
-        format="%(asctime)s::%(name)s::%(levelname)s::%(message)s",
-    )
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+# if IS_DEBUG:
+#     today = datetime.date.today().isoformat()
+#     log_target = pathlib.Path(f"/tmp/efs/_LOGS/{today}.log")
+#     log_target.parent.mkdir(parents=True, exist_ok=True)
+#     logging.basicConfig(
+#         filename=log_target,
+#         encoding="utf-8",
+#         level=logging.DEBUG,
+#         format="%(asctime)s::%(name)s::%(levelname)s::%(message)s",
+#     )
+# logger = logging.getLogger()
+# logger.setLevel(logging.INFO)
 
 
-class VerifierMessageJson(t.TypedDict):
-    problem: str
-    action: str
-    fn: str
-    line: int
-    pos: int
+# class VerifierMessageJson(t.TypedDict):
+#     problem: str
+#     action: str
+#     fn: str
+#     line: int
+#     pos: int
 
 
-class VerifierMessage:
-    def __init__(
-        self,
-        problem: str,
-        recommend: str,
-        prev_elem: t.Optional[bs4.element.Tag],
-        elem: bs4.element.Tag,
-        next_elem: t.Optional[bs4.element.Tag],
-        timestamp: datetime.datetime,
-        fn: str,
-        tags: list[str],
-    ) -> None:
-        self.id = uuid.uuid4().hex[:8]
-        self.problem = problem
-        self.recommend = recommend
-        self.prev_elem = prev_elem if prev_elem else self.find_prev_elem(elem)
-        self.curr_elem = elem
-        self.next_elem = next_elem if next_elem else self.find_next_elem(elem)
-        self.timestamp = timestamp
-        self.fn = fn
-        self.tags = tags
-        self.line = elem.sourceline
-        self.pos = elem.sourcepos
+# class VerifierMessage:
+#     def __init__(
+#         self,
+#         problem: str,
+#         recommend: str,
+#         prev_elem: t.Optional[bs4.element.Tag],
+#         elem: bs4.element.Tag,
+#         next_elem: t.Optional[bs4.element.Tag],
+#         timestamp: datetime.datetime,
+#         fn: str,
+#         tags: list[str],
+#     ) -> None:
+#         self.id = uuid.uuid4().hex[:8]
+#         self.problem = problem
+#         self.recommend = recommend
+#         self.prev_elem = prev_elem if prev_elem else self.find_prev_elem(elem)
+#         self.curr_elem = elem
+#         self.next_elem = next_elem if next_elem else self.find_next_elem(elem)
+#         self.timestamp = timestamp
+#         self.fn = fn
+#         self.tags = tags
+#         self.line = elem.sourceline
+#         self.pos = elem.sourcepos
 
-    @staticmethod
-    def find_prev_elem(elem: bs4.element.Tag) -> t.Optional[bs4.element.PageElement]:
-        """
-        Find previous_sibling, ommiting empty ones.
-        """
-        prev = elem.previous_sibling
-        for i in range(5):  # don't look for more than 5 siblings
-            if hasattr(prev, "text") and prev.text.isspace():
-                prev = prev.previous_sibling
-            else:
-                break
-        return prev
+#     @staticmethod
+#     def find_prev_elem(elem: bs4.element.Tag) -> t.Optional[bs4.element.PageElement]:
+#         """
+#         Find previous_sibling, ommiting empty ones.
+#         """
+#         prev = elem.previous_sibling
+#         for i in range(5):  # don't look for more than 5 siblings
+#             if hasattr(prev, "text") and prev.text.isspace():
+#                 prev = prev.previous_sibling
+#             else:
+#                 break
+#         return prev
 
-    @staticmethod
-    def find_next_elem(elem: bs4.element.Tag) -> t.Optional[bs4.element.PageElement]:
-        """
-        Find next_sibling, ommiting empty ones.
-        """
-        next = elem.next_sibling
-        for i in range(5):  # don't look for more than 5 siblings
-            if hasattr(next, "text") and next.text.isspace():
-                next = next.next_sibling
-            else:
-                break
-        return next
+#     @staticmethod
+#     def find_next_elem(elem: bs4.element.Tag) -> t.Optional[bs4.element.PageElement]:
+#         """
+#         Find next_sibling, ommiting empty ones.
+#         """
+#         next = elem.next_sibling
+#         for i in range(5):  # don't look for more than 5 siblings
+#             if hasattr(next, "text") and next.text.isspace():
+#                 next = next.next_sibling
+#             else:
+#                 break
+#         return next
 
-    def to_json(self) -> VerifierMessageJson:
-        return {
-            "id": self.id,
-            "problem": self.problem,
-            "recommend": self.recommend,
-            "fn": self.fn,
-            "prev_elem": str(self.prev_elem),
-            "curr_elem": str(self.curr_elem),
-            "next_elem": str(self.next_elem),
-            "timestamp": self.timestamp.isoformat(),
-            "tags": self.tags,
-            "line": self.line,
-            "pos": self.pos,
-        }
+#     def to_json(self) -> VerifierMessageJson:
+#         return {
+#             "id": self.id,
+#             "problem": self.problem,
+#             "recommend": self.recommend,
+#             "fn": self.fn,
+#             "prev_elem": str(self.prev_elem),
+#             "curr_elem": str(self.curr_elem),
+#             "next_elem": str(self.next_elem),
+#             "timestamp": self.timestamp.isoformat(),
+#             "tags": self.tags,
+#             "line": self.line,
+#             "pos": self.pos,
+#         }
 
 
-class VerifierMessages:
-    def __init__(self):
-        self._messages = []
+# class VerifierMessages:
+#     def __init__(self):
+#         self._messages = []
 
-    def add_msg(
-        self,
-        problem: str,
-        recommend: str,
-        elem: bs4.element.Tag,
-        fn: str,
-        timestamp: datetime.datetime,
-        tags: list[str],
-        prev_elem: t.Optional[bs4.element.Tag] = None,
-        next_elem: t.Optional[bs4.element.Tag] = None,
-    ) -> None:
-        self._messages.append(
-            VerifierMessage(
-                problem=problem,
-                recommend=recommend,
-                prev_elem=prev_elem,
-                elem=elem,
-                next_elem=next_elem,
-                timestamp=timestamp,
-                fn=fn,
-                tags=tags,
-            )
-        )
+#     def add_msg(
+#         self,
+#         problem: str,
+#         recommend: str,
+#         elem: bs4.element.Tag,
+#         fn: str,
+#         timestamp: datetime.datetime,
+#         tags: list[str],
+#         prev_elem: t.Optional[bs4.element.Tag] = None,
+#         next_elem: t.Optional[bs4.element.Tag] = None,
+#     ) -> None:
+#         self._messages.append(
+#             VerifierMessage(
+#                 problem=problem,
+#                 recommend=recommend,
+#                 prev_elem=prev_elem,
+#                 elem=elem,
+#                 next_elem=next_elem,
+#                 timestamp=timestamp,
+#                 fn=fn,
+#                 tags=tags,
+#             )
+#         )
 
-    def to_json(self) -> list[VerifierMessageJson]:
-        return [msg.to_json() for msg in self._messages]
+#     def to_json(self) -> list[VerifierMessageJson]:
+#         return [msg.to_json() for msg in self._messages]
 
 
 class HtmlVerifier:
