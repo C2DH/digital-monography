@@ -19,8 +19,10 @@ except ModuleNotFoundError:
     )
 
 
-SUPPORTED_ASSET_DIR = ["assets", "images", "videos"]
-
+# TODO: this is legacy, only `assets` should be permitted.
+# As far as I know, there should be no problem of just limiting
+# supported asset dir to `assets`. After DH Wash, try to change it.
+# SUPPORTED_ASSET_DIR = ["assets", "images", "videos",]
 
 if IS_DEBUG:
     today = datetime.date.today().isoformat()
@@ -66,11 +68,12 @@ def _mkdir_read():
 
 def _copy_assets(key: KeyPath) -> None:
     try:
-        for dirname in SUPPORTED_ASSET_DIR:
-            src = key.efs_slug_dir / dirname
-            dst = key.efs_slug_dir / "_build" / "html" / dirname
-            if src.exists():
-                shutil.copytree(src, dst, dirs_exist_ok=True)
+        # for dirname in SUPPORTED_ASSET_DIR:
+        dirname = "assets"
+        src = key.efs_slug_dir / dirname
+        dst = key.efs_slug_dir / "_build" / "html" / dirname
+        if src.exists():
+            shutil.copytree(src, dst, dirs_exist_ok=True)
     except Exception as e:
         logging.exception(f"Unable to copy assets. Error: {repr(e)}")
         raise
