@@ -1,3 +1,11 @@
+# ===== IMPORTANT =====
+# Remember, the only source of truth for keys.py is the one defined in
+# `src/_common/keys.py`. KeyPaths defined in other directories in
+# the src/ folder should be replaced with `src/_common/keys.py` before
+# building the image. We advise that you always build the containers
+# using Makefile commands, as the copy command is already included.
+# ======================
+
 import pathlib
 from functools import cached_property
 

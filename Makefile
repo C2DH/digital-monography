@@ -17,6 +17,7 @@ login:
 
 preparer/build:
 	cp src/_common/constants.py src/preparer/constants.py
+	cp src/_common/keys.py src/preparer/keys.py
 	docker build -t dgtmon-dev-preparer src/preparer
 
 preparer/tag:
@@ -29,6 +30,7 @@ preparer/push:
 
 builder/build:
 	cp src/_common/constants.py src/builder/constants.py
+	cp src/_common/keys.py src/builder/keys.py
 	docker build -t dgtmon-dev-builder src/builder
 
 builder/tag:
@@ -41,6 +43,7 @@ builder/push:
 
 github/build:
 	cp src/_common/constants.py src/github/constants.py
+	cp src/_common/keys.py src/github/keys.py
 	docker build -t dgtmon-dev-github src/github
 
 github/tag:
@@ -53,6 +56,7 @@ github/push:
 
 verifier/build:
 	cp src/_common/constants.py src/verifier/constants.py
+	cp src/_common/keys.py src/verifier/keys.py
 	docker build -t dgtmon-dev-verifier src/verifier
 
 verifier/tag:
