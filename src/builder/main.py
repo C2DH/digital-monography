@@ -59,6 +59,10 @@ def _get_key(event) -> KeyPath:
         raise
 
 
+def _fromtimestamp(event_time: str) -> datetime.datetime:
+    return datetime.datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S.%f%z")
+
+
 # TODO: Check if this is necessary. If not, remove.
 def _mkdir_read():
     new_path = pathlib.Path(DEFAULT_SFS_DIR) / "read"

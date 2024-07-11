@@ -4,15 +4,29 @@ import typing as t
 import uuid
 
 
-class VerifierMessageJson(t.TypedDict):
+class FileVerificationMessageJson(t.TypedDict):
+    id: str
     problem: str
-    action: str
+    recommend: str
     fn: str
+    prev_elem: str
+    curr_elem: str
+    next_elem: str
+    timestamp: str
+    tags: list[str]
     line: int
     pos: int
 
 
-class VerifierMessage:
+class GeneralVerificationMessageJson(t.TypedDict):
+    id: str
+    problem: str
+    recommend: str
+    timestamp: str
+    tags: list[str]
+
+
+class FileVerificationMessage:
     def __init__(
         self,
         problem: str,
@@ -62,7 +76,7 @@ class VerifierMessage:
                 break
         return next
 
-    def to_json(self) -> VerifierMessageJson:
+    def to_json(self) -> FileVerificationMessageJson:
         return {
             "id": self.id,
             "problem": self.problem,
@@ -78,6 +92,30 @@ class VerifierMessage:
         }
 
 
+class GeneralVerificationMessage:
+    def __init__(
+        self,
+        problem: str,
+        recommend: str,
+        timestamp: datetime.datetime,
+        tags: list[str],
+    ) -> None:
+        self.id = uuid.uuid4().hex[:8]
+        self.problem = problem
+        self.recommend = recommend
+        self.timestamp = timestamp
+        self.tags = tags
+
+    def to_json(self) -> GeneralVerificationMessageJson:
+        return {
+            "id": self.id,
+            "problem": self.problem,
+            "recommend": self.recommend,
+            "timestamp": self.timestamp.isoformat(),
+            "tags": self.tags,
+        }
+
+
 class VerifierMessages:
     def __init__(self):
         self._messages = []
@@ -86,25 +124,37 @@ class VerifierMessages:
         self,
         problem: str,
         recommend: str,
-        elem: bs4.element.Tag,
-        fn: str,
         timestamp: datetime.datetime,
         tags: list[str],
         prev_elem: t.Optional[bs4.element.Tag] = None,
+        elem: t.Optional[bs4.element.Tag] = None,
         next_elem: t.Optional[bs4.element.Tag] = None,
+        fn: t.Optional[str] = None,
     ) -> None:
-        self._messages.append(
-            VerifierMessage(
-                problem=problem,
-                recommend=recommend,
-                prev_elem=prev_elem,
-                elem=elem,
-                next_elem=next_elem,
-                timestamp=timestamp,
-                fn=fn,
-                tags=tags,
+        if elem is not None:
+            self._messages.append(
+                FileVerificationMessage(
+                    problem=problem,
+                    recommend=recommend,
+                    prev_elem=prev_elem,
+                    elem=elem,
+                    next_elem=next_elem,
+                    timestamp=timestamp,
+                    fn=fn,
+                    tags=tags,
+                )
             )
-        )
+        else:
+            self._messages.append(
+                GeneralVerificationMessage(
+                    problem=problem,
+                    recommend=recommend,
+                    timestamp=timestamp,
+                    tags=tags,
+                )
+            )
 
-    def to_json(self) -> list[VerifierMessageJson]:
+    def to_json(
+        self,
+    ) -> list[t.Union[FileVerificationMessageJson, GeneralVerificationMessageJson]]:
         return [msg.to_json() for msg in self._messages]
