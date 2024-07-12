@@ -148,6 +148,8 @@ data "aws_iam_policy_document" "builder" {
     actions = [
       "sqs:DeleteMessage",
       "sqs:ReceiveMessage",
+      "sqs:GetQueueAttributes",
+      "sqs:GetQueueUrl"
     ]
   }
   statement {
