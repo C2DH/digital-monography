@@ -142,6 +142,15 @@ data "aws_iam_policy_document" "builder" {
     ]
   }
   statement {
+    sid       = "AllowReceivingSQSMessages"
+    effect    = "Allow"
+    resources = [aws_sqs_queue.pre_builder_queue.arn]
+    actions = [
+      "sqs:DeleteMessage",
+      "sqs:ReceiveMessage",
+    ]
+  }
+  statement {
     sid       = "AllowLambdaVPCNetworking"
     effect    = "Allow"
     resources = ["*"]
