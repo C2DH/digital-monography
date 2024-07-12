@@ -42,7 +42,7 @@ except ModuleNotFoundError as e:
 
 if IS_DEBUG:
     today = datetime.date.today().isoformat()
-    log_target = pathlib.Path(f"/tmp/efs/_LOGS/{today}.log")
+    log_target = pathlib.Path(f"/tmp/efs/_LOGS/{today}_preparer.log")
     log_target.parent.mkdir(parents=True, exist_ok=True)
     logging.basicConfig(
         filename=log_target,
@@ -85,6 +85,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     _write_processed_md_to_efs(md, key)
     _put_md_to_s3(md, key)
     _put_to_archive_s3(key.s3_key.with_suffix(".md"), md)
+    _send_msg_to_sqs(key)
     _log_document_stats(start, md)
     return {"statusCode": 200, "body": ""}
 

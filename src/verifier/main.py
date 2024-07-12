@@ -27,7 +27,7 @@ except ModuleNotFoundError as e:
 
 if IS_DEBUG:
     today = datetime.date.today().isoformat()
-    log_target = pathlib.Path(f"/tmp/efs/_LOGS/{today}.log")
+    log_target = pathlib.Path(f"/tmp/efs/_LOGS/{today}_verifier.log")
     log_target.parent.mkdir(parents=True, exist_ok=True)
     logging.basicConfig(
         filename=log_target,
