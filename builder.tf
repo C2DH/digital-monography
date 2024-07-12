@@ -66,6 +66,30 @@ output "apkg_uploader_id" {
   value = aws_iam_access_key.apkg_uploader.id
 }
 
+## SQS (Lambda trigger)
+
+resource "aws_sqs_queue" "pre_builder_queue" {
+  name                        = "${var.sqs_builder_trigger}.fifo"
+  fifo_queue                  = true
+  receive_wait_time_seconds   = 15
+  content_based_deduplication = true
+  max_message_size            = 8192 # 8 KiB
+}
+
+resource "aws_lambda_event_source_mapping" "example" {
+  event_source_arn = aws_sqs_queue.pre_builder_queue.arn
+  function_name    = aws_lambda_function.builder_func.arn
+}
+
+# resource "aws_s3_bucket_notification" "ir_apkg_md_notification" {
+#   bucket = aws_s3_bucket.ir_apkg_md.id
+#   lambda_function {
+#     lambda_function_arn = aws_lambda_function.builder_func.arn
+#     events              = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
+#   }
+#   depends_on = [aws_lambda_permission.allow_ir_apkg_md_to_invoke_lambda]
+# }
+
 ## Lambda (builder)
 
 data "aws_iam_policy_document" "assume_builder_role" {
@@ -183,14 +207,14 @@ resource "aws_lambda_function" "builder_func" {
   }
 }
 
-resource "aws_s3_bucket_notification" "ir_apkg_md_notification" {
-  bucket = aws_s3_bucket.ir_apkg_md.id
-  lambda_function {
-    lambda_function_arn = aws_lambda_function.builder_func.arn
-    events              = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
-  }
-  depends_on = [aws_lambda_permission.allow_ir_apkg_md_to_invoke_lambda]
-}
+# resource "aws_s3_bucket_notification" "ir_apkg_md_notification" {
+#   bucket = aws_s3_bucket.ir_apkg_md.id
+#   lambda_function {
+#     lambda_function_arn = aws_lambda_function.builder_func.arn
+#     events              = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
+#   }
+#   depends_on = [aws_lambda_permission.allow_ir_apkg_md_to_invoke_lambda]
+# }
 
 resource "aws_ecr_repository" "builder_repo" {
   name                 = var.builder_repo_name
