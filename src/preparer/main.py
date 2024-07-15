@@ -277,6 +277,7 @@ def _write_processed_md_to_efs(md: str, key: KeyPath) -> None:
 
 def _send_msg_to_sqs(key: KeyPath) -> None:
     try:
+        logger.info(f"Preparing to send a message to the sqs queue.")
         QueueUrl = "https://sqs.eu-west-1.amazonaws.com/367031255351/cpy-dgtmon-dev-builder-trigger.fifo"
         MessageBody = key.slug
         MessageDeduplicationId = key.slug

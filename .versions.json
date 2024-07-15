@@ -1,6 +1,6 @@
 {
-    "BUILDER_STABLE_V": "0.0.23",
+    "BUILDER_STABLE_V": "0.0.24",
     "GITHUB_STABLE_V": "0.0.13",
-    "PREPARER_STABLE_V": "0.0.21",
+    "PREPARER_STABLE_V": "0.0.22",
     "VERIFIER_STABLE_V": "0.0.9"
 }
