@@ -56,8 +56,10 @@ logger.setLevel(logging.INFO)
 
 if IS_DEBUG:
     s3 = Faker("s3")
+    sqs = Faker("sqs")
 else:
     s3 = boto3.client("s3")
+    sqs = boto3.client("sqs")
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
@@ -111,7 +113,7 @@ def _get_source_bucket(event) -> str:
         raise
 
 
-def _download_fileobj(src: str, key: KeyPath):
+def _download_fileobj(src: str, key: KeyPath) -> None:
     try:
         key = key.efs_filepath
         key.parent.mkdir(parents=True, exist_ok=True)
@@ -256,20 +258,45 @@ def _put_to_archive_s3(key: KeyPath, contents: t.Optional[str] = None) -> None:
         raise
 
 
-def _write_processed_html_to_efs(html: str, key: KeyPath):
+def _write_processed_html_to_efs(html: str, key: KeyPath) -> None:
     new_efs_filepath = key.efs_slug_html_path.with_suffix(".html")
     new_efs_filepath.parent.mkdir(exist_ok=True)
     with open(new_efs_filepath, "w") as f:
         f.write(html)
 
 
-def _write_processed_md_to_efs(md: str, key: KeyPath):
+def _write_processed_md_to_efs(md: str, key: KeyPath) -> None:
     new_efs_filepath = key.efs_filepath.with_suffix(".md")
     with open(new_efs_filepath, "w") as f:
         f.write(md)
 
 
-def _log_document_stats(start: float, md: str):
+# def _get_queue_url():
+#     return
+
+
+def _send_msg_to_sqs(key: KeyPath) -> None:
+    try:
+        QueueUrl = "https://sqs.eu-west-1.amazonaws.com/367031255351/cpy-dgtmon-dev-builder-trigger.fifo"
+        MessageBody = key.slug
+        MessageDeduplicationId = key.slug
+        MessageGroupId = "0"
+        resp = sqs.send_message(
+            QueueUrl=QueueUrl,
+            MessageBody=MessageBody,
+            MessageDeduplicationId=MessageDeduplicationId,
+            MessageGroupId=MessageGroupId,
+        )
+        logger.info(
+            f"Response from s3.send_message(QueueUrl={QueueUrl}, MessageBody={MessageBody}, MessageDeduplicationId={MessageDeduplicationId}, MessageGroupId={MessageGroupId}): "
+            + json.dumps(resp, default=str)
+        )
+    except Exception as e:
+        logger.exception(f"Sending a message to sqs queue failed. Error: {repr(e)}")
+        raise
+
+
+def _log_document_stats(start: float, md: str) -> None:
     words = re.findall("[a-zA-Z_]+", md)
     end = time.time()
     stats = {

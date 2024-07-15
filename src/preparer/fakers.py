@@ -1,4 +1,5 @@
 import pathlib
+import typing as t
 
 try:
     from .keys import KeyPath
@@ -10,6 +11,7 @@ class Faker:
     def __new__(cls, service_name: str) -> None:
         fakers = [
             ("s3", S3Faker),
+            ("sqs", SQSFaker),
         ]
         for faker in fakers:
             if service_name == faker[0]:
@@ -65,3 +67,14 @@ class S3Faker:
             "ETag": '"just-uuid-id"',
             "ServerSideEncryption": "AES256",
         }
+
+
+class SQSFaker:
+    def send_message(
+        self,
+        QueueUrl: str,
+        MessageBody: str,
+        MessageDeduplicationId: str,
+        MessageGroupId: str,
+    ) -> dict[str, t.Union[str, int]]:
+        return {}

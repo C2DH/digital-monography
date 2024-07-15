@@ -1,4 +1,5 @@
 import datetime
+import json
 import shutil
 import subprocess
 import logging
@@ -39,6 +40,8 @@ logger.setLevel(logging.INFO)
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
+    logger.info("Event: " + json.dumps(event, default=str))
+    logger.info("Context: " + json.dumps(context, default=str))
     key = _get_key(event)
     _mkdir_read()
     _copy_assets(key)
