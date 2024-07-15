@@ -142,7 +142,7 @@ resource "aws_lambda_permission" "allow_preparer_access_s3_via_vpc_endpoint" {
   source_arn    = aws_vpc_endpoint.s3_endpoint.arn
 }
 
-resource "aws_lambda_permission" "allow_preparer_access_s3_via_vpc_endpoint" {
+resource "aws_lambda_permission" "allow_preparer_access_sqs_via_vpc_endpoint" {
   statement_id  = "AllowSQSAccessViaVPCEndpoint"
   action        = "lambda:SendMessage"
   function_name = aws_lambda_function.preparer_func.arn
