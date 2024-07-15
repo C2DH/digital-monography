@@ -69,12 +69,12 @@ output "apkg_uploader_id" {
 ## SQS (Lambda trigger)
 
 resource "aws_sqs_queue" "pre_builder_queue" {
-  name                        = "${var.sqs_builder_trigger}.fifo"
-  fifo_queue                  = true
-  receive_wait_time_seconds   = 1
+  name       = "${var.sqs_builder_trigger}.fifo"
+  fifo_queue = true
+  # receive_wait_time_seconds   = 15
   content_based_deduplication = true
   max_message_size            = 8192 # 8 KiB
-  visibility_timeout_seconds  = 1000
+  # visibility_timeout_seconds  = 2000
 }
 
 resource "aws_lambda_event_source_mapping" "example" {
