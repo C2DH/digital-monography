@@ -18,10 +18,12 @@ resource "aws_vpc_endpoint" "s3_endpoint" {
 }
 
 resource "aws_vpc_endpoint" "sqs_endpoint" {
-  vpc_id            = aws_vpc.dgtmon_vpc.id
-  service_name      = "com.amazonaws.${var.region}.sqs"
-  subnet_ids        = [aws_subnet.efs_public.id]
-  vpc_endpoint_type = "Interface"
+  vpc_id              = aws_vpc.dgtmon_vpc.id
+  service_name        = "com.amazonaws.${var.region}.sqs"
+  subnet_ids          = [aws_subnet.efs_public.id]
+  private_dns_enabled = true
+  vpc_endpoint_type   = "Interface"
+  security_group_ids  = [aws_security_group.efs_access_sg.id]
 }
 
 resource "aws_route_table" "vpc_to_s3_connectivity" {

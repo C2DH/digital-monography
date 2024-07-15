@@ -148,7 +148,7 @@ resource "aws_lambda_permission" "allow_preparer_access_sqs_via_vpc_endpoint" {
   function_name = aws_lambda_function.preparer_func.arn
   principal     = "sqs.amazonaws.com"
   # source_arn    = aws_vpc_endpoint.sqs_endpoint.arn
-  source_arn    = aws_sqs_queue.pre_builder_queue.arn
+  source_arn = aws_sqs_queue.pre_builder_queue.arn
 }
 
 resource "aws_lambda_function" "preparer_func" {
