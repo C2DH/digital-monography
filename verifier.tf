@@ -78,6 +78,14 @@ data "aws_iam_policy_document" "verifier" {
     ]
   }
   statement {
+    sid       = "AllowSendingSQSMessages"
+    effect    = "Allow"
+    resources = [aws_sqs_queue.pre_builder_queue.arn]
+    actions = [
+      "sqs:SendMessage",
+    ]
+  }
+  statement {
     sid       = "AllowLambdaVPCNetworking"
     effect    = "Allow"
     resources = ["*"]
