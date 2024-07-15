@@ -71,7 +71,7 @@ output "apkg_uploader_id" {
 resource "aws_sqs_queue" "pre_builder_queue" {
   name                        = "${var.sqs_builder_trigger}.fifo"
   fifo_queue                  = true
-  receive_wait_time_seconds   = 15
+  receive_wait_time_seconds   = 1
   content_based_deduplication = true
   max_message_size            = 8192 # 8 KiB
   visibility_timeout_seconds  = 1000
