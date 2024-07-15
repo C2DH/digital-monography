@@ -55,7 +55,6 @@ def _get_key(event) -> KeyPath:
     try:
         slug = event["Records"][0]["body"]
         pth = pathlib.Path(slug) / "_config.yml"
-        assert pth.exists()
         return KeyPath(pth)
     except Exception as e:
         logging.exception(f"Unable to retrieve object key. Error: {repr(e)}")
