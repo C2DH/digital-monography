@@ -98,6 +98,8 @@ data "aws_iam_policy_document" "preparer" {
     resources = [aws_sqs_queue.pre_builder_queue.arn]
     actions = [
       "sqs:SendMessage",
+      "sqs:GetQueueAttributes",
+      "sqs:GetQueueUrl"
     ]
   }
   statement {
