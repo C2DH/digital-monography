@@ -18,9 +18,10 @@ resource "aws_vpc_endpoint" "s3_endpoint" {
 }
 
 resource "aws_vpc_endpoint" "sqs_endpoint" {
-  vpc_id          = aws_vpc.dgtmon_vpc.id
-  service_name    = "com.amazonaws.${var.region}.sqs"
-  route_table_ids = [aws_route_table.vpc_to_s3_connectivity.id]
+  vpc_id            = aws_vpc.dgtmon_vpc.id
+  service_name      = "com.amazonaws.${var.region}.sqs"
+  route_table_ids   = [aws_route_table.vpc_to_s3_connectivity.id]
+  vpc_endpoint_type = "Interface"
 }
 
 resource "aws_route_table" "vpc_to_s3_connectivity" {
