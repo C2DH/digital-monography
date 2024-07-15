@@ -53,10 +53,10 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
 
 def _get_key(event) -> KeyPath:
     try:
-        key_str = urllib.parse.unquote_plus(
-            event["Records"][0]["s3"]["object"]["key"], encoding="utf-8"
-        )
-        return KeyPath(key_str)
+        slug = event["Records"][0]["body"]
+        pth = pathlib.Path(slug) / "_config.yml"
+        assert pth.exists()
+        return KeyPath(pth)
     except Exception as e:
         logging.exception(f"Unable to retrieve object key. Error: {repr(e)}")
         raise
