@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser(description="...")
 parser.add_argument("book_path")
 
 
-DEFAULT_EVENT = {
+DEFAULT_S3_EVENT = {
     "Records": [
         {
             "eventVersion": "2.1",
@@ -52,6 +52,30 @@ DEFAULT_EVENT = {
         }
     ]
 }
+DEFAULT_SQS_EVENT = {
+    "Records": [
+        {
+            "messageId": "05e84d45-cf03-4736-b4f6-cfeb224a3c28",
+            "receiptHandle": "AQEBnn8NI0PqDy2vnE+zIr9zMt8EZtxJsNP8EoE518jUB5kM9XfxBISr0y5x/1rLJ5Q8H7ZC8Ki1L4kFqxoDcLrQhaWtYVd3UgGc+QQqiSROweMQbf9HO/UC1AtJwhvxrXqwLJOlwdDMQDqUNVreEw+r49ImzFHeA2PVnCpWlGUxxywJb5PK5aln3taoF9gFF+dYHeY20kCT9FvwcZ/8FPEfWtR0WbTjmK0SGjRC6zNTppLeYmNsWK8WlJuyKssAUDH31swhOM/lCpUFoclUnApDBgUmW1aTW9xxqhnNyV9zVFAz72dwBxxk8ZYomdV1+6LT",
+            "body": "PLACE YOUR SLUG HERE",
+            "attributes": {
+                "ApproximateReceiveCount": "1",
+                "AWSTraceHeader": "Root=1-669541a5-07b9fdc04aa5c7df7bdc7bf6;Parent=3f6868ca47622a17;Sampled=0;Lineage=d722ee3a:0",
+                "SentTimestamp": "1721057704521",
+                "SequenceNumber": "18887334846066927616",
+                "MessageGroupId": "0",
+                "SenderId": "AROAVK5GEQE3275W6UTUO:preparer",
+                "MessageDeduplicationId": "PLACE YOUR SLUG HERE",
+                "ApproximateFirstReceiveTimestamp": "1721057709530",
+            },
+            "messageAttributes": {},
+            "md5OfBody": "201ae3116cba610bc56a93c227353227",
+            "eventSource": "aws:sqs",
+            "eventSourceARN": "arn:aws:sqs:eu-west-1:367031255351:cpy-dgtmon-dev-builder-trigger.fifo",
+            "awsRegion": "eu-west-1",
+        }
+    ]
+}
 
 
 def cpy_to_tmp_and_call_handler(fp: pathlib.Path, key: str):
@@ -60,19 +84,22 @@ def cpy_to_tmp_and_call_handler(fp: pathlib.Path, key: str):
         target_fp = target_fp / key_part
     target_fp.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(fp, target_fp)
-    event = copy.deepcopy(DEFAULT_EVENT)
-    event["Records"][0]["s3"]["object"]["key"] = key
+    s3_event = copy.deepcopy(DEFAULT_S3_EVENT)
+    s3_event["Records"][0]["s3"]["object"]["key"] = key
     context = {}
     # preparer
-    preparer_handler(event, context)
+    preparer_handler(s3_event, context)
     # verifier
-    if key.endswith("docx"):
-        event["Records"][0]["s3"]["object"]["key"] = str(
+    if key.endswith(".docx"):
+        s3_event["Records"][0]["s3"]["object"]["key"] = str(
             KeyPath(key).with_suffix(".html")
         )
-    verifier_handler(event, context)
+        verifier_handler(s3_event, context)
     # builder
-    # builder_handler(event, context)
+    sqs_event = copy.deepcopy(DEFAULT_SQS_EVENT)
+    sqs_event["Records"][0]["body"] = KeyPath(key).slug
+    sqs_event["Records"][0]["attributes"]["MessageDeduplicationId"] = KeyPath(key).slug
+    builder_handler(sqs_event, context)
 
 
 if __name__ == "__main__":
