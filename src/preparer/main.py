@@ -21,6 +21,7 @@ try:
     from md_extraction import DocumentMetadata
     from metadata_extraction import replace_assets_with_directives
     from remove_empty_tables import remove_empty_tables
+    from replace_alt_texts import replace_alt_texts
     from html2md import convert_to_md
     from keys import KeyPath
     from fakers import Faker
@@ -35,6 +36,7 @@ except ModuleNotFoundError as e:
     from src.preparer.md_extraction import DocumentMetadata
     from src.preparer.metadata_extraction import replace_assets_with_directives
     from src.preparer.remove_empty_tables import remove_empty_tables
+    from src.preparer.replace_alt_texts import replace_alt_texts
     from src.preparer.html2md import convert_to_md
     from src.preparer.keys import KeyPath
     from src.preparer.fakers import Faker
@@ -75,6 +77,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     print(html_str)
     html_soup = _get_html_soup(html_str)
     metadata = _get_book_metadata()
+    html_soup = _replace_alt_texts(html_soup)
     html_soup = _add_citations_and_bibliography(html_soup)
     html_soup = _replace_assets_with_directives(html_soup, metadata)
     html_soup = _remove_empty_tables(html_soup)
@@ -190,6 +193,14 @@ def _remove_empty_tables(html_soup: bs4.BeautifulSoup) -> bs4.BeautifulSoup:
         raise
 
 
+def _replace_alt_texts(html_soup: bs4.BeautifulSoup) -> bs4.BeautifulSoup:
+    try:
+        return replace_alt_texts(html_soup)
+    except Exception as e:
+        logger.exception(f"Replacing alt texts failed. Error: {repr(e)}")
+        raise
+
+
 def _convert_to_md(html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata) -> str:
     try:
         return convert_to_md(html_soup, metadata)
@@ -271,8 +282,11 @@ def _write_processed_md_to_efs(md: str, key: KeyPath) -> None:
         f.write(md)
 
 
-# def _get_queue_url():
-#     return
+def _get_queue_url():
+    region = "eu-west-1"
+    account_id = "367031255351"
+    queue_name = "cpy-dgtmon-dev-builder-trigger.fifo"
+    return f"https://sqs.{region}.amazonaws.com/{account_id}/{queue_name}"
 
 
 def _send_msg_to_sqs(key: KeyPath) -> None:
