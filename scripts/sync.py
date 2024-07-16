@@ -4,8 +4,9 @@ import time
 import typing as t
 
 BOOK_PATH = "/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/thinkering-with-memorecord"
-# BOOK_PATH = "/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/guidelines-for-drafting-manuscripts"
-# BOOK_PATH = ("/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/examples")
+BOOK_PATH = "/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/guidelines-for-drafting-manuscripts"
+BOOK_PATH = ("/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/examples")
+BOOK_PATH = ("/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/small-example")
 DST = "cpy-dgtmon-dev-apkg-upload"  # TODO: read from .tfvars
 
 
