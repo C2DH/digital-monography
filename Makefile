@@ -10,6 +10,7 @@ DOCKER_HUB = c2dhunilu
 test:
 	DGTMON_DEBUG=1 python -m pytest tests/preparer/
 	DGTMON_DEBUG=1 python -m pytest tests/verifier/
+	DGTMON_DEBUG=1 python -m pytest tests/builder/
 
 login:
 	aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin ${DOCKER_ECR}
@@ -27,6 +28,8 @@ preparer/tag:
 preparer/push:
 	docker push ${DOCKER_ECR}/dgtmon-dev-preparer:${PREPARER_STABLE_V}
 	docker push ${DOCKER_HUB}/dgtmon-dev-preparer:${PREPARER_STABLE_V}
+
+preparer/make: preparer/build preparer/tag preparer/push
 
 builder/build:
 	cp src/_common/constants.py src/builder/constants.py
