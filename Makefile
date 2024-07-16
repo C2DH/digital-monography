@@ -41,6 +41,8 @@ builder/push:
 	docker push ${DOCKER_ECR}/dgtmon-dev-builder:${BUILDER_STABLE_V}
 	docker push ${DOCKER_HUB}/dgtmon-dev-builder:${BUILDER_STABLE_V}
 
+builder/make: builder/build builder/tag builder/push
+
 github/build:
 	cp src/_common/constants.py src/github/constants.py
 	cp src/_common/keys.py src/github/keys.py
@@ -54,6 +56,8 @@ github/push:
 	docker push ${DOCKER_ECR}/dgtmon-dev-github:${GITHUB_STABLE_V}
 	docker push ${DOCKER_HUB}/dgtmon-dev-github:${GITHUB_STABLE_V}
 
+github/make: github/build github/tag github/push
+
 verifier/build:
 	cp src/_common/constants.py src/verifier/constants.py
 	cp src/_common/keys.py src/verifier/keys.py
@@ -66,6 +70,8 @@ verifier/tag:
 verifier/push:
 	docker push ${DOCKER_ECR}/dgtmon-dev-verifier:${VERIFIER_STABLE_V}
 	docker push ${DOCKER_HUB}/dgtmon-dev-verifier:${VERIFIER_STABLE_V}
+
+verifier/make: verifier/build verifier/tag verifier/push
 
 all/build: preparer/build builder/build github/build verifier/build
 
