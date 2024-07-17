@@ -101,6 +101,16 @@ class HtmlVerifier:
     def stats(self):
         pass
 
+    @property
+    def result(self):
+        return self._messages
+
+    def to_json(self):
+        return self._messages.to_json()
+
+    def sort(self) -> VerifierMessages:
+        self._messages.sort(key=lambda msg: (msg["line"], msg["pos"]))
+
     def verify(
         self, html: str, fp: pathlib.Path, slug: str, timestamp: datetime.datetime
     ) -> VerifierMessages:

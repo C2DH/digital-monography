@@ -54,14 +54,16 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         with open(key.efs_slug_html_path.with_suffix(".html"), "r") as f:
             html = f.read()
         verifer = HtmlVerifier()
-        result = verifer.verify(
+        verifer.verify(
             html,
             key.efs_slug_html_path.with_suffix(".html"),
             slug=key.slug,
             timestamp=timestamp,
-        ).to_json()
-        logger.info(json.dumps(result, default=str))
-        _put_json_to_s3(json.dumps(result, default=str), key)
+        )
+        verifer.sort()
+        vresult = verifer.to_json()
+        logger.info(json.dumps(vresult, default=str))
+        _put_json_to_s3(json.dumps(vresult, default=str), key)
         return {"statusCode": 200, "body": ""}
     return {"statusCode": 200, "body": ""}
 

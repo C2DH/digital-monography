@@ -1,3 +1,4 @@
+import abc
 import bs4
 import datetime
 import typing as t
@@ -24,6 +25,8 @@ class GeneralVerificationMessageJson(t.TypedDict):
     recommend: str
     timestamp: str
     tags: list[str]
+    line: int
+    pos: int
 
 
 class FileVerificationMessage:
@@ -49,6 +52,22 @@ class FileVerificationMessage:
         self.tags = tags
         self.line = elem.sourceline
         self.pos = elem.sourcepos
+
+    def __getitem__(self, x):
+        """Makes object subscriptable, allowing to access e.g. message['id']"""
+        return getattr(self, x)
+
+    def copy(self) -> "FileVerificationMessage":
+        return FileVerificationMessage(
+            problem=self.problem,
+            recommend=self.recommend,
+            prev_elem=self.prev_elem,
+            elem=self.curr_elem,
+            next_elem=self.next_elem,
+            timestamp=self.timestamp,
+            fn=self.fn,
+            tags=self.tags,
+        )
 
     @staticmethod
     def find_prev_elem(elem: bs4.element.Tag) -> t.Optional[bs4.element.PageElement]:
@@ -91,6 +110,9 @@ class FileVerificationMessage:
             "pos": self.pos,
         }
 
+    def __str__(self):
+        return self.to_json()
+
 
 class GeneralVerificationMessage:
     def __init__(
@@ -105,6 +127,20 @@ class GeneralVerificationMessage:
         self.recommend = recommend
         self.timestamp = timestamp
         self.tags = tags
+        self.line = 0
+        self.pos = 0
+
+    def __getitem__(self, x):
+        """Makes object subscriptable, allowing to access e.g. message['id']"""
+        return getattr(self, x)
+
+    def copy(self) -> "GeneralVerificationMessage":
+        return GeneralVerificationMessage(
+            problem=self.problem,
+            recommend=self.recommend,
+            timestamp=self.timestamp,
+            tags=self.tags,
+        )
 
     def to_json(self) -> GeneralVerificationMessageJson:
         return {
@@ -113,10 +149,17 @@ class GeneralVerificationMessage:
             "recommend": self.recommend,
             "timestamp": self.timestamp.isoformat(),
             "tags": self.tags,
+            "line": self.line,
+            "pos": self.pos,
         }
+
+    def __str__(self):
+        return self.to_json()
 
 
 class VerifierMessages:
+    _messages: list[t.Union[FileVerificationMessage, GeneralVerificationMessage]]
+
     def __init__(self):
         self._messages = []
 
@@ -158,3 +201,9 @@ class VerifierMessages:
         self,
     ) -> list[t.Union[FileVerificationMessageJson, GeneralVerificationMessageJson]]:
         return [msg.to_json() for msg in self._messages]
+
+    def sort(self, *args, **kwargs) -> None:
+        self._messages.sort(*args, **kwargs)
+
+    def __str__(self):
+        return self.to_json()
