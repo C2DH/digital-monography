@@ -63,6 +63,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         verifer.sort()
         vresult = verifer.to_json()
         logger.info(json.dumps(vresult, default=str))
+        _write_json_to_efs(vresult, key)
         _put_json_to_s3(json.dumps(vresult, default=str), key)
         return {"statusCode": 200, "body": ""}
     return {"statusCode": 200, "body": ""}
@@ -94,6 +95,17 @@ def _get_timestamp(event) -> datetime.datetime:
             + ". Exception: "
             + repr(e)
         )
+        raise
+
+
+def _write_json_to_efs(vresult, key: KeyPath) -> None:
+    try:
+        fp = key.add_to_efs_slug_dir("_warnings") / key.github_path.with_suffix(".json")
+        with open(fp, "w") as f:
+            json.dump(vresult, f)
+        logger.info(f"Warnings were saved to {str(fp)}")
+    except Exception as e:
+        logger.exception(f"Writing json to /efs directory failed. Error: {repr(e)}")
         raise
 
 
