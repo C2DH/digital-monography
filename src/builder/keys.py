@@ -67,5 +67,5 @@ class KeyPath(type(pathlib.Path())):
     def add_to_efs_slug_dir(self, fldr: str) -> "KeyPath":
         """Adds <fldr> folder to slug dir, /mnt/efs/my-slug/<fldr>/path/to/file.txt"""
         if not (self.efs_slug_dir / fldr).exists():
-            self.efs_slug_dir.mkdir(fldr)
+            (self.efs_slug_dir / fldr).mkdir()
         return self.efs_slug_dir / fldr / self.github_path
