@@ -1,3 +1,10 @@
+# ===== IMPORTANT =====
+# Remember, the only source of truth for html2md.py is the one defined in
+# `src/preparer/html2md.py`. Objects defined in other directories in
+# the src/ folder should be replaced with `src/preparer/html2md.py` before
+# building the image. We advise that you always build the containers
+# using Makefile commands, as the copy command is already included.
+# ======================
 import bs4
 import markdownify
 import re

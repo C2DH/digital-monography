@@ -64,6 +64,7 @@ github/make: github/build github/tag github/push
 verifier/build:
 	cp src/_common/constants.py src/verifier/constants.py
 	cp src/_common/keys.py src/verifier/keys.py
+	cp src/preparer/html2md.py src/verifier/html2md.py
 	docker build -t dgtmon-dev-verifier src/verifier
 
 verifier/tag:
