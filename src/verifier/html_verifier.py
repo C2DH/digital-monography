@@ -71,9 +71,9 @@ MSG_PROBLEMS = {
     TABLES: {
         "check_tbl_unrecognized_field": "Fields used in metadata tables can only be selected from the allowed list.",
         "check_tbl_missing_fields": "Your metadata table is missing required fields.",
-        "check_tbl_for_duplicated_fields": "Metadata tables shouldn't contain duplicated fields.",
+        "check_tbl_for_duplicated_fields": 'Metadata tables shouldn"t contain duplicated fields.',
         "check_tbl_empty_field": "Make sure that all your metadata table fields are filled.",
-        "check_tbl_unrecognized_license": "The license name should a valid [an SPDX Identifier](https://spdx.org/licenses/).",
+        "check_tbl_unrecognized_license": "The license name should a valid [SPDX Identifier](https://spdx.org/licenses/).",
         "check_tbl_not_in_assets": "Valid file paths must start with `assets` folder.",
         "check_tbl_non_relative_path": "Paths to files must be relative.",
         "check_tbl_no_file": "Failed to find one of the files.",
@@ -176,7 +176,7 @@ class HtmlVerifier:
             )
             self._messages.add_msg(
                 problem=MSG_PROBLEMS[HEADINGS]["check_h_no_h1_at_start"],
-                recommend=f"Here, it begins with '{shrt_txt}...' which does not have a Heading 1 style.",
+                recommend=f'Here, it begins with "{shrt_txt}..." which does not have a Heading 1 style.',
                 elem=self._first_tag,
                 fn=self._fp.name,
                 timestamp=self._timestamp,
@@ -189,7 +189,7 @@ class HtmlVerifier:
             if self._h_stack and self._headings_lvls[i] - self._h_stack[-1] > 1:
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[HEADINGS]["check_h_not_sequential"],
-                    recommend=f"Heading {str(self._headings_lvls[i])} ('{tag.text}') is placed after heading level {str(self._h_stack[-1])}. Consider changing the former to style 'Heading {str(self._h_stack[-1] + 1)}'.",
+                    recommend=f'Heading {str(self._headings_lvls[i])} ("{tag.text}") is placed after heading level {str(self._h_stack[-1])}. Consider changing the former to style "Heading {str(self._h_stack[-1] + 1)}".',
                     elem=tag,
                     fn=self._fp.name,
                     timestamp=self._timestamp,
@@ -198,7 +198,7 @@ class HtmlVerifier:
             if len(self._h_stack) == 0 and self._headings_lvls[i] != 1:
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[HEADINGS]["check_h_first_h_not_h1"],
-                    recommend=f"Consider changing the style of '{tag.text}' or '{self._first_tag.text}' to 'Heading 1'.",
+                    recommend=f'Consider changing the style of "{tag.text}" or "{self._first_tag.text}" to "Heading 1".',
                     elem=tag,
                     fn=self._fp.name,
                     timestamp=self._timestamp,
@@ -207,7 +207,7 @@ class HtmlVerifier:
             if i > 1 and self._headings_lvls[i] == 1:
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[HEADINGS]["check_h_h1_after_start"],
-                    recommend=f"Consider changing level of '{tag.text}' or splitting file into two as there should be only one top level heading per file.",
+                    recommend=f'Consider changing level of "{tag.text}" or splitting file into two as there should be only one top level heading per file.',
                     elem=tag,
                     fn=self._fp.name,
                     timestamp=self._timestamp,
@@ -218,7 +218,7 @@ class HtmlVerifier:
             if self._check_h_no_title_case(tag):
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[HEADINGS]["check_h_no_title_case"],
-                    recommend=f"Consider changing the heading '{tag.text}' to '{tag.text.title()}'.",
+                    recommend=f'Consider changing the heading "{tag.text}" to "{tag.text.title()}".',
                     elem=tag,
                     fn=self._fp.name,
                     timestamp=self._timestamp,
@@ -227,7 +227,7 @@ class HtmlVerifier:
             if self._check_h_with_trailing_dot(tag):
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[HEADINGS]["check_h_with_trailing_dot"],
-                    recommend=f"Consider removing the '.' character at the end of the heading.",
+                    recommend=f'Consider removing the "." character at the end of the heading.',
                     elem=tag,
                     fn=self._fp.name,
                     timestamp=self._timestamp,
@@ -236,7 +236,7 @@ class HtmlVerifier:
             if self._check_h_with_footnotes(tag):
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[HEADINGS]["check_h_with_footnotes"],
-                    recommend=f"Please remove the footnote from the heading '{tag.text}'.",
+                    recommend=f'Please remove the footnote from the heading "{tag.text}".',
                     elem=tag,
                     fn=self._fp.name,
                     timestamp=self._timestamp,
@@ -245,7 +245,7 @@ class HtmlVerifier:
             if self._check_h_if_gte_6(tag):
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[HEADINGS]["check_h_if_gte_6"],
-                    recommend=f"Consider changing the style of '{tag.text}' to Heading 5 or lower.",
+                    recommend=f'Consider changing the style of "{tag.text}" to Heading 5 or lower.',
                     elem=tag,
                     fn=self._fp.name,
                     timestamp=self._timestamp,
@@ -254,7 +254,7 @@ class HtmlVerifier:
             if self._check_h_for_duplicates(tag):
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[HEADINGS]["check_h_for_duplicates"],
-                    recommend=f"There should be no two headings with the same text. Please rephrase '{tag.text}'.",
+                    recommend=f'There should be no two headings with the same text. Please rephrase "{tag.text}".',
                     elem=tag,
                     fn=self._fp.name,
                     timestamp=self._timestamp,
@@ -318,7 +318,7 @@ class HtmlVerifier:
             if self._check_cap_no_colon(caption):
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[CAPTIONS]["check_cap_no_colon"],
-                    recommend=f"Add ':' character, e.g. 'Figure 1: Text.'.",
+                    recommend=f'Add ":" character, e.g. "**Figure 1:** Text.".',
                     elem=caption,
                     fn=self._fp.name,
                     timestamp=self._timestamp,
@@ -327,7 +327,7 @@ class HtmlVerifier:
             if self._check_cap_no_number(caption):
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[CAPTIONS]["check_cap_no_number"],
-                    recommend=f"Add a number, so that your caption has a structure similar to this example: 'Figure 1: Text.'.",
+                    recommend=f'Add a number, so that your caption has a structure similar to this example: "**Figure 1:** Text.".',
                     elem=caption,
                     fn=self._fp.name,
                     timestamp=self._timestamp,
@@ -336,7 +336,7 @@ class HtmlVerifier:
             if self._check_cap_no_bold(caption):
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[CAPTIONS]["check_cap_no_bold"],
-                    recommend=f"For example, if your caption is 'Figure 1: Text.' bold the 'Figure 1:' (including a colon).",
+                    recommend=f'For example, if your caption is "Figure 1: Text." bold the "**Figure 1:**" (including a colon).',
                     elem=caption,
                     fn=self._fp.name,
                     timestamp=self._timestamp,
@@ -345,7 +345,7 @@ class HtmlVerifier:
             if self._check_cap_no_end_dot(caption):
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[CAPTIONS]["check_cap_no_end_dot"],
-                    recommend=f"Add a dot after '{caption.text}'.",
+                    recommend=f'Add a dot after "{caption.text}".',
                     elem=caption,
                     fn=self._fp.name,
                     timestamp=self._timestamp,
@@ -354,7 +354,7 @@ class HtmlVerifier:
             if self._check_cap_dupl_num(item, number):
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[CAPTIONS]["check_cap_dupl_num"],
-                    recommend=f"Check your captions for duplicated numbers. If you are using MS Word 'Insert Caption' option (as you should), you can update all dynamic fields in a document by pressing Ctrl+A and then F9.",
+                    recommend=f'Check your captions for duplicated numbers. If you are using MS Word "Insert Caption" option (as you should), you can update all dynamic fields in a document by pressing Ctrl+A and then F9.',
                     elem=caption,
                     fn=self._fp.name,
                     timestamp=self._timestamp,
@@ -363,7 +363,7 @@ class HtmlVerifier:
             if self._check_cap_nonsequantial_num(item, number):
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[CAPTIONS]["check_cap_nonsequantial_num"],
-                    recommend=f"Check if your caption numbering is in order. If you are using MS Word 'Insert Caption' option (as you should), you can update all dynamic fields in a document by pressing Ctrl+A and then F9.",
+                    recommend=f'Check if your caption numbering is in order. If you are using MS Word "Insert Caption" option (as you should), you can update all dynamic fields in a document by pressing Ctrl+A and then F9.',
                     elem=caption,
                     fn=self._fp.name,
                     timestamp=self._timestamp,
@@ -412,7 +412,7 @@ class HtmlVerifier:
             if self._check_a_is_http(href):
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[LINKS]["check_a_is_http"],
-                    recommend=f"If possible, change '{href}' to '{href.replace('http:', 'https:', 1)}'.",
+                    recommend=f"If possible, change \"`{href}`\" to \"{href.replace('http:', 'https:', 1)}\".",
                     elem=link,
                     fn=self._fp.name,
                     timestamp=self._timestamp,
@@ -421,7 +421,7 @@ class HtmlVerifier:
             if self._check_a_not_archived(href):
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[LINKS]["check_a_not_archived"],
-                    recommend=f"Go to 'https://wayback-api.archive.org/' and replace '{href}' in your manuscript with the archived link.",
+                    recommend=f'Go to "https://wayback-api.archive.org/" and replace "`{href}`" in your manuscript with the archived link.',
                     elem=link,
                     fn=self._fp.name,
                     timestamp=self._timestamp,
@@ -486,7 +486,7 @@ class HtmlVerifier:
                 if self._check_tbl_unrecognized_field(key):
                     self._messages.add_msg(
                         problem=MSG_PROBLEMS[TABLES]["check_tbl_unrecognized_field"],
-                        recommend=f"Field {key} does not match any of the recognized names: {[field['key'] for field in METADATA_FIELDS]}.",
+                        recommend=f"Field `{key}` does not match any of the recognized names: {[field['key'] for field in METADATA_FIELDS]}.",
                         elem=elem,
                         fn=self._fp.name,
                         timestamp=self._timestamp,
@@ -495,7 +495,7 @@ class HtmlVerifier:
                 if self._check_tbl_empty_field(val):
                     self._messages.add_msg(
                         problem=MSG_PROBLEMS[TABLES]["check_tbl_empty_field"],
-                        recommend=f"Field {key} is empty.",
+                        recommend=f'Field "`{key}`" is empty.',
                         elem=elem,
                         fn=self._fp.name,
                         timestamp=self._timestamp,
@@ -504,7 +504,7 @@ class HtmlVerifier:
                 if self._check_tbl_unrecognized_license(key, val):
                     self._messages.add_msg(
                         problem=MSG_PROBLEMS[TABLES]["check_tbl_unrecognized_license"],
-                        recommend=f"Name '{val}' does not match any of the recognized License Identifiers.",
+                        recommend=f'Name "{val}" does not match any of the recognized License Identifiers.',
                         elem=elem,
                         fn=self._fp.name,
                         timestamp=self._timestamp,
@@ -513,7 +513,7 @@ class HtmlVerifier:
                 if self._check_tbl_not_in_assets(vpath):
                     self._messages.add_msg(
                         problem=MSG_PROBLEMS[TABLES]["check_tbl_not_in_assets"],
-                        recommend=f"{val} does not correctly point to this directory. Valid path looks closer to `./assets/path/to/a/file.txt`.",
+                        recommend=f'`{val}` does not correctly point to this directory. Valid path looks closer to "`./assets/path/to/a/file.txt`".',
                         elem=elem,
                         fn=self._fp.name,
                         timestamp=self._timestamp,
@@ -522,7 +522,7 @@ class HtmlVerifier:
                 if self._check_tbl_non_relative_path(vpath):
                     self._messages.add_msg(
                         problem=MSG_PROBLEMS[TABLES]["check_tbl_non_relative_path"],
-                        recommend=f"{val} is not a correct relative path. Valid path looks closer to `./assets/path/to/a/file.txt` (note the `./assets` at the beginning).",
+                        recommend=f'`{val}` is not a correct relative path. Valid path looks closer to "`./assets/path/to/a/file.txt`" (note the `./assets` at the beginning).',
                         elem=elem,
                         fn=self._fp.name,
                         timestamp=self._timestamp,
@@ -531,7 +531,7 @@ class HtmlVerifier:
                 if self._check_tbl_no_file(vpath):
                     self._messages.add_msg(
                         problem=MSG_PROBLEMS[TABLES]["check_tbl_no_file"],
-                        recommend=f"{val} was not found. Check carefully if a path to a file is correct.",
+                        recommend=f"`{val}` was not found. Check carefully if a path to a file is correct.",
                         elem=elem,
                         fn=self._fp.name,
                         timestamp=self._timestamp,
@@ -540,7 +540,7 @@ class HtmlVerifier:
                 if self._check_tbl_is_dir(vpath):
                     self._messages.add_msg(
                         problem=MSG_PROBLEMS[TABLES]["check_tbl_is_dir"],
-                        recommend=f"{val} seems to be a directory.",
+                        recommend=f"`{val}` seems to be a directory.",
                         elem=elem,
                         fn=self._fp.name,
                         timestamp=self._timestamp,
@@ -549,7 +549,7 @@ class HtmlVerifier:
                 if self._check_tbl_non_supported_suffix(vpath):
                     self._messages.add_msg(
                         problem=MSG_PROBLEMS[TABLES]["check_tbl_non_supported_suffix"],
-                        recommend=f"Consider conversion of the '{val}' to one of supported file suffixes: {SUPPORTED_SUFFIXES}.",
+                        recommend=f'Consider conversion of the "`{val}`" to one of supported file suffixes: {SUPPORTED_SUFFIXES}.',
                         elem=elem,
                         fn=self._fp.name,
                         timestamp=self._timestamp,
