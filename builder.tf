@@ -71,7 +71,7 @@ output "apkg_uploader_id" {
 resource "aws_sqs_queue" "pre_builder_queue" {
   name                        = "${var.sqs_builder_trigger}.fifo"
   fifo_queue                  = true
-  receive_wait_time_seconds   = 20 # TODO: once on DGT infra, reduce wait time
+  receive_wait_time_seconds   = 15 # TODO: once on DGT infra, reduce wait time
   delay_seconds               = 5
   content_based_deduplication = true
   max_message_size            = 1024 # 1 KiB
