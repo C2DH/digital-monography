@@ -1,10 +1,12 @@
-import json
 import boto3
 import datetime
+import json
 import logging
 import pathlib
 import typing as t
 import urllib.parse
+
+import bs4
 
 try:
     from constants import (
@@ -14,6 +16,7 @@ try:
     from html_verifier import HtmlVerifier
     from fakers import Faker
     from keys import KeyPath
+    from make_warnings_report import make_warnings_report
 
 except ModuleNotFoundError as e:
     from src.verifier.constants import (
@@ -23,6 +26,7 @@ except ModuleNotFoundError as e:
     from src.verifier.html_verifier import HtmlVerifier
     from src.verifier.fakers import Faker
     from src.verifier.keys import KeyPath
+    from src.verifier.make_warnings_report import make_warnings_report
 
 
 if IS_DEBUG:
@@ -61,10 +65,11 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
             timestamp=timestamp,
         )
         verifer.sort()
-        vresult = verifer.to_json()
-        logger.info(json.dumps(vresult, default=str))
-        _write_json_to_efs(vresult, key)
-        _put_json_to_s3(json.dumps(vresult, default=str), key)
+        warnings_json = verifer.to_json(md=True)
+        logger.info(json.dumps(warnings_json, default=str))
+        _write_json_to_efs(warnings_json, key)
+        _make_warnings_report(verifer.soup, warnings_json, timestamp, key)
+        _put_json_to_s3(json.dumps(warnings_json, default=str), key)
         return {"statusCode": 200, "body": ""}
     return {"statusCode": 200, "body": ""}
 
@@ -98,12 +103,33 @@ def _get_timestamp(event) -> datetime.datetime:
         raise
 
 
-def _write_json_to_efs(vresult, key: KeyPath) -> None:
+def _write_json_to_efs(json_data: t.Any, key: KeyPath) -> None:
     try:
-        fp = key.add_to_efs_slug_dir("_warnings") / key.github_path.with_suffix(".json")
+        fp = key.add_to_efs_slug_dir("_warnings").parent / key.github_path.with_suffix(
+            ".json"
+        )
         with open(fp, "w") as f:
-            json.dump(vresult, f)
-        logger.info(f"Warnings were saved to {str(fp)}")
+            json.dump(json_data, f)
+        logger.info(f"Warnings raw data was saved to {str(fp)}")
+    except Exception as e:
+        logger.exception(f"Writing json to /efs directory failed. Error: {repr(e)}")
+        raise
+
+
+def _make_warnings_report(
+    soup: bs4.BeautifulSoup,
+    json_data: t.Any,
+    timestamp: datetime.datetime,
+    key: KeyPath,
+) -> None:
+    try:
+        fp = key.add_to_efs_slug_dir("_warnings").parent / key.github_path.with_suffix(
+            ".md"
+        )
+        file_name = str(key.with_suffix(".docx").name)
+        with open(fp, "w") as f:
+            f.write(make_warnings_report(soup, json_data, timestamp, file_name))
+        logger.info(f"Warnings markdown report was saved to {str(fp)}")
     except Exception as e:
         logger.exception(f"Writing json to /efs directory failed. Error: {repr(e)}")
         raise

@@ -85,6 +85,7 @@ MSG_PROBLEMS = {
 
 class HtmlVerifier:
     def __init__(self) -> None:
+        self.soup = None
         self._links = []
         self._captions = []
         self._headings = []
@@ -105,8 +106,8 @@ class HtmlVerifier:
     def result(self):
         return self._messages
 
-    def to_json(self):
-        return self._messages.to_json()
+    def to_json(self, md: bool = False):
+        return self._messages.to_json(md)
 
     def sort(self) -> VerifierMessages:
         self._messages.sort(key=lambda msg: (msg["line"], msg["pos"]))

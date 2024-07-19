@@ -5,7 +5,6 @@ import subprocess
 import logging
 import pathlib
 import typing as t
-import urllib.parse
 from jupyter_book.cli.main import build
 
 try:
@@ -46,6 +45,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     _mkdir_read()
     _copy_assets(key)
     _build_book(key)
+    _build_verification_report(key)
     _sync_efs_and_s3_with_staticws(key)
     logging.info("Builder Lambda function finished.")
     return {"statusCode": 200, "body": ""}
@@ -124,6 +124,50 @@ def _build_book(key: KeyPath) -> None:
         logging.exception(f"Unable to build book. Error: {repr(e)}")
     except Exception as e:
         logging.exception(f"Unable to build book. Error: {repr(e)}")
+        raise
+
+
+def _build_verification_report(key: KeyPath) -> None:
+    if not (key.efs_slug_dir / "_config.yml").exists():
+        logging.info(
+            f"{key.efs_slug_dir / '_config.yml'} was not found. Skipping build."
+        )
+        return
+    if not (key.efs_slug_dir / "_toc.yml").exists():
+        logging.info(f"{key.efs_slug_dir / '_toc.yml'} was not found. Skipping build.")
+        return
+    src = key.efs_slug_dir
+    dst = key.efs_slug_dir / "_warnings"
+    shutil.copyfile(src / "_config.yml", dst / "_config.yml")
+    shutil.copyfile(src / "_toc.yml", dst / "_toc.yml")
+    try:
+        params = {
+            "path_source": dst,
+            "path_output": dst,
+            "config": dst / "_config.yml",
+            "toc": dst / "_toc.yml",
+            "warningiserror": False,
+            "nitpick": False,
+            "keep_going": False,
+            "freshenv": False,
+            "builder": "html",
+            "custom_builder": None,
+            "verbose": 0,
+            "quiet": 0,
+            "individualpages": False,
+        }
+        if IS_DEBUG:
+            params["nitpick"] = True
+            params["keep_going"] = True
+            # not sure, but it seems verbose can have levels ranging from 0 to 2
+            # https://github.com/sphinx-doc/sphinx/blob/4fbd3682d5cdf606159630f7daf6f818d58de05e/tests/test_util/test_util_logging.py#L56
+            params["verbose"] = 2
+        build.callback(**params)
+        logging.info(f"Builder finished building the verification report at {dst}.")
+    except RuntimeError as e:
+        logging.exception(f"Unable to build verification report. Error: {repr(e)}")
+    except Exception as e:
+        logging.exception(f"Unable to build verification report. Error: {repr(e)}")
         raise
 
 

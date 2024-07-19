@@ -1,8 +1,12 @@
-import abc
 import bs4
 import datetime
 import typing as t
 import uuid
+
+try:
+    from html2md import convert_to_md
+except ModuleNotFoundError as e:
+    from .html2md import convert_to_md
 
 
 class FileVerificationMessageJson(t.TypedDict):
@@ -95,15 +99,46 @@ class FileVerificationMessage:
                 break
         return next
 
-    def to_json(self) -> FileVerificationMessageJson:
+    def to_json(self, md: bool = False) -> FileVerificationMessageJson:
+        print("-" * 75)
+        print(
+            {
+                "id": self.id,
+                "problem": self.problem,
+                "recommend": self.recommend,
+                "fn": self.fn,
+                "prev_elem": self.prev_elem,
+                "curr_elem": self.curr_elem,
+                "next_elem": self.next_elem,
+                "timestamp": self.timestamp.isoformat(),
+                "tags": self.tags,
+                "line": self.line,
+                "pos": self.pos,
+            }
+        )
+        try:
+            prev_elem = convert_to_md(self.prev_elem) if md else str(self.prev_elem)
+        except (TypeError, AttributeError):
+            prev_elem = str(self.prev_elem)
+        try:
+            curr_elem = convert_to_md(self.curr_elem) if md else str(self.curr_elem)
+        except (TypeError, AttributeError):
+            curr_elem = str(self.curr_elem)
+        try:
+            next_elem = convert_to_md(self.next_elem) if md else str(self.next_elem)
+        except (TypeError, AttributeError):
+            next_elem = str(self.next_elem)
         return {
             "id": self.id,
             "problem": self.problem,
             "recommend": self.recommend,
             "fn": self.fn,
-            "prev_elem": str(self.prev_elem),
-            "curr_elem": str(self.curr_elem),
-            "next_elem": str(self.next_elem),
+            "prev_elem": prev_elem,
+            "curr_elem": curr_elem,
+            "next_elem": next_elem,
+            # "prev_elem": convert_to_md(self.prev_elem) if md else str(self.prev_elem),
+            # "curr_elem": convert_to_md(self.curr_elem) if md else str(self.curr_elem),
+            # "next_elem": convert_to_md(self.next_elem) if md else str(self.next_elem),
             "timestamp": self.timestamp.isoformat(),
             "tags": self.tags,
             "line": self.line,
@@ -142,7 +177,7 @@ class GeneralVerificationMessage:
             tags=self.tags,
         )
 
-    def to_json(self) -> GeneralVerificationMessageJson:
+    def to_json(self, md: bool = False) -> GeneralVerificationMessageJson:
         return {
             "id": self.id,
             "problem": self.problem,
@@ -198,9 +233,9 @@ class VerifierMessages:
             )
 
     def to_json(
-        self,
+        self, md: bool = False
     ) -> list[t.Union[FileVerificationMessageJson, GeneralVerificationMessageJson]]:
-        return [msg.to_json() for msg in self._messages]
+        return [msg.to_json(md) for msg in self._messages]
 
     def sort(self, *args, **kwargs) -> None:
         self._messages.sort(*args, **kwargs)
