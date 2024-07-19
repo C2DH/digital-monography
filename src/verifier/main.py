@@ -7,9 +7,6 @@ import pathlib
 import typing as t
 import urllib.parse
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-
 
 try:
     from constants import (
@@ -21,7 +18,6 @@ try:
     from keys import KeyPath
     from make_warnings_report import make_warnings_report
 except ModuleNotFoundError as e:
-    logger.warning("Import error: " + repr(e))
     from src.verifier.constants import (
         IS_DEBUG,
         VERIFIER_MSGS,
@@ -32,18 +28,18 @@ except ModuleNotFoundError as e:
     from src.verifier.make_warnings_report import make_warnings_report
 
 
-# if IS_DEBUG:
-#     today = datetime.date.today().isoformat()
-#     log_target = pathlib.Path(f"/tmp/efs/_LOGS/{today}_verifier.log")
-#     log_target.parent.mkdir(parents=True, exist_ok=True)
-#     logging.basicConfig(
-#         filename=log_target,
-#         encoding="utf-8",
-#         level=logging.DEBUG,
-#         format="%(asctime)s::%(name)s::%(levelname)s::%(message)s",
-#     )
-# logger = logging.getLogger()
-# logger.setLevel(logging.INFO)
+if IS_DEBUG:
+    today = datetime.date.today().isoformat()
+    log_target = pathlib.Path(f"/tmp/efs/_LOGS/{today}_verifier.log")
+    log_target.parent.mkdir(parents=True, exist_ok=True)
+    logging.basicConfig(
+        filename=log_target,
+        encoding="utf-8",
+        level=logging.DEBUG,
+        format="%(asctime)s::%(name)s::%(levelname)s::%(message)s",
+    )
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
 if IS_DEBUG:
@@ -75,6 +71,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _write_json_to_efs(warnings_json, key)
         _make_warnings_report(verifer.soup, warnings_json, timestamp, key)
         _put_json_to_s3(json.dumps(warnings_json, default=str), key)
+        logger.info(f"Time to _send_msg_to_sqs(key).")
         _send_msg_to_sqs(key)
         return {"statusCode": 200, "body": ""}
     return {"statusCode": 200, "body": ""}
@@ -162,8 +159,8 @@ def _get_queue_url():
 
 
 def _send_msg_to_sqs(key: KeyPath) -> None:
+    logger.info(f"Preparing to send a message to the sqs queue.")
     try:
-        logger.info(f"Preparing to send a message to the sqs queue.")
         QueueUrl = "https://sqs.eu-west-1.amazonaws.com/367031255351/cpy-dgtmon-dev-builder-trigger.fifo"
         MessageBody = key.slug
         MessageDeduplicationId = key.slug
