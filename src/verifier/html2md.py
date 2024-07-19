@@ -8,6 +8,7 @@
 import bs4
 import markdownify
 import re
+import typing as t
 
 try:
     from md_extraction import DocumentMetadata
@@ -45,7 +46,7 @@ def sub_inline_conversion(markup_fn):
 
 class MystMdConverter(markdownify.MarkdownConverter):
 
-    def __init__(self, metadata: DocumentMetadata, **options):
+    def __init__(self, metadata: t.Optional[DocumentMetadata], **options):
         self._metadata = metadata
         self._soup = bs4.BeautifulSoup("", "html.parser")
         super().__init__(**options)
@@ -74,7 +75,7 @@ class MystMdConverter(markdownify.MarkdownConverter):
 
     def convert_p(self, el, text, convert_as_inline):
         re_match = re.match(r"\s*%\s*:::{dgt-mon-asset}\s*", text)
-        if re_match is not None:
+        if self._metadata is not None and re_match is not None:
             uuidv4_len = 36
             uuid = text[re_match.span()[1] :][:uuidv4_len]
             asset_meta = self._metadata[uuid]
@@ -158,6 +159,10 @@ class MystMdConverter(markdownify.MarkdownConverter):
         return super().convert_table(el, text, convert_as_inline)
 
 
-def convert_to_md(soup, metadata: DocumentMetadata, **options) -> str:
+def convert_to_md(
+    soup: bs4.BeautifulSoup,
+    metadata: t.Optional[DocumentMetadata] = None,
+    **options,
+) -> str:
     # TODO: change custom options to be passed to convert_to_md(**options <==)
     return MystMdConverter(metadata, **options).convert_soup(soup)

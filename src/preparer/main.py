@@ -70,8 +70,6 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _put_to_archive_s3(key)
         return {"statusCode": 200, "body": ""}
     html_str = _convert_to_html(key.efs_filepath)
-    print("-" * 50)
-    print(html_str)
     html_soup = _get_html_soup(html_str)
     metadata = _get_book_metadata()
     html_soup = _replace_alt_texts(html_soup)
@@ -79,11 +77,13 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     html_soup = _replace_assets_with_directives(html_soup, metadata)
     html_soup = _remove_empty_tables(html_soup)
     html_soup_str = str(html_soup)
+    # IMPORTANT: other services depend on html produced at this stage, make sure that:
+    # 1) html files will be the basis for a paper version of a book,
+    # so irreversible transformations are omited to avoid not being able to recreate a book;
+    # 2) all reversible transformations are made before saving html file;
     _write_processed_html_to_efs(html_soup_str, key)
     _put_html_to_s3(html_soup_str, key)
     md = _convert_to_md(html_soup, metadata)
-    print("-" * 50)
-    print(md)
     _write_processed_md_to_efs(md, key)
     _put_md_to_s3(md, key)
     _put_to_archive_s3(key.s3_key.with_suffix(".md"), md)
