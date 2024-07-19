@@ -4,7 +4,9 @@ from functools import cached_property
 try:
     from constants import DEFAULT_SFS_DIR
 except ModuleNotFoundError:
-    from src.verifier.constants import DEFAULT_SFS_DIR
+    from .constants import DEFAULT_SFS_DIR
+
+    # from src.verifier.constants import DEFAULT_SFS_DIR
 
 
 SUPPORTED_SUFFIXES = (
