@@ -5,8 +5,6 @@ import boto3
 import json
 import logging
 import mammoth
-import re
-import time
 import typing as t
 import urllib.parse
 
@@ -65,7 +63,6 @@ else:
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
-    start = time.time()
     key = _get_key(event)
     src = _get_source_bucket(event)
     _download_fileobj(src, key)
@@ -91,7 +88,6 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     _put_md_to_s3(md, key)
     _put_to_archive_s3(key.s3_key.with_suffix(".md"), md)
     _send_msg_to_sqs(key)
-    _log_document_stats(start, md)
     return {"statusCode": 200, "body": ""}
 
 
@@ -309,15 +305,3 @@ def _send_msg_to_sqs(key: KeyPath) -> None:
     except Exception as e:
         logger.exception(f"Sending a message to sqs queue failed. Error: {repr(e)}")
         raise
-
-
-def _log_document_stats(start: float, md: str) -> None:
-    words = re.findall("[a-zA-Z_]+", md)
-    end = time.time()
-    stats = {
-        "char_count": len("".join(words)),
-        "word_count": len(words),
-        "delta_in_sec": end - start,
-        "delta_in_ms": (end - start) * 1000,
-    }
-    logging.info(json.dumps(stats, default=str))
