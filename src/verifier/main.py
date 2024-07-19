@@ -45,8 +45,10 @@ logger.setLevel(logging.INFO)
 
 if IS_DEBUG:
     s3 = Faker("s3")
+    sqs = Faker("sqs")
 else:
     s3 = boto3.client("s3")
+    sqs = boto3.client("sqs")
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
@@ -70,6 +72,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _write_json_to_efs(warnings_json, key)
         _make_warnings_report(verifer.soup, warnings_json, timestamp, key)
         _put_json_to_s3(json.dumps(warnings_json, default=str), key)
+        _send_msg_to_sqs(key)
         return {"statusCode": 200, "body": ""}
     return {"statusCode": 200, "body": ""}
 
@@ -145,4 +148,33 @@ def _put_json_to_s3(body: str, key: KeyPath) -> None:
         )
     except Exception as e:
         logger.exception(f"Putting json to s3 bucket failed. Error: {repr(e)}")
+        raise
+
+
+def _get_queue_url():
+    region = "eu-west-1"
+    account_id = "367031255351"
+    queue_name = "cpy-dgtmon-dev-builder-trigger.fifo"
+    return f"https://sqs.{region}.amazonaws.com/{account_id}/{queue_name}"
+
+
+def _send_msg_to_sqs(key: KeyPath) -> None:
+    try:
+        logger.info(f"Preparing to send a message to the sqs queue.")
+        QueueUrl = "https://sqs.eu-west-1.amazonaws.com/367031255351/cpy-dgtmon-dev-builder-trigger.fifo"
+        MessageBody = key.slug
+        MessageDeduplicationId = key.slug
+        MessageGroupId = "0"
+        resp = sqs.send_message(
+            QueueUrl=QueueUrl,
+            MessageBody=MessageBody,
+            MessageDeduplicationId=MessageDeduplicationId,
+            MessageGroupId=MessageGroupId,
+        )
+        logger.info(
+            f"Response from sqs.send_message(QueueUrl={QueueUrl}, MessageBody={MessageBody}, MessageDeduplicationId={MessageDeduplicationId}, MessageGroupId={MessageGroupId}): "
+            + json.dumps(resp, default=str)
+        )
+    except Exception as e:
+        logger.exception(f"Sending a message to sqs queue failed. Error: {repr(e)}")
         raise

@@ -77,4 +77,20 @@ class SQSFaker:
         MessageDeduplicationId: str,
         MessageGroupId: str,
     ) -> dict[str, t.Union[str, int]]:
-        return {}
+        return {
+            "MD5OfMessageBody": "201ae3116cba610bc56a93c227353227",
+            "MessageId": "c0712d34-7bb0-409c-9e3c-3ccfe4764d82",
+            "SequenceNumber": "18887419945533167872",
+            "ResponseMetadata": {
+                "RequestId": "125e768e-187c-5b93-972c-299a4e1073e8",
+                "HTTPStatusCode": 200,
+                "HTTPHeaders": {
+                    "x-amzn-requestid": "125e768e-187c-5b93-972c-299a4e1073e8",
+                    "date": "Fri, 01 Jun 2024 01:01:01 GMT",
+                    "content-type": "application/x-amz-json-1.0",
+                    "content-length": "146",
+                    "connection": "keep-alive",
+                },
+                "RetryAttempts": 0,
+            },
+        }

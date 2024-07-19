@@ -87,7 +87,6 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     _write_processed_md_to_efs(md, key)
     _put_md_to_s3(md, key)
     _put_to_archive_s3(key.s3_key.with_suffix(".md"), md)
-    _send_msg_to_sqs(key)
     return {"statusCode": 200, "body": ""}
 
 
@@ -276,32 +275,3 @@ def _write_processed_md_to_efs(md: str, key: KeyPath) -> None:
     new_efs_filepath = key.efs_filepath.with_suffix(".md")
     with open(new_efs_filepath, "w") as f:
         f.write(md)
-
-
-def _get_queue_url():
-    region = "eu-west-1"
-    account_id = "367031255351"
-    queue_name = "cpy-dgtmon-dev-builder-trigger.fifo"
-    return f"https://sqs.{region}.amazonaws.com/{account_id}/{queue_name}"
-
-
-def _send_msg_to_sqs(key: KeyPath) -> None:
-    try:
-        logger.info(f"Preparing to send a message to the sqs queue.")
-        QueueUrl = "https://sqs.eu-west-1.amazonaws.com/367031255351/cpy-dgtmon-dev-builder-trigger.fifo"
-        MessageBody = key.slug
-        MessageDeduplicationId = key.slug
-        MessageGroupId = "0"
-        resp = sqs.send_message(
-            QueueUrl=QueueUrl,
-            MessageBody=MessageBody,
-            MessageDeduplicationId=MessageDeduplicationId,
-            MessageGroupId=MessageGroupId,
-        )
-        logger.info(
-            f"Response from s3.send_message(QueueUrl={QueueUrl}, MessageBody={MessageBody}, MessageDeduplicationId={MessageDeduplicationId}, MessageGroupId={MessageGroupId}): "
-            + json.dumps(resp, default=str)
-        )
-    except Exception as e:
-        logger.exception(f"Sending a message to sqs queue failed. Error: {repr(e)}")
-        raise
