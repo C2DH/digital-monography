@@ -63,6 +63,7 @@ verifier/build:
 	cp src/_common/constants.py src/verifier/constants.py
 	cp src/_common/keys.py src/verifier/keys.py
 	cp src/preparer/html2md.py src/verifier/html2md.py
+	cp src/preparer/md_extraction.py src/verifier/md_extraction.py
 	docker build -t dgtmon-dev-verifier src/verifier
 
 verifier/tag:

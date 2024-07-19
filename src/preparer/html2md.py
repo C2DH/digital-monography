@@ -14,10 +14,13 @@ try:
     from md_extraction import DocumentMetadata
     from constants import CLS_METADATA_TABLE
 except ModuleNotFoundError:
-    from src.preparer.md_extraction import (
-        DocumentMetadata,
-    )
-    from src.preparer.constants import CLS_METADATA_TABLE
+    from .md_extraction import DocumentMetadata
+    from .constants import CLS_METADATA_TABLE
+
+    # from src.preparer.md_extraction import (
+    #     DocumentMetadata,
+    # )
+    # from src.preparer.constants import CLS_METADATA_TABLE
 
 
 line_beginning_re = re.compile(r"^", re.MULTILINE)
