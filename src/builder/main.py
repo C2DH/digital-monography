@@ -46,7 +46,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     _copy_assets(key)
     _build_book(key)
     _build_verification_report(key)
-    _sync_efs_and_s3_with_staticws(key)
+    _sync_book_efs_with_staticws(key)
+    _sync_report_efs_with_staticws(key)
     logging.info("Builder Lambda function finished.")
     return {"statusCode": 200, "body": ""}
 
@@ -171,7 +172,7 @@ def _build_verification_report(key: KeyPath) -> None:
         raise
 
 
-def _sync_efs_and_s3_with_staticws(key: KeyPath) -> None:
+def _sync_book_efs_with_staticws(key: KeyPath) -> None:
     if IS_DEBUG:
         return
     try:
@@ -182,5 +183,24 @@ def _sync_efs_and_s3_with_staticws(key: KeyPath) -> None:
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.wait()
     except Exception as e:
-        logging.exception(f"Syncing exception. Error: {repr(e)}")
+        logging.exception(
+            f"Exception while syncing book efs with static website s3. Error: {repr(e)}"
+        )
+        raise
+
+
+def _sync_report_efs_with_staticws(key: KeyPath) -> None:
+    if IS_DEBUG:
+        return
+    try:
+        src = str(key.efs_slug_dir / "_warnings" / "_build" / "html")
+        dst = f"s3://{STATICWS_WIP_BUCKET_NAME}/check/{key.slug}"
+        cmd = ["aws", "s3", "sync", "--quiet", src, dst]
+        logging.info(f"Syncing files from {src} to {dst}")
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p.wait()
+    except Exception as e:
+        logging.exception(
+            f"Exception while syncing verification report efs with static website s3. Error: {repr(e)}"
+        )
         raise
