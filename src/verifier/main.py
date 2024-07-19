@@ -21,15 +21,26 @@ try:
     from keys import KeyPath
     from make_warnings_report import make_warnings_report
 except ModuleNotFoundError as e:
-    logger.warning("Import error: " + repr(e))
-    from src.verifier.constants import (
-        IS_DEBUG,
-        VERIFIER_MSGS,
-    )
-    from src.verifier.html_verifier import HtmlVerifier
-    from src.verifier.fakers import Faker
-    from src.verifier.keys import KeyPath
-    from src.verifier.make_warnings_report import make_warnings_report
+    logger.warning("Import error lvl 1: " + repr(e))
+    try:
+        from .constants import (
+            IS_DEBUG,
+            VERIFIER_MSGS,
+        )
+        from .html_verifier import HtmlVerifier
+        from .fakers import Faker
+        from .keys import KeyPath
+        from .make_warnings_report import make_warnings_report
+    except ModuleNotFoundError as e:
+        logger.warning("Import error lvl 2: " + repr(e))
+        from src.verifier.constants import (
+            IS_DEBUG,
+            VERIFIER_MSGS,
+        )
+        from src.verifier.html_verifier import HtmlVerifier
+        from src.verifier.fakers import Faker
+        from src.verifier.keys import KeyPath
+        from src.verifier.make_warnings_report import make_warnings_report
 
 
 # if IS_DEBUG:
