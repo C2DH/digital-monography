@@ -7,8 +7,11 @@ try:
     from .keys import KeyPath
     from .warnings import VerifierMessages
 except Exception as e:
-    from src.verifier.keys import KeyPath
-    from src.verifier.warnings import VerifierMessages
+    from keys import KeyPath
+    from warnings import VerifierMessages
+
+    # from src.verifier.keys import KeyPath
+    # from src.verifier.warnings import VerifierMessages
 
 
 STRUCT = "file_structure"

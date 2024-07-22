@@ -2,21 +2,31 @@ import datetime
 import json
 import shutil
 import subprocess
+import os
 import logging
 import pathlib
+import sys
 import typing as t
 from jupyter_book.cli.main import build
 
-try:
-    from keys import KeyPath
-    from constants import IS_DEBUG, DEFAULT_SFS_DIR, STATICWS_WIP_BUCKET_NAME
-except ModuleNotFoundError:
-    from src.builder.keys import KeyPath
-    from src.builder.constants import (
-        IS_DEBUG,
-        DEFAULT_SFS_DIR,
-        STATICWS_WIP_BUCKET_NAME,
-    )
+IS_DEBUG = bool(int(os.environ.get("DGTMON_DEBUG", 0)))
+if not IS_DEBUG:
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    sys.path.append(current_dir)
+
+from .keys import KeyPath
+from .constants import IS_DEBUG, DEFAULT_SFS_DIR, STATICWS_WIP_BUCKET_NAME
+
+# try:
+#     from keys import KeyPath
+#     from constants import IS_DEBUG, DEFAULT_SFS_DIR, STATICWS_WIP_BUCKET_NAME
+# except ModuleNotFoundError:
+#     from src.builder.keys import KeyPath
+#     from src.builder.constants import (
+#         IS_DEBUG,
+#         DEFAULT_SFS_DIR,
+#         STATICWS_WIP_BUCKET_NAME,
+#     )
 
 
 # TODO: this is legacy, only `assets` should be permitted.

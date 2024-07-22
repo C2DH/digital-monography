@@ -3,29 +3,42 @@ import boto3
 import datetime
 import json
 import logging
+import os
 import pathlib
+import sys
 import typing as t
 import urllib.parse
 
 
-try:
-    from constants import (
-        IS_DEBUG,
-        VERIFIER_MSGS,
-    )
-    from html_verifier import HtmlVerifier
-    from fakers import Faker
-    from keys import KeyPath
-    from make_warnings_report import make_warnings_report
-except ModuleNotFoundError as e:
-    from src.verifier.constants import (
-        IS_DEBUG,
-        VERIFIER_MSGS,
-    )
-    from src.verifier.html_verifier import HtmlVerifier
-    from src.verifier.fakers import Faker
-    from src.verifier.keys import KeyPath
-    from src.verifier.make_warnings_report import make_warnings_report
+IS_DEBUG = bool(int(os.environ.get("DGTMON_DEBUG", 0)))
+if not IS_DEBUG:
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    sys.path.append(current_dir)
+
+from .html_verifier import HtmlVerifier
+from .fakers import Faker
+from .keys import KeyPath
+from .make_warnings_report import make_warnings_report
+from .constants import IS_DEBUG, VERIFIER_MSGS
+
+# try:
+#     from constants import (
+#         IS_DEBUG,
+#         VERIFIER_MSGS,
+#     )
+#     from html_verifier import HtmlVerifier
+#     from fakers import Faker
+#     from keys import KeyPath
+#     from make_warnings_report import make_warnings_report
+# except ModuleNotFoundError as e:
+#     from src.verifier.constants import (
+#         IS_DEBUG,
+#         VERIFIER_MSGS,
+#     )
+#     from src.verifier.html_verifier import HtmlVerifier
+#     from src.verifier.fakers import Faker
+#     from src.verifier.keys import KeyPath
+#     from src.verifier.make_warnings_report import make_warnings_report
 
 
 if IS_DEBUG:
