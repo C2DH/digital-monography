@@ -488,6 +488,7 @@ class HtmlVerifier:
                     vpath = PathHandler(val, self._slug)
                 else:
                     vpath = None
+                val = str(val)
                 if self._check_tbl_unrecognized_field(key):
                     self._messages.add_msg(
                         problem=MSG_PROBLEMS[TABLES]["check_tbl_unrecognized_field"],
