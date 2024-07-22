@@ -27,7 +27,6 @@ except Exception as e:
         CLS_METADATA_TABLE,
         CLS_METADATA_TABLE_JSONDATA,
         FIELD_LICENSE_NAME,
-        RECOGNIZED_LICENSE_NAMES,
         FIELD_DIGITAL_SOURCE,
         FIELD_PAPER_SOURCE,
     )
