@@ -4,6 +4,7 @@ import pathlib
 import shutil
 import sys
 import os
+import time
 
 # Get the parent directory and add it to sys.path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -96,9 +97,19 @@ def cpy_to_tmp_and_call_handler(fp: pathlib.Path, key: str):
         )
         verifier_handler(s3_event, context)
     # builder
+    # sqs_event = copy.deepcopy(DEFAULT_SQS_EVENT)
+    # sqs_event["Records"][0]["body"] = KeyPath(key).slug
+    # sqs_event["Records"][0]["attributes"]["MessageDeduplicationId"] = KeyPath(key).slug
+    # builder_handler(sqs_event, context)
+
+
+def build_after_loop(book_path: pathlib.Path) -> None:
+    slug = book_path.parts[-1]
+    context = {}
     sqs_event = copy.deepcopy(DEFAULT_SQS_EVENT)
-    sqs_event["Records"][0]["body"] = KeyPath(key).slug
-    sqs_event["Records"][0]["attributes"]["MessageDeduplicationId"] = KeyPath(key).slug
+    sqs_event["Records"][0]["body"] = slug
+    sqs_event["Records"][0]["attributes"]["MessageDeduplicationId"] = slug
+    print("\n\n\nbuilder_handler(sqs_event, context)")
     builder_handler(sqs_event, context)
 
 
@@ -107,4 +118,4 @@ if __name__ == "__main__":
     book_path_arg = args.book_path.split("=")
     assert len(book_path_arg) == 2
     book_path = pathlib.Path(book_path_arg[1])
-    listen_for_updates(book_path, cpy_to_tmp_and_call_handler)
+    listen_for_updates(book_path, cpy_to_tmp_and_call_handler, build_after_loop)
