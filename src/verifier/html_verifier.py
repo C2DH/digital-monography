@@ -19,7 +19,7 @@ try:
     )
     from local_constants import RECOGNIZED_LICENSE_NAMES
     from path_handler import PathHandler, SUPPORTED_SUFFIXES
-    from warnings import VerifierMessages
+    from verif_warnings import VerifierMessages
 except Exception as e:
     try:
         from .constants import (
@@ -33,7 +33,7 @@ except Exception as e:
         )
         from .local_constants import RECOGNIZED_LICENSE_NAMES
         from .path_handler import PathHandler, SUPPORTED_SUFFIXES
-        from .warnings import VerifierMessages
+        from .verif_warnings import VerifierMessages
     except Exception as e:
         from src.verifier.constants import (
             METADATA_FIELDS,
@@ -46,7 +46,7 @@ except Exception as e:
         )
         from src.verifier.local_constants import RECOGNIZED_LICENSE_NAMES
         from src.verifier.path_handler import PathHandler, SUPPORTED_SUFFIXES
-        from src.verifier.warnings import VerifierMessages
+        from src.verifier.verif_warnings import VerifierMessages
 
     # from src.verifier.local_constants import RECOGNIZED_LICENSE_NAMES
     # from src.verifier.path_handler import PathHandler, SUPPORTED_SUFFIXES

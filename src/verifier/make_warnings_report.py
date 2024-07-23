@@ -4,9 +4,15 @@ import typing as t
 
 
 try:
-    from .warnings import FileVerificationMessageJson, GeneralVerificationMessageJson
+    from .verif_warnings import (
+        FileVerificationMessageJson,
+        GeneralVerificationMessageJson,
+    )
 except ModuleNotFoundError:
-    from warnings import FileVerificationMessageJson, GeneralVerificationMessageJson
+    from verif_warnings import (
+        FileVerificationMessageJson,
+        GeneralVerificationMessageJson,
+    )
 
 
 def make_warnings_report(

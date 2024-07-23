@@ -4,11 +4,16 @@ import json
 import logging
 import os
 import pathlib
+import sys
 import typing as t
 import urllib.parse
 
 
 IS_DEBUG = bool(int(os.environ.get("DGTMON_DEBUG", 0)))
+if not IS_DEBUG:
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    sys.path.append(current_dir)
+
 if IS_DEBUG:
     today = datetime.date.today().isoformat()
     log_target = pathlib.Path(f"/tmp/efs/_LOGS/{today}_verifier.log")
