@@ -66,8 +66,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     key = _get_key(event)
     src = _get_source_bucket(event)
     _download_fileobj(src, key)
-    if not key.suffix.lower() == ".docx":
-        _put_to_archive_s3(key)
+    if key.suffix.lower() != ".docx":
+        # _put_to_archive_s3(key)
         return {"statusCode": 200, "body": ""}
     html_str = _convert_to_html(key.efs_filepath)
     html_soup = _get_html_soup(html_str)
@@ -78,15 +78,15 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     html_soup = _remove_empty_tables(html_soup)
     html_soup_str = str(html_soup)
     # IMPORTANT: other services depend on html produced at this stage, make sure that:
-    # 1) html files will be the basis for a paper version of a book,
-    # so irreversible transformations are omited to avoid not being able to recreate a book;
-    # 2) all reversible transformations are made before saving html file;
+    # 1) all reversible transformations are made before saving html file;
+    # 2) irreversible transformations are omited to avoid not being able to recreate a book
+    # as html files written at this stage will be the basis for a paper version of a book.
     _write_processed_html_to_efs(html_soup_str, key)
     _put_html_to_s3(html_soup_str, key)
     md = _convert_to_md(html_soup, metadata)
     _write_processed_md_to_efs(md, key)
     _put_md_to_s3(md, key)
-    _put_to_archive_s3(key.s3_key.with_suffix(".md"), md)
+    # _put_to_archive_s3(key.s3_key.with_suffix(".md"), md)
     return {"statusCode": 200, "body": ""}
 
 
