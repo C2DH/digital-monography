@@ -5,7 +5,7 @@ import uuid
 
 try:
     from html2md import convert_to_md
-except Exception as e:
+except ModuleNotFoundError as e:
     from .html2md import convert_to_md
 
 
