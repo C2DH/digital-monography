@@ -1,18 +1,25 @@
+import bs4
 import boto3
 import datetime
 import json
 import logging
-import os
 import pathlib
-import sys
 import typing as t
 import urllib.parse
 
 
-IS_DEBUG = bool(int(os.environ.get("DGTMON_DEBUG", 0)))
-if not IS_DEBUG:
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    sys.path.append(current_dir)
+try:
+    from constants import IS_DEBUG, VERIFIER_MSGS
+    from fakers import Faker
+    from html_verifier import HtmlVerifier
+    from make_warnings_report import make_warnings_report
+    from keys import KeyPath
+except ModuleNotFoundError as e:
+    from src.verifier.constants import IS_DEBUG, VERIFIER_MSGS
+    from src.verifier.fakers import Faker
+    from src.verifier.html_verifier import HtmlVerifier
+    from src.verifier.make_warnings_report import make_warnings_report
+    from src.verifier.keys import KeyPath
 
 if IS_DEBUG:
     today = datetime.date.today().isoformat()
@@ -26,16 +33,6 @@ if IS_DEBUG:
     )
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-
-try:
-    from fakers import Faker
-    from keys import KeyPath
-    from html_verifier import HtmlVerifier
-except ModuleNotFoundError as e:
-    from src.verifier.fakers import Faker
-    from src.verifier.keys import KeyPath
-    from src.verifier.html_verifier import HtmlVerifier
-
 
 if IS_DEBUG:
     s3 = Faker("s3")
@@ -54,7 +51,6 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
             key.efs_slug_html_path.parent.mkdir(parents=True, exist_ok=True)
         with open(key.efs_slug_html_path.with_suffix(".html"), "r") as f:
             html = f.read()
-        logger.info(f"key.efs_slug_html_path: {key.efs_slug_html_path}")
         verifer = HtmlVerifier()
         verifer.verify(
             html,
@@ -65,6 +61,10 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         verifer.sort()
         warnings_json = verifer.to_json(md=True)
         logger.info(json.dumps(warnings_json, default=str))
+        _write_json_to_efs(warnings_json, key)
+        _make_warnings_report(verifer.soup, warnings_json, timestamp, key)
+        _put_json_to_s3(json.dumps(warnings_json, default=str), key)
+        _send_msg_to_sqs(key)
     logger.info("Handler ended successfully.")
     return {"statusCode": 200, "body": ""}
 
@@ -95,4 +95,78 @@ def _get_timestamp(event) -> datetime.datetime:
             + ". Exception: "
             + repr(e)
         )
+        raise
+
+
+def _write_json_to_efs(json_data: t.Any, key: KeyPath) -> None:
+    try:
+        fp = key.add_to_efs_slug_dir("_warnings").parent / key.github_path.with_suffix(
+            ".json"
+        )
+        with open(fp, "w") as f:
+            json.dump(json_data, f)
+        logger.info(f"Warnings raw data was saved to {str(fp)}")
+    except Exception as e:
+        logger.exception(f"Writing json to /efs directory failed. Error: {repr(e)}")
+        raise
+
+
+def _make_warnings_report(
+    soup: bs4.BeautifulSoup,
+    json_data: t.Any,
+    timestamp: datetime.datetime,
+    key: KeyPath,
+) -> None:
+    try:
+        fp = key.add_to_efs_slug_dir("_warnings").parent / key.github_path.with_suffix(
+            ".md"
+        )
+        file_name = str(key.with_suffix(".docx").name)
+        with open(fp, "w") as f:
+            f.write(make_warnings_report(soup, json_data, timestamp, file_name))
+        logger.info(f"Warnings markdown report was saved to {str(fp)}")
+    except Exception as e:
+        logger.exception(f"Writing json to /efs directory failed. Error: {repr(e)}")
+        raise
+
+
+def _put_json_to_s3(body: str, key: KeyPath) -> None:
+    try:
+        s3_key = key.s3_key.with_suffix(".json")
+        resp = s3.put_object(Body=body, Bucket=VERIFIER_MSGS, Key=str(s3_key))
+        logger.info(
+            f"Response from s3.put_object(Bucket={VERIFIER_MSGS}, Key={str(s3_key)}): "
+            + json.dumps(resp, default=str)
+        )
+    except Exception as e:
+        logger.exception(f"Putting json to s3 bucket failed. Error: {repr(e)}")
+        raise
+
+
+def _get_queue_url():
+    region = "eu-west-1"
+    account_id = "367031255351"
+    queue_name = "cpy-dgtmon-dev-builder-trigger.fifo"
+    return f"https://sqs.{region}.amazonaws.com/{account_id}/{queue_name}"
+
+
+def _send_msg_to_sqs(key: KeyPath) -> None:
+    logger.info(f"Preparing to send a message to the sqs queue.")
+    try:
+        QueueUrl = "https://sqs.eu-west-1.amazonaws.com/367031255351/cpy-dgtmon-dev-builder-trigger.fifo"
+        MessageBody = key.slug
+        MessageDeduplicationId = key.slug
+        MessageGroupId = "0"
+        resp = sqs.send_message(
+            QueueUrl=QueueUrl,
+            MessageBody=MessageBody,
+            MessageDeduplicationId=MessageDeduplicationId,
+            MessageGroupId=MessageGroupId,
+        )
+        logger.info(
+            f"Response from sqs.send_message(QueueUrl={QueueUrl}, MessageBody={MessageBody}, MessageDeduplicationId={MessageDeduplicationId}, MessageGroupId={MessageGroupId}): "
+            + json.dumps(resp, default=str)
+        )
+    except Exception as e:
+        logger.exception(f"Sending a message to sqs queue failed. Error: {repr(e)}")
         raise
