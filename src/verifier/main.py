@@ -52,14 +52,9 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     if key.suffix.lower() == ".html":
         if not key.efs_slug_html_path.parent.exists():
             key.efs_slug_html_path.parent.mkdir(parents=True, exist_ok=True)
-        logger.info(
-            'key.efs_slug_html_path.with_suffix(".html"): ',
-            key.efs_slug_html_path.with_suffix(".html"),
-        )
         with open(key.efs_slug_html_path.with_suffix(".html"), "r") as f:
             html = f.read()
-        logger.info("html:", html)
-        # new commit
+        logger.info(f"key.efs_slug_html_path: {key.efs_slug_html_path}")
         verifer = HtmlVerifier()
         verifer.verify(
             html,
@@ -70,7 +65,6 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         verifer.sort()
         warnings_json = verifer.to_json(md=True)
         logger.info(json.dumps(warnings_json, default=str))
-
     logger.info("Handler ended successfully.")
     return {"statusCode": 200, "body": ""}
 
