@@ -1,9 +1,11 @@
-import datetime
 import boto3
+import datetime
+import json
 import logging
 import os
 import pathlib
 import typing as t
+import urllib.parse
 
 
 IS_DEBUG = bool(int(os.environ.get("DGTMON_DEBUG", 0)))
@@ -22,8 +24,10 @@ logger.setLevel(logging.INFO)
 
 try:
     from fakers import Faker
+    from keys import KeyPath
 except ModuleNotFoundError as e:
     from src.verifier.fakers import Faker
+    from src.verifier.keys import KeyPath
 
 
 if IS_DEBUG:
@@ -36,10 +40,40 @@ else:
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info("Handler was invoked successfully.")
-    logger.info("s3: " + str(type(s3)))
-    logger.info("sqs: " + str(type(sqs)))
+    key = _get_key(event)
+    timestamp = _get_timestamp(event)
+    if key.suffix.lower() == ".html":
+        if not key.efs_slug_html_path.parent.exists():
+            key.efs_slug_html_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(key.efs_slug_html_path.with_suffix(".html"), "r") as f:
+            html = f.read()
     return {"statusCode": 200, "body": ""}
+
+
+def _get_key(event) -> KeyPath:
+    try:
+        key_str = urllib.parse.unquote_plus(
+            event["Records"][0]["s3"]["object"]["key"], encoding="utf-8"
+        )
+        return KeyPath(key_str)
+    except Exception as e:
+        logger.error(f"Unable to retrieve object key. Error: {repr(e)}")
+        raise
 
 
 def _fromtimestamp(event_time: str) -> datetime.datetime:
     return datetime.datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S.%f%z")
+
+
+def _get_timestamp(event) -> datetime.datetime:
+    try:
+        event_time = event["Records"][0]["eventTime"]
+        return _fromtimestamp(event_time)
+    except Exception as e:
+        logger.error(
+            f"Unable to retrieve event time. Event: "
+            + json.dumps(event, default=str)
+            + ". Exception: "
+            + repr(e)
+        )
+        raise
