@@ -47,13 +47,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     if key.suffix.lower() == ".html":
         if not key.efs_slug_html_path.parent.exists():
             key.efs_slug_html_path.parent.mkdir(parents=True, exist_ok=True)
-        logger.info(
-            'key.efs_slug_html_path.with_suffix(".html"): ',
-            key.efs_slug_html_path.with_suffix(".html"),
-        )
         with open(key.efs_slug_html_path.with_suffix(".html"), "r") as f:
             html = f.read()
-        logger.info("html:", html)
         # new commit
         verifer = HtmlVerifier()
         verifer.verify(

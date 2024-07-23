@@ -2,13 +2,15 @@ import collections
 import bs4
 import datetime
 import json
+from functools import cached_property
 import pathlib
 import re
 import typing as t
-
+import uuid
 
 try:
     from constants import (
+        DEFAULT_SFS_DIR,
         METADATA_FIELDS,
         METADATA_FIELDS_KEYS,
         CLS_METADATA_TABLE,
@@ -18,11 +20,11 @@ try:
         FIELD_PAPER_SOURCE,
     )
     from local_constants import RECOGNIZED_LICENSE_NAMES
-    from path_handler import PathHandler, SUPPORTED_SUFFIXES
-    from warnings import VerifierMessages
+    from html2md import convert_to_md
 except Exception as e:
     try:
         from .constants import (
+            DEFAULT_SFS_DIR,
             METADATA_FIELDS,
             METADATA_FIELDS_KEYS,
             CLS_METADATA_TABLE,
@@ -32,10 +34,10 @@ except Exception as e:
             FIELD_PAPER_SOURCE,
         )
         from .local_constants import RECOGNIZED_LICENSE_NAMES
-        from .path_handler import PathHandler, SUPPORTED_SUFFIXES
-        from .warnings import VerifierMessages
+        from .html2md import convert_to_md
     except Exception as e:
         from src.verifier.constants import (
+            DEFAULT_SFS_DIR,
             METADATA_FIELDS,
             METADATA_FIELDS_KEYS,
             CLS_METADATA_TABLE,
@@ -45,13 +47,7 @@ except Exception as e:
             FIELD_PAPER_SOURCE,
         )
         from src.verifier.local_constants import RECOGNIZED_LICENSE_NAMES
-        from src.verifier.path_handler import PathHandler, SUPPORTED_SUFFIXES
-        from src.verifier.warnings import VerifierMessages
-
-
-    # from src.verifier.local_constants import RECOGNIZED_LICENSE_NAMES
-    # from src.verifier.path_handler import PathHandler, SUPPORTED_SUFFIXES
-    # from src.verifier.warnings import VerifierMessages
+        from src.verifier.html2md import convert_to_md
 
 
 IS_HEADING_TITLE_CASED_REQUIRED = True
@@ -101,6 +97,62 @@ MSG_PROBLEMS = {
 }
 
 
+SUPPORTED_SUFFIXES = (
+    # img formats
+    ".jpg",
+    ".jpeg",
+    ".tiff",
+    ".png",
+    # audio/video formats
+    ".mp4",
+    # web formats
+    ".js",
+    ".css",
+    # data formats
+    ".json",
+    ".csv",
+    ".xls",
+    ".xlsx",
+)
+
+
+class PathHandler:
+    def __init__(self, fp: str, slug: str):
+        self._fp = fp
+        self.slug = slug
+        self._windows_path = pathlib.PureWindowsPath(fp)
+        self._posix_path = pathlib.PurePosixPath(fp)
+        if len(self._windows_path.parts) != len(self._posix_path.parts):
+            self.fp = pathlib.Path(*self._windows_path.parts)
+        else:
+            self.fp = pathlib.Path(fp)
+
+    def is_relative(self) -> bool:
+        return not self.fp.is_absolute() and not self._windows_path.is_absolute()
+
+    def is_dir(self) -> bool:
+        return self.exists() and self.fp.is_dir()
+
+    def exists(self) -> bool:
+        return self.efs_slug_filepath.exists()
+
+    def is_in_asset_dir(self) -> bool:
+        return self.fp.is_relative_to("assets")
+
+    def is_suffix_supported(self) -> bool:
+        return self.fp.suffix.lower() in SUPPORTED_SUFFIXES
+
+    @cached_property
+    def efs_slug_filepath(self) -> pathlib.Path:
+        fp = pathlib.Path(DEFAULT_SFS_DIR) / self.slug
+        for part in self.fp.parts:
+            fp = fp / part
+        return fp
+
+    def __str__(self) -> str:
+        return str(self.fp)
+
+
 class HtmlVerifier:
     def __init__(self) -> None:
         self.soup = None
@@ -127,12 +179,12 @@ class HtmlVerifier:
     def to_json(self, md: bool = False):
         return self._messages.to_json(md)
 
-    def sort(self) -> VerifierMessages:
+    def sort(self) -> "VerifierMessages":
         self._messages.sort(key=lambda msg: (msg["line"], msg["pos"]))
 
     def verify(
         self, html: str, fp: pathlib.Path, slug: str, timestamp: datetime.datetime
-    ) -> VerifierMessages:
+    ) -> "VerifierMessages":
         self._first_tag = None
         self._fp = fp
         self._slug = slug
@@ -641,3 +693,238 @@ class HtmlVerifier:
         return not vpath.is_suffix_supported()
 
     #####################################################################################
+
+
+class FileVerificationMessageJson(t.TypedDict):
+    id: str
+    problem: str
+    recommend: str
+    fn: str
+    prev_elem: str
+    curr_elem: str
+    next_elem: str
+    timestamp: str
+    tags: list[str]
+    line: int
+    pos: int
+
+
+class GeneralVerificationMessageJson(t.TypedDict):
+    id: str
+    problem: str
+    recommend: str
+    timestamp: str
+    tags: list[str]
+    line: int
+    pos: int
+
+
+class FileVerificationMessage:
+    def __init__(
+        self,
+        problem: str,
+        recommend: str,
+        prev_elem: t.Optional[bs4.element.Tag],
+        elem: bs4.element.Tag,
+        next_elem: t.Optional[bs4.element.Tag],
+        timestamp: datetime.datetime,
+        fn: str,
+        tags: list[str],
+    ) -> None:
+        self.id = uuid.uuid4().hex[:8]
+        self.problem = problem
+        self.recommend = recommend
+        self.prev_elem = prev_elem if prev_elem else self.find_prev_elem(elem)
+        self.curr_elem = elem
+        self.next_elem = next_elem if next_elem else self.find_next_elem(elem)
+        self.timestamp = timestamp
+        self.fn = fn
+        self.tags = tags
+        self.line = elem.sourceline
+        self.pos = elem.sourcepos
+
+    def __getitem__(self, x):
+        """Makes object subscriptable, allowing to access e.g. message['id']"""
+        return getattr(self, x)
+
+    def copy(self) -> "FileVerificationMessage":
+        return FileVerificationMessage(
+            problem=self.problem,
+            recommend=self.recommend,
+            prev_elem=self.prev_elem,
+            elem=self.curr_elem,
+            next_elem=self.next_elem,
+            timestamp=self.timestamp,
+            fn=self.fn,
+            tags=self.tags,
+        )
+
+    @staticmethod
+    def find_prev_elem(elem: bs4.element.Tag) -> t.Optional[bs4.element.PageElement]:
+        """
+        Find previous_sibling, ommiting empty ones.
+        """
+        prev = elem.previous_sibling
+        for i in range(5):  # don't look for more than 5 siblings
+            if hasattr(prev, "text") and prev.text.isspace():
+                prev = prev.previous_sibling
+            else:
+                break
+        return prev
+
+    @staticmethod
+    def find_next_elem(elem: bs4.element.Tag) -> t.Optional[bs4.element.PageElement]:
+        """
+        Find next_sibling, ommiting empty ones.
+        """
+        next = elem.next_sibling
+        for i in range(5):  # don't look for more than 5 siblings
+            if hasattr(next, "text") and next.text.isspace():
+                next = next.next_sibling
+            else:
+                break
+        return next
+
+    def to_json(self, md: bool = False) -> FileVerificationMessageJson:
+        print("-" * 75)
+        print(
+            {
+                "id": self.id,
+                "problem": self.problem,
+                "recommend": self.recommend,
+                "fn": self.fn,
+                "prev_elem": self.prev_elem,
+                "curr_elem": self.curr_elem,
+                "next_elem": self.next_elem,
+                "timestamp": self.timestamp.isoformat(),
+                "tags": self.tags,
+                "line": self.line,
+                "pos": self.pos,
+            }
+        )
+        try:
+            prev_elem = convert_to_md(self.prev_elem) if md else str(self.prev_elem)
+        except (TypeError, AttributeError):
+            prev_elem = str(self.prev_elem)
+        try:
+            curr_elem = convert_to_md(self.curr_elem) if md else str(self.curr_elem)
+        except (TypeError, AttributeError):
+            curr_elem = str(self.curr_elem)
+        try:
+            next_elem = convert_to_md(self.next_elem) if md else str(self.next_elem)
+        except (TypeError, AttributeError):
+            next_elem = str(self.next_elem)
+        return {
+            "id": self.id,
+            "problem": self.problem,
+            "recommend": self.recommend,
+            "fn": self.fn,
+            "prev_elem": prev_elem,
+            "curr_elem": curr_elem,
+            "next_elem": next_elem,
+            # "prev_elem": convert_to_md(self.prev_elem) if md else str(self.prev_elem),
+            # "curr_elem": convert_to_md(self.curr_elem) if md else str(self.curr_elem),
+            # "next_elem": convert_to_md(self.next_elem) if md else str(self.next_elem),
+            "timestamp": self.timestamp.isoformat(),
+            "tags": self.tags,
+            "line": self.line,
+            "pos": self.pos,
+        }
+
+    def __str__(self):
+        return self.to_json()
+
+
+class GeneralVerificationMessage:
+    def __init__(
+        self,
+        problem: str,
+        recommend: str,
+        timestamp: datetime.datetime,
+        tags: list[str],
+    ) -> None:
+        self.id = uuid.uuid4().hex[:8]
+        self.problem = problem
+        self.recommend = recommend
+        self.timestamp = timestamp
+        self.tags = tags
+        self.line = 0
+        self.pos = 0
+
+    def __getitem__(self, x):
+        """Makes object subscriptable, allowing to access e.g. message['id']"""
+        return getattr(self, x)
+
+    def copy(self) -> "GeneralVerificationMessage":
+        return GeneralVerificationMessage(
+            problem=self.problem,
+            recommend=self.recommend,
+            timestamp=self.timestamp,
+            tags=self.tags,
+        )
+
+    def to_json(self, md: bool = False) -> GeneralVerificationMessageJson:
+        return {
+            "id": self.id,
+            "problem": self.problem,
+            "recommend": self.recommend,
+            "timestamp": self.timestamp.isoformat(),
+            "tags": self.tags,
+            "line": self.line,
+            "pos": self.pos,
+        }
+
+    def __str__(self):
+        return self.to_json()
+
+
+class VerifierMessages:
+    _messages: list[t.Union[FileVerificationMessage, GeneralVerificationMessage]]
+
+    def __init__(self):
+        self._messages = []
+
+    def add_msg(
+        self,
+        problem: str,
+        recommend: str,
+        timestamp: datetime.datetime,
+        tags: list[str],
+        prev_elem: t.Optional[bs4.element.Tag] = None,
+        elem: t.Optional[bs4.element.Tag] = None,
+        next_elem: t.Optional[bs4.element.Tag] = None,
+        fn: t.Optional[str] = None,
+    ) -> None:
+        if elem is not None:
+            self._messages.append(
+                FileVerificationMessage(
+                    problem=problem,
+                    recommend=recommend,
+                    prev_elem=prev_elem,
+                    elem=elem,
+                    next_elem=next_elem,
+                    timestamp=timestamp,
+                    fn=fn,
+                    tags=tags,
+                )
+            )
+        else:
+            self._messages.append(
+                GeneralVerificationMessage(
+                    problem=problem,
+                    recommend=recommend,
+                    timestamp=timestamp,
+                    tags=tags,
+                )
+            )
+
+    def to_json(
+        self, md: bool = False
+    ) -> list[t.Union[FileVerificationMessageJson, GeneralVerificationMessageJson]]:
+        return [msg.to_json(md) for msg in self._messages]
+
+    def sort(self, *args, **kwargs) -> None:
+        self._messages.sort(*args, **kwargs)
+
+    def __str__(self):
+        return self.to_json()
