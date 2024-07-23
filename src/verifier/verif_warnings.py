@@ -100,50 +100,29 @@ class FileVerificationMessage:
         return next
 
     def to_json(self, md: bool = False) -> FileVerificationMessageJson:
-        print("-" * 75)
-        print(
-            {
-                "id": self.id,
-                "problem": self.problem,
-                "recommend": self.recommend,
-                "fn": self.fn,
-                "prev_elem": self.prev_elem,
-                "curr_elem": self.curr_elem,
-                "next_elem": self.next_elem,
-                "timestamp": self.timestamp.isoformat(),
-                "tags": self.tags,
-                "line": self.line,
-                "pos": self.pos,
-            }
-        )
-        try:
-            prev_elem = convert_to_md(self.prev_elem) if md else str(self.prev_elem)
-        except (TypeError, AttributeError):
-            prev_elem = str(self.prev_elem)
-        try:
-            curr_elem = convert_to_md(self.curr_elem) if md else str(self.curr_elem)
-        except (TypeError, AttributeError):
-            curr_elem = str(self.curr_elem)
-        try:
-            next_elem = convert_to_md(self.next_elem) if md else str(self.next_elem)
-        except (TypeError, AttributeError):
-            next_elem = str(self.next_elem)
         return {
             "id": self.id,
             "problem": self.problem,
             "recommend": self.recommend,
             "fn": self.fn,
-            "prev_elem": prev_elem,
-            "curr_elem": curr_elem,
-            "next_elem": next_elem,
-            # "prev_elem": convert_to_md(self.prev_elem) if md else str(self.prev_elem),
-            # "curr_elem": convert_to_md(self.curr_elem) if md else str(self.curr_elem),
-            # "next_elem": convert_to_md(self.next_elem) if md else str(self.next_elem),
+            "prev_elem": self._bs4element_to_str(self.prev_elem, md),
+            "curr_elem": self._bs4element_to_str(self.curr_elem, md),
+            "next_elem": self._bs4element_to_str(self.next_elem, md),
             "timestamp": self.timestamp.isoformat(),
             "tags": self.tags,
             "line": self.line,
             "pos": self.pos,
         }
+
+    def _bs4element_to_str(
+        self, elem: t.Optional[bs4.element.PageElement], md: bool
+    ) -> str:
+        elem_str = str(elem)
+        if not elem or elem_str == "None":
+            return ""
+        if isinstance(elem, bs4.element.NavigableString):
+            return elem_str
+        return convert_to_md(elem) if md else elem_str
 
     def __str__(self):
         return self.to_json()
