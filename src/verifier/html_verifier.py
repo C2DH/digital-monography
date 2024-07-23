@@ -48,7 +48,6 @@ except Exception as e:
         from src.verifier.path_handler import PathHandler, SUPPORTED_SUFFIXES
         from src.verifier.warnings import VerifierMessages
 
-
     # from src.verifier.local_constants import RECOGNIZED_LICENSE_NAMES
     # from src.verifier.path_handler import PathHandler, SUPPORTED_SUFFIXES
     # from src.verifier.warnings import VerifierMessages
