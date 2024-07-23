@@ -21,18 +21,33 @@ try:
     from path_handler import PathHandler, SUPPORTED_SUFFIXES
     from warnings import VerifierMessages
 except Exception as e:
-    from .constants import (
-        METADATA_FIELDS,
-        METADATA_FIELDS_KEYS,
-        CLS_METADATA_TABLE,
-        CLS_METADATA_TABLE_JSONDATA,
-        FIELD_LICENSE_NAME,
-        FIELD_DIGITAL_SOURCE,
-        FIELD_PAPER_SOURCE,
-    )
-    from .local_constants import RECOGNIZED_LICENSE_NAMES
-    from .path_handler import PathHandler, SUPPORTED_SUFFIXES
-    from .warnings import VerifierMessages
+    try:
+        from .constants import (
+            METADATA_FIELDS,
+            METADATA_FIELDS_KEYS,
+            CLS_METADATA_TABLE,
+            CLS_METADATA_TABLE_JSONDATA,
+            FIELD_LICENSE_NAME,
+            FIELD_DIGITAL_SOURCE,
+            FIELD_PAPER_SOURCE,
+        )
+        from .local_constants import RECOGNIZED_LICENSE_NAMES
+        from .path_handler import PathHandler, SUPPORTED_SUFFIXES
+        from .warnings import VerifierMessages
+    except Exception as e:
+        from src.verifier.constants import (
+            METADATA_FIELDS,
+            METADATA_FIELDS_KEYS,
+            CLS_METADATA_TABLE,
+            CLS_METADATA_TABLE_JSONDATA,
+            FIELD_LICENSE_NAME,
+            FIELD_DIGITAL_SOURCE,
+            FIELD_PAPER_SOURCE,
+        )
+        from src.verifier.local_constants import RECOGNIZED_LICENSE_NAMES
+        from src.verifier.path_handler import PathHandler, SUPPORTED_SUFFIXES
+        from src.verifier.warnings import VerifierMessages
+
 
     # from src.verifier.local_constants import RECOGNIZED_LICENSE_NAMES
     # from src.verifier.path_handler import PathHandler, SUPPORTED_SUFFIXES
