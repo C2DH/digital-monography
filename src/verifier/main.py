@@ -1,4 +1,5 @@
 import datetime
+import boto3
 import logging
 import os
 import pathlib
@@ -19,9 +20,24 @@ if IS_DEBUG:
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+try:
+    from fakers import Faker
+except ModuleNotFoundError as e:
+    from src.verifier.fakers import Faker
+
+
+if IS_DEBUG:
+    s3 = Faker("s3")
+    sqs = Faker("sqs")
+else:
+    s3 = boto3.client("s3")
+    sqs = boto3.client("sqs")
+
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info("Handler was invoked successfully.")
+    logger.info("s3: " + str(type(s3)))
+    logger.info("sqs: " + str(type(sqs)))
     return {"statusCode": 200, "body": ""}
 
 
