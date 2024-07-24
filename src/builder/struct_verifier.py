@@ -4,14 +4,11 @@ import yaml
 import typing as t
 
 try:
-    from .keys import KeyPath
-    from .warnings import VerifierMessages
-except Exception as e:
     from keys import KeyPath
-    from warnings import VerifierMessages
-
-    # from src.verifier.keys import KeyPath
-    # from src.verifier.warnings import VerifierMessages
+    from verif_warnings import VerifierMessages
+except (ImportError, ModuleNotFoundError):
+    from .keys import KeyPath
+    from .verif_warnings import VerifierMessages
 
 
 STRUCT = "file_structure"
