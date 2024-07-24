@@ -3,7 +3,7 @@ import typing as t
 
 try:
     from keys import KeyPath
-except Exception as e:
+except (ImportError, ModuleNotFoundError):
     from .keys import KeyPath
 
 

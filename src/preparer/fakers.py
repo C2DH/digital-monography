@@ -2,9 +2,9 @@ import pathlib
 import typing as t
 
 try:
-    from .keys import KeyPath
-except Exception as e:
     from keys import KeyPath
+except (ImportError, ModuleNotFoundError):
+    from .keys import KeyPath
 
 
 class Faker:

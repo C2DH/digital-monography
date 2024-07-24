@@ -14,12 +14,12 @@ try:
     from html_verifier import HtmlVerifier
     from make_warnings_report import make_warnings_report
     from keys import KeyPath
-except ModuleNotFoundError as e:
-    from src.verifier.constants import IS_DEBUG, VERIFIER_MSGS
-    from src.verifier.fakers import Faker
-    from src.verifier.html_verifier import HtmlVerifier
-    from src.verifier.make_warnings_report import make_warnings_report
-    from src.verifier.keys import KeyPath
+except (ImportError, ModuleNotFoundError):
+    from .constants import IS_DEBUG, VERIFIER_MSGS
+    from .fakers import Faker
+    from .html_verifier import HtmlVerifier
+    from .make_warnings_report import make_warnings_report
+    from .keys import KeyPath
 
 if IS_DEBUG:
     today = datetime.date.today().isoformat()

@@ -20,37 +20,19 @@ try:
     from local_constants import RECOGNIZED_LICENSE_NAMES
     from path_handler import PathHandler, SUPPORTED_SUFFIXES
     from verif_warnings import VerifierMessages
-except Exception as e:
-    try:
-        from .constants import (
-            METADATA_FIELDS,
-            METADATA_FIELDS_KEYS,
-            CLS_METADATA_TABLE,
-            CLS_METADATA_TABLE_JSONDATA,
-            FIELD_LICENSE_NAME,
-            FIELD_DIGITAL_SOURCE,
-            FIELD_PAPER_SOURCE,
-        )
-        from .local_constants import RECOGNIZED_LICENSE_NAMES
-        from .path_handler import PathHandler, SUPPORTED_SUFFIXES
-        from .verif_warnings import VerifierMessages
-    except Exception as e:
-        from src.verifier.constants import (
-            METADATA_FIELDS,
-            METADATA_FIELDS_KEYS,
-            CLS_METADATA_TABLE,
-            CLS_METADATA_TABLE_JSONDATA,
-            FIELD_LICENSE_NAME,
-            FIELD_DIGITAL_SOURCE,
-            FIELD_PAPER_SOURCE,
-        )
-        from src.verifier.local_constants import RECOGNIZED_LICENSE_NAMES
-        from src.verifier.path_handler import PathHandler, SUPPORTED_SUFFIXES
-        from src.verifier.verif_warnings import VerifierMessages
-
-    # from src.verifier.local_constants import RECOGNIZED_LICENSE_NAMES
-    # from src.verifier.path_handler import PathHandler, SUPPORTED_SUFFIXES
-    # from src.verifier.warnings import VerifierMessages
+except (ImportError, ModuleNotFoundError):
+    from .constants import (
+        METADATA_FIELDS,
+        METADATA_FIELDS_KEYS,
+        CLS_METADATA_TABLE,
+        CLS_METADATA_TABLE_JSONDATA,
+        FIELD_LICENSE_NAME,
+        FIELD_DIGITAL_SOURCE,
+        FIELD_PAPER_SOURCE,
+    )
+    from .local_constants import RECOGNIZED_LICENSE_NAMES
+    from .path_handler import PathHandler, SUPPORTED_SUFFIXES
+    from .verif_warnings import VerifierMessages
 
 
 IS_HEADING_TITLE_CASED_REQUIRED = True

@@ -12,12 +12,12 @@ try:
         GITHUB_SECRET_ID,
     )
     from keys import KeyPath
-except ModuleNotFoundError as e:
-    from src.github.constants import (
+except (ImportError, ModuleNotFoundError):
+    from .constants import (
         ARCHIVE_APKG_ALL,
         GITHUB_SECRET_ID,
     )
-    from src.github.keys import KeyPath
+    from .keys import KeyPath
 
 
 logger = logging.getLogger()

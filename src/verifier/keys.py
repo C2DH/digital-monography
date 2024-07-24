@@ -10,9 +10,9 @@ import pathlib
 from functools import cached_property
 
 try:
-    from .constants import DEFAULT_SFS_DIR
-except Exception as e:
     from constants import DEFAULT_SFS_DIR
+except (ImportError, ModuleNotFoundError):
+    from .constants import DEFAULT_SFS_DIR
 
 
 class InvalidKey(Exception):

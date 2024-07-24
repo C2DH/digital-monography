@@ -6,14 +6,14 @@ import uuid
 
 
 try:
-    from .constants import (
+    from constants import (
         METADATA_FIELDS,
         FIELD_DIGITAL_SOURCE,
         FIELD_PAPER_SOURCE,
         FIELD_DELETE_PREVIOUS,
     )
-except Exception as e:
-    from constants import (
+except (ImportError, ModuleNotFoundError):
+    from .constants import (
         METADATA_FIELDS,
         FIELD_DIGITAL_SOURCE,
         FIELD_PAPER_SOURCE,

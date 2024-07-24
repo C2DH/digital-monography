@@ -23,21 +23,21 @@ try:
     from html2md import convert_to_md
     from keys import KeyPath
     from fakers import Faker
-except ModuleNotFoundError as e:
-    from src.preparer.constants import (
+except (ImportError, ModuleNotFoundError):
+    from .constants import (
         ARCHIVE_APKG_ALL,
         IR_APKG_HTML_BUCKET_NAME,
         IR_APKG_MD_BUCKET_NAME,
         IS_DEBUG,
     )
-    from src.preparer.citations import add_citations_and_bibliography
-    from src.preparer.md_extraction import DocumentMetadata
-    from src.preparer.metadata_extraction import replace_assets_with_directives
-    from src.preparer.remove_empty_tables import remove_empty_tables
-    from src.preparer.replace_alt_texts import replace_alt_texts
-    from src.preparer.html2md import convert_to_md
-    from src.preparer.keys import KeyPath
-    from src.preparer.fakers import Faker
+    from .citations import add_citations_and_bibliography
+    from .md_extraction import DocumentMetadata
+    from .metadata_extraction import replace_assets_with_directives
+    from .remove_empty_tables import remove_empty_tables
+    from .replace_alt_texts import replace_alt_texts
+    from .html2md import convert_to_md
+    from .keys import KeyPath
+    from .fakers import Faker
 
 
 if IS_DEBUG:

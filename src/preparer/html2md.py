@@ -13,7 +13,7 @@ import typing as t
 try:
     from md_extraction import DocumentMetadata
     from constants import CLS_METADATA_TABLE
-except ModuleNotFoundError:
+except (ImportError, ModuleNotFoundError):
     from .md_extraction import DocumentMetadata
     from .constants import CLS_METADATA_TABLE
 

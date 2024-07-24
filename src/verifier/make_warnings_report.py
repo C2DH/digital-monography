@@ -4,12 +4,12 @@ import typing as t
 
 
 try:
-    from .verif_warnings import (
+    from verif_warnings import (
         FileVerificationMessageJson,
         GeneralVerificationMessageJson,
     )
-except ModuleNotFoundError:
-    from verif_warnings import (
+except (ImportError, ModuleNotFoundError):
+    from .verif_warnings import (
         FileVerificationMessageJson,
         GeneralVerificationMessageJson,
     )

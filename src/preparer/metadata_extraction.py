@@ -6,9 +6,9 @@ import typing as t
 try:
     from md_extraction import AssetMetadata, DocumentMetadata
     from constants import CLS_METADATA_TABLE, CLS_METADATA_TABLE_JSONDATA
-except ModuleNotFoundError:
-    from src.preparer.md_extraction import AssetMetadata, DocumentMetadata
-    from src.preparer.constants import CLS_METADATA_TABLE, CLS_METADATA_TABLE_JSONDATA
+except (ImportError, ModuleNotFoundError):
+    from .md_extraction import AssetMetadata, DocumentMetadata
+    from .constants import CLS_METADATA_TABLE, CLS_METADATA_TABLE_JSONDATA
 
 
 def replace_assets_with_directives(
