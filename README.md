@@ -36,6 +36,16 @@ Few things to keep in mind:
 - Remember to set the `DGTMON_DEBUG=1` environment variable.
 - The local script uses only part of the actual workflow. Please consider testing on the cloud.
 
+## Dependencies
+
+Python version is defined in `.python-version`. Python dependencies are described in `requirements.txt` files both per-service in `src/<service-name>` and in testing environment at the root of the project. Beyond that the project requires:
+
+* docker
+* git
+* sops
+* make
+* terraform (if you want to use the tf cli outside of the gitlab-ci pipeline)
+
 ## Updating code
 
 Images are hosted in the Docker Hub registry. When applying changes in the terraform configuration, AWS will pull images from Docker Hub, build and deploy them using the tags specified in the `.versions.json` file. Note that only the stable tags will be used.
@@ -192,7 +202,6 @@ git config --add --local core.sshCommand 'ssh -i ~/.ssh/filename'
 
 * limit permissions linked to the AWS Role connected to the CI/CD pipeline
 * change python-mammoth from being a wheel file to being installed from github fork
-* utilities like keys.KeyPath should be installed from a dir shared accross all Lambdas (easier for testing)
 * more unit tests
 * add integration testing
 * add e2e cloud testing on actual Lambdas
