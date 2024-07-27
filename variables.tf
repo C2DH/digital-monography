@@ -45,7 +45,7 @@ variable "upload_apkg_bucket_name" {
 variable "upload_apkg_temp_bucket_name" {
   type        = string
   description = "Temp"
-  default     = "upload_apkg_temp"
+  default     = "upload-apkg-temp"
 }
 
 variable "verification_msgs_bucket_name" {
