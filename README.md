@@ -24,17 +24,15 @@ You can check the basic workflow of the platform by running local scripts. To do
 1. Prepare Python virtual environment `python -m venv .venv`
 1. Activate the virtual environment (e.g. `source .venv/bin/activate`)
 1. Install dependencies `python -m pip install -r requirements.txt`
-1. Run `DGTMON_DEBUG=1 python scripts/prepare_and_build.py book_path=path/to/a/dir`
+1. Run `python scripts/prepare_and_build.py book_path=path/to/a/dir`
 
 For example 
 
 ```sh
-DGTMON_DEBUG=1 python scripts/prepare_and_build.py book_path="/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/examples"
+python scripts/prepare_and_build.py book_path="/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/examples"
 ```
 
-Few things to keep in mind:
-- Remember to set the `DGTMON_DEBUG=1` environment variable.
-- The local script uses only part of the actual workflow. Please consider testing on the cloud.
+Please keep in mind that the local script uses only part of the actual workflow. Consider testing on the cloud.
 
 ## Dependencies
 

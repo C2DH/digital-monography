@@ -6,6 +6,10 @@ import sys
 import os
 import time
 
+
+os.environ["DGTMON_DEBUG"] = "1"
+
+
 # Get the parent directory and add it to sys.path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
