@@ -1,5 +1,7 @@
 # https://github.com/hashicorp/terraform-provider-aws/tree/main/examples/s3-api-gateway-integration
+# https://aws.amazon.com/blogs/apn/how-an-aws-lambda-function-can-be-integrated-with-box-webhooks/
 # https://github.com/robty123/s3-proxy
+# https://gitlab.com/de-gruyter/external-sites/digital-history-journal/dhj-mvp/-/blob/69ae699e5f379d088f6ca6f3822bacba2aba782e/infra/api_gateway.tf
 
 resource "aws_s3_bucket" "upload_apkg_temp" {
   bucket        = var.upload_apkg_temp_bucket_name
