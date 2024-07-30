@@ -18,6 +18,12 @@ The platform consists of the following modules (Lambda functions):
 
 ## Local development
 
+```sh
+docker compose up -d
+docker compose run main make test
+docker compose run main python scripts/prepare_and_build.py book_path="data/input/a-book-slug"
+```
+
 You can check the basic workflow of the platform by running local scripts. To do that, follow these steps:
 
 1. Make sure that you have Python version 3.12.
