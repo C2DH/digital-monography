@@ -27,6 +27,10 @@ RUN mkdir /home/username/dgtmon/.pytest_cache
 RUN chown -R username:username /home/username/dgtmon/.pytest_cache
 RUN chmod +rwx------ /home/username/dgtmon/.pytest_cache
 
+# Give the user permissions to write to /data directory.
+RUN chown -R username:username /tmp
+RUN chmod +rwx------ /tmp
+
 # Add PYTHONPATH to change the search path for libraries.
 # The search path should be the same for all of the scripts (inlc. tests).
 ENV PYTHONPATH "${PYTHONPATH}:/"
