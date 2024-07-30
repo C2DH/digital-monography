@@ -110,6 +110,19 @@ def build_after_loop(book_path: pathlib.Path) -> None:
     sqs_event["Records"][0]["body"] = slug
     sqs_event["Records"][0]["attributes"]["MessageDeduplicationId"] = slug
     builder_handler(sqs_event, context)
+    # cp from /tmp to data/output, relevant when run in docker container
+    book_src = pathlib.Path("/tmp") / "efs" / slug / "_build" / "html"
+    book_dst = pathlib.Path("data") / "output" / slug
+    if not book_dst.exists():
+        book_dst.mkdir(exist_ok=True)
+    shutil.copytree(book_src, book_dst, symlinks=False, ignore=None, dirs_exist_ok=True)
+    warnings_src = pathlib.Path("/tmp") / "efs" / slug / "_warnings"
+    warnings_dst = pathlib.Path("data") / "warnings" / slug
+    if not warnings_dst.exists():
+        warnings_dst.mkdir(exist_ok=True)
+    shutil.copytree(
+        warnings_src, warnings_dst, symlinks=False, ignore=None, dirs_exist_ok=True
+    )
 
 
 if __name__ == "__main__":

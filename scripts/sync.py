@@ -21,6 +21,7 @@ def listen_for_updates(
     func_after_loop: t.Optional[t.Callable] = None,
 ) -> None:
     last_modified = {}
+    is_update = False
     while True:
         for fp in book_path.glob("**/*"):
             if not fp.exists() or fp.is_dir():
