@@ -37,9 +37,8 @@ USER username
 COPY src/ /home/username/dgtmon/src
 COPY scripts/ /home/username/dgtmon/scripts
 COPY *.whl  /home/username/dgtmon/
-
-# Copy the requirements.txt file
-COPY /requirements.txt /home/username/dgtmon/requirements.txt
+COPY Makefile /home/username/dgtmon/
+COPY requirements.txt /home/username/dgtmon/requirements.txt
 
 WORKDIR /home/username/dgtmon
 
