@@ -42,6 +42,7 @@ COPY src/ /home/username/dgtmon/src
 COPY scripts/ /home/username/dgtmon/scripts
 COPY *.whl  /home/username/dgtmon/
 COPY Makefile /home/username/dgtmon/
+COPY .versions.json /home/username/dgtmon/.versions.json
 COPY requirements.txt /home/username/dgtmon/requirements.txt
 
 WORKDIR /home/username/dgtmon
