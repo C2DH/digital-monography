@@ -40,6 +40,12 @@ make dev/draft SLUG="slug-of-your-manuscript"
 
 Please keep in mind that the local script uses only part of the actual workflow. Consider testing on the cloud instead.
 
+You can also try to execute the scripts directly through your CLI:
+
+```sh
+python scripts/prepare_and_build.py book_path="/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/examples"
+```
+
 ## Dependencies
 
 Python version is defined in `.python-version`. Python dependencies are described in `requirements.txt` files both per-service in `src/<service-name>` and in testing environment at the root of the project. Beyond that the project requires:
