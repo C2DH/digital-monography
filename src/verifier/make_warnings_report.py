@@ -43,7 +43,8 @@ and checks each line against the predefined rules.
 If an element violates a rule, the platform flags it as a warning.
 Click on the drop-down to see the fragment of the manuscript where the issue was raised
 as well as a description of the problem.
-The "👉" character will point the exact element that has violated a rule.
+The "👉" and "👈" characters will point where the element that has violated 
+a rule starts and ends.
 
 ## Warning messages
 
@@ -105,34 +106,56 @@ def _get_character_and_word_count(soup: bs4.BeautifulSoup) -> tuple[int, int]:
     return len(soup_contents), len(words)
 
 
+def _escape_md(md: str) -> str:
+    while ":::" in md:
+        md = md.replace(":::", r"\:\:\:")
+    while "```" in md:
+        md = md.replace("```", r"\`\`\`")
+    return md
+
+
 def _make_fwarning_dropdown(msg: FileVerificationMessageJson) -> str:
-    directive, grid, grid_item = r"{dropdown}", r"{grid}", r"{grid-item}"
-    return f""" \n
-:::::{directive} {msg["problem"]}
+    directive = r"{dropdown}"
+    return f"""\
+::::{directive} {msg["problem"]}
 **{msg["problem"]}** {msg["recommend"]}
-::::{grid}
-:::{grid_item}
-:columns: 1
+\n
+:::md
+{_escape_md(msg["prev_elem"])}\n
+👉 {_escape_md(msg["curr_elem"])} 👈\n
+{_escape_md(msg["next_elem"])}
 :::
-:::{grid_item}
-:columns: 11
-{msg["prev_elem"]}
-:::
-:::{grid_item}
-:columns: 1
-👉
-:::
-:::{grid_item}
-:columns: 11
-{msg["curr_elem"]}
-:::
-:::{grid_item}
-:columns: 1
-:::
-:::{grid_item}
-:columns: 11
-{msg["next_elem"]}
-:::
-::::
-:::::
-\n"""
+::::\n"""
+
+
+# def _make_fwarning_dropdown(msg: FileVerificationMessageJson) -> str:
+#     directive, grid, grid_item = r"{dropdown}", r"{grid}", r"{grid-item}"
+#     return f""" \n
+# :::::{directive} {msg["problem"]}
+# **{msg["problem"]}** {msg["recommend"]}
+# ::::{grid}
+# :::{grid_item}
+# :columns: 1
+# :::
+# :::{grid_item}
+# :columns: 11\n
+# {msg["prev_elem"]}
+# :::
+# :::{grid_item}
+# :columns: 1
+# 👉
+# :::
+# :::{grid_item}
+# :columns: 11\n
+# {msg["curr_elem"]}
+# :::
+# :::{grid_item}
+# :columns: 1
+# :::
+# :::{grid_item}
+# :columns: 11\n
+# {msg["next_elem"]}
+# :::
+# ::::
+# :::::
+# \n"""
