@@ -1,13 +1,50 @@
-import random
 import bs4
 
+# import pathlib
+import random
+
 from src.verifier.html_verifier import HtmlVerifier
+
+# from src.verifier.html_verifier import HtmlVerifier, MSG_PROBLEMS, LINKS
 from src.verifier.main import _fromtimestamp
-from src.verifier.warnings import FileVerificationMessage, GeneralVerificationMessage
+from src.verifier.verif_warnings import (
+    FileVerificationMessage,
+    GeneralVerificationMessage,
+)
 
 
-class TestWarnings:
+# class TestHtmlElementsInWarnings:
+#     @classmethod
+#     def setup_class(cls):
+#         cls.verifier = HtmlVerifier()
+#         slug = "examples"
+#         timestamp = _fromtimestamp("2024-06-26T09:53:49.380Z")
+#         fp = pathlib.Path("tests") / "_fixtures" / "index.html"
+#         html = '<p id="p1">See </p><a id="p2"><a id="a" href="http://example.com/">a link</a></p><p id="p3">.</p>'
+#         result = cls.verifier.verify(html, fp, slug, timestamp)
+#         cls.res_json = result.to_json()
+#         cls.link_warning = next(
+#             w
+#             for w in cls.res_json
+#             if w["problem"] == MSG_PROBLEMS[LINKS]["check_a_not_archived"]
+#         )
 
+#     def test_href_prev_elem(self):
+#         # print(self.res_json)
+#         assert 1 == 54
+
+#     def test_href_curr_elem(self):
+#         # print(self.res_json)
+#         curr_elem = str(self.link_warning["curr_elem"])
+#         assert curr_elem == '<a href="http://example.com/" id="a">a link</a>'
+#         assert 1 == 55
+
+#     def test_href_next_elem(self):
+#         print(self.res_json)
+#         assert 1 == 56
+
+
+class TestSortingWarnings:
     @classmethod
     def setup_class(cls):
         cls.verifier = HtmlVerifier()
