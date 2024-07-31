@@ -121,11 +121,11 @@ def _build_book(key: KeyPath) -> None:
             "individualpages": False,
         }
         if IS_DEBUG:
-            params["nitpick"] = True
+            # params["nitpick"] = True
             params["keep_going"] = True
             # not sure, but it seems verbose can have levels ranging from 0 to 2
             # https://github.com/sphinx-doc/sphinx/blob/4fbd3682d5cdf606159630f7daf6f818d58de05e/tests/test_util/test_util_logging.py#L56
-            params["verbose"] = 2
+            # params["verbose"] = 2
         build.callback(**params)
         logging.info(f"Builder finished building the book at {key.efs_slug_dir}.")
     except RuntimeError as e:
@@ -165,11 +165,11 @@ def _build_verification_report(key: KeyPath) -> None:
             "individualpages": False,
         }
         if IS_DEBUG:
-            params["nitpick"] = True
+            # params["nitpick"] = True
             params["keep_going"] = True
             # not sure, but it seems verbose can have levels ranging from 0 to 2
             # https://github.com/sphinx-doc/sphinx/blob/4fbd3682d5cdf606159630f7daf6f818d58de05e/tests/test_util/test_util_logging.py#L56
-            params["verbose"] = 2
+            # params["verbose"] = 2
         build.callback(**params)
         logging.info(f"Builder finished building the verification report at {dst}.")
     except RuntimeError as e:
