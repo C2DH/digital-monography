@@ -1,5 +1,8 @@
 FROM python:3.12
 
+RUN apt-get update && \
+    apt-get install -y jq
+
 # Due to security reasons, 
 # it’s a good practice to run containers as a non-root user.
 # Option `--create-home` will create user’s home directory.
@@ -50,8 +53,7 @@ WORKDIR /home/username/dgtmon
 # Install all required packages.
 # Disable the cash using `--no-cache-dir` option to lower image size.
 RUN python -m pip install --upgrade pip && python -m pip install -r requirements.txt
-# RUN pip install --no-cache-dir -r requirements/prod.txt
-# WARNING: The scripts pip, pip3 and pip3.12 are installed in '/home/username/dgtmon/.local/bin' which is not on PATH
+# The scripts pip, pip3 and pip3.12 are installed in '/home/username/dgtmon/.local/bin' which is not on PATH
 
 # Set bash as default command,
 # which will be invoked when docker container runs.
