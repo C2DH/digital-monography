@@ -18,27 +18,27 @@ The platform consists of the following modules (Lambda functions):
 
 ## Local development
 
-```sh
-docker compose up -d
-docker compose run main make test
-docker compose run main python scripts/prepare_and_build.py book_path="data/input/a-book-slug"
-```
-
 You can check the basic workflow of the platform by running local scripts. To do that, follow these steps:
 
-1. Make sure that you have Python version 3.12.
-1. Prepare Python virtual environment `python -m venv .venv`
-1. Activate the virtual environment (e.g. `source .venv/bin/activate`)
-1. Install dependencies `python -m pip install -r requirements.txt`
-1. Run `python scripts/prepare_and_build.py book_path=path/to/a/dir`
-
-For example 
+1. Start the container in the background.
 
 ```sh
-python scripts/prepare_and_build.py book_path="/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/examples"
+make dev/start
 ```
 
-Please keep in mind that the local script uses only part of the actual workflow. Consider testing on the cloud.
+1. Test the basic workflow.
+
+```sh
+make dev/test
+```
+
+1. Build a Jupyter Book out of a manuscript stored in a `data/input` directory. Replace `slug-of-your-manuscript` with the name of this directory.
+
+```sh
+make dev/draft SLUG="slug-of-your-manuscript"
+```
+
+Please keep in mind that the local script uses only part of the actual workflow. Consider testing on the cloud instead.
 
 ## Dependencies
 

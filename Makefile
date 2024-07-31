@@ -14,6 +14,15 @@ login:
 	aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin ${DOCKER_ECR}
 	docker login --username c2dhadmin
 
+dev/start:
+	docker compose up --detach
+
+dev/test:
+	docker compose run main make test
+
+dev/draft:
+	docker compose run main python scripts/prepare_and_build.py book_path=data/input/$(SLUG)
+
 preparer/build:
 	cp src/_common/constants.py src/preparer/constants.py
 	cp src/_common/keys.py src/preparer/keys.py
