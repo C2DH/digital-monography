@@ -2,6 +2,7 @@ BUILDER_STABLE_V := $(shell jq -r '.BUILDER_STABLE_V' < .versions.json)
 PREPARER_STABLE_V := $(shell jq -r '.PREPARER_STABLE_V' < .versions.json) 
 GITHUB_STABLE_V  := $(shell jq -r '.GITHUB_STABLE_V' < .versions.json) 
 VERIFIER_STABLE_V  := $(shell jq -r '.VERIFIER_STABLE_V' < .versions.json) 
+LOCAL_STABLE_V := $(shell jq -r '.LOCAL_STABLE_V' < .versions.json)
 AWS_KMS_ARN = 'arn:aws:kms:eu-west-1:367031255351:key/34644061-6a4d-4414-b0e4-90a9df0e2cff'
 DOCKER_ECR = 367031255351.dkr.ecr.eu-west-1.amazonaws.com
 DOCKER_HUB = c2dhunilu
@@ -16,6 +17,14 @@ login:
 
 dev/build:
 	docker compose build --no-cache
+
+dev/tag:
+	docker tag dgtmon-dev-local ${DOCKER_HUB}/dgtmon-dev-local:${LOCAL_STABLE_V}
+	docker tag dgtmon-dev-local ${DOCKER_HUB}/dgtmon-dev-local:latest
+
+dev/push:
+	docker push ${DOCKER_HUB}/dgtmon-dev-local:${LOCAL_STABLE_V}
+	docker push ${DOCKER_HUB}/dgtmon-dev-local:latest
 
 dev/start:
 	docker compose up --detach
