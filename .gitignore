@@ -10,3 +10,7 @@ __pycache__
 
 **/*:Zone.Identifier
 scripts/rclone.conf
+data/input/*
+data/output/*
+data/warnings/*
+
