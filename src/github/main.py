@@ -1,0 +1,216 @@
+import base64
+import json
+import boto3
+import logging
+import requests
+import typing as t
+import urllib.parse
+
+try:
+    from constants import (
+        ARCHIVE_APKG_ALL,
+        GITHUB_SECRET_ID,
+    )
+    from keys import KeyPath
+except (ImportError, ModuleNotFoundError):
+    from .constants import (
+        ARCHIVE_APKG_ALL,
+        GITHUB_SECRET_ID,
+    )
+    from .keys import KeyPath
+
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+
+s3 = boto3.client("s3")
+secretsmanager = boto3.client("secretsmanager")
+
+
+class GitHubSecret(t.TypedDict):
+    github_api_token: str
+    github_api_org: str
+
+
+def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
+    logger.info("Starting GitHub Lambda.")
+    logger.info(json.dumps(event, default=str))
+    logger.info(json.dumps(context, default=str))
+
+    key = _get_key(event)
+    if key.suffix not in [".md", ".MD", ".ipynb", ".IPYNB"]:
+        return {"statusCode": 200, "body": ""}
+
+    secret = _get_api_key(GITHUB_SECRET_ID)
+
+    # naively try to create repo without checking if it exists
+    _create_github_repo(key, secret)
+    new_bytes = _get_obj_from_archive_s3(key)
+    prev_obj = _get_from_github_repo(key, secret)
+    prev_v_sha = prev_obj.json().get("sha", None)
+    _put_to_github_repo(key, secret, new_bytes, prev_v_sha, event)
+    return {"statusCode": 200, "body": ""}
+
+
+def _get_key(event) -> KeyPath:
+    try:
+        key_str = urllib.parse.unquote_plus(
+            event["Records"][0]["s3"]["object"]["key"], encoding="utf-8"
+        )
+        return KeyPath(key_str)
+    except Exception as e:
+        logger.error(f"Unable to retrieve object key. Error: {repr(e)}")
+        raise
+
+
+def _get_api_key(secret_id: str) -> GitHubSecret:
+    try:
+        resp = secretsmanager.get_secret_value(SecretId=secret_id)
+        logger.info(
+            "secretsmanager.get_secret_value response: " + json.dumps(resp, default=str)
+        )
+        return json.loads(resp["SecretString"])
+    except Exception as e:
+        logging.exception(
+            f"Error while getting secret value for {secret_id}: {repr(e)}"
+        )
+        raise
+
+
+def _create_github_repo(key: KeyPath, secret: GitHubSecret) -> requests.Response:
+    """
+    Creates a new repository in the specified organization.
+    Note that the GitHub API token must have the write "Administration" repo permissions.
+    If the repository already exists, the repository creation will fail with a message
+    "name already exists on this account".
+    See API docs here:
+    https://docs.github.com/en/rest/repos/repos?apiVersion=2022-11-28#create-an-organization-repository
+    """
+    try:
+        github_token = secret["github_api_token"]
+        github_org = secret["github_api_org"]
+        data = {
+            "name": key.slug,
+            # "description": "",  # TODO: get a desc from `key.efs_slug_dir / "_config.yml"`
+            # "homepage": "",  # TODO: link to the digital version of the book
+            "private": False,
+            "visibility": "public",
+            "security_and_analysis": None,
+            "has_issues": True,
+            "has_projects": False,
+            "has_wiki": False,
+            "is_template": False,
+        }
+        headers = {
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {github_token}",
+            "X-GitHub-Api-Version": "2022-11-28",
+        }
+        res = requests.post(
+            f"https://api.github.com/orgs/{github_org}/repos",
+            json=data,
+            headers=headers,
+        )
+        logger.info(json.dumps(res.json(), default=str))
+        return res
+    except Exception as e:
+        logging.exception(
+            f"Error while sending request to update github repo: {repr(e)}"
+        )
+        raise
+
+
+def _get_obj_from_archive_s3(key: KeyPath) -> bytes:
+    try:
+        resp = s3.get_object(
+            Bucket=ARCHIVE_APKG_ALL,
+            Key=str(key.s3_key),
+        )
+        logger.info(
+            f"Response from s3.get_object(Bucket={ARCHIVE_APKG_ALL}, Key={key.s3_key}): "
+            + json.dumps(resp, default=str)
+        )
+        contents = resp["Body"].read()
+        logger.info(f"Retrieved object as str: " + contents.decode("utf-8"))
+        return contents
+    except Exception as e:
+        logging.exception(f"Error while getting object from s3: {repr(e)}")
+        raise
+
+
+def _get_from_github_repo(key: KeyPath, secret: GitHubSecret) -> requests.Response:
+    """
+    Gets the contents of a file in a repository.
+    See API docs here:
+    https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28#get-repository-content
+    """
+    try:
+        github_org = secret["github_api_org"]
+        res = requests.get(
+            f"https://api.github.com/repos/{github_org}/{key.slug}/contents/{key.github_path}",
+        )
+        logger.info(json.dumps(res.json(), default=str))
+        return res
+    except Exception as e:
+        logger.error(
+            f"Unable to retrieve the previous version of the {key.s3_key} file. Error: {repr(e)}"
+        )
+        raise
+
+
+def _put_to_github_repo(
+    key: KeyPath,
+    secret: GitHubSecret,
+    contents: bytes,
+    prev_v_sha: t.Optional[str],
+    event,
+) -> requests.Response:
+    """
+    Creates a new file or replaces an existing file in a repository.
+    See API docs here:
+    https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28#create-or-update-file-contents
+    """
+    try:
+        b64content = base64.b64encode(contents).decode()
+        github_token = secret["github_api_token"]
+        github_org = secret["github_api_org"]
+        eventSource = event["Records"][0]["eventSource"]
+        eventName = event["Records"][0]["eventName"]
+        eventTime = event["Records"][0]["eventTime"]
+        requestId = event["Records"][0]["responseElements"]["x-amz-request-id"]
+    except Exception as e:
+        logger.error(f"Unable to retrieve the event data. Error: {repr(e)}")
+        raise
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {github_token}",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    data = {
+        "message": f"{eventTime} [{requestId}] Perform action {eventSource}:{eventName} on '{key.s3_key}'",
+        "content": b64content,
+        # "committer": { # TODO: figure out how to extract data of the commiter & author
+        #     "name": "",
+        #     "email": "",
+        # },
+        # "author": {
+        #     "name": "",
+        #     "email": "",
+        # },
+    }
+    if prev_v_sha:
+        data.update({"sha": prev_v_sha})
+    try:
+        res = requests.put(
+            f"https://api.github.com/repos/{github_org}/{key.slug}/contents/{key.github_path}",
+            json=data,
+            headers=headers,
+        )
+        logger.info(json.dumps(res.json(), default=str))
+        return res
+    except Exception as e:
+        logging.exception(
+            f"Error while sending request to update github repo: {repr(e)}"
+        )
+        raise

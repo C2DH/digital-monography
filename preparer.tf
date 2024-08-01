@@ -93,6 +93,16 @@ data "aws_iam_policy_document" "preparer" {
     ]
   }
   statement {
+    sid       = "AllowSendingSQSMessages"
+    effect    = "Allow"
+    resources = [aws_sqs_queue.pre_builder_queue.arn]
+    actions = [
+      "sqs:SendMessage",
+      "sqs:GetQueueAttributes",
+      "sqs:GetQueueUrl"
+    ]
+  }
+  statement {
     sid       = "AllowLambdaVPCNetworking"
     effect    = "Allow"
     resources = ["*"]
@@ -130,6 +140,15 @@ resource "aws_lambda_permission" "allow_preparer_access_s3_via_vpc_endpoint" {
   function_name = aws_lambda_function.preparer_func.arn
   principal     = "s3.amazonaws.com"
   source_arn    = aws_vpc_endpoint.s3_endpoint.arn
+}
+
+resource "aws_lambda_permission" "allow_preparer_access_sqs_via_vpc_endpoint" {
+  statement_id  = "AllowSQSAccessViaVPCEndpoint"
+  action        = "lambda:SendMessage"
+  function_name = aws_lambda_function.preparer_func.arn
+  principal     = "sqs.amazonaws.com"
+  # source_arn    = aws_vpc_endpoint.sqs_endpoint.arn
+  source_arn = aws_sqs_queue.pre_builder_queue.arn
 }
 
 resource "aws_lambda_function" "preparer_func" {

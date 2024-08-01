@@ -1,9 +1,32 @@
 stages:
+  - init
   - deploy
   - destroy
 
+init:
+  stage: init
+  only:
+    - main
+    - develop
+  image: google/cloud-sdk
+  before_script:
+    - apt-get update && apt-get install -y curl gnupg jq
+    - curl -qsL https://github.com/mozilla/sops/releases/download/v3.5.0/sops-v3.5.0.linux -o /usr/local/bin/sops
+    - chmod +x /usr/local/bin/sops
+    - cat $PGP_KEY | gpg --batch --import
+    - echo $PGP_PASSPHRASE | gpg --batch --always-trust --yes --passphrase-fd 0 --pinentry-mode=loopback -s $(mktemp)
+  script:
+    - sops -d secrets/dev.tfvars.enc.json | jq '.data' > secrets/dev.tfvars.json
+    - cat secrets/dev.tfvars.json # TODO: remove
+  artifacts:
+    # expire_in: 1 day # TODO: consider TTL
+    paths:
+      - secrets/dev.tfvars.json
+
 deploy:
   stage: deploy
+  dependencies:
+    - init
   only:
     - main
     - develop
@@ -17,9 +40,10 @@ deploy:
     - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
     - mkdir ~/.aws
     - echo -e "[profile oidc]\nrole_arn=${ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
+    - cat secrets/dev.tfvars.json
   script:
-    - terraform init -var-file=secrets/dev.tfvars
-    - terraform apply -auto-approve -var-file=secrets/dev.tfvars
+    - terraform init -var-file=secrets/dev.tfvars.json
+    - terraform apply -auto-approve -var-file=secrets/dev.tfvars.json
 
 destroy:
   stage: destroy
@@ -37,6 +61,6 @@ destroy:
     - mkdir ~/.aws
     - echo -e "[profile oidc]\nrole_arn=${ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
   script:
-    - terraform init -var-file=secrets/dev.tfvars -reconfigure
-    - terraform destroy -auto-approve -var-file=secrets/dev.tfvars
+    - terraform init -var-file=secrets/dev.tfvars.json -reconfigure
+    - terraform destroy -auto-approve -var-file=secrets/dev.tfvars.json
   when: manual

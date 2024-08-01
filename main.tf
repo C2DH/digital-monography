@@ -11,4 +11,9 @@ terraform {
 provider "aws" {
   profile = "oidc"
   region  = var.region
+  default_tags {
+    tags = {
+      project = "dgt-mon"
+    }
+  }
 }

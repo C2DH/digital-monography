@@ -6,6 +6,56 @@ Platform for scholars of digital humanities to publish their digital work
 
 ![aws_architecture_diagram](./2024-04-23_architecture.svg)
 
+For the full architecture see [the instructions on generating an infrastrucutre visualisation](#generating-infrastrucutre-visualisation) and open the produced `graphviz.html` file.
+
+The architecture attempts to follow the pattern of `... -> s3 upload -> Lambda invoke -> s3 upload -> ...`. Sometimes an upload to s3 can and should invoke multiple Lambda functions. It can be also advantageous to have an SQS queue as a part of the chain. This allows for a modular design, which brings some benefits with it.
+
+The platform consists of the following modules (Lambda functions):
+* **preparer** - processes the author package.
+* **verifier** - checks the author package against the verification rules.
+* **github** - pushes the processed documents to GitHub remote repository.
+* **builder** - runs Jupyter Book to build a book out of processed documents.
+
+## Local development
+
+You can check the basic workflow of the platform by running local scripts. To do that, follow these steps:
+
+1. Start the container in the background.
+
+```sh
+make dev/start
+```
+
+1. Test the basic workflow.
+
+```sh
+make dev/test
+```
+
+1. Build a Jupyter Book out of a manuscript stored in a `data/input` directory. Replace `slug-of-your-manuscript` with the name of this directory.
+
+```sh
+make dev/draft SLUG="slug-of-your-manuscript"
+```
+
+Please keep in mind that the local script uses only part of the actual workflow. Consider testing on the cloud instead.
+
+You can also try to execute the scripts directly through your CLI:
+
+```sh
+python scripts/prepare_and_build.py book_path="/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/examples"
+```
+
+## Dependencies
+
+Python version is defined in `.python-version`. Python dependencies are described in `requirements.txt` files both per-service in `src/<service-name>` and in testing environment at the root of the project. Beyond that the project requires:
+
+* docker
+* git
+* sops
+* make
+* terraform (if you want to use the tf cli outside of the gitlab-ci pipeline)
+
 ## Updating code
 
 Images are hosted in the Docker Hub registry. When applying changes in the terraform configuration, AWS will pull images from Docker Hub, build and deploy them using the tags specified in the `.versions.json` file. Note that only the stable tags will be used.
@@ -35,6 +85,16 @@ Changes to the Terraform Infrastructure as Code will be updated automatically af
 
 See `.gitlab-ci.yml` for details.
 
+## Encrypting secret files
+
+To encrypt a file, use the sops tool.
+
+```sh
+sops -e secrets/dev.tfvars.json > secrets/dev.tfvars.enc.json
+```
+
+To set up sops, you can follow the [official instructions](https://github.com/getsops/sops) or [unofficials guides](https://dev.to/stack-labs/manage-your-secrets-in-git-with-sops-g0a).
+
 ## AWS setup for development
 
 Steps to configure the platform __for development__ on your own AWS account.
@@ -45,7 +105,7 @@ Note that this setup is different than the configuration for "test" and "live" e
 Configure GitLab as an identity provider for IAM. This will allow IAM to recognize GitLab as a trusted entity that we can assign permissions via an IAM Role.
 Navigate to IAM in the AWS Management Console, and then click on "Identity Providers" on the sidebar under "Access Management". After that, click on the button saying "Add provider" on the top right-hand side.
 
-Make sure that the option for OpenID Connect is selected on the top, this is because OpenID Connect allows you to configure trust relationships with third party accounts including but not limited to GitLab. Also ensure that the provider URL is GitLab's root URL, https://gitlab.com as well as the Audience. The provider URL is the URL from which the OpenID configuration is obtained.
+Make sure that the option for OpenID Connect is selected on the top, this is because OpenID Connect allows you to configure trust relationships with third party accounts including but not limited to GitLab. Also ensure that the provider URL is GitLab's root URL, https://gitlab.com as well as the Audience. The provider URL is the URL from which the OpenID configuration is obtained. See [this walkthrough](https://community.aws/content/2dquEzIKfm2wVH77AYmApToZdWj/gitlab-with-terraform) for details.
 
 ### Create an IAM Role for GitLab CI
 
@@ -114,3 +174,55 @@ provider "aws" {
 Go to the home page of the GitLab repository, and click on "CI/CD" under the "Settings" dropdown menu on the very bottom of the sidebar. Then click "Expand" on the "Variables" section and click on "Add variable". Have the Key be "ROLE_ARN" and the value be the ARN of the Role created in the step above. Remember to select the option "Protect variable".
 
 Also, add the "AWS_DEFAULT_REGION" variable with value equal to the AWS region selected for the above mentioned resources.
+
+## Adding a new Lambda function
+
+When adding a new Lambda function (a new module), please follow these steps:
+1. Add the module code to the `src/ ` directory.
+1. Add the test code to the `tests/ ` directory.
+1. Copy and modify one of the `.tf` files that define a Lambda function. Usually you can reuse all of the IaC code changing only the <old-function-name> to <new-function-name>.
+1. Update the `Makefile`.
+1. Update the `.versions.json`.
+1. Update the `secrets/dev.tfvars.enc.json` (remember to use the `sops` tool) and `variables.tf`.
+1. Push the git repository to remote
+1. Build, tag and push the new image to the container registry (see `Makefile`).
+1. Retry the GitLab job.
+
+## Sundry
+
+### Generating infrastrucutre visualisation
+
+To generate a visualization of an infrastructure as defined by .tf IaC files follow these steps:
+
+1. Copy current project directory so that you don't have to migrate state nor reconfigure. E.g. `cp digital-monography tfgraph`.
+1. Initalize terraform locally with `terraform init`.
+1. Run `terraform graph`.
+1. Copy output from terraform graph command to [WebGraphViz](http://www.webgraphviz.com/?tab=map) and select on "Generate Graph".
+1. Save the '<div id="graphviz_svg_div">' tag as "graphviz.html" in the root of the project.
+
+### Changing guidelines github repo 
+
+One way to upload changes to the guidelines repository is to clone the github remote repo to your local machine, apply your update and push your changes. You can use the following command to point to the ssh private key that is used by github user.
+
+```sh
+git config --add --local core.sshCommand 'ssh -i ~/.ssh/filename'
+```
+
+### TODO
+
+* limit permissions linked to the AWS Role connected to the CI/CD pipeline
+* change python-mammoth from being a wheel file to being installed from github fork
+* more unit tests
+* add integration testing
+* add e2e cloud testing on actual Lambdas
+* mypy type checking
+* flake8 linting
+
+### Tech stack for the frontend
+
+- React - as ui framework
+- Bootstrap - for ui components
+- Astro - for static site generation
+- AWS Amplify - tiny backend for authentication and AWS integration (this is a similar to Firebase or Supabase)
+
+https://github.com/aws-samples/amplify-authentication-for-astro

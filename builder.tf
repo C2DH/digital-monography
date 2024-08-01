@@ -66,6 +66,32 @@ output "apkg_uploader_id" {
   value = aws_iam_access_key.apkg_uploader.id
 }
 
+## SQS (Lambda trigger)
+
+resource "aws_sqs_queue" "pre_builder_queue" {
+  name                        = "${var.sqs_builder_trigger}.fifo"
+  fifo_queue                  = true
+  receive_wait_time_seconds   = 15 # TODO: once on DGT infra, reduce wait time
+  delay_seconds               = 5
+  content_based_deduplication = true
+  max_message_size            = 1024 # 1 KiB
+  message_retention_seconds   = 3600 # 1 hour
+}
+
+resource "aws_lambda_event_source_mapping" "example" {
+  event_source_arn = aws_sqs_queue.pre_builder_queue.arn
+  function_name    = aws_lambda_function.builder_func.arn
+}
+
+# resource "aws_s3_bucket_notification" "ir_apkg_md_notification" {
+#   bucket = aws_s3_bucket.ir_apkg_md.id
+#   lambda_function {
+#     lambda_function_arn = aws_lambda_function.builder_func.arn
+#     events              = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
+#   }
+#   depends_on = [aws_lambda_permission.allow_ir_apkg_md_to_invoke_lambda]
+# }
+
 ## Lambda (builder)
 
 data "aws_iam_policy_document" "assume_builder_role" {
@@ -115,6 +141,17 @@ data "aws_iam_policy_document" "builder" {
     actions = [
       "logs:CreateLogStream",
       "logs:PutLogEvents",
+    ]
+  }
+  statement {
+    sid       = "AllowReceivingSQSMessages"
+    effect    = "Allow"
+    resources = [aws_sqs_queue.pre_builder_queue.arn]
+    actions = [
+      "sqs:DeleteMessage",
+      "sqs:ReceiveMessage",
+      "sqs:GetQueueAttributes",
+      "sqs:GetQueueUrl"
     ]
   }
   statement {
@@ -183,14 +220,14 @@ resource "aws_lambda_function" "builder_func" {
   }
 }
 
-resource "aws_s3_bucket_notification" "ir_apkg_md_notification" {
-  bucket = aws_s3_bucket.ir_apkg_md.id
-  lambda_function {
-    lambda_function_arn = aws_lambda_function.builder_func.arn
-    events              = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
-  }
-  depends_on = [aws_lambda_permission.allow_ir_apkg_md_to_invoke_lambda]
-}
+# resource "aws_s3_bucket_notification" "ir_apkg_md_notification" {
+#   bucket = aws_s3_bucket.ir_apkg_md.id
+#   lambda_function {
+#     lambda_function_arn = aws_lambda_function.builder_func.arn
+#     events              = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
+#   }
+#   depends_on = [aws_lambda_permission.allow_ir_apkg_md_to_invoke_lambda]
+# }
 
 resource "aws_ecr_repository" "builder_repo" {
   name                 = var.builder_repo_name
