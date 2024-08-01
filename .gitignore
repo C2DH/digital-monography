@@ -8,4 +8,5 @@
 __pycache__
 .pytest_cache
 
+**/*:Zone.Identifier
 scripts/rclone.conf

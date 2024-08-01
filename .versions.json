@@ -2,5 +2,6 @@
     "BUILDER_STABLE_V": "0.1.0",
     "GITHUB_STABLE_V": "0.0.14",
     "PREPARER_STABLE_V": "0.1.0",
-    "VERIFIER_STABLE_V": "0.1.0"
+    "VERIFIER_STABLE_V": "0.1.0",
+    "LOCAL_STABLE_V": "0.1.1"
 }
