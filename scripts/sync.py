@@ -1,5 +1,6 @@
 import boto3
 import pathlib
+import os
 import time
 import typing as t
 
@@ -40,8 +41,11 @@ def listen_for_updates(
                 print(f"Uploaded {key}.")
         if is_update and func_after_loop is not None:
             func_after_loop(book_path)
-        print(".", end="", flush=True)
-        time.sleep(0.1)
+        if os.environ.get("DGTMON_VOLUME") is not None:
+            break
+        else:
+            print(".", end="", flush=True)
+            time.sleep(0.1)
 
 
 if __name__ == "__main__":
