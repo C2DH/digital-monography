@@ -14,6 +14,9 @@ login:
 	aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin ${DOCKER_ECR}
 	docker login --username c2dhadmin
 
+dev/build:
+	docker compose build --no-cache
+
 dev/start:
 	docker compose up --detach
 
