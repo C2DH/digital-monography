@@ -4,6 +4,7 @@ import pathlib
 import shutil
 import sys
 import os
+import time
 
 
 os.environ["DGTMON_DEBUG"] = "1"
@@ -83,7 +84,8 @@ DEFAULT_SQS_EVENT = {
 }
 
 
-def cpy_to_tmp_and_call_handler(fp: pathlib.Path, key: str):
+def cpy_to_tmp_and_call_handler(fp: pathlib.Path, key: str) -> dict[str, float]:
+    time_status = {}
     target_fp = pathlib.Path("/tmp") / "efs" / "_INPUT"
     for key_part in pathlib.Path(key).parts:
         target_fp = target_fp / key_part
@@ -93,36 +95,31 @@ def cpy_to_tmp_and_call_handler(fp: pathlib.Path, key: str):
     s3_event["Records"][0]["s3"]["object"]["key"] = key
     context = {}
     # preparer
+    start = time.time()  # consider time.perf_counter or time.process_time
     preparer_handler(s3_event, context)
+    time_status["preparer"] = time.time() - start
     # verifier
     if key.endswith(".docx"):
+        start = time.time()  # consider time.perf_counter or time.process_time
         s3_event["Records"][0]["s3"]["object"]["key"] = str(
             KeyPath(key).with_suffix(".html")
         )
         verifier_handler(s3_event, context)
+        time_status["verifier"] = time.time() - start
+    return time_status
 
 
-def build_after_loop(book_path: pathlib.Path) -> None:
+def build_after_loop(book_path: pathlib.Path) -> dict[str, float]:
     # builder
+    start = time.time()  # consider time.perf_counter or time.process_time
     slug = book_path.parts[-1]
     context = {}
     sqs_event = copy.deepcopy(DEFAULT_SQS_EVENT)
     sqs_event["Records"][0]["body"] = slug
     sqs_event["Records"][0]["attributes"]["MessageDeduplicationId"] = slug
     builder_handler(sqs_event, context)
-    #
-    # book_src = pathlib.Path("/tmp") / "efs" / slug / "_build" / "html"
-    # book_dst = pathlib.Path("data") / "output" / slug
-    # if not book_dst.exists():
-    #     book_dst.mkdir(exist_ok=True)
-    # shutil.copytree(book_src, book_dst, symlinks=False, ignore=None, dirs_exist_ok=True)
-    # warnings_src = pathlib.Path("/tmp") / "efs" / slug / "_warnings"
-    # warnings_dst = pathlib.Path("data") / "warnings" / slug
-    # if not warnings_dst.exists():
-    #     warnings_dst.mkdir(exist_ok=True)
-    # shutil.copytree(
-    #     warnings_src, warnings_dst, symlinks=False, ignore=None, dirs_exist_ok=True
-    # )
+    end = time.time()
+    return {"builder": end - start}
 
 
 if __name__ == "__main__":
@@ -134,4 +131,5 @@ if __name__ == "__main__":
         listen_for_updates(book_path, cpy_to_tmp_and_call_handler)
     else:
         listen_for_updates(book_path, cpy_to_tmp_and_call_handler, build_after_loop)
-    # listen_for_updates() waits for updates, so nothing can be processed afterwards
+    # If DGTMON_VOLUME is not set, listen_for_updates() waits for updates,
+    # so nothing can be processed afterwards.

@@ -26,11 +26,6 @@ except (ImportError, ModuleNotFoundError):
     )
 
 
-# TODO: this is legacy, only `assets` should be permitted.
-# As far as I know, there should be no problem of just limiting
-# supported asset dir to `assets`. After DH Wash, try to change it.
-# SUPPORTED_ASSET_DIR = ["assets", "images", "videos",]
-
 if IS_DEBUG:
     today = datetime.date.today().isoformat()
     log_target = pathlib.Path(f"/tmp/efs/_LOGS/{today}_builder.log")
@@ -225,69 +220,3 @@ def _sync_efs_to_staticws(src: pathlib.Path, dstdir: str, slug: str) -> None:
     logging.info(f"Syncing files from {src} to {dst}.")
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p.wait()
-
-
-# def _sync_book_efs_with_staticws(key: KeyPath) -> None:
-#     if IS_DEBUG:
-#         return
-#     try:
-#         src = str(key.efs_slug_dir / "_build" / "html")
-#         dst = f"s3://{STATICWS_WIP_BUCKET_NAME}/read/{key.slug}"
-#         cmd = ["aws", "s3", "sync", "--quiet", src, dst]
-#         logging.info(f"Syncing files from {src} to {dst}")
-#         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-#         p.wait()
-#     except Exception as e:
-#         logging.exception(
-#             f"Exception while syncing book efs with static website s3. Error: {repr(e)}"
-#         )
-#         raise
-
-# logging.info(f'os.environ.get("DGTMON_VOLUME")', os.environ.get("DGTMON_VOLUME"))
-# src = str(key.efs_slug_dir / "_warnings" / "_build" / "html")
-# dst = pathlib.Path(os.environ.get("DGTMON_VOLUME")) / "output"
-# logging.info(f"Copying files from {src} to {dst}.")
-# if not dst.exists():
-#     dst.mkdir(exist_ok=True)
-# shutil.copytree(src, dst, symlinks=False, ignore=None, dirs_exist_ok=True)
-
-# def _sync_report_efs_with_staticws(key: KeyPath) -> None:
-#     try:
-#         src = key.efs_slug_dir / "_warnings" / "_build" / "html"
-#         if IS_DEBUG and os.environ.get("DGTMON_VOLUME"):
-#             _cp_efs_to_data_dir(src, "warnings")
-#         elif not IS_DEBUG:
-#             src = str(src)
-#             dst = f"s3://{STATICWS_WIP_BUCKET_NAME}/check/{key.slug}"
-#             cmd = ["aws", "s3", "sync", "--quiet", src, dst]
-#             logging.info(f"Syncing files from {src} to {dst}")
-#             p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-#             p.wait()
-#     except Exception as e:
-#         logging.exception(
-#             f"Exception while syncing verification report efs with static website s3. Error: {repr(e)}"
-#         )
-#         raise
-
-# def _copy_tmp_to_data_dir(key: KeyPath) -> None:
-#     logging.info(f"_copy_tmp_to_data_dir")
-#     volume_dir = "/home/username/dgtmon/data/output"
-#     slug = key.slug
-#     if not IS_DEBUG:
-#         return
-#     src = pathlib.Path("/tmp") / "efs" / slug / "_build" / "html"
-#     dst = pathlib.Path("/home") / "username" / "dgtmon" / "data" / "output" / slug
-#     logging.info(f"Copying files from {src} to {dst}.")
-#     if not dst.exists():
-#         dst.mkdir(exist_ok=True)
-#     shutil.copytree(src, dst, symlinks=False, ignore=None, dirs_exist_ok=True)
-#     logging.info(f"Copying files finished.")
-
-
-#     warnings_src = pathlib.Path("/tmp") / "efs" / slug / "_warnings"
-#     warnings_dst = pathlib.Path("data") / "warnings" / slug
-#     if not warnings_dst.exists():
-#         warnings_dst.mkdir(exist_ok=True)
-#     shutil.copytree(
-#         warnings_src, warnings_dst, symlinks=False, ignore=None, dirs_exist_ok=True
-#     )
