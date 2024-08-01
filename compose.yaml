@@ -4,8 +4,9 @@ services:
     build: .
     environment:
       - PYTHONUNBUFFERED=0
+      - DGTMON_VOLUME=/home/username/dgtmon/data
     image: dgtmon-dev-local
     volumes:
-      - ./data:/home/dgtmon/data
+      - ./data:/home/username/dgtmon/data
     stdin_open: true
     tty: true
