@@ -1,0 +1,2 @@
+aws-lambda-wsgi==0.0.*
+Flask==0.10.*

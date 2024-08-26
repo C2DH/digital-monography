@@ -1,3 +1,4 @@
+ENTRYPOINT_STABLE_V := $(shell jq -r '.ENTRYPOINT_STABLE_V' < .versions.json) 
 BUILDER_STABLE_V := $(shell jq -r '.BUILDER_STABLE_V' < .versions.json) 
 PREPARER_STABLE_V := $(shell jq -r '.PREPARER_STABLE_V' < .versions.json) 
 GITHUB_STABLE_V  := $(shell jq -r '.GITHUB_STABLE_V' < .versions.json) 
@@ -34,6 +35,19 @@ dev/test:
 
 dev/draft:
 	docker compose run main python scripts/prepare_and_build.py book_path=data/input/$(SLUG)
+
+entrypoint/build:
+	docker build -t dgtmon-dev-entrypoint src/entrypoint
+
+entrypoint/tag:
+	docker tag dgtmon-dev-entrypoint ${DOCKER_ECR}/dgtmon-dev-entrypoint:${ENTRYPOINT_STABLE_V}
+	docker tag dgtmon-dev-entrypoint ${DOCKER_HUB}/dgtmon-dev-entrypoint:${ENTRYPOINT_STABLE_V}
+
+entrypoint/push:
+	docker push ${DOCKER_ECR}/dgtmon-dev-entrypoint:${ENTRYPOINT_STABLE_V}
+	docker push ${DOCKER_HUB}/dgtmon-dev-entrypoint:${ENTRYPOINT_STABLE_V}
+
+entrypoint/make: entrypoint/build entrypoint/tag entrypoint/push
 
 preparer/build:
 	cp src/_common/constants.py src/preparer/constants.py
