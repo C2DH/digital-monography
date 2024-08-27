@@ -1,3 +1,102 @@
+## Lambda (entrypoint)
+
+data "aws_iam_policy_document" "assume_entrypoint_role" {
+  statement {
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+resource "aws_iam_role" "entrypoint_iam" {
+  name               = "entrypoint_iam"
+  assume_role_policy = data.aws_iam_policy_document.assume_entrypoint_role.json
+}
+
+data "aws_iam_policy_document" "entrypoint" {
+  #   statement {
+  #     sid       = "AllowS3Permissions"
+  #     effect    = "Allow"
+  #     resources = ["*"] # TODO: limit (since we also want to list buckets, include both "arn:aws:s3:::mybucket/*" and "arn:aws:s3:::mybucket")
+  #     actions = [
+  #       "s3:PutObject",
+  #       "s3:PutObjectAcl",
+  #       "s3:GetObject",
+  #       "s3:GetObjectAcl",
+  #       "s3:ListBucket"
+  #     ]
+  #   }
+  statement {
+    sid       = "AllowInvokingLambdas"
+    effect    = "Allow"
+    resources = ["arn:aws:lambda:${var.region}:*:function:*"]
+    actions   = ["lambda:InvokeFunction"]
+  }
+  statement {
+    sid       = "AllowCreatingLogGroups"
+    effect    = "Allow"
+    resources = ["arn:aws:logs:${var.region}:*:*"]
+    actions   = ["logs:CreateLogGroup"]
+  }
+  statement {
+    sid       = "AllowWritingLogs"
+    effect    = "Allow"
+    resources = ["arn:aws:logs:${var.region}:*:log-group:/aws/*:*"]
+    actions = [
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+    ]
+  }
+  #   statement {
+  #     sid       = "AllowSendingSQSMessages"
+  #     effect    = "Allow"
+  #     resources = [aws_sqs_queue.pre_builder_queue.arn]
+  #     actions = [
+  #       "sqs:SendMessage",
+  #       "sqs:GetQueueAttributes",
+  #       "sqs:GetQueueUrl"
+  #     ]
+  #   }
+}
+
+resource "aws_iam_policy" "entrypoint" {
+  name   = "entrypoint_policy"
+  policy = data.aws_iam_policy_document.entrypoint.json
+}
+
+resource "aws_iam_role_policy_attachment" "entrypoint" {
+  role       = aws_iam_role.entrypoint_iam.name
+  policy_arn = aws_iam_policy.entrypoint.arn
+}
+
+resource "aws_lambda_permission" "allow_upload_apkg_to_invoke_lambda" {
+  statement_id  = "AllowExecutionFromS3Bucket"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.entrypoint_func.arn
+  principal     = "s3.amazonaws.com"
+  source_arn    = aws_s3_bucket.upload_apkg.arn
+}
+
+resource "aws_lambda_permission" "allow_entrypoint_access_s3_via_vpc_endpoint" {
+  statement_id  = "AllowS3AccessViaVPCEndpoint"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.entrypoint_func.arn
+  principal     = "s3.amazonaws.com"
+  source_arn    = aws_vpc_endpoint.s3_endpoint.arn
+}
+
+resource "aws_lambda_permission" "allow_entrypoint_access_sqs_via_vpc_endpoint" {
+  statement_id  = "AllowSQSAccessViaVPCEndpoint"
+  action        = "lambda:SendMessage"
+  function_name = aws_lambda_function.entrypoint_func.arn
+  principal     = "sqs.amazonaws.com"
+  # source_arn    = aws_vpc_endpoint.sqs_endpoint.arn
+  source_arn = aws_sqs_queue.pre_builder_queue.arn
+}
+
 resource "aws_lambda_function" "entrypoint_func" {
   function_name = "entrypoint"
   package_type  = "Image"
