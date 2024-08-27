@@ -14,6 +14,7 @@ if IS_DEBUG:
 else:
     DEFAULT_SFS_DIR = "/mnt/efs"  # AWS EFS
 GITHUB_SECRET_ID = "dgtmon-dev-github-api-secrets"
+DROPBOX_SECRET_ID = "dgtmon-dev-github-api-secrets"
 # S3 bucket names
 ARCHIVE_APKG_ALL = "cpy-dgtmon-dev-archive-apkg-all"
 IR_APKG_HTML_BUCKET_NAME = "cpy-dgtmon-dev-ir-apkg-html"
