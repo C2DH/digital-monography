@@ -78,6 +78,11 @@ variable "builder_repo_name" {
   description = "Name of the ECR repository for the book builder image"
 }
 
+variable "entrypoint_repo_name" {
+  type        = string
+  description = "Name of the ECR repository for the entrypoint image"
+}
+
 variable "preparer_repo_name" {
   type        = string
   description = "Name of the ECR repository for the preparer image"

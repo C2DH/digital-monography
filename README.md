@@ -11,6 +11,7 @@ For the full architecture see [the instructions on generating an infrastrucutre 
 The architecture attempts to follow the pattern of `... -> s3 upload -> Lambda invoke -> s3 upload -> ...`. Sometimes an upload to s3 can and should invoke multiple Lambda functions. It can be also advantageous to have an SQS queue as a part of the chain. This allows for a modular design, which brings some benefits with it.
 
 The platform consists of the following modules (Lambda functions):
+* **entrypoint** - takes in file uploaded by users.
 * **preparer** - processes the author package.
 * **verifier** - checks the author package against the verification rules.
 * **github** - pushes the processed documents to GitHub remote repository.

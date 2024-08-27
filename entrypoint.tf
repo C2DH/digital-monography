@@ -1,8 +1,8 @@
-resource "aws_lambda_function" "preparer_func" {
-  function_name = "preparer"
+resource "aws_lambda_function" "entrypoint_func" {
+  function_name = "entrypoint"
   package_type  = "Image"
-  image_uri     = "${aws_ecr_repository.preparer_repo.repository_url}:${local.preparer_stable_v}"
-  role          = aws_iam_role.preparer_iam.arn
+  image_uri     = "${aws_ecr_repository.entrypoint_repo.repository_url}:${local.entrypoint_stable_v}"
+  role          = aws_iam_role.entrypoint_iam.arn
   depends_on = [
     data.aws_cloudwatch_log_group.general_purpose_logs,
     # aws_efs_mount_target.efs_mount
@@ -27,17 +27,17 @@ resource "aws_lambda_function" "preparer_func" {
 # resource "aws_s3_bucket_notification" "upload_apkg_notification" {
 #   bucket = aws_s3_bucket.upload_apkg.id
 #   lambda_function {
-#     lambda_function_arn = aws_lambda_function.preparer_func.arn
+#     lambda_function_arn = aws_lambda_function.entrypoint_func.arn
 #     events              = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
 #   }
 #   depends_on = [aws_lambda_permission.allow_upload_apkg_to_invoke_lambda]
 # }
 
-resource "aws_ecr_repository" "preparer_repo" {
-  name                 = var.preparer_repo_name
+resource "aws_ecr_repository" "entrypoint_repo" {
+  name                 = var.entrypoint_repo_name
   image_tag_mutability = "IMMUTABLE"
 }
 
 locals {
-  preparer_stable_v = local.versions_data.ENTRYPOINT_STABLE_V
+  entrypoint_stable_v = local.versions_data.ENTRYPOINT_STABLE_V
 }
