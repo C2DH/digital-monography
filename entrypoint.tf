@@ -72,30 +72,29 @@ resource "aws_iam_role_policy_attachment" "entrypoint" {
   policy_arn = aws_iam_policy.entrypoint.arn
 }
 
-resource "aws_lambda_permission" "allow_upload_apkg_to_invoke_lambda" {
-  statement_id  = "AllowExecutionFromS3Bucket"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.entrypoint_func.arn
-  principal     = "s3.amazonaws.com"
-  source_arn    = aws_s3_bucket.upload_apkg.arn
-}
+# resource "aws_lambda_permission" "allow_upload_apkg_to_invoke_lambda" {
+#   statement_id  = "AllowExecutionFromS3Bucket"
+#   action        = "lambda:InvokeFunction"
+#   function_name = aws_lambda_function.entrypoint_func.arn
+#   principal     = "s3.amazonaws.com"
+#   source_arn    = aws_s3_bucket.upload_apkg.arn
+# }
 
-resource "aws_lambda_permission" "allow_entrypoint_access_s3_via_vpc_endpoint" {
-  statement_id  = "AllowS3AccessViaVPCEndpoint"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.entrypoint_func.arn
-  principal     = "s3.amazonaws.com"
-  source_arn    = aws_vpc_endpoint.s3_endpoint.arn
-}
+# resource "aws_lambda_permission" "allow_entrypoint_access_s3_via_vpc_endpoint" {
+#   statement_id  = "AllowS3AccessViaVPCEndpoint"
+#   action        = "lambda:InvokeFunction"
+#   function_name = aws_lambda_function.entrypoint_func.arn
+#   principal     = "s3.amazonaws.com"
+#   source_arn    = aws_vpc_endpoint.s3_endpoint.arn
+# }
 
-resource "aws_lambda_permission" "allow_entrypoint_access_sqs_via_vpc_endpoint" {
-  statement_id  = "AllowSQSAccessViaVPCEndpoint"
-  action        = "lambda:SendMessage"
-  function_name = aws_lambda_function.entrypoint_func.arn
-  principal     = "sqs.amazonaws.com"
-  # source_arn    = aws_vpc_endpoint.sqs_endpoint.arn
-  source_arn = aws_sqs_queue.pre_builder_queue.arn
-}
+# resource "aws_lambda_permission" "allow_entrypoint_access_sqs_via_vpc_endpoint" {
+#   statement_id  = "AllowSQSAccessViaVPCEndpoint"
+#   action        = "lambda:SendMessage"
+#   function_name = aws_lambda_function.entrypoint_func.arn
+#   principal     = "sqs.amazonaws.com"
+#   source_arn = aws_sqs_queue.pre_builder_queue.arn
+# }
 
 resource "aws_lambda_function" "entrypoint_func" {
   function_name = "entrypoint"
