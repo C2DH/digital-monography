@@ -1,7 +1,8 @@
+-r src/entrypoint/requirements.txt
 -r src/preparer/requirements.txt
--r src/builder/requirements.txt
--r src/github/requirements.txt
 -r src/verifier/requirements.txt
+-r src/github/requirements.txt
+-r src/builder/requirements.txt
 
 pytest==7.4.*
 

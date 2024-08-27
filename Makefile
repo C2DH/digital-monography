@@ -37,6 +37,7 @@ dev/draft:
 	docker compose run main python scripts/prepare_and_build.py book_path=data/input/$(SLUG)
 
 entrypoint/build:
+	cp src/_common/constants.py src/entrypoint/constants.py
 	docker build -t dgtmon-dev-entrypoint src/entrypoint
 
 entrypoint/tag:
