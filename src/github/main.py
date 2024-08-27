@@ -31,6 +31,7 @@ secretsmanager = boto3.client("secretsmanager")
 class GitHubSecret(t.TypedDict):
     github_api_token: str
     github_api_org: str
+    # as a hack I added third field to be used by another module
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
@@ -67,9 +68,6 @@ def _get_key(event) -> KeyPath:
 def _get_api_key(secret_id: str) -> GitHubSecret:
     try:
         resp = secretsmanager.get_secret_value(SecretId=secret_id)
-        logger.info(
-            "secretsmanager.get_secret_value response: " + json.dumps(resp, default=str)
-        )
         return json.loads(resp["SecretString"])
     except Exception as e:
         logging.exception(
