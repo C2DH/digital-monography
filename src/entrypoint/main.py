@@ -49,6 +49,8 @@ TOKEN = ""
 app = flask.Flask(__name__)
 app.debug = True
 app.secret_key = FLASK_SECRET_KEY
+if not IS_DEBUG:
+    app.config["APPLICATION_ROOT"] = "/test"
 
 
 def get_dbx_app_secret(secret_id: str) -> str:
@@ -72,7 +74,7 @@ def get_flow():
     return dropbox.DropboxOAuth2Flow(
         APP_KEY,
         dbx_app_secret,
-        get_url(f"{AWS_AGW_STAGE}/oauth_callback"),
+        get_url("oauth_callback"),
         flask.session,
         "dropbox-csrf-token",
     )
@@ -83,9 +85,9 @@ def welcome():
     logger.info("Welcome REST api endpoint was called.")
     return flask.render_template(
         "welcome.html",
-        redirect_url=get_url(f"{AWS_AGW_STAGE}/oauth_callback"),
-        webhook_url=get_url(f"{AWS_AGW_STAGE}/webhook"),
-        home_url=get_url(f"{AWS_AGW_STAGE}/index"),
+        redirect_url=get_url("/oauth_callback"),
+        webhook_url=get_url("/webhook"),
+        home_url=get_url("/index"),
         app_key=APP_KEY,
     )
 
@@ -225,8 +227,10 @@ def webhook() -> t.Union[t.NoReturn | str]:
 
 def lambda_handler(event, context):
     logger.info("Lambda handler was called.")
+    IS_DEBUG = False
     return aws_lambda_wsgi.response(app, event, context)
 
 
 if __name__ == "__main__":
+    IS_DEBUG = True
     app.run()
