@@ -10,9 +10,10 @@ import logging
 import markdown
 import pathlib
 import typing as t
-import werkzeug.exceptions
-from werkzeug.middleware import dispatcher
 import urllib
+
+# import werkzeug.exceptions
+# from werkzeug.middleware import dispatcher
 
 try:
     from constants import (
@@ -52,12 +53,12 @@ app = flask.Flask(__name__)
 app.debug = True
 app.secret_key = FLASK_SECRET_KEY
 # app.wsgi_app = werkzeug.middleware.dispatcher.DispatcherMiddleware(
-app.wsgi_app = dispatcher.DispatcherMiddleware(
-    werkzeug.exceptions.NotFound(), {"/test": app.wsgi_app}
-)
-app.config["SERVER_NAME"] = "20cks5gkc3.execute-api.eu-west-1.amazonaws.com"
-app.config["APPLICATION_ROOT"] = "/test"
-app.config["PREFERRED_URL_SCHEME"] = "https"
+# app.wsgi_app = dispatcher.DispatcherMiddleware(
+#     werkzeug.exceptions.NotFound(), {"/test": app.wsgi_app}
+# )
+# app.config["SERVER_NAME"] = "20cks5gkc3.execute-api.eu-west-1.amazonaws.com"
+# app.config["APPLICATION_ROOT"] = "/test"
+# app.config["PREFERRED_URL_SCHEME"] = "https"
 
 
 def get_dbx_app_secret(secret_id: str) -> str:
@@ -94,7 +95,7 @@ def get_flow():
     )
 
 
-@app.route("/welcome")
+@app.route(f"/{AWS_AGW_STAGE}/welcome")
 def welcome():
     logger.info("Welcome REST api endpoint was called.")
     return flask.render_template(
@@ -106,7 +107,7 @@ def welcome():
     )
 
 
-@app.route("/welcome2")
+@app.route(f"/{AWS_AGW_STAGE}/welcome2")
 def welcome2():
     logger.info("Welcome REST api endpoint was called.")
     logger.info('get_url("oauth_callback"): ' + get_url("oauth_callback"))
@@ -121,7 +122,7 @@ def welcome2():
     )
 
 
-@app.route("/oauth_callback")
+@app.route(f"/{AWS_AGW_STAGE}/oauth_callback")
 def oauth_callback():
     """Callback function for when the user returns from OAuth."""
     logger.info("oauth_callback REST api endpoint was called.")
@@ -196,19 +197,19 @@ def index() -> str:
     return flask.render_template("index.html")
 
 
-@app.route("/login")
+@app.route(f"/{AWS_AGW_STAGE}/login")
 def login():
     logger.info("Login REST api endpoint was called.")
     return flask.redirect(get_flow().start())
 
 
-@app.route("/done")
+@app.route(f"/{AWS_AGW_STAGE}/done")
 def done() -> str:
     logger.info("Done REST api endpoint was called.")
     return flask.render_template("done.html")
 
 
-@app.route("/webhook", methods=["GET"])
+@app.route(f"/{AWS_AGW_STAGE}/webhook", methods=["GET"])
 def challenge() -> flask.Response:
     """Respond to the webhook challenge (GET request) by echoing back the challenge parameter."""
     logger.info("Webhook REST api endpoint was called with GET (challenge).")
@@ -225,7 +226,7 @@ def challenge() -> flask.Response:
     return resp
 
 
-@app.route("/webhook", methods=["POST"])
+@app.route(f"/{AWS_AGW_STAGE}/webhook", methods=["POST"])
 def webhook() -> t.Union[t.NoReturn | str]:
     """Receive a list of changed user IDs from Dropbox and process each."""
     # Make sure this is a valid request from Dropbox
@@ -259,16 +260,16 @@ def lambda_handler(event, context):
     return aws_lambda_wsgi.response(app, event, context)
 
 
-with app.app_context():
-    logger.info(
-        "oauth_callback"
-        + flask.url_for("oauth_callback", _external=True, _scheme="https")
-    )
-    logger.info("oauth_callback" + flask.url_for("oauth_callback", _scheme="https"))
-    logger.info("webhook" + flask.url_for("webhook", _external=True, _scheme="https"))
-    logger.info("webhook" + flask.url_for("webhook", _scheme="https"))
-    logger.info("index" + flask.url_for("index", _external=True, _scheme="https"))
-    logger.info("index" + flask.url_for("index", _scheme="https"))
+# with app.app_context():
+#     logger.info(
+#         "oauth_callback"
+#         + flask.url_for("oauth_callback", _external=True, _scheme="https")
+#     )
+#     logger.info("oauth_callback" + flask.url_for("oauth_callback", _scheme="https"))
+#     logger.info("webhook" + flask.url_for("webhook", _external=True, _scheme="https"))
+#     logger.info("webhook" + flask.url_for("webhook", _scheme="https"))
+#     logger.info("index" + flask.url_for("index", _external=True, _scheme="https"))
+#     logger.info("index" + flask.url_for("index", _scheme="https"))
 
 
 if __name__ == "__main__":
