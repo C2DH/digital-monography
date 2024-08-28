@@ -10,6 +10,8 @@ import logging
 import markdown
 import pathlib
 import typing as t
+import werkzeug.exceptions
+from werkzeug.middleware import dispatcher
 import urllib
 
 try:
@@ -49,9 +51,13 @@ TOKEN = ""
 app = flask.Flask(__name__)
 app.debug = True
 app.secret_key = FLASK_SECRET_KEY
-if not IS_DEBUG:
-    app.config["SERVER_NAME"] = "20cks5gkc3.execute-api.eu-west-1.amazonaws.com"
-    app.config["APPLICATION_ROOT"] = "/test"
+# app.wsgi_app = werkzeug.middleware.dispatcher.DispatcherMiddleware(
+app.wsgi_app = dispatcher.DispatcherMiddleware(
+    werkzeug.exceptions.NotFound(), {"/test": app.wsgi_app}
+)
+app.config["SERVER_NAME"] = "20cks5gkc3.execute-api.eu-west-1.amazonaws.com"
+app.config["APPLICATION_ROOT"] = "/test"
+app.config["PREFERRED_URL_SCHEME"] = "https"
 
 
 def get_dbx_app_secret(secret_id: str) -> str:
@@ -63,6 +69,13 @@ def get_dbx_app_secret(secret_id: str) -> str:
 def get_url(route) -> str:
     """Generate a proper URL, forcing HTTPS if not running locally."""
     host = urllib.parse.urlparse(flask.request.url).hostname
+    # print("host", host)
+    # print("route", route)
+    # print("flask.request.url", flask.request.url)
+    # print(
+    #     "urllib.parse.urlparse(flask.request.url)",
+    #     urllib.parse.urlparse(flask.request.url),
+    # )
     return flask.url_for(
         route,
         _external=True,
@@ -86,9 +99,24 @@ def welcome():
     logger.info("Welcome REST api endpoint was called.")
     return flask.render_template(
         "welcome.html",
-        redirect_url=get_url("/oauth_callback"),
-        webhook_url=get_url("/webhook"),
-        home_url=get_url("/index"),
+        redirect_url=get_url("oauth_callback"),
+        webhook_url=get_url("webhook"),
+        home_url=get_url("index"),
+        app_key=APP_KEY,
+    )
+
+
+@app.route("/welcome2")
+def welcome2():
+    logger.info("Welcome REST api endpoint was called.")
+    logger.info('get_url("oauth_callback"): ' + get_url("oauth_callback"))
+    logger.info('get_url("webhook"): ' + get_url("webhook"))
+    logger.info('get_url("index"): ' + get_url("index"))
+    return flask.render_template(
+        "welcome.html",
+        redirect_url=get_url("oauth_callback"),
+        webhook_url=get_url("webhook"),
+        home_url=get_url("index"),
         app_key=APP_KEY,
     )
 
@@ -228,8 +256,19 @@ def webhook() -> t.Union[t.NoReturn | str]:
 
 def lambda_handler(event, context):
     logger.info("Lambda handler was called.")
-    IS_DEBUG = False
     return aws_lambda_wsgi.response(app, event, context)
+
+
+with app.app_context():
+    logger.info(
+        "oauth_callback"
+        + flask.url_for("oauth_callback", _external=True, _scheme="https")
+    )
+    logger.info("oauth_callback" + flask.url_for("oauth_callback", _scheme="https"))
+    logger.info("webhook" + flask.url_for("webhook", _external=True, _scheme="https"))
+    logger.info("webhook" + flask.url_for("webhook", _scheme="https"))
+    logger.info("index" + flask.url_for("index", _external=True, _scheme="https"))
+    logger.info("index" + flask.url_for("index", _scheme="https"))
 
 
 if __name__ == "__main__":
