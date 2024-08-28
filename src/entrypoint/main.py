@@ -43,9 +43,7 @@ secretsmanager = boto3.client("secretsmanager")
 
 APP_KEY = "9d9sdu2khx0lboj"
 FLASK_SECRET_KEY = "FLASK_SECRET_KEY"
-# REDISTOGO_URL = ""
-# redis_url = REDISTOGO_URL
-# redis_client = redis.from_url(redis_url, decode_responses=True)
+AWS_AGW_STAGE = "test"
 TOKEN = ""
 
 app = flask.Flask(__name__)
@@ -74,7 +72,7 @@ def get_flow():
     return dropbox.DropboxOAuth2Flow(
         APP_KEY,
         dbx_app_secret,
-        get_url("oauth_callback"),
+        get_url(f"{AWS_AGW_STAGE}/oauth_callback"),
         flask.session,
         "dropbox-csrf-token",
     )
@@ -82,11 +80,12 @@ def get_flow():
 
 @app.route("/welcome")
 def welcome():
+    logger.info("Welcome REST api endpoint was called.")
     return flask.render_template(
         "welcome.html",
-        redirect_url=get_url("oauth_callback"),
-        webhook_url=get_url("webhook"),
-        home_url=get_url("index"),
+        redirect_url=get_url(f"{AWS_AGW_STAGE}/oauth_callback"),
+        webhook_url=get_url(f"{AWS_AGW_STAGE}/webhook"),
+        home_url=get_url(f"{AWS_AGW_STAGE}/index"),
         app_key=APP_KEY,
     )
 
@@ -94,6 +93,7 @@ def welcome():
 @app.route("/oauth_callback")
 def oauth_callback():
     """Callback function for when the user returns from OAuth."""
+    logger.info("oauth_callback REST api endpoint was called.")
     logger.info(
         "oauth_callback path received the following args:"
         + json.dumps(
