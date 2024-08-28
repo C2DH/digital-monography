@@ -95,8 +95,9 @@ def welcome():
 def oauth_callback():
     """Callback function for when the user returns from OAuth."""
     logger.info(
-        json.dumps(
-            "oauth_callback path received the following args:" + flask.request.args,
+        "oauth_callback path received the following args:"
+        + json.dumps(
+            flask.request.args.to_dict(),
             default=str,
         )
     )
@@ -181,8 +182,9 @@ def challenge() -> flask.Response:
     """Respond to the webhook challenge (GET request) by echoing back the challenge parameter."""
     logger.info("Webhook REST api endpoint was called with GET (challenge).")
     logger.info(
-        json.dumps(
-            "webhook path received the following args:" + flask.request.args,
+        "webhook path received the following args:"
+        + json.dumps(
+            flask.request.args.to_dict(),
             default=str,
         )
     )
@@ -198,8 +200,9 @@ def webhook() -> t.Union[t.NoReturn | str]:
     # Make sure this is a valid request from Dropbox
     logger.info("Webhook REST api endpoint was called with POST.")
     logger.info(
-        json.dumps(
-            "webhook path received the following args:" + flask.request.args,
+        "webhook path received the following args:"
+        + json.dumps(
+            flask.request.args.to_dict(),
             default=str,
         )
     )
