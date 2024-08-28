@@ -69,6 +69,7 @@ def get_dbx_app_secret(secret_id: str) -> str:
 
 def get_url(route) -> str:
     """Generate a proper URL, forcing HTTPS if not running locally."""
+    # host = urllib.parse.urlparse(flask.request.url).hostname
     host = urllib.parse.urlparse(flask.request.url).hostname
     # print("host", host)
     # print("route", route)
@@ -77,11 +78,30 @@ def get_url(route) -> str:
     #     "urllib.parse.urlparse(flask.request.url)",
     #     urllib.parse.urlparse(flask.request.url),
     # )
-    return flask.url_for(
+    is_local = host in ("127.0.0.1", "localhost")
+    url = flask.url_for(
         route,
         _external=True,
-        _scheme="http" if host in ("127.0.0.1", "localhost") else "https",
+        _scheme="http" if is_local else "https",
+        # _scheme="http" if host in ("127.0.0.1", "localhost") else "https",
     )
+    # solution 1
+    url_parts = urllib.parse.urlparse(url)
+    url_parts = url_parts._replace(path=f"/{AWS_AGW_STAGE}" + url_parts.path)
+    res1 = urllib.parse.urlunparse(url_parts)
+    logger.info("Res1 == " + res1)
+    # solution 2
+    schema_end = 7 if is_local else 8
+    netloc_end = url[schema_end:].index("/")
+    res2 = (
+        url[: schema_end + netloc_end] + f"/{AWS_AGW_STAGE}/" + url[schema_end + netloc_end + 1 :]
+    )
+    logger.info("Res2 == " + res2)
+    return res1
+
+    # "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com/welcome"
+    # "http://127.0.0.1:5000/welcome"
+    # return url
 
 
 def get_flow():
@@ -95,7 +115,7 @@ def get_flow():
     )
 
 
-@app.route(f"/{AWS_AGW_STAGE}/welcome")
+@app.route("/welcome")
 def welcome():
     logger.info("Welcome REST api endpoint was called.")
     return flask.render_template(
@@ -107,7 +127,7 @@ def welcome():
     )
 
 
-@app.route(f"/{AWS_AGW_STAGE}/welcome2")
+@app.route("/welcome2")
 def welcome2():
     logger.info("Welcome REST api endpoint was called.")
     logger.info('get_url("oauth_callback"): ' + get_url("oauth_callback"))
@@ -122,7 +142,7 @@ def welcome2():
     )
 
 
-@app.route(f"/{AWS_AGW_STAGE}/oauth_callback")
+@app.route("/oauth_callback")
 def oauth_callback():
     """Callback function for when the user returns from OAuth."""
     logger.info("oauth_callback REST api endpoint was called.")
@@ -197,19 +217,19 @@ def index() -> str:
     return flask.render_template("index.html")
 
 
-@app.route(f"/{AWS_AGW_STAGE}/login")
+@app.route("/login")
 def login():
     logger.info("Login REST api endpoint was called.")
     return flask.redirect(get_flow().start())
 
 
-@app.route(f"/{AWS_AGW_STAGE}/done")
+@app.route("/done")
 def done() -> str:
     logger.info("Done REST api endpoint was called.")
     return flask.render_template("done.html")
 
 
-@app.route(f"/{AWS_AGW_STAGE}/webhook", methods=["GET"])
+@app.route("/webhook", methods=["GET"])
 def challenge() -> flask.Response:
     """Respond to the webhook challenge (GET request) by echoing back the challenge parameter."""
     logger.info("Webhook REST api endpoint was called with GET (challenge).")
@@ -226,7 +246,7 @@ def challenge() -> flask.Response:
     return resp
 
 
-@app.route(f"/{AWS_AGW_STAGE}/webhook", methods=["POST"])
+@app.route("/webhook", methods=["POST"])
 def webhook() -> t.Union[t.NoReturn | str]:
     """Receive a list of changed user IDs from Dropbox and process each."""
     # Make sure this is a valid request from Dropbox
