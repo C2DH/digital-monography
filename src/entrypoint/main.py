@@ -9,6 +9,7 @@ import json
 import logging
 import markdown
 import pathlib
+import time
 import typing as t
 import urllib
 
@@ -86,17 +87,21 @@ def get_url(route) -> str:
         # _scheme="http" if host in ("127.0.0.1", "localhost") else "https",
     )
     # solution 1
+    start = time.perf_counter()
     url_parts = urllib.parse.urlparse(url)
     url_parts = url_parts._replace(path=f"/{AWS_AGW_STAGE}" + url_parts.path)
     res1 = urllib.parse.urlunparse(url_parts)
-    logger.info("Res1 == " + res1)
+    logger.info("Res1 == " + res1 + str(time.perf_counter() - start))
     # solution 2
+    start = time.perf_counter()
     schema_end = 7 if is_local else 8
     netloc_end = url[schema_end:].index("/")
     res2 = (
-        url[: schema_end + netloc_end] + f"/{AWS_AGW_STAGE}/" + url[schema_end + netloc_end + 1 :]
+        url[: schema_end + netloc_end]
+        + f"/{AWS_AGW_STAGE}/"
+        + url[schema_end + netloc_end + 1 :]
     )
-    logger.info("Res2 == " + res2)
+    logger.info("Res2 == " + res2 + str(time.perf_counter() - start))
     return res1
 
     # "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com/welcome"
