@@ -8,7 +8,6 @@ import hmac
 import json
 import logging
 import markdown
-import os
 import pathlib
 import typing as t
 import urllib
@@ -61,7 +60,7 @@ def get_dbx_app_secret(secret_id: str) -> str:
 
 
 def get_url(route) -> str:
-    """Generate a proper URL, forcing HTTPS if not running locally"""
+    """Generate a proper URL, forcing HTTPS if not running locally."""
     host = urllib.parse.urlparse(flask.request.url).hostname
     return flask.url_for(
         route,
@@ -95,10 +94,19 @@ def welcome():
 @app.route("/oauth_callback")
 def oauth_callback():
     """Callback function for when the user returns from OAuth."""
+    logger.info(
+        json.dumps(
+            "oauth_callback path received the following args:" + flask.request.args,
+            default=str,
+        )
+    )
     auth_result = get_flow().finish(flask.request.args)
+    logger.info("auth_result: " + str(auth_result))
     account = auth_result.account_id
+    logger.info("account: " + str(account))
     # Extract and store the access token for this user
     access_token = auth_result.access_token
+    logger.info("access_token: " + str(access_token))
     TOKEN = access_token
     # redis_client.hset("tokens", account, access_token)
     process_user(account)
@@ -158,6 +166,7 @@ def index() -> str:
 
 @app.route("/login")
 def login():
+    logger.info("Login REST api endpoint was called.")
     return flask.redirect(get_flow().start())
 
 
@@ -170,6 +179,13 @@ def done() -> str:
 @app.route("/webhook", methods=["GET"])
 def challenge() -> flask.Response:
     """Respond to the webhook challenge (GET request) by echoing back the challenge parameter."""
+    logger.info("Webhook REST api endpoint was called with GET (challenge).")
+    logger.info(
+        json.dumps(
+            "webhook path received the following args:" + flask.request.args,
+            default=str,
+        )
+    )
     resp = flask.Response(flask.request.args.get("challenge"))
     resp.headers["Content-Type"] = "text/plain"
     resp.headers["X-Content-Type-Options"] = "nosniff"
@@ -180,6 +196,13 @@ def challenge() -> flask.Response:
 def webhook() -> t.Union[t.NoReturn | str]:
     """Receive a list of changed user IDs from Dropbox and process each."""
     # Make sure this is a valid request from Dropbox
+    logger.info("Webhook REST api endpoint was called with POST.")
+    logger.info(
+        json.dumps(
+            "webhook path received the following args:" + flask.request.args,
+            default=str,
+        )
+    )
     dbx_app_secret = get_dbx_app_secret(DROPBOX_SECRET_ID)
     signature = flask.request.headers.get("X-Dropbox-Signature")
     key = bytes(dbx_app_secret, encoding="ascii")
@@ -193,7 +216,7 @@ def webhook() -> t.Union[t.NoReturn | str]:
         # good idea to add the work to a reliable queue and process the queue
         # in a worker process.
         # threading.Thread(target=process_user, args=(account,)).start()
-        logger.info("Process a webhook's request by a worker.")
+        logger.info("Success!!! Process a webhook's request by a worker.")
     return ""
 
 
