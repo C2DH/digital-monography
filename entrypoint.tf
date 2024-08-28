@@ -60,6 +60,16 @@ data "aws_iam_policy_document" "entrypoint" {
   #       "sqs:GetQueueUrl"
   #     ]
   #   }
+  statement {
+    sid       = "AllowSecretsFetching"
+    effect    = "Allow"
+    resources = ["arn:aws:secretsmanager:${var.region}:*:secret:dgtmon-${var.environment}-github-api-secrets*"]
+    actions = [
+      "secretsmanager:DescribeSecret",
+      "secretsmanager:GetResourcePolicy",
+      "secretsmanager:GetSecretValue",
+    ]
+  }
 }
 
 resource "aws_iam_policy" "entrypoint" {
