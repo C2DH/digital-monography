@@ -50,6 +50,7 @@ app = flask.Flask(__name__)
 app.debug = True
 app.secret_key = FLASK_SECRET_KEY
 if not IS_DEBUG:
+    app.config["SERVER_NAME"] = "20cks5gkc3.execute-api.eu-west-1.amazonaws.com"
     app.config["APPLICATION_ROOT"] = "/test"
 
 
