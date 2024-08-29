@@ -13,8 +13,6 @@ import time
 import typing as t
 import urllib
 
-# import werkzeug.exceptions
-# from werkzeug.middleware import dispatcher
 
 try:
     from constants import (
@@ -123,21 +121,6 @@ def get_flow():
 @app.route("/welcome")
 def welcome():
     logger.info("Welcome REST api endpoint was called.")
-    return flask.render_template(
-        "welcome.html",
-        redirect_url=get_url("oauth_callback"),
-        webhook_url=get_url("webhook"),
-        home_url=get_url("index"),
-        app_key=APP_KEY,
-    )
-
-
-@app.route("/welcome2")
-def welcome2():
-    logger.info("Welcome REST api endpoint was called.")
-    logger.info('get_url("oauth_callback"): ' + get_url("oauth_callback"))
-    logger.info('get_url("webhook"): ' + get_url("webhook"))
-    logger.info('get_url("index"): ' + get_url("index"))
     return flask.render_template(
         "welcome.html",
         redirect_url=get_url("oauth_callback"),
