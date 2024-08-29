@@ -1,5 +1,6 @@
 import aws_lambda_wsgi
 import boto3
+import binascii
 import datetime
 import dropbox
 import fastapi
@@ -228,10 +229,31 @@ def process_user(account):
         has_more = result.has_more
 
 
+def generate_csrf(server_secret, session_secret, form_id, time, salt):
+    # <form action='/' method='POST' autocomplete="off">
+    # <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    # </form>
+    time = time.strftime("%Y.%m.%d.%H.%M")
+    if type(form_id) is str:
+        form_id = form_id.encode("utf-8")
+    hasher = hashlib.sha256
+    msg = hasher(
+        b"|".join((salt, server_secret, session_secret, form_id, time.encode("ascii")))
+    ).digest()
+    return "|".join(
+        (
+            "v1",
+            time,
+            binascii.hexlify(salt).decode("ascii"),
+            binascii.hexlify(msg).decode("ascii"),
+        )
+    )
+
+
 @app.route("/")
 def index() -> str:
     logger.info("Index REST api endpoint was called.")
-    return flask.render_template("index.html")
+    return flask.render_template("index.html", {"csrf_token": ""})
 
 
 @app.route("/login")
