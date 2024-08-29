@@ -1,6 +1,6 @@
 ## DynamoDB
 
-resource "aws_dynamodb_table" "example" {
+resource "aws_dynamodb_table" "tokens_tbl" {
   name         = var.dgtmon_dev_dyndb_tokens_tbl
   hash_key     = "AccountID"
   billing_mode = "PAY_PER_REQUEST"
@@ -81,7 +81,7 @@ data "aws_iam_policy_document" "entrypoint" {
   statement {
     sid       = "AllowReadAndWriteToDynamoDB"
     effect    = "Allow"
-    resources = [] # DynamoDB ARN
+    resources = [aws_dynamodb_table.tokens_tbl.arn]
     actions = [
       "dynamodb:GetItem",
       "dynamodb:PutItem",
