@@ -121,7 +121,7 @@ def get_url(route) -> str:
 def get_flow(session=None):
     dbx_app_secret = get_dbx_app_secret(DROPBOX_SECRET_ID)
     if session:
-        logger.info("FastAPI session == " + json.dumps(session, default=str)))
+        logger.info("FastAPI session == " + json.dumps(session, default=str))
     if flask.session:
         logger.info("Flask.session == " + json.dumps(flask.session, default=str))
         logger.info("Flask.session == " + json.dumps(flask.session, default=str))
@@ -247,7 +247,7 @@ def login(request: Request):
     authorize_url = get_flow(request.session).start()
     logger.info("Login REST api generated authorize_url : " + str(authorize_url))
     return RedirectResponse(authorize_url)
-
+FastAPI session
 
 # @fapp.get("/login")
 # def login():
