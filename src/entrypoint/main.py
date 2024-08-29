@@ -247,7 +247,7 @@ def login(request: Request):
     authorize_url = get_flow(request.session).start()
     logger.info("Login REST api generated authorize_url : " + str(authorize_url))
     return RedirectResponse(authorize_url)
-FastAPI session
+
 
 # @fapp.get("/login")
 # def login():
