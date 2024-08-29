@@ -253,7 +253,7 @@ def generate_csrf(server_secret, session_secret, form_id, time, salt):
 @app.route("/")
 def index() -> str:
     logger.info("Index REST api endpoint was called.")
-    return flask.render_template("index.html", {"csrf_token": ""})
+    return flask.render_template("index.html", **{"csrf_token": ""})
 
 
 @app.route("/login")
