@@ -2,16 +2,22 @@ import aws_lambda_wsgi
 import boto3
 import datetime
 import dropbox
+import fastapi
+import fastapi.templating
 import flask  # TODO: consider replacing flask with something microVM specific (fastapi? bottle?)
 import hashlib
 import hmac
 import json
+import os
 import logging
 import markdown
 import pathlib
 import time
 import typing as t
 import urllib
+from starlette.middleware.sessions import SessionMiddleware
+from starlette.requests import Request
+from starlette.responses import RedirectResponse
 
 
 try:
@@ -59,6 +65,10 @@ app.secret_key = FLASK_SECRET_KEY
 # app.config["SERVER_NAME"] = "20cks5gkc3.execute-api.eu-west-1.amazonaws.com"
 # app.config["APPLICATION_ROOT"] = "/test"
 # app.config["PREFERRED_URL_SCHEME"] = "https"
+
+fapp = fastapi.FastAPI()
+fapp.add_middleware(SessionMiddleware, secret_key=FLASK_SECRET_KEY)
+templates = fastapi.templating.Jinja2Templates(directory="templates")
 
 
 def get_dbx_app_secret(secret_id: str) -> str:
@@ -108,15 +118,26 @@ def get_url(route) -> str:
     # return url
 
 
-def get_flow():
+def get_flow(session=None):
     dbx_app_secret = get_dbx_app_secret(DROPBOX_SECRET_ID)
-    logger.info("Flask.session == " + json.dumps(flask.session, default=str))
+    if session:
+        logger.info("FastAPI session == " + json.dumps(session, default=str)))
+    if flask.session:
+        logger.info("Flask.session == " + json.dumps(flask.session, default=str))
+        logger.info("Flask.session == " + json.dumps(flask.session, default=str))
+        try:
+            logger.info(
+                "Flask.session == " + json.dumps(flask.session.items(), default=str)
+            )
+        except Exception as e:
+            pass
     return dropbox.DropboxOAuth2Flow(
         consumer_key=APP_KEY,
         consumer_secret=dbx_app_secret,
         redirect_uri=get_url("oauth_callback"),
         session={},
-        csrf_token_session_key="dropbox-csrf-token",
+        csrf_token_session_key="dropbox-auth-csrf-token",
+        # token_access_type="offline", # I don't see such argument
     )
 
 
@@ -154,6 +175,7 @@ def oauth_callback(*args, **kwargs):
     logger.info("access_token: " + str(access_token))
     TOKEN = access_token
     # redis_client.hset("tokens", account, access_token)
+    logger.info('Here was: `redis_client.hset("tokens", account, access_token)`')
     process_user(account)
     return flask.redirect(flask.url_for("done"))
 
@@ -163,10 +185,12 @@ def process_user(account):
     logger.info("process_user function was invoked with account " + str(account))
     # OAuth token for the user
     # token = redis_client.hget("tokens", account)
+    logger.info('Here was: `token = redis_client.hget("tokens", account)`')
     token = TOKEN
 
     # cursor for the user (None the first time)
     # cursor = redis_client.hget("cursors", account)
+    logger.info('Here was: `redis_client.hget("cursors", account)`')
 
     dbx = dropbox.Dropbox(token)
     has_more = True
@@ -198,21 +222,37 @@ def process_user(account):
         # Update cursor
         cursor = result.cursor
         # redis_client.hset("cursors", account, cursor)
+        logger.info('Here was: `redis_client.hset("cursors", account, cursor)`')
 
         # Repeat only if there's more to do
         has_more = result.has_more
 
 
-@app.route("/")
-def index() -> str:
+@fapp.get("/", response_class=fastapi.responses.HTMLResponse)
+def index(request: Request) -> str:
     logger.info("Index REST api endpoint was called.")
-    return flask.render_template("index.html")
+    logger.info("Index REST api request ==" + json.dumps(request, default=str))
+    if request:
+        logger.info("Index REST api request session == " + request.session)
+    return templates.TemplateResponse(request=request, name="item.html")
+    # return flask.render_template("index.html")
 
 
-@app.route("/login")
-def login():
+@fapp.get("/login")
+def login(request: Request):
     logger.info("Login REST api endpoint was called.")
-    return flask.redirect(get_flow().start())
+    logger.info("Login REST api request ==" + json.dumps(request, default=str))
+    if request:
+        logger.info("Login REST api request session == " + request.session)
+    authorize_url = get_flow(request.session).start()
+    logger.info("Login REST api generated authorize_url : " + str(authorize_url))
+    return RedirectResponse(authorize_url)
+
+
+# @fapp.get("/login")
+# def login():
+#     logger.info("Login REST api endpoint was called.")
+#     return flask.redirect(get_flow().start())
 
 
 @app.route("/done")
