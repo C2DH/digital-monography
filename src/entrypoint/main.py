@@ -109,12 +109,13 @@ def get_url(route) -> str:
 
 def get_flow():
     dbx_app_secret = get_dbx_app_secret(DROPBOX_SECRET_ID)
+    logger.info("Flask.session == " + json.dumps(flask.session, default=str))
     return dropbox.DropboxOAuth2Flow(
-        APP_KEY,
-        dbx_app_secret,
-        get_url("oauth_callback"),
-        flask.session,
-        "dropbox-csrf-token",
+        consumer_key=APP_KEY,
+        consumer_secret=dbx_app_secret,
+        redirect_uri=get_url("oauth_callback"),
+        session={},
+        csrf_token_session_key="dropbox-csrf-token",
     )
 
 
