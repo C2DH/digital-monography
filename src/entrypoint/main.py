@@ -135,7 +135,7 @@ def get_flow(session=None):
         consumer_key=APP_KEY,
         consumer_secret=dbx_app_secret,
         redirect_uri=get_url("oauth_callback"),
-        session={},
+        session=flask.session if session is None else session,
         csrf_token_session_key="dropbox-auth-csrf-token",
         # token_access_type="offline", # I don't see such argument
     )
@@ -228,20 +228,36 @@ def process_user(account):
         has_more = result.has_more
 
 
-@fapp.get("/", response_class=fastapi.responses.HTMLResponse)
-def index(request: Request) -> str:
+@app.route("/")
+def index() -> str:
     logger.info("Index REST api endpoint was called.")
-    logger.info("Index REST api request ==" + json.dumps(request, default=str))
+    return flask.render_template("index.html")
+
+
+@app.route("/login")
+def login(*args, **kwargs):
+    logger.info("Login REST api endpoint was called.")
+    flow = get_flow()
+    logger.info("Login REST api flow == " + json.dumps(flow, default=str))
+    authorize_url = flow.start()
+    logger.info("Login REST api authorize_url == " + json.dumps(flow, default=str))
+    return flask.redirect(authorize_url)
+
+
+@fapp.get("/index", response_class=fastapi.responses.HTMLResponse)
+def index2(request: Request) -> str:
+    logger.info("Index2 REST api endpoint was called.")
+    logger.info("Index2 REST api request ==" + json.dumps(request, default=str))
     if request:
         logger.info("Index REST api request session == " + request.session)
     return templates.TemplateResponse(request=request, name="item.html")
     # return flask.render_template("index.html")
 
 
-@fapp.get("/login")
-def login(request: Request):
-    logger.info("Login REST api endpoint was called.")
-    logger.info("Login REST api request ==" + json.dumps(request, default=str))
+@fapp.get("/login2")
+def login2(request: Request):
+    logger.info("Login2 REST api endpoint was called.")
+    logger.info("Login2 REST api request ==" + json.dumps(request, default=str))
     if request:
         logger.info("Login REST api request session == " + request.session)
     authorize_url = get_flow(request.session).start()
