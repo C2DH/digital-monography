@@ -40,6 +40,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
+client = boto3.client("dynamodb")
 secretsmanager = boto3.client("secretsmanager")
 
 
@@ -132,7 +133,7 @@ def welcome():
 
 
 @app.route("/oauth_callback")
-def oauth_callback():
+def oauth_callback(*args, **kwargs):
     """Callback function for when the user returns from OAuth."""
     logger.info("oauth_callback REST api endpoint was called.")
     logger.info(
@@ -142,6 +143,8 @@ def oauth_callback():
             default=str,
         )
     )
+    logger.info("args==" + json.dumps(args, default=str))
+    logger.info("kwargs==" + json.dumps(kwargs, default=str))
     auth_result = get_flow().finish(flask.request.args)
     logger.info("auth_result: " + str(auth_result))
     account = auth_result.account_id
@@ -157,7 +160,7 @@ def oauth_callback():
 
 def process_user(account):
     """Call /files/list_folder for the given user ID and process any changes."""
-
+    logger.info("process_user function was invoked with account " + str(account))
     # OAuth token for the user
     # token = redis_client.hget("tokens", account)
     token = TOKEN
@@ -266,6 +269,9 @@ def webhook() -> t.Union[t.NoReturn | str]:
 
 def lambda_handler(event, context):
     logger.info("Lambda handler was called.")
+    logger.info("Event == " + json.dumps(event, default=str))
+    logger.info("Context == " + json.dumps(context, default=str))
+    logger.info("Event cookies" + event.get("headers", {}).get("Cookie", ""))
     return aws_lambda_wsgi.response(app, event, context)
 
 
