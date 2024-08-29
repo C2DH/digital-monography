@@ -1,3 +1,21 @@
+## DynamoDB
+
+resource "aws_dynamodb_table" "example" {
+  name         = var.dgtmon_dev_dyndb_tokens_tbl
+  hash_key     = "AccountID"
+  billing_mode = "PAY_PER_REQUEST"
+
+  attribute {
+    name = "AccountID"
+    type = "S"
+  }
+
+  ttl {
+    attribute_name = "ttl"
+    enabled        = true
+  }
+}
+
 ## Lambda (entrypoint)
 
 data "aws_iam_policy_document" "assume_entrypoint_role" {
@@ -50,16 +68,6 @@ data "aws_iam_policy_document" "entrypoint" {
       "logs:PutLogEvents",
     ]
   }
-  #   statement {
-  #     sid       = "AllowSendingSQSMessages"
-  #     effect    = "Allow"
-  #     resources = [aws_sqs_queue.pre_builder_queue.arn]
-  #     actions = [
-  #       "sqs:SendMessage",
-  #       "sqs:GetQueueAttributes",
-  #       "sqs:GetQueueUrl"
-  #     ]
-  #   }
   statement {
     sid       = "AllowSecretsFetching"
     effect    = "Allow"
@@ -70,6 +78,29 @@ data "aws_iam_policy_document" "entrypoint" {
       "secretsmanager:GetSecretValue",
     ]
   }
+  statement {
+    sid       = "AllowReadAndWriteToDynamoDB"
+    effect    = "Allow"
+    resources = [] # DynamoDB ARN
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+      "dynamodb:DeleteItem",
+      "dynamodb:Scan",
+      "dynamodb:Query"
+    ]
+  }
+  #   statement {
+  #     sid       = "AllowSendingSQSMessages"
+  #     effect    = "Allow"
+  #     resources = [aws_sqs_queue.pre_builder_queue.arn]
+  #     actions = [
+  #       "sqs:SendMessage",
+  #       "sqs:GetQueueAttributes",
+  #       "sqs:GetQueueUrl"
+  #     ]
+  #   }
 }
 
 resource "aws_iam_policy" "entrypoint" {

@@ -106,3 +106,8 @@ variable "sqs_builder_trigger" {
 locals {
   versions_data = jsondecode(file("${path.root}/.versions.json"))
 }
+
+variable "dgtmon_dev_dyndb_tokens_tbl" {
+  type        = string
+  description = "Name of the table for holding Dropbox account and access_token data"
+}
