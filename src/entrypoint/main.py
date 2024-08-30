@@ -181,7 +181,7 @@ def oauth_callback(*args, **kwargs):
     # redis_client.hset("tokens", account, access_token)
     logger.info('Here was: `redis_client.hset("tokens", account, access_token)`')
     dynamodb_set(
-        DYNAMODB_TOKENS_TBL, {"account": account, "access_token": access_token}
+        DYNAMODB_TOKENS_TBL, **{"account": account, "access_token": access_token}
     )
     process_user(account)
     return flask.redirect(flask.url_for("done"))
@@ -235,7 +235,7 @@ def process_user(account):
         cursor = result.cursor
         # redis_client.hset("cursors", account, cursor)
         logger.info('Here was: `redis_client.hset("cursors", account, cursor)`')
-        # dynamodb_set("cursors", {"account": account, "cursor": cursor})
+        # dynamodb_set("cursors", **{"account": account, "cursor": cursor})
 
         # Repeat only if there's more to do
         has_more = result.has_more
