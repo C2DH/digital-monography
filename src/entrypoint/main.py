@@ -359,7 +359,7 @@ def webhook() -> t.Union[t.NoReturn | str]:
 
 def dynamodb_set(tbl: str, **kwargs) -> None:
     expire_at = int((datetime.datetime.now() + datetime.timedelta(days=3)).timestamp())
-    table = dynamodb.table(tbl)
+    table = dynamodb.Table(tbl)
     resp = table.put_item(Key={"expire_at": expire_at, **kwargs})
     logger.info(
         f"Response from dynamodb.Table({tbl}).put_item: {json.dumps(resp, default=str)}"
@@ -367,7 +367,7 @@ def dynamodb_set(tbl: str, **kwargs) -> None:
 
 
 def dynamodb_get(tbl: str, pk: dict[str, str]) -> dict[str, t.Any]:
-    table = dynamodb.table(tbl)
+    table = dynamodb.Table(tbl)
     resp = table.get_item(Key=pk)
     logger.info(
         f"Response from dynamodb.Table({tbl}).get_item: {json.dumps(resp, default=str)}"
