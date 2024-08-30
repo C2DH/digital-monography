@@ -2,16 +2,16 @@
 
 resource "aws_dynamodb_table" "tokens_tbl" {
   name         = var.dgtmon_dev_dyndb_tokens_tbl
-  hash_key     = "AccountID"
+  hash_key     = "account"
   billing_mode = "PAY_PER_REQUEST"
 
   attribute {
-    name = "AccountID"
+    name = "account"
     type = "S"
   }
 
   ttl {
-    attribute_name = "ttl"
+    attribute_name = "expires_at"
     enabled        = true
   }
 }

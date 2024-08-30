@@ -19,17 +19,20 @@ import urllib
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
+from boto3.dynamodb.conditions import Key
 
 
 try:
     from constants import (
         IS_DEBUG,
         DROPBOX_SECRET_ID,
+        DYNAMODB_TOKENS_TBL,
     )
 except (ImportError, ModuleNotFoundError):
     from .constants import (
         IS_DEBUG,
         DROPBOX_SECRET_ID,
+        DYNAMODB_TOKENS_TBL,
     )
 
 
@@ -47,14 +50,14 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-client = boto3.client("dynamodb")
+dynamodb = boto3.resource("dynamodb")
 secretsmanager = boto3.client("secretsmanager")
 
 
 APP_KEY = "9d9sdu2khx0lboj"
 FLASK_SECRET_KEY = "FLASK_SECRET_KEY"
 AWS_AGW_STAGE = "test"
-TOKEN = ""
+# TOKEN = ""
 
 app = flask.Flask(__name__)
 app.debug = True
@@ -174,9 +177,12 @@ def oauth_callback(*args, **kwargs):
     # Extract and store the access token for this user
     access_token = auth_result.access_token
     logger.info("access_token: " + str(access_token))
-    TOKEN = access_token
+    # TOKEN = access_token
     # redis_client.hset("tokens", account, access_token)
     logger.info('Here was: `redis_client.hset("tokens", account, access_token)`')
+    dynamodb_set(
+        DYNAMODB_TOKENS_TBL, {"account": account, "access_token": access_token}
+    )
     process_user(account)
     return flask.redirect(flask.url_for("done"))
 
@@ -187,11 +193,16 @@ def process_user(account):
     # OAuth token for the user
     # token = redis_client.hget("tokens", account)
     logger.info('Here was: `token = redis_client.hget("tokens", account)`')
-    token = TOKEN
+    tokens_resp = dynamodb_get("tokens", {"account": account})
+    logger.info("tokens_resp == " + json.dumps(tokens_resp, default=str))
+    token = tokens_resp.get("Item", {}).get("access_token")
+    logger.info(f"token == {token}")
+    # token = TOKEN
 
     # cursor for the user (None the first time)
     # cursor = redis_client.hget("cursors", account)
     logger.info('Here was: `redis_client.hget("cursors", account)`')
+    # dynamodb_get("cursors", {"account": account})
 
     dbx = dropbox.Dropbox(token)
     has_more = True
@@ -224,6 +235,7 @@ def process_user(account):
         cursor = result.cursor
         # redis_client.hset("cursors", account, cursor)
         logger.info('Here was: `redis_client.hset("cursors", account, cursor)`')
+        # dynamodb_set("cursors", {"account": account, "cursor": cursor})
 
         # Repeat only if there's more to do
         has_more = result.has_more
@@ -343,6 +355,24 @@ def webhook() -> t.Union[t.NoReturn | str]:
         # threading.Thread(target=process_user, args=(account,)).start()
         logger.info("Success!!! Process a webhook's request by a worker.")
     return ""
+
+
+def dynamodb_set(tbl: str, **kwargs) -> None:
+    expire_at = int((datetime.datetime.now() + datetime.timedelta(days=3)).timestamp())
+    table = dynamodb.table(tbl)
+    resp = table.put_item(Key={"expire_at": expire_at, **kwargs})
+    logger.info(
+        f"Response from dynamodb.Table({tbl}).put_item: {json.dumps(resp, default=str)}"
+    )
+
+
+def dynamodb_get(tbl: str, pk: dict[str, str]) -> dict[str, t.Any]:
+    table = dynamodb.table(tbl)
+    resp = table.get_item(Key=pk)
+    logger.info(
+        f"Response from dynamodb.Table({tbl}).get_item: {json.dumps(resp, default=str)}"
+    )
+    return resp
 
 
 def lambda_handler(event, context):
