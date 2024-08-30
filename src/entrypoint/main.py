@@ -360,7 +360,8 @@ def webhook() -> t.Union[t.NoReturn | str]:
 def dynamodb_set(tbl: str, **kwargs) -> None:
     expire_at = int((datetime.datetime.now() + datetime.timedelta(days=3)).timestamp())
     table = dynamodb.Table(tbl)
-    resp = table.put_item(Key={"expire_at": expire_at, **kwargs})
+    logger.info(f"{json.dumps({"expire_at": expire_at, **kwargs}, default=str)}")
+    resp = table.put_item(Item={"expire_at": expire_at, **kwargs})
     logger.info(
         f"Response from dynamodb.Table({tbl}).put_item: {json.dumps(resp, default=str)}"
     )
