@@ -219,6 +219,10 @@ def process_user(account):
             result = dbx.files_list_folder_continue(cursor)
 
         for entry in result.entries:
+            logger.info("dir(entry)" + json.dumps(dir(entry), default=str))
+            logger.info(f"entry.name {entry.name}")
+            logger.info(f"entry.path_lower {entry.path_lower}")
+
             # Ignore deleted files, folders, and non-markdown files
             if (
                 isinstance(entry, dropbox.files.DeletedMetadata)
@@ -230,11 +234,13 @@ def process_user(account):
             # Convert to Markdown and store as <basename>.html
             _, resp = dbx.files_download(entry.path_lower)
             html = markdown(resp.content.decode("utf-8"))
+            logger.info("html == " + html)
             dbx.files_upload(
                 bytes(html, encoding="utf-8"),
                 entry.path_lower[:-3] + ".html",
                 mode=dropbox.files.WriteMode("overwrite"),
             )
+            logger.info(f"New file '{entry.path_lower[:-3] + '.html'}' was uploaded.")
 
         # Update cursor
         cursor = result.cursor
@@ -244,6 +250,8 @@ def process_user(account):
 
         # Repeat only if there's more to do
         has_more = result.has_more
+        logger.info('result.has_more loop in process_user has ended.')
+    logger.info('process_user has ended.')
 
 
 def generate_csrf(server_secret, session_secret, form_id, time, salt):
