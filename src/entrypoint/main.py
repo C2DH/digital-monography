@@ -193,7 +193,7 @@ def process_user(account):
     # OAuth token for the user
     # token = redis_client.hget("tokens", account)
     logger.info('Here was: `token = redis_client.hget("tokens", account)`')
-    tokens_resp = dynamodb_get("tokens", {"account": account})
+    tokens_resp = dynamodb_get(DYNAMODB_TOKENS_TBL, {"account": account})
     logger.info("tokens_resp == " + json.dumps(tokens_resp, default=str))
     token = tokens_resp.get("Item", {}).get("access_token")
     logger.info(f"token == {token}")
