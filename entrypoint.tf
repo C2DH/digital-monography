@@ -35,18 +35,6 @@ resource "aws_iam_role" "entrypoint_iam" {
 }
 
 data "aws_iam_policy_document" "entrypoint" {
-  #   statement {
-  #     sid       = "AllowS3Permissions"
-  #     effect    = "Allow"
-  #     resources = ["*"] # TODO: limit (since we also want to list buckets, include both "arn:aws:s3:::mybucket/*" and "arn:aws:s3:::mybucket")
-  #     actions = [
-  #       "s3:PutObject",
-  #       "s3:PutObjectAcl",
-  #       "s3:GetObject",
-  #       "s3:GetObjectAcl",
-  #       "s3:ListBucket"
-  #     ]
-  #   }
   statement {
     sid       = "AllowInvokingLambdas"
     effect    = "Allow"
@@ -91,16 +79,6 @@ data "aws_iam_policy_document" "entrypoint" {
       "dynamodb:Query"
     ]
   }
-  #   statement {
-  #     sid       = "AllowSendingSQSMessages"
-  #     effect    = "Allow"
-  #     resources = [aws_sqs_queue.pre_builder_queue.arn]
-  #     actions = [
-  #       "sqs:SendMessage",
-  #       "sqs:GetQueueAttributes",
-  #       "sqs:GetQueueUrl"
-  #     ]
-  #   }
 }
 
 resource "aws_iam_policy" "entrypoint" {
