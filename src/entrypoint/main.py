@@ -186,7 +186,8 @@ def oauth_callback(*args, **kwargs):
         DYNAMODB_TOKENS_TBL, **{"account": account, "access_token": access_token}
     )
     process_user(account)
-    return flask.redirect(flask.url_for("done"))
+    return flask.redirect(get_url("done"))
+    # return flask.redirect(flask.url_for("done"))
 
 
 def process_user(account):

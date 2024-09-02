@@ -1,5 +1,5 @@
 {
-    "ENTRYPOINT_STABLE_V": "0.0.28",
+    "ENTRYPOINT_STABLE_V": "0.0.29",
     "BUILDER_STABLE_V": "0.1.0",
     "GITHUB_STABLE_V": "0.0.15",
     "PREPARER_STABLE_V": "0.1.0",
