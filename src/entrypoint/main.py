@@ -381,9 +381,10 @@ def webhook() -> t.Union[t.NoReturn | str]:
         # actual work in a separate thread. For more robustness, it's a
         # good idea to add the work to a reliable queue and process the queue
         # in a worker process.
-        logger.info("Passing a process request to a separate thread.")
-        threading.Thread(target=process_user, args=(account,)).start()
-        logger.info("Process a webhook's request by a worker.")
+        process_user(account)
+        # logger.info("Passing a process request to a separate thread.")
+        # threading.Thread(target=process_user, args=(account,)).start()
+        # logger.info("Process a webhook's request by a worker.")
     return ""
 
 
