@@ -27,12 +27,14 @@ try:
         IS_DEBUG,
         DROPBOX_SECRET_ID,
         DYNAMODB_TOKENS_TBL,
+        DYNAMODB_CURSORS_TBL,
     )
 except (ImportError, ModuleNotFoundError):
     from .constants import (
         IS_DEBUG,
         DROPBOX_SECRET_ID,
         DYNAMODB_TOKENS_TBL,
+        DYNAMODB_CURSORS_TBL,
     )
 
 
@@ -202,7 +204,8 @@ def process_user(account):
     # cursor for the user (None the first time)
     # cursor = redis_client.hget("cursors", account)
     logger.info('Here was: `redis_client.hget("cursors", account)`')
-    # dynamodb_get("cursors", {"account": account})
+    cursors_resp = dynamodb_get(DYNAMODB_CURSORS_TBL, {"account": account})
+    cursor = cursors_resp.get("Item", {}).get("cursor")
 
     dbx = dropbox.Dropbox(token)
     has_more = True
@@ -235,7 +238,7 @@ def process_user(account):
         cursor = result.cursor
         # redis_client.hset("cursors", account, cursor)
         logger.info('Here was: `redis_client.hset("cursors", account, cursor)`')
-        # dynamodb_set("cursors", **{"account": account, "cursor": cursor})
+        dynamodb_set(DYNAMODB_CURSORS_TBL, **{"account": account, "cursor": cursor})
 
         # Repeat only if there's more to do
         has_more = result.has_more

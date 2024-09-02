@@ -1,7 +1,25 @@
-## DynamoDB
+## DynamoDB (tokens)
 
 resource "aws_dynamodb_table" "tokens_tbl" {
   name         = var.dgtmon_dev_dyndb_tokens_tbl
+  hash_key     = "account"
+  billing_mode = "PAY_PER_REQUEST"
+
+  attribute {
+    name = "account"
+    type = "S"
+  }
+
+  ttl {
+    attribute_name = "expires_at"
+    enabled        = true
+  }
+}
+
+## DynamoDB (cursors)
+
+resource "aws_dynamodb_table" "cursors_tbl" {
+  name         = var.dgtmon_dev_dyndb_cursors_tbl
   hash_key     = "account"
   billing_mode = "PAY_PER_REQUEST"
 
@@ -69,7 +87,7 @@ data "aws_iam_policy_document" "entrypoint" {
   statement {
     sid       = "AllowReadAndWriteToDynamoDB"
     effect    = "Allow"
-    resources = [aws_dynamodb_table.tokens_tbl.arn]
+    resources = [aws_dynamodb_table.tokens_tbl.arn, aws_dynamodb_table.cursors_tbl.arn]
     actions = [
       "dynamodb:GetItem",
       "dynamodb:PutItem",

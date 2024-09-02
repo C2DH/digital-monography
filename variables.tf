@@ -111,3 +111,8 @@ variable "dgtmon_dev_dyndb_tokens_tbl" {
   type        = string
   description = "Name of the table for holding Dropbox account and access_token data"
 }
+
+variable "dgtmon_dev_dyndb_cursors_tbl" {
+  type        = string
+  description = "Name of the table for holding Dropbox account and cursor data (relevant for DBX `/files/list_folder/continue`)"
+}

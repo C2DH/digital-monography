@@ -16,6 +16,7 @@ else:
 GITHUB_SECRET_ID = "dgtmon-dev-github-api-secrets"
 DROPBOX_SECRET_ID = "dgtmon-dev-github-api-secrets"
 DYNAMODB_TOKENS_TBL = "dgtmon-dev-dyndb-tokens-tbl"
+DYNAMODB_CURSORS_TBL = "dgtmon-dev-dyndb-cursors-tbl"
 # S3 bucket names
 ARCHIVE_APKG_ALL = "cpy-dgtmon-dev-archive-apkg-all"
 IR_APKG_HTML_BUCKET_NAME = "cpy-dgtmon-dev-ir-apkg-html"
