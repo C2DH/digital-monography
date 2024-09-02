@@ -14,6 +14,7 @@ import logging
 import markdown
 import pathlib
 import time
+import threading
 import typing as t
 import urllib
 from starlette.middleware.sessions import SessionMiddleware
@@ -344,11 +345,27 @@ def webhook() -> t.Union[t.NoReturn | str]:
             default=str,
         )
     )
+    logger.info(
+        "webhook path received the following json:"
+        + json.dumps(
+            flask.request.json,
+            default=str,
+        )
+    )
+    logger.info(
+        "webhook path received the following data:"
+        + json.dumps(
+            json.loads(flask.request.data),
+            default=str,
+        )
+    )
     dbx_app_secret = get_dbx_app_secret(DROPBOX_SECRET_ID)
     signature = flask.request.headers.get("X-Dropbox-Signature")
     key = bytes(dbx_app_secret, encoding="ascii")
     computed_signature = hmac.new(key, flask.request.data, hashlib.sha256).hexdigest()
     if not hmac.compare_digest(signature, computed_signature):
+        logger.info("Digests from signature and computed_signature are not equal. " +
+                    "Exiting with 'Forbidden' status code.")
         flask.abort(403)
 
     for account in json.loads(flask.request.data)["list_folder"]["accounts"]:
@@ -356,8 +373,9 @@ def webhook() -> t.Union[t.NoReturn | str]:
         # actual work in a separate thread. For more robustness, it's a
         # good idea to add the work to a reliable queue and process the queue
         # in a worker process.
-        # threading.Thread(target=process_user, args=(account,)).start()
-        logger.info("Success!!! Process a webhook's request by a worker.")
+        logger.info("Passing a process request to a separate thread.")
+        threading.Thread(target=process_user, args=(account,)).start()
+        logger.info("Process a webhook's request by a worker.")
     return ""
 
 
