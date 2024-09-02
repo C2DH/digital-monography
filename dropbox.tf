@@ -102,10 +102,15 @@ resource "aws_iam_role_policy_attachment" "dropbox" {
   policy_arn = aws_iam_policy.dropbox.arn
 }
 
-resource "aws_lambda_event_source_mapping" "pre_dropbox" {
+resource "aws_lambda_event_source_mapping" "example" {
   event_source_arn = aws_sqs_queue.entrypoint_to_dropbox.arn
   function_name    = aws_lambda_function.dropbox_func.arn
 }
+
+# resource "aws_lambda_event_source_mapping" "pre_dropbox" {
+#   event_source_arn = aws_sqs_queue.entrypoint_to_dropbox.arn
+#   function_name    = aws_lambda_function.dropbox_func.arn
+# }
 
 # resource "aws_lambda_permission" "allow_upload_apkg_to_invoke_lambda" {
 #   statement_id  = "AllowExecutionFromS3Bucket"

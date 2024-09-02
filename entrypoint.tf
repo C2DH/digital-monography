@@ -37,7 +37,8 @@ resource "aws_dynamodb_table" "cursors_tbl" {
 ## SQS (pass messages between entrypoint and dropbox functions)
 
 resource "aws_sqs_queue" "entrypoint_to_dropbox" {
-  name = var.sqs_entrypoint_to_dropbox
+  name                       = var.sqs_entrypoint_to_dropbox
+  visibility_timeout_seconds = 900
 }
 
 ## Lambda (entrypoint)
