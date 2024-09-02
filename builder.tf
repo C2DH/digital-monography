@@ -76,6 +76,7 @@ resource "aws_sqs_queue" "pre_builder_queue" {
   content_based_deduplication = true
   max_message_size            = 1024 # 1 KiB
   message_retention_seconds   = 3600 # 1 hour
+  visibility_timeout_seconds  = 900
 }
 
 resource "aws_lambda_event_source_mapping" "pre_builder" {

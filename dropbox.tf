@@ -107,11 +107,6 @@ resource "aws_lambda_event_source_mapping" "pre_dropbox" {
   function_name    = aws_lambda_function.dropbox_func.arn
 }
 
-# resource "aws_lambda_event_source_mapping" "pre_dropbox" {
-#   event_source_arn = aws_sqs_queue.entrypoint_to_dropbox.arn
-#   function_name    = aws_lambda_function.dropbox_func.arn
-# }
-
 # resource "aws_lambda_permission" "allow_upload_apkg_to_invoke_lambda" {
 #   statement_id  = "AllowExecutionFromS3Bucket"
 #   action        = "lambda:InvokeFunction"
