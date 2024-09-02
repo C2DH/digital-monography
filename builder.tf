@@ -78,7 +78,7 @@ resource "aws_sqs_queue" "pre_builder_queue" {
   message_retention_seconds   = 3600 # 1 hour
 }
 
-resource "aws_lambda_event_source_mapping" "example" {
+resource "aws_lambda_event_source_mapping" "pre_builder" {
   event_source_arn = aws_sqs_queue.pre_builder_queue.arn
   function_name    = aws_lambda_function.builder_func.arn
 }
