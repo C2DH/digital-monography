@@ -233,7 +233,7 @@ def process_user(account):
 
             # Convert to Markdown and store as <basename>.html
             _, resp = dbx.files_download(entry.path_lower)
-            html = markdown(resp.content.decode("utf-8"))
+            html = markdown.markdown(resp.content.decode("utf-8"))
             logger.info("html == " + html)
             dbx.files_upload(
                 bytes(html, encoding="utf-8"),
