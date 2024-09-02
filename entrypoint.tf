@@ -34,6 +34,12 @@ resource "aws_dynamodb_table" "cursors_tbl" {
   }
 }
 
+## SQS (pass messages between entrypoint and dropbox functions)
+
+resource "aws_sqs_queue" "entrypoint_to_dropbox" {
+  name = var.sqs_entrypoint_to_dropbox
+}
+
 ## Lambda (entrypoint)
 
 data "aws_iam_policy_document" "assume_entrypoint_role" {
@@ -97,6 +103,16 @@ data "aws_iam_policy_document" "entrypoint" {
       "dynamodb:Query"
     ]
   }
+  statement {
+    sid       = "AllowSendingSQSMessages"
+    effect    = "Allow"
+    resources = [aws_sqs_queue.entrypoint_to_dropbox.arn]
+    actions = [
+      "sqs:SendMessage",
+      "sqs:GetQueueAttributes",
+      "sqs:GetQueueUrl"
+    ]
+  }
 }
 
 resource "aws_iam_policy" "entrypoint" {
@@ -148,6 +164,11 @@ resource "aws_lambda_function" "entrypoint_func" {
   logging_config {
     log_group  = data.aws_cloudwatch_log_group.general_purpose_logs.name
     log_format = "JSON"
+  }
+  environment {
+    variables = {
+      SQS_URL = aws_sqs_queue.entrypoint_to_dropbox.url
+    }
   }
   #   file_system_config {
   #     arn              = aws_efs_access_point.efs_access_point.arn

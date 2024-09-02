@@ -1,3 +1,4 @@
+import os
 import bs4
 import boto3
 import datetime

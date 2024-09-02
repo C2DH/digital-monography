@@ -1,4 +1,5 @@
 ENTRYPOINT_STABLE_V := $(shell jq -r '.ENTRYPOINT_STABLE_V' < .versions.json) 
+DROPBOX_STABLE_V := $(shell jq -r '.DROPBOX_STABLE_V' < .versions.json) 
 BUILDER_STABLE_V := $(shell jq -r '.BUILDER_STABLE_V' < .versions.json) 
 PREPARER_STABLE_V := $(shell jq -r '.PREPARER_STABLE_V' < .versions.json) 
 GITHUB_STABLE_V  := $(shell jq -r '.GITHUB_STABLE_V' < .versions.json) 
@@ -49,6 +50,20 @@ entrypoint/push:
 	docker push ${DOCKER_HUB}/dgtmon-dev-entrypoint:${ENTRYPOINT_STABLE_V}
 
 entrypoint/make: entrypoint/build entrypoint/tag entrypoint/push
+
+dropbox/build:
+	cp src/_common/constants.py src/dropbox/constants.py
+	docker build -t dgtmon-dev-dropbox src/dropbox
+
+dropbox/tag:
+	docker tag dgtmon-dev-dropbox ${DOCKER_ECR}/dgtmon-dev-dropbox:${DROPBOX_STABLE_V}
+	docker tag dgtmon-dev-dropbox ${DOCKER_HUB}/dgtmon-dev-dropbox:${DROPBOX_STABLE_V}
+
+dropbox/push:
+	docker push ${DOCKER_ECR}/dgtmon-dev-dropbox:${DROPBOX_STABLE_V}
+	docker push ${DOCKER_HUB}/dgtmon-dev-dropbox:${DROPBOX_STABLE_V}
+
+dropbox/make: dropbox/build dropbox/tag dropbox/push
 
 preparer/build:
 	cp src/_common/constants.py src/preparer/constants.py

@@ -83,6 +83,11 @@ variable "entrypoint_repo_name" {
   description = "Name of the ECR repository for the entrypoint image"
 }
 
+variable "dropbox_repo_name" {
+  type        = string
+  description = "Name of the ECR repository for the dropbox-caller image"
+}
+
 variable "preparer_repo_name" {
   type        = string
   description = "Name of the ECR repository for the preparer image"
@@ -101,6 +106,11 @@ variable "verifier_repo_name" {
 variable "sqs_builder_trigger" {
   type        = string
   description = "Name of the SQS unique-id queue with messages to build a particular book"
+}
+
+variable "sqs_entrypoint_to_dropbox" {
+  type        = string
+  description = "Name of the SQS queue for notifications when Dropbox was updated (send from entrypoint to dropbox)"
 }
 
 locals {

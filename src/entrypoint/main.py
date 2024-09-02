@@ -55,6 +55,7 @@ logger.setLevel(logging.INFO)
 
 dynamodb = boto3.resource("dynamodb")
 secretsmanager = boto3.client("secretsmanager")
+sqs = boto3.client("sqs")
 
 
 APP_KEY = "9d9sdu2khx0lboj"
@@ -76,6 +77,19 @@ app.secret_key = FLASK_SECRET_KEY
 fapp = fastapi.FastAPI()
 fapp.add_middleware(SessionMiddleware, secret_key=FLASK_SECRET_KEY)
 templates = fastapi.templating.Jinja2Templates(directory="templates")
+
+
+class UserData(t.TypedDict):
+    users: list[int]
+
+class AccountsData(t.TypedDict):
+    accounts: list[str]
+
+
+class FlaskRequestData(t.TypedDict):
+    # {'delta': {'users': [635421248]}, 'list_folder': {'accounts': ['dbid:AAC4AZN7bGg-92mRl_JqfdGDY8vV-d0xwpk']}}
+    delta: UserData
+    list_folder: UserData
 
 
 def get_dbx_app_secret(secret_id: str) -> str:
@@ -343,7 +357,14 @@ def challenge() -> flask.Response:
 
 @app.route("/webhook", methods=["POST"])
 def webhook() -> t.Union[t.NoReturn | str]:
-    """Receive a list of changed user IDs from Dropbox and process each."""
+    """
+    Handle POST webhook requests by sending messages to an SQS queue.
+    Important: the Entrypoint AWS Lambda has only 10 seconds to respond to 
+    a webhook request! Thus, the only action it takes is to send messages to 
+    the SQS queue. The messages are received by the Dropbox AWS Lambda,
+    which will call the Dropbox API `/files/list_folder/` or 
+    `/files/list_folder/continue` endpoint and upload files to AWS S3.
+    """
     # Make sure this is a valid request from Dropbox
     logger.info("Webhook REST api endpoint was called with POST.")
     logger.info(
@@ -376,6 +397,9 @@ def webhook() -> t.Union[t.NoReturn | str]:
                     "Exiting with 'Forbidden' status code.")
         flask.abort(403)
 
+    
+
+
     for account in json.loads(flask.request.data)["list_folder"]["accounts"]:
         # We need to respond quickly to the webhook request, so we do the
         # actual work in a separate thread. For more robustness, it's a
@@ -386,6 +410,25 @@ def webhook() -> t.Union[t.NoReturn | str]:
         # threading.Thread(target=process_user, args=(account,)).start()
         # logger.info("Process a webhook's request by a worker.")
     return ""
+
+
+def _send_msg_to_sqs(request_data: FlaskRequestData) -> None:
+    logger.info(f"Preparing to send a message to the sqs queue.")
+    logger.info("Os.environ: " + json.dumps(os.environ, default=str))
+    try:
+        QueueUrl = "https://sqs.eu-west-1.amazonaws.com/367031255351/cpy-dgtmon-dev-entrypoint-to-dropbox"
+        MessageBody = json.dumps(request_data, default=str)
+        resp = sqs.send_message(
+            QueueUrl=QueueUrl,
+            MessageBody=MessageBody,
+        )
+        logger.info(
+            f"Response from sqs.send_message(QueueUrl={QueueUrl}, MessageBody={MessageBody}): "
+            + json.dumps(resp, default=str)
+        )
+    except Exception as e:
+        logger.exception(f"Sending a message to sqs queue failed. Error: {repr(e)}")
+        raise
 
 
 def dynamodb_set(tbl: str, **kwargs) -> None:
