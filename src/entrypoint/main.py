@@ -1,4 +1,5 @@
 import aws_lambda_wsgi
+import base64
 import boto3
 import binascii
 import datetime
@@ -14,13 +15,11 @@ import logging
 import markdown
 import pathlib
 import time
-import threading
 import typing as t
 import urllib
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
-from boto3.dynamodb.conditions import Key
 
 
 try:
@@ -416,8 +415,8 @@ def _send_msg_to_sqs(request_data: FlaskRequestData) -> None:
     logger.info(f"Preparing to send a message to the sqs queue.")
     logger.info("Os.environ: " + json.dumps(os.environ, default=str))
     try:
-        QueueUrl = "https://sqs.eu-west-1.amazonaws.com/367031255351/cpy-dgtmon-dev-entrypoint-to-dropbox"
-        MessageBody = json.dumps(request_data, default=str)
+        QueueUrl = os.environ["SQS_URL"]
+        MessageBody = base64.b64encode(json.dumps(request_data, default=str))
         resp = sqs.send_message(
             QueueUrl=QueueUrl,
             MessageBody=MessageBody,

@@ -1,3 +1,4 @@
+import base64
 import datetime
 import json
 import pathlib
@@ -30,4 +31,7 @@ logger.setLevel(logging.INFO)
 def lambda_handler(event, context):
     logger.info("Event" + json.dumps(event, default=str))
     logger.info("Context" + json.dumps(context, default=str))
+
+    msg = base64.b64decode(event["Records"][0]["body"])
+    logger.info(f"Message: {msg}")
     return
