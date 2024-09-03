@@ -3,7 +3,43 @@
 resource "aws_s3_bucket" "archive_apkg_all" {
   bucket        = var.archive_apkg_all_bucket_name
   force_destroy = true
+  # TODO: turn on archiving
+  # lifecycle {
+  #   prevent_destroy = true
+  # }
 }
+
+# # TODO: turn on archiving
+# resource "aws_s3_bucket_versioning" "archive_apkg_all" {
+#   bucket = aws_s3_bucket.archive_apkg_all.id
+#   versioning_configuration {
+#     status = "Enabled"
+#   }
+# }
+
+# # TODO: turn on archiving
+# resource "aws_s3_bucket_object_lock_configuration" "archive_apkg_all" {
+#   bucket              = aws_s3_bucket.archive_apkg_all.id
+#   object_lock_enabled = "Enabled"
+# }
+
+# # TODO: turn on archiving
+# resource "aws_s3_bucket_lifecycle_configuration" "archive_apkg_all" {
+#   bucket = aws_s3_bucket.archive_apkg_all.id
+#   depends_on = [aws_s3_bucket_versioning.archive_apkg_all]
+#   rule {
+#     id = "archive_apkg_all_old_versions_to_archive"
+#     status = "Enabled"
+#     noncurrent_version_transition {
+#       noncurrent_days = 30
+#       storage_class   = "STANDARD_IA"
+#     }
+#     noncurrent_version_transition {
+#       noncurrent_days = 60
+#       storage_class   = "GLACIER"
+#     }
+#   }
+# }
 
 data "aws_iam_policy_document" "archive_apkg_all_policy" {
   statement {
