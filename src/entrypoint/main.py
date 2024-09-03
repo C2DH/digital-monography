@@ -397,15 +397,15 @@ def webhook() -> t.Union[t.NoReturn | str]:
                     "Exiting with 'Forbidden' status code.")
         flask.abort(403)
 
-    
+    _send_msg_to_sqs(flask.request.data)
 
 
-    for account in json.loads(flask.request.data)["list_folder"]["accounts"]:
+    # for account in json.loads(flask.request.data)["list_folder"]["accounts"]:
         # We need to respond quickly to the webhook request, so we do the
         # actual work in a separate thread. For more robustness, it's a
         # good idea to add the work to a reliable queue and process the queue
         # in a worker process.
-        process_user(account)
+        # process_user(account)
         # logger.info("Passing a process request to a separate thread.")
         # threading.Thread(target=process_user, args=(account,)).start()
         # logger.info("Process a webhook's request by a worker.")
