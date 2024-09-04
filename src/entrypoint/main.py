@@ -414,6 +414,14 @@ def webhook() -> t.Union[t.NoReturn | str]:
 def _send_msg_to_sqs(request_data: FlaskRequestData) -> None:
     logger.info(f"Preparing to send a message to the sqs queue.")
     logger.info("Os.environ: " + json.dumps(os.environ, default=str))
+    logger.info(f"request_data={request_data}, type={type(request_data)}")
+    logger.info(f"json.dumps(request_data, default=str)={json.dumps(request_data, default=str)}")
+    logger.info('json.dumps(request_data, default=str).encode("utf-8")' + json.dumps(request_data, default=str).encode("utf-8"))
+    logger.info('type(json.dumps(request_data, default=str).encode("utf-8"))=' + type(json.dumps(request_data, default=str).encode("utf-8")))
+    logger.info(f'base64.b64encode(json.dumps(request_data, default=str).encode("utf-8"))={base64.b64encode(json.dumps(request_data, default=str).encode("utf-8"))}')
+    logger.info(f'type={type(base64.b64encode(json.dumps(request_data, default=str).encode("utf-8")))}')
+    logger.info(f'base64.b64encode(json.dumps(request_data, default=str).encode("utf-8")).decode("utf-8")={base64.b64encode(json.dumps(request_data, default=str).encode("utf-8")).decode("utf-8")}')
+    logger.info(f'type={type(base64.b64encode(json.dumps(request_data, default=str).encode("utf-8")).decode("utf-8"))}')
     try:
         QueueUrl = os.environ["SQS_URL"]
         MessageBody = base64.b64encode(json.dumps(request_data, default=str).encode("utf-8")).decode("utf-8")
