@@ -416,7 +416,7 @@ def _send_msg_to_sqs(request_data: FlaskRequestData) -> None:
     logger.info("Os.environ: " + json.dumps(os.environ, default=str))
     try:
         QueueUrl = os.environ["SQS_URL"]
-        MessageBody = base64.b64encode(json.dumps(request_data).encode("utf-8")).decode("utf-8")
+        MessageBody = base64.b64encode(json.dumps(request_data, default=str).encode("utf-8")).decode("utf-8")
         resp = sqs.send_message(
             QueueUrl=QueueUrl,
             MessageBody=MessageBody,
