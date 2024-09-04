@@ -24,7 +24,7 @@ except (ImportError, ModuleNotFoundError):
 
 if IS_DEBUG:
     today = datetime.date.today().isoformat()
-    log_target = pathlib.Path(f"/tmp/efs/_LOGS/{today}_preparer.log")
+    log_target = pathlib.Path(f"/tmp/efs/_LOGS/{today}.log")
     log_target.parent.mkdir(parents=True, exist_ok=True)
     logging.basicConfig(
         filename=log_target,
@@ -35,18 +35,18 @@ if IS_DEBUG:
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-
-dynamodb = boto3.resource("dynamodb")
+if IS_DEBUG:
+    dynamodb = None
+else:
+    dynamodb = boto3.resource("dynamodb")
 
 
 def lambda_handler(event, context):
     logger.info("Event" + json.dumps(event, default=str))
     logger.info("Context" + json.dumps(context, default=str))
-
     request_data = json.loads(base64.b64decode(event["Records"][0]["body"]))
-    logger.info(f"Message: {request_data}")
-
-    for account in json.loads(request_data)["list_folder"]["accounts"]:
+    logger.info(f"Message: {request_data}, type={type(request_data)}")
+    for account in request_data["list_folder"]["accounts"]:
         # We need to respond quickly to the webhook request, so we do the
         # actual work in a separate thread. For more robustness, it's a
         # good idea to add the work to a reliable queue and process the queue
