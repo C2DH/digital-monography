@@ -93,11 +93,61 @@ def process_user(account):
 
     while has_more:
         if cursor is None:
-            result = dbx.files_list_folder(path="")
+            logger.info(">.> dbx.files_list_folder")
+            result = dbx.files_list_folder(path="", recursive=True)
         else:
+            logger.info(">.> dbx.files_list_folder_continue")
+            result = dbx.files_list_folder_continue(cursor)
+        logger.info(f"result.entries {result.entries}")
+        if len(result.entries) == 0:
+            logger.info(f"result {result}")
+        for entry in result.entries:
+            logger.info("dir(entry)" + json.dumps(dir(entry), default=str))
+            logger.info(f"type(entry) {type(entry)}")
+            logger.info(f"entry.name {entry.name}")
+            logger.info(f"entry.path_lower {entry.path_lower}")
+
+            if isinstance(entry, dropbox.files.FolderMetadata):
+                logger.info("Object is a folder.")
+                logger.info(f"{entry}")
+                _download_dir(dbx, entry)
+            elif isinstance(entry, dropbox.files.DeletedMetadata):
+                logger.info("Object is a deleted file.")
+                logger.info(f"{entry}")
+                logger.info("For now we don't handle file deletions.")
+            elif isinstance(entry, dropbox.files.FileMetadata):
+                logger.info(f"Object path_lower is {entry.path_lower}.")
+                _download_file(dbx, entry)
+
+        # Update cursor
+        cursor = result.cursor
+        # redis_client.hset("cursors", account, cursor)
+        logger.info('Here was: `redis_client.hset("cursors", account, cursor)`')
+        dynamodb_set(DYNAMODB_CURSORS_TBL, **{"account": account, "cursor": cursor})
+
+        # Repeat only if there's more to do
+        has_more = result.has_more
+        logger.info("result.has_more loop in process_user has ended.")
+    logger.info("process_user has ended.")
+    ######################################
+    ######################################
+    ######################################
+    logger.info('############################### NEW')
+    logger.info('############################### NEW')
+    cursor = None
+    dbx = dropbox.Dropbox(token)
+    has_more = True
+    while has_more:
+        if cursor is None:
+            logger.info(">.> dbx.files_list_folder")
+            result = dbx.files_list_folder(path="", recursive=True)
+        else:
+            logger.info(">.> dbx.files_list_folder_continue")
             result = dbx.files_list_folder_continue(cursor)
 
         logger.info(f"result.entries {result.entries}")
+        if len(result.entries) == 0:
+            logger.info(f"result {result}")
         for entry in result.entries:
             logger.info("dir(entry)" + json.dumps(dir(entry), default=str))
             logger.info(f"type(entry) {type(entry)}")
@@ -170,17 +220,19 @@ def _download_dir(dbx: dropbox.Dropbox, dir_meta: dropbox.files.FolderMetadata) 
     cursor = None
     while has_more:
         if cursor is None:
-            result: dropbox.files.ListFolderResult = dbx.files_list_folder(dir_meta.path_lower)
+            logger.info(">.> dbx.files_list_folder")
+            result: dropbox.files.ListFolderResult = dbx.files_list_folder(dir_meta.path_lower, recursive=True)
         else:
+            logger.info(">.> dbx.files_list_folder_continue")
             result: dropbox.files.ListFolderResult = dbx.files_list_folder_continue(cursor)
         logger.info(f"result.entries {result.entries}")
         for entry in result.entries:
             logger.info("entry")
-            if isinstance(entry, dropbox.files.FolderMetadata):
-                logger.info(">> " + "Object is a folder.")
-                logger.info(">> " + f"{entry}")
-                _download_dir(dbx, entry)
-            elif isinstance(entry, dropbox.files.DeletedMetadata):
+            # if isinstance(entry, dropbox.files.FolderMetadata):
+            #     logger.info(">> " + "Object is a folder.")
+            #     logger.info(">> " + f"{entry}")
+            #     _download_dir(dbx, entry)
+            if isinstance(entry, dropbox.files.DeletedMetadata):
                 logger.info(">> " + "Object is a deleted file.")
                 logger.info(">> " + f"{entry}")
                 logger.info(">> " + "For now we don't handle file deletions.")
