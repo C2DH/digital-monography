@@ -97,6 +97,7 @@ def process_user(account):
         else:
             result = dbx.files_list_folder_continue(cursor)
 
+        logger.info(f"result.entries {result.entries}")
         for entry in result.entries:
             logger.info("dir(entry)" + json.dumps(dir(entry), default=str))
             logger.info(f"type(entry) {type(entry)}")
@@ -172,6 +173,7 @@ def _download_dir(dbx: dropbox.Dropbox, dir_meta: dropbox.files.FolderMetadata) 
             result: dropbox.files.ListFolderResult = dbx.files_list_folder(dir_meta.path_lower)
         else:
             result: dropbox.files.ListFolderResult = dbx.files_list_folder_continue(cursor)
+        logger.info(f"result.entries {result.entries}")
         for entry in result.entries:
             logger.info("entry")
             if isinstance(entry, dropbox.files.FolderMetadata):
