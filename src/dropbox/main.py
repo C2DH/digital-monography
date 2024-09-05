@@ -195,22 +195,33 @@ def _put_file_from_dbx_to_s3(body: bytes, key: KeyPath) -> None:
 
 def _download_dir(dbx: dropbox.Dropbox, dir_meta: dropbox.files.FolderMetadata) -> None:
     logger.info("_download_dir")
-    result: dropbox.files.ListFolderResult = dbx.files_list_folder(dir_meta.path_lower)
-    for entry in result.entries:
-        logger.info("entry")
-        if isinstance(entry, dropbox.files.FolderMetadata):
-            logger.info(">> " + "Object is a folder.")
-            logger.info(">> " + f"{entry}")
-            logger.info(">> " + entry)
-            _download_dir(dbx, entry)
-        elif isinstance(entry, dropbox.files.DeletedMetadata):
-            logger.info(">> " + "Object is a deleted file.")
-            logger.info(">> " + f"{entry}")
-            logger.info(">> " + entry)
-            logger.info(">> " + "For now we don't handle file deletions.")
-        elif isinstance(entry, dropbox.files.FileMetadata):
-            logger.info(">> " + f"Object path_lower is {entry.path_lower}.")
-            _download_file(dbx, entry)
+    has_more = True
+    cursor = None
+    while has_more:
+        if cursor is None:
+            result: dropbox.files.ListFolderResult = dbx.files_list_folder(dir_meta.path_lower)
+        else:
+            result: dropbox.files.ListFolderResult = dbx.files_list_folder_continue(cursor)
+        for entry in result.entries:
+            logger.info("entry")
+            if isinstance(entry, dropbox.files.FolderMetadata):
+                logger.info(">> " + "Object is a folder.")
+                logger.info(">> " + f"{entry}")
+                logger.info(">> " + entry)
+                _download_dir(dbx, entry)
+            elif isinstance(entry, dropbox.files.DeletedMetadata):
+                logger.info(">> " + "Object is a deleted file.")
+                logger.info(">> " + f"{entry}")
+                logger.info(">> " + entry)
+                logger.info(">> " + "For now we don't handle file deletions.")
+            elif isinstance(entry, dropbox.files.FileMetadata):
+                logger.info(">> " + f"Object path_lower is {entry.path_lower}.")
+                _download_file(dbx, entry)
+        cursor = result.cursor
+        logger.info(f"result.cursor {result.cursor}")
+        has_more = result.has_more
+        logger.info(f"result.has_more {result.has_more}")
+    logger.info(f"Has_more loop ended")
 
 
 def _download_file(dbx: dropbox.Dropbox, entry: dropbox.files.FileMetadata) -> None:
