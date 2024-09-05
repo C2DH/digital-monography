@@ -103,10 +103,16 @@ def process_user(account):
             logger.info(f"entry.name {entry.name}")
             logger.info(f"entry.path_lower {entry.path_lower}")
 
+            if isinstance(entry, dropbox.files.DeletedMetadata):
+                logger.info("Object is a deleted file.")
+            elif isinstance(entry, dropbox.files.FolderMetadata):
+                logger.info("Object is a folder.")
+            else:
+                logger.info(f"Object path_lower is {entry.path_lower}.")
             # Ignore deleted files, folders, and non-markdown files
             if (
                 isinstance(entry, dropbox.files.DeletedMetadata)
-                or isinstance(entry, dropbox.files.FolderMetadata)
+                # or isinstance(entry, dropbox.files.FolderMetadata)
                 or not entry.path_lower.endswith(".md")
             ):
                 continue
@@ -120,7 +126,9 @@ def process_user(account):
 
             logger.info(f'Response content {resp.content.decode("utf-8")}')
             logger.info(f"entry.path_lower: {entry.path_lower}")
-            key = KeyPath(entry.path_lower)
+
+            p = entry.path_lower[1:] if entry.path_lower[0] == "/" else entry.path_lower
+            key = KeyPath(p)
             logger.info(f"keypath: {key}")
             logger.info(f"type(resp.content): {type(resp.content)}")
             _put_file_from_dbx_to_s3(resp.content, key)
