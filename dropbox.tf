@@ -93,7 +93,7 @@ data "aws_iam_policy_document" "dropbox" {
   statement {
     sid       = "AllowPuttingToS3"
     effect    = "Allow"
-    resources = [aws_s3_bucket.upload_apkg.arn]
+    resources = ["${aws_s3_bucket.upload_apkg.arn}/*"]
     actions = [
       "s3:PutObject",
       "s3:PutObjectAcl",
