@@ -197,7 +197,6 @@ def _download_file(dbx: dropbox.Dropbox, entry: dropbox.files.FileMetadata) -> N
     meta, resp = dbx.files_download(entry.path_lower)
     meta: dropbox.files.FileMetadata
     resp: requests.models.Response
-    logger.info(f'Response content {resp.content.decode("utf-8")}')
     logger.info(f"entry.path_lower: {entry.path_lower}")
     p = entry.path_lower[1:] if entry.path_lower[0] == "/" else entry.path_lower
     logger.info(f"path: {p}")
