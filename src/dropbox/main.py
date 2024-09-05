@@ -177,12 +177,10 @@ def _download_dir(dbx: dropbox.Dropbox, dir_meta: dropbox.files.FolderMetadata) 
             if isinstance(entry, dropbox.files.FolderMetadata):
                 logger.info(">> " + "Object is a folder.")
                 logger.info(">> " + f"{entry}")
-                logger.info(">> " + entry)
                 _download_dir(dbx, entry)
             elif isinstance(entry, dropbox.files.DeletedMetadata):
                 logger.info(">> " + "Object is a deleted file.")
                 logger.info(">> " + f"{entry}")
-                logger.info(">> " + entry)
                 logger.info(">> " + "For now we don't handle file deletions.")
             elif isinstance(entry, dropbox.files.FileMetadata):
                 logger.info(">> " + f"Object path_lower is {entry.path_lower}.")
