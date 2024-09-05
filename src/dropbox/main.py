@@ -8,6 +8,8 @@ import pathlib
 import logging
 import typing as t
 
+import requests
+
 
 try:
     from constants import (
@@ -110,8 +112,11 @@ def process_user(account):
                 continue
 
             # Convert to Markdown and store as <basename>.html
-            metadata, resp = dbx.files_download(entry.path_lower)
-
+            # _, resp = dbx.files_download(entry.path_lower)
+            # r: tuple[dropbox.files.FileMetadata, requests.models.Response] = dbx.files_download(entry.path_lower)
+            meta, resp = dbx.files_download(entry.path_lower)
+            meta: dropbox.files.FileMetadata
+            resp: requests.models.Response
 
             logger.info(f'Response content {resp.content.decode("utf-8")}')
             logger.info(f"entry.path_lower: {entry.path_lower}")
