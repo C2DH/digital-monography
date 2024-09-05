@@ -113,11 +113,7 @@ def process_user(account):
             metadata, resp = dbx.files_download(entry.path_lower)
 
 
-            logger.info("dir(metadata)" + json.dumps(dir(metadata), default=str))
-            logger.info(f"resp from dbx.files_download {json.dumps(resp.json(), default=str)}")
             logger.info(f'Response content {resp.content.decode("utf-8")}')
-
-
             logger.info(f"entry.path_lower: {entry.path_lower}")
             key = KeyPath(entry.path_lower)
             logger.info(f"keypath: {key}")
