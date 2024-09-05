@@ -193,23 +193,24 @@ def _put_file_from_dbx_to_s3(body: bytes, key: KeyPath) -> None:
         raise
 
 
-def _download_dir(dbx: dropbox.Dropbox, entry: dropbox.files.FolderMetadata) -> None:
+def _download_dir(dbx: dropbox.Dropbox, dir_meta: dropbox.files.FolderMetadata) -> None:
     logger.info("_download_dir")
-    to_download = dbx.files_list_folder(entry.path_lower)
-    for ent in to_download:
-        if isinstance(ent, dropbox.files.FolderMetadata):
+    result: dropbox.files.ListFolderResult = dbx.files_list_folder(dir_meta.path_lower)
+    for entry in result.entries:
+        logger.info("entry")
+        if isinstance(entry, dropbox.files.FolderMetadata):
             logger.info(">> " + "Object is a folder.")
-            logger.info(">> " + f"{ent}")
-            logger.info(">> " + ent)
-            _download_dir(dbx, ent)
-        elif isinstance(ent, dropbox.files.DeletedMetadata):
+            logger.info(">> " + f"{entry}")
+            logger.info(">> " + entry)
+            _download_dir(dbx, entry)
+        elif isinstance(entry, dropbox.files.DeletedMetadata):
             logger.info(">> " + "Object is a deleted file.")
-            logger.info(">> " + f"{ent}")
-            logger.info(">> " + ent)
+            logger.info(">> " + f"{entry}")
+            logger.info(">> " + entry)
             logger.info(">> " + "For now we don't handle file deletions.")
-        elif isinstance(ent, dropbox.files.FileMetadata):
-            logger.info(">> " + f"Object path_lower is {ent.path_lower}.")
-            _download_file(dbx, ent)
+        elif isinstance(entry, dropbox.files.FileMetadata):
+            logger.info(">> " + f"Object path_lower is {entry.path_lower}.")
+            _download_file(dbx, entry)
 
 
 def _download_file(dbx: dropbox.Dropbox, entry: dropbox.files.FileMetadata) -> None:
