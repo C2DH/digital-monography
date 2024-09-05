@@ -3,7 +3,6 @@ import boto3
 import datetime
 import dropbox
 import json
-import markdown
 import pathlib
 import logging
 import typing as t
@@ -226,11 +225,3 @@ def _download_file(dbx: dropbox.Dropbox, entry: dropbox.files.FileMetadata) -> N
     logger.info(f"keypath: {key}")
     logger.info(f"type(resp.content): {type(resp.content)}")
     _put_file_from_dbx_to_s3(resp.content, key)
-    html = markdown.markdown(resp.content.decode("utf-8"))
-    logger.info("html == " + html)
-    dbx.files_upload(
-        bytes(html, encoding="utf-8"),
-        entry.path_lower[:-3] + ".html",
-        mode=dropbox.files.WriteMode("overwrite"),
-    )
-    logger.info(f"New file '{entry.path_lower[:-3] + '.html'}' was uploaded.")
