@@ -100,22 +100,27 @@ def process_user(account):
 
         for entry in result.entries:
             logger.info("dir(entry)" + json.dumps(dir(entry), default=str))
+            logger.info(f"type(entry) {type(entry)}")
             logger.info(f"entry.name {entry.name}")
             logger.info(f"entry.path_lower {entry.path_lower}")
 
             if isinstance(entry, dropbox.files.DeletedMetadata):
                 logger.info("Object is a deleted file.")
+                logger.info(f"{entry}")
+                logger.info(entry)
             elif isinstance(entry, dropbox.files.FolderMetadata):
                 logger.info("Object is a folder.")
+                logger.info(f"{entry}")
+                logger.info(entry)
             else:
                 logger.info(f"Object path_lower is {entry.path_lower}.")
             # Ignore deleted files, folders, and non-markdown files
-            if (
-                isinstance(entry, dropbox.files.DeletedMetadata)
-                # or isinstance(entry, dropbox.files.FolderMetadata)
-                or not entry.path_lower.endswith(".md")
-            ):
-                continue
+            # if (
+            #     isinstance(entry, dropbox.files.DeletedMetadata)
+            #     # or isinstance(entry, dropbox.files.FolderMetadata)
+            #     or not entry.path_lower.endswith(".md")
+            # ):
+            #     continue
 
             # Convert to Markdown and store as <basename>.html
             # _, resp = dbx.files_download(entry.path_lower)
