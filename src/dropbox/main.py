@@ -115,29 +115,6 @@ def process_user(account):
                 logger.info(f"Object path_lower is {entry.path_lower}.")
                 _download_file(dbx, entry)
 
-            # meta, resp = dbx.files_download(entry.path_lower)
-            # meta: dropbox.files.FileMetadata
-            # resp: requests.models.Response
-
-            # logger.info(f'Response content {resp.content.decode("utf-8")}')
-            # logger.info(f"entry.path_lower: {entry.path_lower}")
-
-            # p = entry.path_lower[1:] if entry.path_lower[0] == "/" else entry.path_lower
-            # key = KeyPath(p)
-            # logger.info(f"keypath: {key}")
-            # logger.info(f"type(resp.content): {type(resp.content)}")
-            # _put_file_from_dbx_to_s3(resp.content, key)
-
-
-            # html = markdown.markdown(resp.content.decode("utf-8"))
-            # logger.info("html == " + html)
-            # dbx.files_upload(
-            #     bytes(html, encoding="utf-8"),
-            #     entry.path_lower[:-3] + ".html",
-            #     mode=dropbox.files.WriteMode("overwrite"),
-            # )
-            # logger.info(f"New file '{entry.path_lower[:-3] + '.html'}' was uploaded.")
-
         # Update cursor
         cursor = result.cursor
         # redis_client.hset("cursors", account, cursor)
@@ -181,11 +158,6 @@ def _put_file_from_dbx_to_s3(body: bytes, key: KeyPath) -> None:
             f"Response from s3.put_object(Bucket={dst}, Key={key}): "
             + json.dumps(resp, default=str)
         )
-        # _put_object(
-        #     contents.encode("utf-8"),
-        #     IR_APKG_HTML_BUCKET_NAME,
-        #     s3_key,
-        # )
     except Exception as e:
         logger.exception(f"Putting file from Dropbox to {dst} bucket failed. Error: {repr(e)}")
         raise
