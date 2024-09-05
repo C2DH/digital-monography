@@ -38,6 +38,7 @@ resource "aws_dynamodb_table" "cursors_tbl" {
 
 resource "aws_sqs_queue" "entrypoint_to_dropbox" {
   name                       = var.sqs_entrypoint_to_dropbox
+  message_retention_seconds  = 3600
   visibility_timeout_seconds = 900
 }
 
