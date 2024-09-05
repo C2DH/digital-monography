@@ -104,49 +104,42 @@ def process_user(account):
             logger.info(f"entry.name {entry.name}")
             logger.info(f"entry.path_lower {entry.path_lower}")
 
-            if isinstance(entry, dropbox.files.DeletedMetadata):
-                logger.info("Object is a deleted file.")
-                logger.info(f"{entry}")
-                logger.info(entry)
-            elif isinstance(entry, dropbox.files.FolderMetadata):
+            if isinstance(entry, dropbox.files.FolderMetadata):
                 logger.info("Object is a folder.")
                 logger.info(f"{entry}")
                 logger.info(entry)
-            else:
+                _download_dir(dbx, entry)
+            elif isinstance(entry, dropbox.files.DeletedMetadata):
+                logger.info("Object is a deleted file.")
+                logger.info(f"{entry}")
+                logger.info(entry)
+                logger.info("For now we don't handle file deletions.")
+            elif isinstance(entry, dropbox.files.FileMetadata):
                 logger.info(f"Object path_lower is {entry.path_lower}.")
-            # Ignore deleted files, folders, and non-markdown files
-            # if (
-            #     isinstance(entry, dropbox.files.DeletedMetadata)
-            #     # or isinstance(entry, dropbox.files.FolderMetadata)
-            #     or not entry.path_lower.endswith(".md")
-            # ):
-            #     continue
+                _download_file(dbx, entry)
 
-            # Convert to Markdown and store as <basename>.html
-            # _, resp = dbx.files_download(entry.path_lower)
-            # r: tuple[dropbox.files.FileMetadata, requests.models.Response] = dbx.files_download(entry.path_lower)
-            meta, resp = dbx.files_download(entry.path_lower)
-            meta: dropbox.files.FileMetadata
-            resp: requests.models.Response
+            # meta, resp = dbx.files_download(entry.path_lower)
+            # meta: dropbox.files.FileMetadata
+            # resp: requests.models.Response
 
-            logger.info(f'Response content {resp.content.decode("utf-8")}')
-            logger.info(f"entry.path_lower: {entry.path_lower}")
+            # logger.info(f'Response content {resp.content.decode("utf-8")}')
+            # logger.info(f"entry.path_lower: {entry.path_lower}")
 
-            p = entry.path_lower[1:] if entry.path_lower[0] == "/" else entry.path_lower
-            key = KeyPath(p)
-            logger.info(f"keypath: {key}")
-            logger.info(f"type(resp.content): {type(resp.content)}")
-            _put_file_from_dbx_to_s3(resp.content, key)
+            # p = entry.path_lower[1:] if entry.path_lower[0] == "/" else entry.path_lower
+            # key = KeyPath(p)
+            # logger.info(f"keypath: {key}")
+            # logger.info(f"type(resp.content): {type(resp.content)}")
+            # _put_file_from_dbx_to_s3(resp.content, key)
 
 
-            html = markdown.markdown(resp.content.decode("utf-8"))
-            logger.info("html == " + html)
-            dbx.files_upload(
-                bytes(html, encoding="utf-8"),
-                entry.path_lower[:-3] + ".html",
-                mode=dropbox.files.WriteMode("overwrite"),
-            )
-            logger.info(f"New file '{entry.path_lower[:-3] + '.html'}' was uploaded.")
+            # html = markdown.markdown(resp.content.decode("utf-8"))
+            # logger.info("html == " + html)
+            # dbx.files_upload(
+            #     bytes(html, encoding="utf-8"),
+            #     entry.path_lower[:-3] + ".html",
+            #     mode=dropbox.files.WriteMode("overwrite"),
+            # )
+            # logger.info(f"New file '{entry.path_lower[:-3] + '.html'}' was uploaded.")
 
         # Update cursor
         cursor = result.cursor
@@ -199,3 +192,45 @@ def _put_file_from_dbx_to_s3(body: bytes, key: KeyPath) -> None:
     except Exception as e:
         logger.exception(f"Putting file from Dropbox to {dst} bucket failed. Error: {repr(e)}")
         raise
+
+
+def _download_dir(dbx: dropbox.Dropbox, entry: dropbox.files.FolderMetadata) -> None:
+    logger.info("_download_dir")
+    to_download = dbx.files_list_folder(entry.path_lower)
+    for ent in to_download:
+        if isinstance(ent, dropbox.files.FolderMetadata):
+            logger.info(">> " + "Object is a folder.")
+            logger.info(">> " + f"{ent}")
+            logger.info(">> " + ent)
+            _download_dir(dbx, ent)
+        elif isinstance(ent, dropbox.files.DeletedMetadata):
+            logger.info(">> " + "Object is a deleted file.")
+            logger.info(">> " + f"{ent}")
+            logger.info(">> " + ent)
+            logger.info(">> " + "For now we don't handle file deletions.")
+        elif isinstance(ent, dropbox.files.FileMetadata):
+            logger.info(">> " + f"Object path_lower is {ent.path_lower}.")
+            _download_file(dbx, ent)
+
+
+def _download_file(dbx: dropbox.Dropbox, entry: dropbox.files.FileMetadata) -> None:
+    logger.info("_download_file")
+    meta, resp = dbx.files_download(entry.path_lower)
+    meta: dropbox.files.FileMetadata
+    resp: requests.models.Response
+    logger.info(f'Response content {resp.content.decode("utf-8")}')
+    logger.info(f"entry.path_lower: {entry.path_lower}")
+    p = entry.path_lower[1:] if entry.path_lower[0] == "/" else entry.path_lower
+    logger.info(f"path: {p}")
+    key = KeyPath(p)
+    logger.info(f"keypath: {key}")
+    logger.info(f"type(resp.content): {type(resp.content)}")
+    _put_file_from_dbx_to_s3(resp.content, key)
+    html = markdown.markdown(resp.content.decode("utf-8"))
+    logger.info("html == " + html)
+    dbx.files_upload(
+        bytes(html, encoding="utf-8"),
+        entry.path_lower[:-3] + ".html",
+        mode=dropbox.files.WriteMode("overwrite"),
+    )
+    logger.info(f"New file '{entry.path_lower[:-3] + '.html'}' was uploaded.")
