@@ -8,18 +8,23 @@ import pathlib
 import logging
 import typing as t
 
+
 try:
     from constants import (
-        IS_DEBUG,
+        APKG_UPLOAD_BUCKET_NAME,
         DYNAMODB_TOKENS_TBL,
         DYNAMODB_CURSORS_TBL,
+        IS_DEBUG,
     )
+    from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
     from .constants import (
-        IS_DEBUG,
+        APKG_UPLOAD_BUCKET_NAME,
         DYNAMODB_TOKENS_TBL,
         DYNAMODB_CURSORS_TBL,
+        IS_DEBUG,
     )
+    from .keys import KeyPath
 
 
 if IS_DEBUG:
@@ -36,9 +41,12 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 if IS_DEBUG:
+    # TODO: add fakers
     dynamodb = None
+    s3 = None
 else:
     dynamodb = boto3.resource("dynamodb")
+    s3 = boto3.client("s3")
 
 
 def lambda_handler(event, context):
@@ -46,13 +54,19 @@ def lambda_handler(event, context):
     logger.info("Context" + json.dumps(context, default=str))
     request_data = json.loads(base64.b64decode(event["Records"][0]["body"]))
     logger.info(f"Message: {request_data}, type={type(request_data)}")
+
+    try:
+        request_data["list_folder"]["accounts"]
+    except Exception as e:
+        return {"statusCode": 200, "body": ""}
+
     for account in request_data["list_folder"]["accounts"]:
         # We need to respond quickly to the webhook request, so we do the
         # actual work in a separate thread. For more robustness, it's a
         # good idea to add the work to a reliable queue and process the queue
         # in a worker process.
         process_user(account)
-    return
+    return {"statusCode": 200, "body": ""}
 
 
 def process_user(account):
@@ -96,7 +110,21 @@ def process_user(account):
                 continue
 
             # Convert to Markdown and store as <basename>.html
-            _, resp = dbx.files_download(entry.path_lower)
+            metadata, resp = dbx.files_download(entry.path_lower)
+
+
+            logger.info("dir(metadata)" + json.dumps(dir(metadata), default=str))
+            logger.info(f"resp from dbx.files_download {json.dumps(resp.json(), default=str)}")
+            logger.info(f'Response content {resp.content.decode("utf-8")}')
+
+
+            logger.info(f"entry.path_lower: {entry.path_lower}")
+            key = KeyPath(entry.path_lower)
+            logger.info(f"keypath: {key}")
+            logger.info(f"type(resp.content): {type(resp.content)}")
+            _put_file_from_dbx_to_s3(resp.content, key)
+
+
             html = markdown.markdown(resp.content.decode("utf-8"))
             logger.info("html == " + html)
             dbx.files_upload(
@@ -116,6 +144,7 @@ def process_user(account):
         has_more = result.has_more
         logger.info("result.has_more loop in process_user has ended.")
     logger.info("process_user has ended.")
+    return {"statusCode": 200, "body": ""}
 
 
 def dynamodb_set(tbl: str, **kwargs) -> None:
@@ -135,3 +164,24 @@ def dynamodb_get(tbl: str, pk: dict[str, str]) -> dict[str, t.Any]:
         f"Response from dynamodb.Table({tbl}).get_item: {json.dumps(resp, default=str)}"
     )
     return resp
+
+
+def _put_file_from_dbx_to_s3(body: bytes, key: KeyPath) -> None:
+    # This lambda cannot save to EFS because it is outside of the VPC
+    # To remedy that, I write to S3 and the next Lambda in the pipeline
+    # downloads it from there.
+    try:
+        dst = APKG_UPLOAD_BUCKET_NAME
+        resp = s3.put_object(Body=body, Bucket=dst, Key=str(key))
+        logger.info(
+            f"Response from s3.put_object(Bucket={dst}, Key={key}): "
+            + json.dumps(resp, default=str)
+        )
+        # _put_object(
+        #     contents.encode("utf-8"),
+        #     IR_APKG_HTML_BUCKET_NAME,
+        #     s3_key,
+        # )
+    except Exception as e:
+        logger.exception(f"Putting file from Dropbox to {dst} bucket failed. Error: {repr(e)}")
+        raise

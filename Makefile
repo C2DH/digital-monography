@@ -53,6 +53,7 @@ entrypoint/make: entrypoint/build entrypoint/tag entrypoint/push
 
 dropbox/build:
 	cp src/_common/constants.py src/dropbox/constants.py
+	cp src/_common/keys.py src/dropbox/keys.py
 	docker build -t dgtmon-dev-dropbox src/dropbox
 
 dropbox/tag:

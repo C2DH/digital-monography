@@ -16,6 +16,7 @@ resource "aws_s3_bucket_versioning" "archive_apkg_all" {
 
 resource "aws_s3_bucket_object_lock_configuration" "archive_apkg_all" {
   bucket              = aws_s3_bucket.archive_apkg_all.id
+  depends_on          = [aws_s3_bucket_versioning.archive_apkg_all]
   object_lock_enabled = "Enabled"
 }
 
