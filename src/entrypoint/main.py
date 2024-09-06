@@ -142,49 +142,7 @@ def oauth_callback(*args, **kwargs):
     dynamodb_set(
         DYNAMODB_TOKENS_TBL, **{"account": account, "access_token": access_token}
     )
-    process_user(account)
     return flask.redirect(get_url("done"))
-
-
-def process_user(account):
-    """Call /files/list_folder for the given user ID and process any changes."""
-    logger.info("process_user function was invoked with account " + str(account))
-    # OAuth token for the user
-    tokens_resp = dynamodb_get(DYNAMODB_TOKENS_TBL, {"account": account})
-    token = tokens_resp.get("Item", {}).get("access_token")
-    # cursor for the user (None the first time)
-    cursors_resp = dynamodb_get(DYNAMODB_CURSORS_TBL, {"account": account})
-    cursor = cursors_resp.get("Item", {}).get("cursor")
-    dbx = dropbox.Dropbox(token)
-    has_more = True
-    while has_more:
-        if cursor is None:
-            result = dbx.files_list_folder(path="")
-        else:
-            result = dbx.files_list_folder_continue(cursor)
-        for entry in result.entries:
-            # Ignore deleted files, folders, and non-markdown files
-            if (
-                isinstance(entry, dropbox.files.DeletedMetadata)
-                or isinstance(entry, dropbox.files.FolderMetadata)
-                or not entry.path_lower.endswith(".md")
-            ):
-                continue
-            # Convert to Markdown and store as <basename>.html
-            _, resp = dbx.files_download(entry.path_lower)
-            html = markdown.markdown(resp.content.decode("utf-8"))
-            logger.info("html == " + html)
-            dbx.files_upload(
-                bytes(html, encoding="utf-8"),
-                entry.path_lower[:-3] + ".html",
-                mode=dropbox.files.WriteMode("overwrite"),
-            )
-        # Update cursor
-        cursor = result.cursor
-        dynamodb_set(DYNAMODB_CURSORS_TBL, **{"account": account, "cursor": cursor})
-        # Repeat only if there's more to do
-        has_more = result.has_more
-    logger.info("process_user has ended.")
 
 
 @app.route("/")
