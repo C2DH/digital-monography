@@ -4,8 +4,6 @@ import boto3
 import binascii
 import datetime
 import dropbox
-import fastapi
-import fastapi.templating
 import flask  # TODO: consider replacing flask with something microVM specific (fastapi? bottle?)
 import hashlib
 import hmac
@@ -17,9 +15,6 @@ import pathlib
 import time
 import typing as t
 import urllib
-from starlette.middleware.sessions import SessionMiddleware
-from starlette.requests import Request
-from starlette.responses import RedirectResponse
 
 
 try:
@@ -72,10 +67,6 @@ app.secret_key = FLASK_SECRET_KEY
 # app.config["SERVER_NAME"] = "20cks5gkc3.execute-api.eu-west-1.amazonaws.com"
 # app.config["APPLICATION_ROOT"] = "/test"
 # app.config["PREFERRED_URL_SCHEME"] = "https"
-
-fapp = fastapi.FastAPI()
-fapp.add_middleware(SessionMiddleware, secret_key=FLASK_SECRET_KEY)
-templates = fastapi.templating.Jinja2Templates(directory="templates")
 
 
 class UserData(t.TypedDict):
@@ -138,10 +129,9 @@ def get_url(route) -> str:
     # return url
 
 
-def get_flow(session=None):
+def get_flow():
     dbx_app_secret = get_dbx_app_secret(DROPBOX_SECRET_ID)
-    if session:
-        logger.info("FastAPI session == " + json.dumps(session, default=str))
+    # TODO: condition is not needed anymore
     if flask.session:
         logger.info("Flask.session == " + json.dumps(flask.session, default=str))
         logger.info("Flask.session == " + json.dumps(flask.session, default=str))
@@ -155,7 +145,7 @@ def get_flow(session=None):
         consumer_key=APP_KEY,
         consumer_secret=dbx_app_secret,
         redirect_uri=get_url("oauth_callback"),
-        session=flask.session if session is None else session,
+        session=flask.session,
         csrf_token_session_key="dropbox-auth-csrf-token",
         # token_access_type="offline", # I don't see such argument
     )
@@ -302,33 +292,6 @@ def login(*args, **kwargs):
     authorize_url = flow.start()
     logger.info("Login REST api authorize_url == " + json.dumps(flow, default=str))
     return flask.redirect(authorize_url)
-
-
-@fapp.get("/index", response_class=fastapi.responses.HTMLResponse)
-def index2(request: Request) -> str:
-    logger.info("Index2 REST api endpoint was called.")
-    logger.info("Index2 REST api request ==" + json.dumps(request, default=str))
-    if request:
-        logger.info("Index REST api request session == " + request.session)
-    return templates.TemplateResponse(request=request, name="item.html")
-    # return flask.render_template("index.html")
-
-
-@fapp.get("/login2")
-def login2(request: Request):
-    logger.info("Login2 REST api endpoint was called.")
-    logger.info("Login2 REST api request ==" + json.dumps(request, default=str))
-    if request:
-        logger.info("Login REST api request session == " + request.session)
-    authorize_url = get_flow(request.session).start()
-    logger.info("Login REST api generated authorize_url : " + str(authorize_url))
-    return RedirectResponse(authorize_url)
-
-
-# @fapp.get("/login")
-# def login():
-#     logger.info("Login REST api endpoint was called.")
-#     return flask.redirect(get_flow().start())
 
 
 @app.route("/done")
