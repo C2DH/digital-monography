@@ -74,8 +74,6 @@ def process_user(account):
     """Call /files/list_folder for the given user ID and process any changes."""
     logger.info("process_user function was invoked with account " + str(account))
     # OAuth token for the user
-    # token = redis_client.hget("tokens", account)
-    logger.info('Here was: `token = redis_client.hget("tokens", account)`')
     tokens_resp = dynamodb_get(DYNAMODB_TOKENS_TBL, {"account": account})
     logger.info("tokens_resp == " + json.dumps(tokens_resp, default=str))
     token = tokens_resp.get("Item", {}).get("access_token")
@@ -83,8 +81,6 @@ def process_user(account):
     # token = TOKEN
 
     # cursor for the user (None the first time)
-    # cursor = redis_client.hget("cursors", account)
-    logger.info('Here was: `redis_client.hget("cursors", account)`')
     cursors_resp = dynamodb_get(DYNAMODB_CURSORS_TBL, {"account": account})
     cursor = cursors_resp.get("Item", {}).get("cursor")
 
@@ -121,8 +117,6 @@ def process_user(account):
 
         # Update cursor
         cursor = result.cursor
-        # redis_client.hset("cursors", account, cursor)
-        logger.info('Here was: `redis_client.hset("cursors", account, cursor)`')
         dynamodb_set(DYNAMODB_CURSORS_TBL, **{"account": account, "cursor": cursor})
 
         # Repeat only if there's more to do
@@ -168,8 +162,6 @@ def process_user(account):
 
         # Update cursor
         cursor = result.cursor
-        # redis_client.hset("cursors", account, cursor)
-        logger.info('Here was: `redis_client.hset("cursors", account, cursor)`')
         dynamodb_set(DYNAMODB_CURSORS_TBL, **{"account": account, "cursor": cursor})
 
         # Repeat only if there's more to do
