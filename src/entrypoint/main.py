@@ -9,7 +9,6 @@ import hmac
 import json
 import os
 import logging
-import markdown
 import pathlib
 import typing as t
 import urllib
@@ -20,14 +19,12 @@ try:
         IS_DEBUG,
         DROPBOX_SECRET_ID,
         DYNAMODB_TOKENS_TBL,
-        DYNAMODB_CURSORS_TBL,
     )
 except (ImportError, ModuleNotFoundError):
     from .constants import (
         IS_DEBUG,
         DROPBOX_SECRET_ID,
         DYNAMODB_TOKENS_TBL,
-        DYNAMODB_CURSORS_TBL,
     )
 
 
@@ -92,7 +89,7 @@ def get_url(route) -> str:
         _external=True,
         _scheme="http" if is_local else "https",
     )
-    # Include the stage part of the url
+    # Include the stage part of the url, e.g https://.../test/...
     url_parts = urllib.parse.urlparse(url)
     url_parts = url_parts._replace(path=f"/{AWS_AGW_STAGE}" + url_parts.path)
     return urllib.parse.urlunparse(url_parts)
@@ -100,16 +97,6 @@ def get_url(route) -> str:
 
 def get_flow():
     dbx_app_secret = get_dbx_app_secret(DROPBOX_SECRET_ID)
-    # TODO: condition is not needed anymore
-    if flask.session:
-        logger.info("Flask.session == " + json.dumps(flask.session, default=str))
-        logger.info("Flask.session == " + json.dumps(flask.session, default=str))
-        try:
-            logger.info(
-                "Flask.session == " + json.dumps(flask.session.items(), default=str)
-            )
-        except Exception as e:
-            pass
     return dropbox.DropboxOAuth2Flow(
         consumer_key=APP_KEY,
         consumer_secret=dbx_app_secret,
@@ -185,20 +172,6 @@ def webhook() -> t.Union[t.NoReturn | str]:
     `/files/list_folder/continue` endpoint and upload files to AWS S3.
     """
     logger.info("Webhook REST api endpoint was called with POST.")
-    logger.info(
-        "webhook path received the following args:"
-        + json.dumps(
-            flask.request.args.to_dict(),
-            default=str,
-        )
-    )
-    logger.info(
-        "webhook path received the following data:"
-        + json.dumps(
-            json.loads(flask.request.data),
-            default=str,
-        )
-    )
     # Make sure this is a valid request from Dropbox
     dbx_app_secret = get_dbx_app_secret(DROPBOX_SECRET_ID)
     signature = flask.request.headers.get("X-Dropbox-Signature")
@@ -250,7 +223,6 @@ def dynamodb_get(tbl: str, pk: dict[str, str]) -> dict[str, t.Any]:
 
 
 def lambda_handler(event, context):
-    logger.info("Lambda handler was called.")
     logger.info(f"Event: {json.dumps(event, default=str)}")
     logger.info(f"Context: {json.dumps(context, default=str)}")
     return aws_lambda_wsgi.response(app, event, context)
