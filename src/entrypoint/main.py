@@ -226,3 +226,7 @@ def lambda_handler(event, context):
     logger.info(f"Event: {json.dumps(event, default=str)}")
     logger.info(f"Context: {json.dumps(context, default=str)}")
     return aws_lambda_wsgi.response(app, event, context)
+
+
+if __name__ == "__main__":
+    app.run()
