@@ -37,6 +37,7 @@ deploy:
     GITLAB_OIDC_TOKEN:
       aud: https://gitlab.com
   before_script:
+    - cp -a infra/. .
     - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
     - mkdir ~/.aws
     - echo -e "[profile oidc]\nrole_arn=${ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
@@ -57,6 +58,7 @@ destroy:
     GITLAB_OIDC_TOKEN:
       aud: https://gitlab.com
   before_script:
+    - cp -a infra/. .
     - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
     - mkdir ~/.aws
     - echo -e "[profile oidc]\nrole_arn=${ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
