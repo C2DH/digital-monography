@@ -6,10 +6,6 @@
 
 pytest==7.4.*
 
-# TODO: turn box-sdk-gen and appengine-python-standard on when using the Box integration
-# box-sdk-gen==1.1.*
-# appengine-python-standard==1.1.*
-
 # TODO: consider adding linting and type checking
 # flake8==7.0.*
 # mypy==1.9.*
