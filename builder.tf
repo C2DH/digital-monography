@@ -1,6 +1,38 @@
 resource "aws_s3_bucket" "upload_apkg" {
-  bucket        = var.upload_apkg_bucket_name
-  force_destroy = true
+  bucket = var.upload_apkg_bucket_name
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "aws_s3_bucket_versioning" "upload_apkg" {
+  bucket = aws_s3_bucket.upload_apkg.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_object_lock_configuration" "upload_apkg" {
+  bucket              = aws_s3_bucket.upload_apkg.id
+  depends_on          = [aws_s3_bucket_versioning.upload_apkg]
+  object_lock_enabled = "Enabled"
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "upload_apkg" {
+  bucket     = aws_s3_bucket.upload_apkg.id
+  depends_on = [aws_s3_bucket_versioning.upload_apkg]
+  rule {
+    id     = "upload_apkg_old_versions_to_archive"
+    status = "Enabled"
+    noncurrent_version_transition {
+      noncurrent_days = 30
+      storage_class   = "STANDARD_IA"
+    }
+    noncurrent_version_transition {
+      noncurrent_days = 60
+      storage_class   = "GLACIER"
+    }
+  }
 }
 
 data "aws_iam_policy_document" "public_upload_apkg" {
