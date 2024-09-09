@@ -1,3 +1,7 @@
+## Upload author's package S3
+## TODO: maybe only the archive_apkg_all (see github.tf) 
+## should have versioning, OL and lifecycle enabled.
+
 resource "aws_s3_bucket" "upload_apkg" {
   bucket = var.upload_apkg_bucket_name
   lifecycle {
