@@ -118,7 +118,7 @@ class TestHtml2MdMetadataExtraction:
 
     def test_standard_tables_included_in_markdown(self):
         assert (
-            "\n|  |  |\n| --- | --- |\n| Just a table | Just a table |\n| Don’t extract | Don’t extract |\n\n"
+            "\n\n| Just a table | Just a table |\n| --- | --- |\n| Don’t extract | Don’t extract |\n\nJust a sentence to make sure that it won’t be removed.\n\n"
             in self.md
         )
 
