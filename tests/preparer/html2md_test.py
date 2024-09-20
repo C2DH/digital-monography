@@ -28,3 +28,23 @@ class TestHtml2MdFootnotes:
             "[^footnote-ref-1]: Joe Schmoe, „Just no“, Opinions, 1, Nr. 1 (2035): 1–2."
         )
         assert expected_md_includes in self.md
+
+
+class TestHtml2MdGreedy:
+    fp = pathlib.Path("tests") / "_fixtures" / "greedy.docx"
+
+    @classmethod
+    def setup_class(cls):
+        style_mappings = """
+        p[style-name='Quote'] => blockquote:fresh
+        p[style-name='Caption'] => p.dgt-mon-caption:fresh
+        """
+        with open(cls.fp, "rb") as f:
+            result = mammoth.convert_to_html(f, style_map=style_mappings)
+        cls.html_soup = bs4.BeautifulSoup(result.value, "html.parser")
+        metadata = DocumentMetadata()
+        cls.md = convert_to_md(cls.html_soup, metadata)
+
+    def test_two_new_lines_after_blockquote_element(self):
+        assert "a\n\n> b\n\nc\n\n" in self.md
+        #               ^^^^ # must be 2 \n to stop swallowing of the next el
