@@ -2,6 +2,11 @@
 
 Platform for scholars of digital humanities to publish their digital work
 
+## Design principles
+
+* Rely on features of MS Word for `.docx` input, JupyterLab/Notebook for `.ipynb` input and on JupyterBook/Sphinx-doc for output as much as possible.
+* Target MyST specification rather that bespoke solutions.
+
 ## Architecture design
 
 ![aws_architecture_diagram](./2024-04-23_architecture.svg)
