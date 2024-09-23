@@ -14,8 +14,12 @@ if IS_DEBUG:
 else:
     DEFAULT_SFS_DIR = "/mnt/efs"  # AWS EFS
 GITHUB_SECRET_ID = "dgtmon-dev-github-api-secrets"
+DROPBOX_SECRET_ID = "dgtmon-dev-github-api-secrets"
+DYNAMODB_TOKENS_TBL = "dgtmon-dev-dyndb-tokens-tbl"
+DYNAMODB_CURSORS_TBL = "dgtmon-dev-dyndb-cursors-tbl"
 # S3 bucket names
 ARCHIVE_APKG_ALL = "cpy-dgtmon-dev-archive-apkg-all"
+APKG_UPLOAD_BUCKET_NAME = "cpy-dgtmon-dev-apkg-upload"
 IR_APKG_HTML_BUCKET_NAME = "cpy-dgtmon-dev-ir-apkg-html"
 IR_APKG_MD_BUCKET_NAME = "cpy-dgtmon-dev-ir-apkg-md"
 STATICWS_WIP_BUCKET_NAME = "cpy-dgtmon-dev-staticws-wip"
