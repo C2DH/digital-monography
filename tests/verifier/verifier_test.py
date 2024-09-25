@@ -333,6 +333,21 @@ class TestTablesAndAssetsBreakingVerificationRules:
             if TABLES in war["tags"]:
                 cls.warnings[TABLES].append(war)
 
+    def test_check_tbl_no_caption(self):
+        is_incorrect_raise_warning = None
+        is_correct_no_warning = None
+        for w in self.warnings[TABLES]:
+            if w["problem"] == MSG_PROBLEMS[TABLES]["check_tbl_no_caption"]:
+                if (
+                    "This is not a valid caption because no style was selected"
+                    in w["prev_elem"]
+                ):
+                    is_incorrect_raise_warning = w
+                if "A correct table" in w["prev_elem"]:
+                    is_correct_no_warning = w
+        assert is_correct_no_warning is None
+        assert is_incorrect_raise_warning
+
     def test_check_tbl_missing_fields(self):
         is_incorrect_raise_warning = None
         is_correct_no_warning = None

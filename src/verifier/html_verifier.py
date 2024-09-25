@@ -74,6 +74,7 @@ MSG_PROBLEMS = {
         "check_a_not_archived": "Links should point to websites archived using the Internet Archive.",
     },
     TABLES: {
+        "check_tbl_no_caption": "",
         "check_tbl_unrecognized_field": "Fields used in metadata tables can only be selected from the allowed list.",
         "check_tbl_missing_fields": "Your metadata table is missing required fields.",
         "check_tbl_for_duplicated_fields": 'Metadata tables shouldn"t contain duplicated fields.',
@@ -504,7 +505,27 @@ class HtmlVerifier:
     # tables ############################################################################
 
     def _apply_tables_verification(self):
-        pass
+        for elem in self._tables:
+            if self._check_tbl_no_caption(elem):
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[TABLES]["check_tbl_no_caption"],
+                    recommend=f"",
+                    elem=elem,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
+                    tags=[TABLES],
+                )
+
+    def _check_tbl_no_caption(self, tag: bs4.element.Tag) -> bool:
+        prev = tag.previous_sibling
+        for i in range(5):  # don't look for more than 5 siblings
+            if hasattr(prev, "text") and prev.text.isspace():
+                prev = prev.previous_sibling
+            else:
+                break
+        if prev and "dgt-mon-caption" in prev.get("class", []):
+            return False
+        return True
 
     # metadata tables ###################################################################
 
