@@ -35,6 +35,7 @@ except (ImportError, ModuleNotFoundError):
     from .verif_warnings import VerifierMessages
 
 
+CAPTION_TYPES = ["Figure", "Table", "Graph"]
 IS_HEADING_TITLE_CASED_REQUIRED = True
 ASSETS = "assets"
 CAPTIONS = "captions"
@@ -59,6 +60,7 @@ MSG_PROBLEMS = {
         "check_cap_no_colon": "Captions must contain a colon.",
         "check_cap_no_number": "Second word in a caption must be a number.",
         "check_cap_no_bold": "Captions should start with bolded text.",
+        "check_cap_invalid_type": "Invalid caption type.",
         "check_cap_no_end_dot": "Captions must end with a trailing dot.",
         "check_cap_dupl_num": "A caption with repeated numbering was found.",
         "check_cap_nonsequantial_num": "Caption numbering is not sequential.",
@@ -342,6 +344,20 @@ class HtmlVerifier:
                     timestamp=self._timestamp,
                     tags=[CAPTIONS],
                 )
+            if self._check_cap_invalid_type(item, caption):
+                recommend = f', not "{item}"' if item else ""
+                valid_types = (
+                    ", ".join(f'"{ct}"' for ct in CAPTION_TYPES[:-1])
+                    + f' or "{CAPTION_TYPES[-1]}"'
+                )
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[CAPTIONS]["check_cap_invalid_type"],
+                    recommend=f"Captions must start with {valid_types}{recommend}.",
+                    elem=caption,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
+                    tags=[CAPTIONS],
+                )
             if self._check_cap_no_end_dot(caption):
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[CAPTIONS]["check_cap_no_end_dot"],
@@ -384,6 +400,16 @@ class HtmlVerifier:
             return re.match(r"^\w+ \d+:", bolded.text) is None
         except IndexError:
             return True
+
+    def _check_cap_invalid_type(
+        self, item: t.Optional[str], tag: bs4.element.Tag
+    ) -> bool:
+        if item in CAPTION_TYPES:
+            return False
+        match = re.match(r"^\w+", tag.text)
+        if match and match.group(0) in CAPTION_TYPES:
+            return False
+        return True
 
     def _check_cap_no_end_dot(self, tag: bs4.element.Tag) -> bool:
         return not tag.text.strip().endswith(".")

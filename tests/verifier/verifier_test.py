@@ -204,6 +204,24 @@ class TestHeadingsLinksAndCaptionsBreakingVerificationRules:
         assert is_incorrect_raise_warning
         assert is_correct_no_warning is None
 
+    def test_check_cap_invalid_type(self):
+        is_incorrect_raise_warning = None
+        is_correct_no_warning = None
+        for w in self.warnings[CAPTIONS]:
+            if (
+                w["curr_elem"].startswith('<p class="dgt-mon-caption">Image ')
+                and w["problem"] == MSG_PROBLEMS[CAPTIONS]["check_cap_invalid_type"]
+            ):
+                is_incorrect_raise_warning = w
+            if (
+                "Figure VII " in w["curr_elem"]
+                and w["problem"] == MSG_PROBLEMS[CAPTIONS]["check_cap_invalid_type"]
+            ):
+                is_correct_no_warning = w
+        assert is_incorrect_raise_warning
+        assert is_incorrect_raise_warning["fn"] == "verify_h_a_cap.html"
+        assert is_correct_no_warning is None
+
     def test_check_cap_no_end_dot(self):
         warning = next(
             w
