@@ -9,6 +9,7 @@ from src.verifier.html_verifier import (
     HEADINGS,
     LINKS,
     TABLES,
+    PARAGRAPHS,
 )
 from src.verifier.main import _fromtimestamp
 from src.verifier.path_handler import PathHandler
@@ -34,6 +35,8 @@ class TestHeadingsLinksAndCaptionsBreakingVerificationRules:
                 cls.warnings[CAPTIONS].append(war)
             if LINKS in war["tags"]:
                 cls.warnings[LINKS].append(war)
+            if PARAGRAPHS in war["tags"]:
+                cls.warnings[PARAGRAPHS].append(war)
 
     # headings ########################################################################
 
@@ -157,6 +160,22 @@ class TestHeadingsLinksAndCaptionsBreakingVerificationRules:
         )
         assert warning
         assert warning["fn"] == "verify_h_a_cap.html"
+
+    def test_check_h_bold_instead_heading(self):
+        all_bold = None
+        bold_at_start_and_end = None
+        bold_in_the_middle = None
+        for w in self.warnings[PARAGRAPHS]:
+            if w["problem"] == MSG_PROBLEMS[PARAGRAPHS]["check_p_bold_instead_heading"]:
+                if "No heading style - <em>that’s</em> bold" in w["curr_elem"]:
+                    all_bold = w
+                if "In this sentence" in w["curr_elem"]:
+                    bold_at_start_and_end = w
+                if "with a duplicated text" in w["curr_elem"]:
+                    bold_in_the_middle = w
+        assert all_bold
+        assert bold_at_start_and_end == None
+        assert bold_in_the_middle == None
 
     # captions ########################################################################
 

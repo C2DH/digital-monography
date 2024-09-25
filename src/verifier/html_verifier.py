@@ -41,6 +41,7 @@ ASSETS = "assets"
 CAPTIONS = "captions"
 FOOTNOTES = "footnotes"
 HEADINGS = "headings"
+PARAGRAPHS = "paragraphs"
 LINKS = "links"
 TABLES = "tables"
 METADATA_TABLES = "metadata_tables"
@@ -55,6 +56,9 @@ MSG_PROBLEMS = {
         "check_h_with_footnotes": "Headings must not contain any footnotes.",
         "check_h_if_gte_6": "Heading of level 6 and above are not supported.",
         "check_h_for_duplicates": "Duplicate headings found.",
+    },
+    PARAGRAPHS: {
+        "check_p_bold_instead_heading": "Found bold line. Did you meant to use a heading?",
     },
     CAPTIONS: {
         "check_cap_no_colon": "Captions must contain a colon.",
@@ -91,6 +95,7 @@ class HtmlVerifier:
         self._captions = []
         self._headings = []
         self._headings_lvls = []
+        self._paragraphs = []
         self._tables = []
         self._metadata_tables = []
         self._metadata_tables_records = []
@@ -123,6 +128,7 @@ class HtmlVerifier:
         self.soup = bs4.BeautifulSoup(html, "html.parser")
         self._mark_html_elements_recursively(self.soup)
         self._apply_heading_verification()
+        self._apply_paragraphs_verification()
         self._apply_captions_verification()
         self._apply_links_verification()
         # self._apply_assets_verification()
@@ -163,6 +169,8 @@ class HtmlVerifier:
                     and CLS_METADATA_TABLE_JSONDATA in child.attrs.get("class", [])
                 ):
                     self._metadata_tables_records += json.loads(child.text)
+                if child.name == "p":
+                    self._paragraphs.append(child)
             self._mark_html_elements_recursively(child, lvl + 1)
 
     # headings ##########################################################################
@@ -301,6 +309,32 @@ class HtmlVerifier:
         if tag.text in self._unique_headings:
             return True
         self._unique_headings.append(tag.text)
+        return False
+
+    # paragraphs #######################################################################
+
+    def _apply_paragraphs_verification(self) -> None:
+        for p in self._paragraphs:
+            if self._check_p_bold_instead_heading(p):
+                bold = p.text[:20] + "..." if len(p.text) > 20 else p.text
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[PARAGRAPHS]["check_p_bold_instead_heading"],
+                    recommend=f'If so, please change the MS Word style for "{bold}" to appropriate "Heading" level.',
+                    elem=p,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
+                    tags=[HEADINGS, PARAGRAPHS],
+                )
+
+    def _check_p_bold_instead_heading(self, tag: bs4.element.Tag) -> bool:
+        """
+        In case when a <strong> tag is only part of the <p> element,
+        the children will include also bs4.element.NavigableString,
+        which name attribute is None.
+        """
+        children_names = {ch.name for ch in tag.children}
+        if len(children_names) == 1 and "strong" in children_names:
+            return True
         return False
 
     # captions ##########################################################################
