@@ -27,6 +27,7 @@ VERIFIER_MSGS = "cpy-dgtmon-dev-verifier-msgs"
 # html classes
 CLS_METADATA_TABLE = "dgt-mon-metadata-table"
 CLS_METADATA_TABLE_JSONDATA = "dgt-mon-hidden-metadata"
+ATTRIB_METADATA_UUID = "dgt-mon-metadata-uuid"
 # metadata fields
 FIELD_DIGITAL_SOURCE = "digitalsource"
 FIELD_PAPER_SOURCE = "papersource"
