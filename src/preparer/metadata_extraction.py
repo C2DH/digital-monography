@@ -16,9 +16,6 @@ def replace_assets_with_directives(
 ) -> bs4.BeautifulSoup:
     """
     Find, hide and add UUID to metadata tables.
-    In addition, hide all document metadata in a hidden script at the end of
-    a file. Hidden tables will be replaced with uuid-comment during
-    transformation to markdown.
     """
     for table in html_soup.find_all(["table"]):
         if "##" in table.text:
@@ -41,12 +38,7 @@ def replace_assets_with_directives(
                 table["class"] = CLS_METADATA_TABLE
                 table["id"] = asset_metadata.uuid
 
-    json_elem = html_soup.new_tag("script")
-    json_elem["type"] = "application/json"
-    json_elem["class"] = CLS_METADATA_TABLE_JSONDATA
-    json_elem["hidden"] = "hidden"
-    json_elem.string = json.dumps(document_metadata.assets_as_dicts(), default=str)
-    html_soup.append(json_elem)
+    _hide_metadata_in_scripts_html_tag(html_soup, document_metadata)
     return html_soup
 
 
@@ -59,3 +51,19 @@ def _find_described_object(
             return None
         prev = prev.previous_sibling
     return prev
+
+
+def _hide_metadata_in_scripts_html_tag(
+    html_soup: bs4.BeautifulSoup, document_metadata: DocumentMetadata
+) -> None:
+    """
+    Hide all document metadata in a hidden script at the end of
+    a file. Hidden tables will be replaced with uuid-comment during
+    transformation to markdown.
+    """
+    json_elem = html_soup.new_tag("script")
+    json_elem["type"] = "application/json"
+    json_elem["class"] = CLS_METADATA_TABLE_JSONDATA
+    json_elem["hidden"] = "hidden"
+    json_elem.string = json.dumps(document_metadata.assets_as_dicts(), default=str)
+    html_soup.append(json_elem)
