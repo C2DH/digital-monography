@@ -68,6 +68,7 @@ MSG_PROBLEMS = {
         "check_cap_no_end_dot": "Captions must end with a trailing dot.",
         "check_cap_dupl_num": "A caption with repeated numbering was found.",
         "check_cap_nonsequantial_num": "Caption numbering is not sequential.",
+        "check_cap_no_copyright": "No valid license information found.",
     },
     LINKS: {
         "check_a_is_http": "Links should point to websites using secure https over http.",
@@ -420,6 +421,15 @@ class HtmlVerifier:
                     timestamp=self._timestamp,
                     tags=[CAPTIONS],
                 )
+            if self._check_cap_no_copyright(item, caption):
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[CAPTIONS]["check_cap_no_copyright"],
+                    recommend=f"It is very important to include a [SPDX Identifier](https://spdx.org/licenses/) in every caption associated with a figure. The identifier must be phrased in exactly the same characters as were used originally on the spdx.org website (e.g. hyphens instead of spaces).",
+                    elem=caption,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
+                    tags=[CAPTIONS],
+                )
             if item is not None and number is not None:
                 self._caption_numbers[item].append(number)
 
@@ -463,6 +473,24 @@ class HtmlVerifier:
             return False
         if len(self._caption_numbers[item]) >= 1:
             return self._caption_numbers[item][-1] - 1 != number
+        return False
+
+    def _check_cap_no_copyright(
+        self, item: t.Optional[str], tag: bs4.element.Tag
+    ) -> bool:
+        if item is None:
+            match = re.match(r"^\w+", tag.text)
+            item = match.group(0)
+        if item == "Figure":
+            uuid = tag.get("dgt-mon-metadata-uuid", "")
+            if uuid:
+                metadata = next(
+                    m for m in self._metadata_tables_records if m["uuid"] == uuid
+                )
+                licensename = metadata.get("licensename", "").lower()
+                if licensename in tag.text.lower():
+                    return False
+            return True
         return False
 
     # links #############################################################################

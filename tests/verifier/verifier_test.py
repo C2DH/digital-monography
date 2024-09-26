@@ -276,6 +276,10 @@ class TestHeadingsLinksAndCaptionsBreakingVerificationRules:
         )
         assert warning
 
+    def test_check_cap_no_copyright(self):
+        "See in a class below"
+        pass
+
     # links ###########################################################################
 
     def test_check_a_is_http(self):
@@ -330,6 +334,8 @@ class TestTablesAndAssetsBreakingVerificationRules:
         for war in result.to_json():
             if ASSETS in war["tags"]:
                 cls.warnings[ASSETS].append(war)
+            if CAPTIONS in war["tags"]:
+                cls.warnings[CAPTIONS].append(war)
             if TABLES in war["tags"]:
                 cls.warnings[TABLES].append(war)
 
@@ -506,6 +512,18 @@ class TestTablesAndAssetsBreakingVerificationRules:
     def test_check_tbl_non_relative_path__absolute_linux2(self):
         vpath = PathHandler("mnt/c/Users/Joe.Doe/OneDrive/project/file.jpg", "myslug")
         assert vpath.is_relative()
+
+    def test_check_cap_no_copyright(self):
+        is_incorrect_raise_warning = None
+        is_correct_no_warning = None
+        for w in self.warnings[CAPTIONS]:
+            if w["problem"] == MSG_PROBLEMS[CAPTIONS]["check_cap_no_copyright"]:
+                if "Caption to fig.1 but without a license" in w["curr_elem"]:
+                    is_incorrect_raise_warning = w
+                if "CC-BY-4.0" in w["curr_elem"]:
+                    is_correct_no_warning = w
+        assert is_incorrect_raise_warning
+        assert is_correct_no_warning is None
 
     def test_efs_slug_filepath_1(self):
         vpath = PathHandler("./assets/path/file.jpg", "myslug")
