@@ -9,7 +9,7 @@ Platform for scholars of digital humanities to publish their digital work
 
 ## Architecture design
 
-![aws_architecture_diagram](./2024-04-23_architecture.svg)
+![aws_architecture_diagram](./architecture.svg)
 
 For the full architecture see [the instructions on generating an infrastrucutre visualisation](#generating-infrastrucutre-visualisation) and open the produced `graphviz.html` file.
 
@@ -20,7 +20,7 @@ The platform consists of the following modules (Lambda functions):
 | ---               | ---   | --- |
 | **entrypoint**    | false | Opens up REST endpoints, incl. OAuth and webhooks to integrate with Dropbox. |
 | **dropbox**       | false | Calls Dropbox API to retrieve files from Dropbox and writes them to s3. |
-| **preparer**      | true  | Processes the author package. |
+| **preparer**      | true  | Does all the transformations of the files in the author package. |
 | **verifier**      | true  | Checks the author package against the verification rules. |
 | **github**        | true  | Pushes the processed documents to GitHub remote repository. |
 | **builder**       | true  | Runs Jupyter Book to build a book out of processed documents. |
