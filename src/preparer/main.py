@@ -5,6 +5,7 @@ import boto3
 import json
 import logging
 import mammoth
+import nbformat
 import typing as t
 import urllib.parse
 
@@ -21,6 +22,7 @@ try:
     from remove_empty_tables import remove_empty_tables
     from replace_alt_texts import replace_alt_texts
     from html2md import convert_to_md
+    from ipynb_prep import tags_to_myst_crossref_targets
     from keys import KeyPath
     from fakers import Faker
 except (ImportError, ModuleNotFoundError):
@@ -36,6 +38,7 @@ except (ImportError, ModuleNotFoundError):
     from .remove_empty_tables import remove_empty_tables
     from .replace_alt_texts import replace_alt_texts
     from .html2md import convert_to_md
+    from .ipynb_prep import tags_to_myst_crossref_targets
     from .keys import KeyPath
     from .fakers import Faker
 
@@ -66,28 +69,35 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     key = _get_key(event)
     src = _get_source_bucket(event)
     _download_fileobj(src, key)
-    if key.suffix.lower() != ".docx":
+    if key.suffix.lower() == ".ipynb":
+        ipynb: nbformat.NotebookNode = _unmarshall_json(key.efs_filepath)
+        tags_to_myst_crossref_targets(ipynb)
+        _write_processed_ipynb_to_efs(ipynb, key)
+
         # _put_to_archive_s3(key)
         return {"statusCode": 200, "body": ""}
-    html_str = _convert_to_html(key.efs_filepath)
-    html_soup = _get_html_soup(html_str)
-    metadata = _get_book_metadata()
-    html_soup = _replace_alt_texts(html_soup)
-    html_soup = _add_citations_and_bibliography(html_soup)
-    html_soup = _replace_assets_with_directives(html_soup, metadata)
-    html_soup = _remove_empty_tables(html_soup)
-    html_soup_str = str(html_soup)
-    # IMPORTANT: other services depend on html produced at this stage, make sure that:
-    # 1) all reversible transformations are made before saving html file;
-    # 2) irreversible transformations are omited to avoid not being able to recreate a book
-    # as html files written at this stage will be the basis for a paper version of a book.
-    _write_processed_html_to_efs(html_soup_str, key)
-    _put_html_to_s3(html_soup_str, key)
-    md = _convert_to_md(html_soup, metadata)
-    _write_processed_md_to_efs(md, key)
-    _put_md_to_s3(md, key)
-    # _put_to_archive_s3(key.s3_key.with_suffix(".md"), md)
-    return {"statusCode": 200, "body": ""}
+    if key.suffix.lower() == ".docx":
+        html_str = _convert_to_html(key.efs_filepath)
+        html_soup = _get_html_soup(html_str)
+        metadata = _get_book_metadata()
+        html_soup = _replace_alt_texts(html_soup)
+        html_soup = _add_citations_and_bibliography(html_soup)
+        html_soup = _replace_assets_with_directives(html_soup, metadata)
+        html_soup = _remove_empty_tables(html_soup)
+        html_soup_str = str(html_soup)
+        # IMPORTANT: other services depend on html produced at this stage, make sure that:
+        # 1) all reversible transformations are made before saving html file;
+        # 2) irreversible transformations are omited to avoid not being able to recreate a book
+        # as html files written at this stage will be the basis for a paper version of a book.
+        _write_processed_html_to_efs(html_soup_str, key)
+        _put_html_to_s3(html_soup_str, key)
+        md = _convert_to_md(html_soup, metadata)
+        _write_processed_md_to_efs(md, key)
+        _put_md_to_s3(md, key)
+        # _put_to_archive_s3(key.s3_key.with_suffix(".md"), md)
+        return {"statusCode": 200, "body": ""}
+    else:
+        return {"statusCode": 200, "body": ""}
 
 
 def _get_key(event) -> KeyPath:
@@ -275,3 +285,13 @@ def _write_processed_md_to_efs(md: str, key: KeyPath) -> None:
     new_efs_filepath = key.efs_filepath.with_suffix(".md")
     with open(new_efs_filepath, "w") as f:
         f.write(md)
+
+
+def _write_processed_ipynb_to_efs(ipynb: nbformat.NotebookNode, key: KeyPath) -> None:
+    nbformat.write(ipynb, key.efs_filepath)
+
+
+def _unmarshall_json(key: KeyPath) -> nbformat.NotebookNode:
+    with open(key, "r") as f:
+        nb = nbformat.read(f, as_version=nbformat.NO_CONVERT)
+    return nb
