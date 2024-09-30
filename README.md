@@ -22,7 +22,7 @@ The platform consists of the following modules (Lambda functions):
 | **dropbox**       | false | Calls Dropbox API to retrieve files from Dropbox and writes them to s3. |
 | **preparer**      | true  | Does all the transformations of the files in the author package. |
 | **verifier**      | true  | Checks the author package against the verification rules. |
-| **github**        | true  | Pushes the processed documents to GitHub remote repository. |
+| **github**        | false  | Pushes the processed documents to GitHub remote repository. |
 | **builder**       | true  | Runs Jupyter Book to build a book out of processed documents. |
 
 ## Local development
