@@ -280,6 +280,32 @@ class TestHeadingsLinksAndCaptionsBreakingVerificationRules:
         "See in a class below"
         pass
 
+    def test_check_cap_many_bookmarks(self):
+        html = (
+            '<p class="dgt-mon-caption"><a id="_Ref178606187"></a><a id="_Ref178606188"></a><strong>Figure 1:</strong> Duplicated bookmarks.</p>'
+            '<p class="dgt-mon-caption"><a id="_Ref178606189"></a><strong>Figure 2:</strong> One bookmark.</p>'
+        )
+        fp = pathlib.Path("some_file.html")
+        verifer = HtmlVerifier()
+        slug = "tests"
+        timestamp = _fromtimestamp("2024-06-26T09:53:49.380Z")
+        result = verifer.verify(html, fp, slug, timestamp)
+        res_json = result.to_json()
+        is_incorrect_raise_warning = None
+        is_correct_no_warning = None
+        for w in res_json:
+            if w["problem"] == MSG_PROBLEMS[CAPTIONS]["check_cap_many_bookmarks"]:
+                if "Duplicated bookmarks" in w["curr_elem"]:
+                    is_incorrect_raise_warning = w
+                elif "One bookmark" in w["curr_elem"]:
+                    is_correct_no_warning = w
+        assert is_incorrect_raise_warning
+        assert not is_incorrect_raise_warning["prev_elem"]
+        assert "_Ref178606187" not in is_incorrect_raise_warning["recommend"]
+        assert "_Ref178606188" in is_incorrect_raise_warning["recommend"]
+        assert "_Ref178606189" not in is_incorrect_raise_warning["recommend"]
+        assert is_correct_no_warning == None
+
     # links ###########################################################################
 
     def test_check_a_is_http(self):

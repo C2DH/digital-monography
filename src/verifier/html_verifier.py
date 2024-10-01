@@ -69,6 +69,7 @@ MSG_PROBLEMS = {
         "check_cap_dupl_num": "A caption with repeated numbering was found.",
         "check_cap_nonsequantial_num": "Caption numbering is not sequential.",
         "check_cap_no_copyright": "No valid license information found.",
+        "check_cap_many_bookmarks": "A caption includes duplicated bookmarks.",
     },
     LINKS: {
         "check_a_is_http": "Links should point to websites using secure https over http.",
@@ -103,6 +104,7 @@ class HtmlVerifier:
         self._metadata_tables_records = []
         self._comments = {}
         self._messages = VerifierMessages()
+        self._logs = []
 
     def summary(self):
         pass
@@ -428,6 +430,17 @@ class HtmlVerifier:
                     elem=caption,
                     fn=self._fp.name,
                     timestamp=self._timestamp,
+                    tags=[METADATA_TABLES, TABLES, CAPTIONS],
+                )
+            ref_nums = self._check_cap_many_bookmarks(caption)
+            if len(ref_nums) > 1:
+                refs_to_del = ", ".join(f'"{_ref}"' for _ref in ref_nums[1:])
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[CAPTIONS]["check_cap_many_bookmarks"],
+                    recommend=f'You have to remove the duplicates: {refs_to_del}. To do that, open "{self._fp.name}" in MS Word, select "Insert" button in the top pane, click on "Bookmark" button, turn on "Hidden bookmarks", locate the bookmarks to remove and hit "Delete".',
+                    elem=caption,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
                     tags=[CAPTIONS],
                 )
             if item is not None and number is not None:
@@ -492,6 +505,16 @@ class HtmlVerifier:
                     return False
             return True
         return False
+
+    def _check_cap_many_bookmarks(self, tag: bs4.element.Tag) -> list[str]:
+        ref_nums = []
+        if "dgt-mon-caption" in tag.get("class", []):
+            for child in tag.children:
+                if child.name == "a" and child.get("id", "").startswith("_Ref"):
+                    ref_nums.append(child.get("id", ""))
+                if len(ref_nums) > 1:
+                    return ref_nums
+        return ref_nums
 
     # links #############################################################################
 
