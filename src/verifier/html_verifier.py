@@ -76,7 +76,7 @@ MSG_PROBLEMS = {
         "check_a_not_archived": "Links should point to websites archived using the Internet Archive.",
     },
     TABLES: {
-        "check_tbl_no_caption": "",
+        "check_tbl_no_caption": "Every table should start with a caption.",
         "check_tbl_unrecognized_field": "Fields used in metadata tables can only be selected from the allowed list.",
         "check_tbl_missing_fields": "Your metadata table is missing required fields.",
         "check_tbl_for_duplicated_fields": 'Metadata tables shouldn"t contain duplicated fields.',
@@ -560,7 +560,7 @@ class HtmlVerifier:
             if self._check_tbl_no_caption(elem):
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[TABLES]["check_tbl_no_caption"],
-                    recommend=f"",
+                    recommend=f'To add a missing caption, open "{self._fp.name}" in MS Word, find the "References" tab at the top of the window, click on the "Insert Caption" button, set the "Label" option to "Table" and fill the content of your "Caption" (e.g. "**Table 1:** Some short but accurate data description.").',
                     elem=elem,
                     fn=self._fp.name,
                     timestamp=self._timestamp,
