@@ -21,6 +21,7 @@ try:
     from metadata_extraction import replace_assets_with_directives
     from remove_empty_tables import remove_empty_tables
     from replace_alt_texts import replace_alt_texts
+    from refs import add_id_to_captions_without_bookmarks
     from html2md import convert_to_md
     from ipynb_prep import tags_to_myst_crossref_targets
     from keys import KeyPath
@@ -37,6 +38,7 @@ except (ImportError, ModuleNotFoundError):
     from .metadata_extraction import replace_assets_with_directives
     from .remove_empty_tables import remove_empty_tables
     from .replace_alt_texts import replace_alt_texts
+    from .refs import add_id_to_captions_without_bookmarks
     from .html2md import convert_to_md
     from .ipynb_prep import tags_to_myst_crossref_targets
     from .keys import KeyPath
@@ -73,8 +75,12 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         ipynb: nbformat.NotebookNode = _unmarshall_json(key.efs_filepath)
         tags_to_myst_crossref_targets(ipynb)
         _write_processed_ipynb_to_efs(ipynb, key)
-
-        # _put_to_archive_s3(key)
+        # TODO
+        """
+        This is becoming too much.
+        Replace multiple search operations with one recursion.
+        """
+        ARCHIVE = "_put_to_archive_s3(key)"
         return {"statusCode": 200, "body": ""}
     if key.suffix.lower() == ".docx":
         html_str = _convert_to_html(key.efs_filepath)
@@ -83,6 +89,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_soup = _replace_alt_texts(html_soup)
         html_soup = _add_citations_and_bibliography(html_soup)
         html_soup = _replace_assets_with_directives(html_soup, metadata)
+        html_soup = _add_id_to_captions_without_bookmarks(html_soup)
         html_soup = _remove_empty_tables(html_soup)
         html_soup_str = str(html_soup)
         # IMPORTANT: other services depend on html produced at this stage, make sure that:
@@ -94,7 +101,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         md = _convert_to_md(html_soup, metadata)
         _write_processed_md_to_efs(md, key)
         _put_md_to_s3(md, key)
-        # _put_to_archive_s3(key.s3_key.with_suffix(".md"), md)
+        ARCHIVE = '_put_to_archive_s3(key.s3_key.with_suffix(".md"), md)'
         return {"statusCode": 200, "body": ""}
     else:
         return {"statusCode": 200, "body": ""}
@@ -187,6 +194,18 @@ def _replace_assets_with_directives(
         return replace_assets_with_directives(html_soup, metadata)
     except Exception as e:
         logger.exception(f"Replacing assets with directives failed. Error: {repr(e)}")
+        raise
+
+
+def _add_id_to_captions_without_bookmarks(
+    html_soup: bs4.BeautifulSoup,
+) -> bs4.BeautifulSoup:
+    try:
+        return add_id_to_captions_without_bookmarks(html_soup)
+    except Exception as e:
+        logger.exception(
+            f"Adding ids to captions, which do not have bookmarks, failed. Error: {repr(e)}"
+        )
         raise
 
 
