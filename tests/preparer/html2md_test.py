@@ -48,7 +48,3 @@ class TestHtml2MdGreedy:
     def test_two_new_lines_after_blockquote_element(self):
         assert "a\n\n> b\n\nc\n\n" in self.md
         #               ^^^^ # must be 2 \n to stop swallowing of the next el
-
-    def test_1132(self):
-        print("\n\nmetadata", self.metadata)
-        assert 5 == 3
