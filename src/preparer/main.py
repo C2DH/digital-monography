@@ -17,7 +17,7 @@ try:
         IS_DEBUG,
     )
     from citations import add_citations_and_bibliography
-    from md_extraction import DocumentMetadata
+    from metadata import DocumentMetadata
     from metadata_extraction import replace_assets_with_directives
     from remove_empty_tables import remove_empty_tables
     from replace_alt_texts import replace_alt_texts
@@ -34,7 +34,7 @@ except (ImportError, ModuleNotFoundError):
         IS_DEBUG,
     )
     from .citations import add_citations_and_bibliography
-    from .md_extraction import DocumentMetadata
+    from .metadata import DocumentMetadata
     from .metadata_extraction import replace_assets_with_directives
     from .remove_empty_tables import remove_empty_tables
     from .replace_alt_texts import replace_alt_texts
@@ -198,7 +198,7 @@ def _replace_assets_with_directives(
 
 
 def _add_id_to_captions_without_bookmarks(
-    html_soup: bs4.BeautifulSoup,
+    html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata
 ) -> bs4.BeautifulSoup:
     try:
         return add_id_to_captions_without_bookmarks(html_soup)

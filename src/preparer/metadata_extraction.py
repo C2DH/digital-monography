@@ -1,22 +1,45 @@
 import json
-import re
 import bs4
+import pathlib
+import re
 import typing as t
+import uuid
 
 try:
-    from md_extraction import AssetMetadata, DocumentMetadata
+    from metadata import AssetDatapoint, DocumentMetadata
     from constants import (
         ATTRIB_METADATA_UUID,
         CLS_METADATA_TABLE,
         CLS_METADATA_TABLE_JSONDATA,
+        FIELD_DELETE_PREVIOUS,
+        FIELD_DIGITAL_SOURCE,
+        METADATA_FIELDS,
     )
 except (ImportError, ModuleNotFoundError):
-    from .md_extraction import AssetMetadata, DocumentMetadata
+    from .metadata import AssetDatapoint, DocumentMetadata
     from .constants import (
         ATTRIB_METADATA_UUID,
         CLS_METADATA_TABLE,
         CLS_METADATA_TABLE_JSONDATA,
+        FIELD_DELETE_PREVIOUS,
+        FIELD_DIGITAL_SOURCE,
+        METADATA_FIELDS,
     )
+
+type AcceptedValues = t.Union[str, bool, pathlib.Path]
+FALSE_EQUIVALENTS = [
+    "0",
+    "no",
+    "nee",
+    "not",
+    "non",
+    "nul",
+    "none",
+    "nicht",
+    "nein",
+    "false",
+    "kein",
+]
 
 
 def replace_assets_with_directives(
@@ -27,7 +50,7 @@ def replace_assets_with_directives(
     """
     for table in html_soup.find_all(["table"]):
         if "##" in table.text:
-            asset_metadata = AssetMetadata()
+            metadata_tbl = MetadataTable()
             key, val = "", ""
             for tr in table.find_all(["tr"]):
                 for descendent in tr.find_all():
@@ -36,27 +59,31 @@ def replace_assets_with_directives(
                     else:
                         val = descendent.text
                 if key:
-                    asset_metadata.add(key, val)
-            if asset_metadata:
-                document_metadata.add_asset_metadata(asset_metadata)
+                    metadata_tbl.add(key, val)
+            if metadata_tbl:
+                # TODO: store as records
+                # document_metadata.add_asset_metadata(metadata_tbl)  ## <===
                 described_el = _find_described_element(table)
                 caption_el = _find_related_caption(described_el)
                 if (
-                    asset_metadata.delete_prev
-                    and asset_metadata.digital_fp
+                    metadata_tbl.includes(FIELD_DELETE_PREVIOUS)
+                    and metadata_tbl.includes(FIELD_DIGITAL_SOURCE)
                     and described_el is not None
                 ):
                     described_el.extract()
                 table["hidden"] = "hidden"
                 table["class"] = CLS_METADATA_TABLE
-                table["id"] = asset_metadata.uuid
-                table[ATTRIB_METADATA_UUID] = asset_metadata.uuid
+                table["id"] = metadata_tbl.uuid
+                table[ATTRIB_METADATA_UUID] = metadata_tbl.uuid
                 if described_el:
-                    described_el[ATTRIB_METADATA_UUID] = asset_metadata.uuid
+                    described_el[ATTRIB_METADATA_UUID] = metadata_tbl.uuid
                 if caption_el:
-                    caption_el[ATTRIB_METADATA_UUID] = asset_metadata.uuid
+                    caption_el[ATTRIB_METADATA_UUID] = metadata_tbl.uuid
 
-    _hide_metadata_in_scripts_html_tag(html_soup, document_metadata)
+            asset = AssetDatapoint(pk=metadata_tbl.uuid, kwargs=metadata_tbl.to_dict())
+            document_metadata.add_asset(asset)
+    # TODO: only records, nothing else
+    _hide_metadata_in_scripts_html_tag(html_soup, document_metadata)  ## <===
     return html_soup
 
 
@@ -102,5 +129,68 @@ def _hide_metadata_in_scripts_html_tag(
     json_elem["type"] = "application/json"
     json_elem["class"] = CLS_METADATA_TABLE_JSONDATA
     json_elem["hidden"] = "hidden"
-    json_elem.string = json.dumps(document_metadata.assets_as_dicts(), default=str)
+    json_elem.string = json.dumps(document_metadata.to_json())
     html_soup.append(json_elem)
+
+
+class MetadataTable:
+    """
+    Container of key-value pairs extracted from a Metadata table
+    that describe a single asset (e.g. license and author data
+    of a single image).
+    """
+
+    def __init__(self) -> None:
+        self.uuid = str(uuid.uuid4())
+        self.rows = []
+
+    def __nonzero__(self):
+        return bool(self.rows)
+
+    def __str__(self):
+        return "[" + ", ".join(f"{k}={v}" for k, v in self.rows) + "]"
+
+    def __len__(self):
+        return len(self.rows)
+
+    def __getitem__(self, key: str) -> AcceptedValues:
+        return self.get(key)
+
+    def get(self, lookup_key: str) -> t.Optional[str]:
+        try:
+            return next(row[1] for row in self.rows if row[0] == lookup_key)
+        except StopIteration:
+            return None
+
+    def includes(self, lookup_key: str) -> bool:
+        return True if self.get(lookup_key) else False
+
+    def add(self, key: str, val: str) -> None:
+        key = self._normalize_key(key)
+        val = self._normalize_val(val, key)
+        self.rows.append((key, val))
+
+    def _normalize_key(self, key: str) -> str:
+        while " " in key:
+            key = key.replace(" ", "")
+        key = key.lower().strip().replace("_", "").replace("-", "").replace("#", "")
+        for field in METADATA_FIELDS:
+            if key in field["aliases"]:
+                return field["key"]
+        return key
+
+    def _normalize_val(self, val: str, key: str) -> AcceptedValues:
+        field_desc = next((f for f in METADATA_FIELDS if f["key"] == key), None)
+        val = val.strip()
+        if field_desc and field_desc["is_bool"]:
+            val = val.lower()
+            if val in FALSE_EQUIVALENTS:
+                return False
+            return bool(val)
+        # TODO: after clarity on the asset storage, change this naive logic into `if fp.exists() and not fp.is_dir()` or similar
+        elif val.startswith("./"):
+            return pathlib.Path(val)
+        return val
+
+    def to_dict(self) -> dict[str, AcceptedValues]:
+        return {k: v for k, v in self.rows}

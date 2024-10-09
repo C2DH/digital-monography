@@ -4,7 +4,7 @@ import pathlib
 
 from src.preparer.citations import add_citations_and_bibliography
 from src.preparer.html2md import convert_to_md
-from src.preparer.md_extraction import DocumentMetadata
+from src.preparer.metadata import DocumentMetadata
 
 
 class TestHtml2MdFootnotes:
@@ -42,9 +42,13 @@ class TestHtml2MdGreedy:
         with open(cls.fp, "rb") as f:
             result = mammoth.convert_to_html(f, style_map=style_mappings)
         cls.html_soup = bs4.BeautifulSoup(result.value, "html.parser")
-        metadata = DocumentMetadata()
-        cls.md = convert_to_md(cls.html_soup, metadata)
+        cls.metadata = DocumentMetadata()
+        cls.md = convert_to_md(cls.html_soup, cls.metadata)
 
     def test_two_new_lines_after_blockquote_element(self):
         assert "a\n\n> b\n\nc\n\n" in self.md
         #               ^^^^ # must be 2 \n to stop swallowing of the next el
+
+    def test_1132(self):
+        print("\n\nmetadata", self.metadata)
+        assert 5 == 3

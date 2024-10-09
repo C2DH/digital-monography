@@ -6,7 +6,7 @@ from pprint import pprint
 from src.preparer.citations import add_citations_and_bibliography
 from src.preparer.metadata_extraction import replace_assets_with_directives
 from src.preparer.html2md import convert_to_md
-from src.preparer.md_extraction import DocumentMetadata
+from src.preparer.metadata import DocumentMetadata
 from src.preparer.constants import (
     FIELD_DIGITAL_SOURCE,
     FIELD_PAPER_SOURCE,
@@ -26,11 +26,12 @@ class TestHtml2MdMetadataExtraction:
         cls.html_soup = add_citations_and_bibliography(cls.html_soup)
         cls.html_soup = replace_assets_with_directives(cls.html_soup, cls.metadata)
         cls.md = convert_to_md(cls.html_soup, cls.metadata)
-        cls.assets_meta = cls.metadata.assets_as_dicts()
-        cls.assmeta0 = cls.metadata.assets[0]
-        cls.assmeta1 = cls.metadata.assets[1]
-        cls.assmeta2 = cls.metadata.assets[2]
-        cls.expected_meta = [
+        cls.assets_meta = cls.metadata.to_dict()
+        assets_ids = [dp.pk for dp in cls.metadata.assets]
+        cls.asset_0 = cls.metadata.get_asset(assets_ids[0])
+        cls.asset_1 = cls.metadata.get_asset(assets_ids[1])
+        cls.asset_2 = cls.metadata.get_asset(assets_ids[2])
+        cls.expected_kwargs = [
             {
                 FIELD_PAPER_SOURCE: pathlib.Path("./images/tiny-picture.png"),
                 "licensename": "Unsplash License",
@@ -55,66 +56,72 @@ class TestHtml2MdMetadataExtraction:
         assert len(self.metadata.assets) == 3
 
     def test_all_metadata_rows_were_extracted(self):
-        assert len(self.metadata.assets[0]) == len(self.expected_meta[0])
-        assert len(self.metadata.assets[1]) == len(self.expected_meta[1])
+        assert len(self.asset_0.kwargs) == 6
+        assert len(self.asset_1.kwargs) == 4
+        assert len(self.asset_2.kwargs) == 3
 
     def test_string_values(self):
         assert (
-            self.assmeta0[FIELD_PAPER_SOURCE]
-            == self.expected_meta[0][FIELD_PAPER_SOURCE]
+            self.asset_0.kwargs[FIELD_PAPER_SOURCE]
+            == self.expected_kwargs[0][FIELD_PAPER_SOURCE]
         )
-        assert self.assmeta0["licensename"] == self.expected_meta[0]["licensename"]
-        assert self.assmeta0["licenseurl"] == self.expected_meta[0]["licenseurl"]
-        assert self.assmeta0["author"] == self.expected_meta[0]["author"]
-        assert self.assmeta1["author"] == self.expected_meta[1]["author"]
+        assert (
+            self.asset_0.kwargs["licensename"] == self.expected_kwargs[0]["licensename"]
+        )
+        assert (
+            self.asset_0.kwargs["licenseurl"] == self.expected_kwargs[0]["licenseurl"]
+        )
+        assert self.asset_0.kwargs["author"] == self.expected_kwargs[0]["author"]
+        assert self.asset_1.kwargs["author"] == self.expected_kwargs[1]["author"]
 
     def test_filepath_values(self):
         assert (
-            self.assmeta0[FIELD_PAPER_SOURCE]
-            == self.expected_meta[0][FIELD_PAPER_SOURCE]
+            self.asset_0.kwargs[FIELD_PAPER_SOURCE]
+            == self.expected_kwargs[0][FIELD_PAPER_SOURCE]
         )
         assert (
-            self.assmeta1[FIELD_PAPER_SOURCE]
-            == self.expected_meta[1][FIELD_PAPER_SOURCE]
+            self.asset_1.kwargs[FIELD_PAPER_SOURCE]
+            == self.expected_kwargs[1][FIELD_PAPER_SOURCE]
         )
         assert (
-            self.assmeta1[FIELD_DIGITAL_SOURCE]
-            == self.expected_meta[1][FIELD_DIGITAL_SOURCE]
+            self.asset_1.kwargs[FIELD_DIGITAL_SOURCE]
+            == self.expected_kwargs[1][FIELD_DIGITAL_SOURCE]
         )
 
     def test_filepath_attribs(self):
-        assert self.assmeta0.paper_fp == pathlib.Path("./images/tiny-picture.png")
-        assert self.assmeta0.digital_fp == None
-        assert self.assmeta1.paper_fp == pathlib.Path("./images/10x10px-img.png")
-        assert self.assmeta1.digital_fp == pathlib.Path("./images/10x10px-img.png")
-        assert self.assmeta2.paper_fp == pathlib.Path("./images/tiny-picture.png")
-        assert self.assmeta2.digital_fp == pathlib.Path("./images/10x10px-img.png")
+        tiny_pic = pathlib.Path("./images/tiny-picture.png")
+        img10x10 = pathlib.Path("./images/10x10px-img.png")
+        assert self.asset_0.kwargs[FIELD_PAPER_SOURCE] == tiny_pic
+        assert self.asset_0.kwargs.get(FIELD_DIGITAL_SOURCE) == None
+        assert self.asset_1.kwargs[FIELD_PAPER_SOURCE] == img10x10
+        assert self.asset_1.kwargs[FIELD_DIGITAL_SOURCE] == img10x10
+        assert self.asset_2.kwargs[FIELD_PAPER_SOURCE] == tiny_pic
+        assert self.asset_2.kwargs[FIELD_DIGITAL_SOURCE] == img10x10
 
     def test_delete_prev_values(self):
         assert (
-            self.assmeta0[FIELD_DELETE_PREVIOUS]
-            == self.expected_meta[0][FIELD_DELETE_PREVIOUS]
+            self.asset_0.kwargs[FIELD_DELETE_PREVIOUS]
+            == self.expected_kwargs[0][FIELD_DELETE_PREVIOUS]
         )
         assert (
-            self.assmeta1[FIELD_DELETE_PREVIOUS]
-            == self.expected_meta[1][FIELD_DELETE_PREVIOUS]
+            self.asset_1.kwargs[FIELD_DELETE_PREVIOUS]
+            == self.expected_kwargs[1][FIELD_DELETE_PREVIOUS]
         )
         assert (
-            self.assmeta2[FIELD_DELETE_PREVIOUS]
-            == self.expected_meta[2][FIELD_DELETE_PREVIOUS]
+            self.asset_2.kwargs[FIELD_DELETE_PREVIOUS]
+            == self.expected_kwargs[2][FIELD_DELETE_PREVIOUS]
         )
 
     def test_delete_prev_attrib(self):
-        assert self.assmeta0.delete_prev
-        assert self.assmeta1.delete_prev == False
-        assert self.assmeta2.delete_prev
+        assert self.asset_0.kwargs[FIELD_DELETE_PREVIOUS]
+        assert self.asset_1.kwargs[FIELD_DELETE_PREVIOUS] == False
+        assert self.asset_2.kwargs[FIELD_DELETE_PREVIOUS]
 
-    # def test_metadata_tables_removed_from_markdown(self):
-    # TODO: this used to work, but stoped since I hid the metadatatables
-    # TODO: think a smarter test
-    #     assert self.assmeta0["licensename"] not in self.md
-    #     assert self.assmeta0["author"] not in self.md
-    #     assert self.assmeta1["author"] not in self.md
+    def test_metadata_tables_removed_from_markdown(self):
+        # TODO: think a smarter test
+        assert self.asset_0.kwargs["licensename"] not in self.md
+        assert self.asset_0.kwargs["author"] not in self.md
+        assert self.asset_1.kwargs["author"] not in self.md
 
     def test_standard_tables_included_in_markdown(self):
         assert (
