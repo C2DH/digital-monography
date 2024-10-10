@@ -2,15 +2,16 @@ import bs4
 import re
 
 from src.preparer.refs import add_id_to_captions_without_bookmarks
+from src.preparer.metadata import DocumentMetadata
 
 
 HTML_STR = f"""\
 <p class="dgt-mon-caption">Figure 1: No bold.</p>
 <p class="dgt-mon-caption"><strong>Figure 2:</strong> Bold, but <i>no</i> bookmark.</p>
 <p class="dgt-mon-caption"><strong>Figure 3: </strong>Also bold, but space in a different place. No bookmark.</p>
-<p class="dgt-mon-caption"><a id="_Ref178606189"></a><strong>Figure 4:</strong> A bookmark.</p>
+<p class="dgt-mon-caption"><a id="_Ref178606189"></a><strong>Figure IV:</strong> A bookmark.</p>
 <!-- Duplicated anchor tag -->
-<p class="dgt-mon-caption"><a id="_Ref178606187"></a><a id="_Ref178606188"></a><strong>Figure 5:</strong> Duplicated bookmarks.</p>
+<p class="dgt-mon-caption"><a id="_Ref178606187"></a><a id="_Ref178606188"></a><strong>Figure 5.1:</strong> Duplicated bookmarks.</p>
 <!-- Captions with links -->
 <p class="dgt-mon-caption"><strong>Figure 6: </strong>Caption with a <a href="example.com">link</a> but no bookmark.</p>
 <p class="dgt-mon-caption"><a id="_Ref178606189"></a><strong>Figure 7:</strong> Caption with a <a href="example.com">link</a> and a bookmark.</p>
@@ -34,24 +35,26 @@ class TestManagingReferences:
                     assert a["id"].startswith("_Ref") or a["id"].startswith("_Unref")
 
     def test_if_caption_content_was_injected_to_anchor(self):
-        pattern = r'<p class="dgt-mon-caption"><a id="_Unref[0-9]{9}">Figure 1: No bold.</a></p>'
+        pattern = r'<p class="dgt-mon-caption"><a id="_Unref[0-9]{9}">Figure \w+: No bold.</a></p>'
         assert (
             re.match(pattern, self.html_soup_str) is not None
         ), "Injecting _Unref anchor tag failed."
-        pattern = r'<p class="dgt-mon-caption"><a id="_Unref[0-9]{9}"><strong>Figure 2:</strong> Bold, but <i>no</i> bookmark\.</a></p>'
+        pattern = r'<p class="dgt-mon-caption"><a id="_Unref[0-9]{9}"><strong>Figure \w+:</strong> Bold, but <i>no</i> bookmark\.</a></p>'
         assert (
             re.search(pattern, self.html_soup_str) is not None
         ), "Injecting _Unref anchor tag to complex caption failed."
 
+        pattern = r'<p class="dgt-mon-caption"><a id="_Ref178606187"><a id="_Ref178606188"></a><strong>Figure [\w\.]+:</strong> Duplicated bookmarks.</a></p>'
         assert (
-            '<p class="dgt-mon-caption"><a id="_Ref178606187"><a id="_Ref178606188"></a><strong>Figure 5:</strong> Duplicated bookmarks.</a></p>'
-            in self.html_soup_str
-        )
-        pattern = r'<p class="dgt-mon-caption"><a id="_Unref[0-9]{9}"><strong>Figure 6: </strong>Caption with a <a href="example.com">link</a> but no bookmark.</a></p>'
+            re.search(pattern, self.html_soup_str) is not None
+        ), "Handling duplicated anchor tag OR handling complex numbering failed."
+
+        pattern = r'<p class="dgt-mon-caption"><a id="_Unref[0-9]{9}"><strong>Figure \w+: </strong>Caption with a <a href="example.com">link</a> but no bookmark.</a></p>'
         assert (
             re.search(pattern, self.html_soup_str) is not None
         ), "Injecting _Unref anchor tag to a caption with a link failed."
+
+        pattern = r'<p class="dgt-mon-caption"><a id="_Ref178606189"><strong>Figure \w+:</strong> Caption with a <a href="example.com">link</a> and a bookmark.</a></p>'
         assert (
-            '<p class="dgt-mon-caption"><a id="_Ref178606189"><strong>Figure 7:</strong> Caption with a <a href="example.com">link</a> and a bookmark.</a></p>'
-            in self.html_soup_str
-        )
+            re.search(pattern, self.html_soup_str) is not None
+        ), "Handling a caption with a link and a bookmark failed."
