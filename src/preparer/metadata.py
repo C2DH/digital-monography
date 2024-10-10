@@ -19,9 +19,6 @@ class FieldTypeRecord(t.TypedDict):
 
 @dataclasses.dataclass
 class AssetDatapoint:
-    # pk: str = dataclasses.field(init=False)
-    # key: str
-    # val: AcceptedValues
     pk: str
     kwargs: dict[str, AcceptedValues] = dataclasses.field(default_factory=dict)
 
@@ -55,7 +52,8 @@ class RefDatapoint:
 class TargetDatapoint:
     pk: int = dataclasses.field(init=False)
     full_id: str
-    content: str
+    html: str
+    text: str
 
     def __post_init__(self):
         "Get 241403112 from _Unref241403112."

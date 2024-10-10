@@ -1,7 +1,6 @@
 import bs4
 import mammoth
 import pathlib
-from pprint import pprint
 
 from src.preparer.citations import add_citations_and_bibliography
 from src.preparer.metadata_extraction import replace_assets_with_directives

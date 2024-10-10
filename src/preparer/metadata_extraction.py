@@ -13,6 +13,7 @@ try:
         CLS_METADATA_TABLE_JSONDATA,
         FIELD_DELETE_PREVIOUS,
         FIELD_DIGITAL_SOURCE,
+        FIELD_PAPER_SOURCE,
         METADATA_FIELDS,
     )
 except (ImportError, ModuleNotFoundError):
@@ -23,6 +24,7 @@ except (ImportError, ModuleNotFoundError):
         CLS_METADATA_TABLE_JSONDATA,
         FIELD_DELETE_PREVIOUS,
         FIELD_DIGITAL_SOURCE,
+        FIELD_PAPER_SOURCE,
         METADATA_FIELDS,
     )
 
@@ -129,6 +131,10 @@ def _hide_metadata_in_scripts_html_tag(
     json_elem["type"] = "application/json"
     json_elem["class"] = CLS_METADATA_TABLE_JSONDATA
     json_elem["hidden"] = "hidden"
+    # print(
+    #     'document_metadata.to_json()["assets"]', document_metadata.to_json()["assets"]
+    # )
+    # TODO: integrate preparer and verifier
     json_elem.string = json.dumps(document_metadata.to_json())
     html_soup.append(json_elem)
 
@@ -188,7 +194,7 @@ class MetadataTable:
                 return False
             return bool(val)
         # TODO: after clarity on the asset storage, change this naive logic into `if fp.exists() and not fp.is_dir()` or similar
-        elif val.startswith("./"):
+        elif key == FIELD_DIGITAL_SOURCE or key == FIELD_PAPER_SOURCE:
             return pathlib.Path(val)
         return val
 

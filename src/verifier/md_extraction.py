@@ -166,6 +166,13 @@ class DocumentMetadata:
         self.assets.append(asset_meta)
 
     def assets_as_dicts(self) -> list[dict[str, AcceptedValues]]:
+        # TODO:
+        """
+        This is for hiding
+        [{'papersource': PosixPath('images/tiny-picture.png'), 'licensename': 'Unsplash License', 'licenseurl': 'https://unsplash.com/license', 'author': 'Jean Carlo Emer', 'takenfrom': 'https://unsplash.com/photos/beige-concrete-house-2d-RL-xa4mk', 'deleteprevious': True, 'uuid': '43113d7a-ba35-4d3a-8fd2-7bf2d6931708'}, {'papersource': PosixPath('images/10x10px-img.png'), 'digitalsource': PosixPath('images/10x10px-img.png'), 'deleteprevious': False, 'author': 'Koziołek Matołek', 'uuid': 'b34ad277-3b63-4a90-a048-bce6aacb82ce'}, {'papersource': PosixPath('images/tiny-picture.png'), 'digitalsource': PosixPath('images/10x10px-img.png'), 'deleteprevious': True, 'uuid': '12c10a58-4505-489c-8a0f-d2bdd1f5e618'}]
+        in the html scripts tag. Maybe we'd want to store all
+        metadata in one place structured similarly?
+        """
         return [am.to_dict() for am in self.assets]
 
     def __str__(self) -> str:
