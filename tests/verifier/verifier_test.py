@@ -228,7 +228,7 @@ class TestHeadingsLinksAndCaptionsBreakingVerificationRules:
         is_correct_no_warning = None
         for w in self.warnings[CAPTIONS]:
             if (
-                w["curr_elem"].startswith('<p class="dgt-mon-caption">Image ')
+                "Image " in w["curr_elem"]
                 and w["problem"] == MSG_PROBLEMS[CAPTIONS]["check_cap_invalid_type"]
             ):
                 is_incorrect_raise_warning = w
