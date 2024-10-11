@@ -20,6 +20,7 @@ try:
     from local_constants import RECOGNIZED_LICENSE_NAMES
     from path_handler import PathHandler, SUPPORTED_SUFFIXES
     from verif_warnings import VerifierMessages
+    from metadata import AssetDatapoint, DocumentMetadata
 except (ImportError, ModuleNotFoundError):
     from .constants import (
         METADATA_FIELDS,
@@ -33,6 +34,7 @@ except (ImportError, ModuleNotFoundError):
     from .local_constants import RECOGNIZED_LICENSE_NAMES
     from .path_handler import PathHandler, SUPPORTED_SUFFIXES
     from .verif_warnings import VerifierMessages
+    from .metadata import AssetDatapoint, DocumentMetadata
 
 
 CAPTION_TYPES = ["Figure", "Table", "Graph"]
@@ -101,9 +103,9 @@ class HtmlVerifier:
         self._paragraphs = []
         self._tables = []
         self._metadata_tables = []
-        self._metadata_tables_records = []
         self._comments = {}
         self._messages = VerifierMessages()
+        self._metadata = DocumentMetadata()
         self._logs = []
 
     def summary(self):
@@ -172,7 +174,7 @@ class HtmlVerifier:
                     child.name == "script"
                     and CLS_METADATA_TABLE_JSONDATA in child.attrs.get("class", [])
                 ):
-                    self._metadata_tables_records += json.loads(child.text)
+                    self._metadata.from_json(json.loads(child.text))
                 if child.name == "p":
                     self._paragraphs.append(child)
             self._mark_html_elements_recursively(child, lvl + 1)
@@ -497,10 +499,8 @@ class HtmlVerifier:
         if item == "Figure":
             uuid = tag.get("dgt-mon-metadata-uuid", "")
             if uuid:
-                metadata = next(
-                    m for m in self._metadata_tables_records if m["uuid"] == uuid
-                )
-                licensename = metadata.get("licensename", "").lower()
+                asset = self._metadata.get_asset(pk=uuid)
+                licensename = asset.kwargs.get("licensename", "").lower()
                 if licensename in tag.text.lower():
                     return False
             return True
@@ -583,13 +583,9 @@ class HtmlVerifier:
     def _apply_metadatatables_verification(self) -> None:
         for elem in self._metadata_tables:
             uuid = elem.get("id")
-            raw_data = next(
-                mdtbl
-                for mdtbl in self._metadata_tables_records
-                if mdtbl["uuid"] == uuid
-            )
+            asset_datapoint = self._metadata.get_asset(pk=uuid)
             # whole metadata table verification
-            missing_req_fields = self._check_tbl_missing_fields(raw_data)
+            missing_req_fields = self._check_tbl_missing_fields(asset_datapoint)
             if missing_req_fields:
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[TABLES]["check_tbl_missing_fields"],
@@ -610,7 +606,7 @@ class HtmlVerifier:
                     tags=[TABLES, METADATA_TABLES],
                 )
             # single field verification
-            for key, val in raw_data.items():
+            for key, val in asset_datapoint.kwargs.items():
                 if key in (FIELD_DIGITAL_SOURCE, FIELD_PAPER_SOURCE):
                     vpath = PathHandler(val, self._slug)
                 else:
@@ -692,15 +688,15 @@ class HtmlVerifier:
     def _check_tbl_unrecognized_field(self, key: str) -> bool:
         return key not in METADATA_FIELDS_KEYS
 
-    def _check_tbl_missing_fields(self, mdtbl: dict[str, str]) -> list[str]:
+    def _check_tbl_missing_fields(self, asset: AssetDatapoint) -> list[str]:
         missing = []
         is_missing = False
         for field in METADATA_FIELDS:
             if field["is_required"]:
-                if field["key"] not in mdtbl.keys():
+                if field["key"] not in asset.kwargs.keys():
                     is_missing = True
                     for alias in field["aliases"]:
-                        if alias in mdtbl.keys():
+                        if alias in asset.kwargs.keys():
                             is_missing = False
                 if is_missing:
                     missing.append(field["key"])

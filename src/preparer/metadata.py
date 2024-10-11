@@ -1,6 +1,6 @@
 # ===== IMPORTANT =====
 # Remember, the only source of truth for metadata.py is the one defined in
-# `src/_common/metadata.py`. metadata.py file in the src/ folder will be
+# `src/_common/metadata.py`. A file with the same name in the src/ folder will be
 # replaced with `src/_common/metadata.py` before building the image.
 # We advise that you always build the containers using Makefile commands,
 # as the copy command is already included.
@@ -13,6 +13,7 @@ import pathlib
 import typing as t
 
 type AcceptedValues = t.Union[str, bool, pathlib.Path]
+T = t.TypeVar("T")
 
 
 class FieldTypeRecord(t.TypedDict):
@@ -23,6 +24,25 @@ class FieldTypeRecord(t.TypedDict):
     is_required: bool
     aliases: list[str]
     desc: str
+
+
+class AssetRecord(t.TypedDict):
+    pk: str
+    kwargs: dict[str, AcceptedValues]
+
+
+class RefRecord(t.TypedDict):
+    pk: int
+    target_id: int
+    target_full_id: str
+    content: str
+
+
+class TargetRecord(t.TypedDict):
+    pk: int
+    full_id: str
+    html: str
+    text: str
 
 
 @dataclasses.dataclass
@@ -36,7 +56,14 @@ class AssetDatapoint:
             if isinstance(v, pathlib.Path):
                 v = str(v)
             res.update({k: v})
+        res.update({"pk": self.pk})
         return res
+
+    @staticmethod
+    def from_json(jsml: dict[str, str]) -> "AssetDatapoint":
+        pk = jsml["pk"]
+        del jsml["pk"]
+        return AssetDatapoint(pk=pk, kwargs=jsml)
 
     def __getitem__(self, name: str) -> t.Union[AcceptedValues]:
         return getattr(self, name)
@@ -51,6 +78,10 @@ class RefDatapoint:
 
     def to_json(self) -> dict[str, t.Union[str, int]]:
         return {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}
+
+    @staticmethod
+    def from_json(jsml: dict[str, t.Union[str, int]]) -> "RefDatapoint":
+        return RefDatapoint(**jsml)
 
     def __getitem__(self, name: str) -> t.Union[int, str]:
         return getattr(self, name)
@@ -69,6 +100,10 @@ class TargetDatapoint:
 
     def to_json(self) -> dict[str, t.Union[str, int]]:
         return {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}
+
+    @staticmethod
+    def from_json(jsml: dict[str, t.Union[str, int]]) -> "TargetDatapoint":
+        return TargetDatapoint(**jsml)
 
     def __getitem__(self, name: str) -> t.Union[int, str]:
         return getattr(self, name)
@@ -99,6 +134,8 @@ class DocumentMetadata:
         self, records_name: str, pk: str
     ) -> t.Union[AssetDatapoint, RefDatapoint, TargetDatapoint]:
         records = getattr(self, records_name)
+        print("pk", pk)
+        print("records", records)
         return next(rec for rec in records if rec["pk"] == pk)
 
     def filter(
@@ -129,6 +166,13 @@ class DocumentMetadata:
             "refs": [rec.to_json() for rec in self.refs],
             "targets": [rec.to_json() for rec in self.targets],
         }
+
+    def from_json(
+        self, jsml: dict[str, t.Union[AssetRecord, RefRecord, TargetRecord]]
+    ) -> None:
+        self.assets = [AssetDatapoint.from_json(rec) for rec in jsml["assets"]]
+        self.refs = [RefDatapoint.from_json(rec) for rec in jsml["refs"]]
+        self.targets = [TargetDatapoint.from_json(rec) for rec in jsml["targets"]]
 
     def __str__(self) -> str:
         return "%s(assets=[%s], refs=[%s], targets=[%s])" % (
