@@ -10,7 +10,7 @@ except (ImportError, ModuleNotFoundError):
     from .metadata import DocumentMetadata, TargetDatapoint
 
 
-def add_id_to_captions_without_bookmarks(
+def handle_targets_in_caption(
     html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata
 ) -> bs4.BeautifulSoup:
     for caption in html_soup.find_all("p", {"class": "dgt-mon-caption"}):

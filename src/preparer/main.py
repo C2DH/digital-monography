@@ -21,7 +21,7 @@ try:
     from metadata_extraction import replace_assets_with_directives
     from remove_empty_tables import remove_empty_tables
     from replace_alt_texts import replace_alt_texts
-    from refs import add_id_to_captions_without_bookmarks
+    from refs import handle_targets_in_caption
     from html2md import convert_to_md
     from ipynb_prep import tags_to_myst_crossref_targets
     from keys import KeyPath
@@ -38,7 +38,7 @@ except (ImportError, ModuleNotFoundError):
     from .metadata_extraction import replace_assets_with_directives
     from .remove_empty_tables import remove_empty_tables
     from .replace_alt_texts import replace_alt_texts
-    from .refs import add_id_to_captions_without_bookmarks
+    from .refs import handle_targets_in_caption
     from .html2md import convert_to_md
     from .ipynb_prep import tags_to_myst_crossref_targets
     from .keys import KeyPath
@@ -89,7 +89,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_soup = _replace_alt_texts(html_soup)
         html_soup = _add_citations_and_bibliography(html_soup)
         html_soup = _replace_assets_with_directives(html_soup, metadata)
-        html_soup = _add_id_to_captions_without_bookmarks(html_soup, metadata)
+        html_soup = _handle_targets_in_caption(html_soup, metadata)
         html_soup = _remove_empty_tables(html_soup)
         html_soup_str = str(html_soup)
         # IMPORTANT: other services depend on html produced at this stage, make sure that:
@@ -197,14 +197,14 @@ def _replace_assets_with_directives(
         raise
 
 
-def _add_id_to_captions_without_bookmarks(
+def _handle_targets_in_caption(
     html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata
 ) -> bs4.BeautifulSoup:
     try:
-        return add_id_to_captions_without_bookmarks(html_soup, metadata)
+        return handle_targets_in_caption(html_soup, metadata)
     except Exception as e:
         logger.exception(
-            f"Adding ids to captions, which do not have bookmarks, failed. Error: {repr(e)}"
+            f"Handling reference targets in captions failed. Error: {repr(e)}"
         )
         raise
 
