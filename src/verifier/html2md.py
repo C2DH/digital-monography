@@ -12,7 +12,7 @@ import typing as t
 
 try:
     from constants import CLS_METADATA_TABLE
-    from preparer.metadata import DocumentMetadata
+    from metadata import DocumentMetadata
 except (ImportError, ModuleNotFoundError):
     from .constants import CLS_METADATA_TABLE
     from .metadata import DocumentMetadata
@@ -136,7 +136,11 @@ class MystMdConverter(markdownify.MarkdownConverter):
     def convert_blockquote(self, el, text, convert_as_inline):
         if convert_as_inline:
             return text
-        return "" + (line_beginning_re.sub("> ", text) + "\n") if text else ""
+        if el.next_sibling and el.next_sibling.name == "blockquote":
+            end = "\n"
+        else:
+            end = "\n\n"
+        return "" + (line_beginning_re.sub("> ", text) + end) if text else ""
 
     convert_sub = sub_inline_conversion(lambda self: self.options["sub_symbol"])
 

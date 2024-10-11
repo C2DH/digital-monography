@@ -70,6 +70,7 @@ preparer/build:
 	cp src/_common/constants.py src/preparer/constants.py
 	cp src/_common/keys.py src/preparer/keys.py
 	cp src/_common/metadata.py src/preparer/metadata.py
+	cp src/_common/html2md.py src/preparer/html2md.py
 	docker build -t dgtmon-dev-preparer src/preparer
 
 preparer/tag:
@@ -116,7 +117,7 @@ verifier/build:
 	cp src/_common/constants.py src/verifier/constants.py
 	cp src/_common/keys.py src/verifier/keys.py
 	cp src/_common/metadata.py src/verifier/metadata.py
-	cp src/preparer/html2md.py src/verifier/html2md.py
+	cp src/_common/html2md.py src/verifier/html2md.py
 	docker build -t dgtmon-dev-verifier src/verifier
 
 verifier/tag:
