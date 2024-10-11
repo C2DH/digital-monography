@@ -457,7 +457,7 @@ class HtmlVerifier:
     def _check_cap_no_bold(self, tag: bs4.element.Tag) -> bool:
         try:
             bolded = tag.find_all("strong")[0]
-            return re.match(r"^\w+ \d+:", bolded.text) is None
+            return re.match(r"^\w+ {{ (_Unref|_Ref)[0-9]{9} }}:", bolded.text) is None
         except IndexError:
             return True
 
