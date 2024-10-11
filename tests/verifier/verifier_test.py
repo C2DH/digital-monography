@@ -260,21 +260,22 @@ class TestHeadingsLinksAndCaptionsBreakingVerificationRules:
         )
         assert warning
 
-    def test_check_cap_nonsequantial_num(self):
-        warning = next(
-            w
-            for w in self.warnings[CAPTIONS]
-            if "Almost correct caption" in w["curr_elem"]
-            and w["problem"] == MSG_PROBLEMS[CAPTIONS]["check_cap_nonsequantial_num"]
-        )
-        assert warning
-        warning = next(
-            w
-            for w in self.warnings[CAPTIONS]
-            if "Duplicated caption number" in w["curr_elem"]
-            and w["problem"] == MSG_PROBLEMS[CAPTIONS]["check_cap_nonsequantial_num"]
-        )
-        assert warning
+    # NOTE: 2024-10-11: replaced with dynamic numbering
+    # def test_check_cap_nonsequantial_num(self):
+    #     warning = next(
+    #         w
+    #         for w in self.warnings[CAPTIONS]
+    #         if "Almost correct caption" in w["curr_elem"]
+    #         and w["problem"] == MSG_PROBLEMS[CAPTIONS]["check_cap_nonsequantial_num"]
+    #     )
+    #     assert warning
+    #     warning = next(
+    #         w
+    #         for w in self.warnings[CAPTIONS]
+    #         if "Duplicated caption number" in w["curr_elem"]
+    #         and w["problem"] == MSG_PROBLEMS[CAPTIONS]["check_cap_nonsequantial_num"]
+    #     )
+    #     assert warning
 
     def test_check_cap_no_copyright(self):
         "See in a class below"

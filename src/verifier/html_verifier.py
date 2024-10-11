@@ -69,7 +69,7 @@ MSG_PROBLEMS = {
         "check_cap_invalid_type": "Invalid caption type.",
         "check_cap_no_end_dot": "Captions must end with a trailing dot.",
         "check_cap_dupl_num": "A caption with repeated numbering was found.",
-        "check_cap_nonsequantial_num": "Caption numbering is not sequential.",
+        # "check_cap_nonsequantial_num": "Caption numbering is not sequential.",
         "check_cap_no_copyright": "No valid license information found.",
         "check_cap_many_bookmarks": "A caption includes duplicated bookmarks.",
     },
@@ -416,15 +416,15 @@ class HtmlVerifier:
                     timestamp=self._timestamp,
                     tags=[CAPTIONS],
                 )
-            if self._check_cap_nonsequantial_num(item, number):
-                self._messages.add_msg(
-                    problem=MSG_PROBLEMS[CAPTIONS]["check_cap_nonsequantial_num"],
-                    recommend=f'Check if your caption numbering is in order. If you are using MS Word "Insert Caption" option (as you should), you can update all dynamic fields in a document by pressing Ctrl+A and then F9.',
-                    elem=caption,
-                    fn=self._fp.name,
-                    timestamp=self._timestamp,
-                    tags=[CAPTIONS],
-                )
+            # if self._check_cap_nonsequantial_num(item, number):
+            #     self._messages.add_msg(
+            #         problem=MSG_PROBLEMS[CAPTIONS]["check_cap_nonsequantial_num"],
+            #         recommend=f'Check if your caption numbering is in order. If you are using MS Word "Insert Caption" option (as you should), you can update all dynamic fields in a document by pressing Ctrl+A and then F9.',
+            #         elem=caption,
+            #         fn=self._fp.name,
+            #         timestamp=self._timestamp,
+            #         tags=[CAPTIONS],
+            #     )
             if self._check_cap_no_copyright(item, caption):
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[CAPTIONS]["check_cap_no_copyright"],
@@ -481,14 +481,15 @@ class HtmlVerifier:
             return False
         return number in self._caption_numbers[item]
 
-    def _check_cap_nonsequantial_num(
-        self, item: t.Optional[str], number: t.Optional[int]
-    ) -> bool:
-        if item is None or number is None:
-            return False
-        if len(self._caption_numbers[item]) >= 1:
-            return self._caption_numbers[item][-1] - 1 != number
-        return False
+    # NOTE: 2024-10-11: replaced with dynamic numbering
+    # def _check_cap_nonsequantial_num(
+    #     self, item: t.Optional[str], number: t.Optional[int]
+    # ) -> bool:
+    #     if item is None or number is None:
+    #         return False
+    #     if len(self._caption_numbers[item]) >= 1:
+    #         return self._caption_numbers[item][-1] - 1 != number
+    #     return False
 
     def _check_cap_no_copyright(
         self, item: t.Optional[str], tag: bs4.element.Tag
