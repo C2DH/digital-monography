@@ -1,0 +1,139 @@
+# ===== IMPORTANT =====
+# Remember, the only source of truth for metadata.py is the one defined in
+# `src/_common/metadata.py`. metadata.py file in the src/ folder will be
+# replaced with `src/_common/metadata.py` before building the image.
+# We advise that you always build the containers using Makefile commands,
+# as the copy command is already included.
+# ======================
+
+import dataclasses
+import functools
+import itertools
+import pathlib
+import typing as t
+
+type AcceptedValues = t.Union[str, bool, pathlib.Path]
+
+
+class FieldTypeRecord(t.TypedDict):
+    """Structure of fields definition in METADATA_FIELDS."""
+
+    key: str
+    is_bool: bool
+    is_required: bool
+    aliases: list[str]
+    desc: str
+
+
+@dataclasses.dataclass
+class AssetDatapoint:
+    pk: str
+    kwargs: dict[str, AcceptedValues] = dataclasses.field(default_factory=dict)
+
+    def to_json(self) -> dict[str, str]:
+        res = {}
+        for k, v in self.kwargs.items():
+            if isinstance(v, pathlib.Path):
+                v = str(v)
+            res.update({k: v})
+        return res
+
+    def __getitem__(self, name: str) -> t.Union[AcceptedValues]:
+        return getattr(self, name)
+
+
+@dataclasses.dataclass
+class RefDatapoint:
+    pk: int = dataclasses.field(default_factory=itertools.count().__next__, init=False)
+    target_id: int
+    target_full_id: str
+    content: str
+
+    def to_json(self) -> dict[str, t.Union[str, int]]:
+        return {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}
+
+    def __getitem__(self, name: str) -> t.Union[int, str]:
+        return getattr(self, name)
+
+
+@dataclasses.dataclass
+class TargetDatapoint:
+    pk: int = dataclasses.field(init=False)
+    full_id: str
+    html: str
+    text: str
+
+    def __post_init__(self):
+        "Get 241403112 from _Unref241403112."
+        self.pk = int("".join(ch for ch in self.full_id if ch.isdigit()))
+
+    def to_json(self) -> dict[str, t.Union[str, int]]:
+        return {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}
+
+    def __getitem__(self, name: str) -> t.Union[int, str]:
+        return getattr(self, name)
+
+
+class DocumentMetadata:
+    """
+    Collection of records (lists of dictionaries) about:
+        assets: data from the Metadata tables describing assets
+        refs: references (links and cross-references)
+        targets: reference targets (e.g. headings, captions)
+    """
+
+    def __init__(self) -> None:
+        self.assets: list[AssetDatapoint] = []
+        self.refs: list[RefDatapoint] = []
+        self.targets: list[TargetDatapoint] = []
+
+    def add(
+        self,
+        records_name: str,
+        record: t.Union[AssetDatapoint, RefDatapoint, TargetDatapoint],
+    ) -> None:
+        records = getattr(self, records_name)
+        records.append(record)
+
+    def get(
+        self, records_name: str, pk: str
+    ) -> t.Union[AssetDatapoint, RefDatapoint, TargetDatapoint]:
+        records = getattr(self, records_name)
+        return next(rec for rec in records if rec["pk"] == pk)
+
+    def filter(
+        self, records_name: str, attrib: str, val: str
+    ) -> list[t.Union[AssetDatapoint, RefDatapoint, TargetDatapoint]]:
+        records = getattr(self, records_name)
+        return [rec for rec in records if getattr(rec, attrib) == val]
+
+    add_asset = functools.partialmethod(add, "assets")
+    get_asset = functools.partialmethod(get, "assets")
+
+    add_ref = functools.partialmethod(add, "refs")
+    get_ref = functools.partialmethod(get, "refs")
+
+    add_target = functools.partialmethod(add, "targets")
+    get_target = functools.partialmethod(get, "targets")
+
+    def to_dict(self) -> dict[str, list[dict[str, AcceptedValues]]]:
+        return {
+            "assets": self.assets,
+            "refs": self.refs,
+            "targets": self.targets,
+        }
+
+    def to_json(self) -> dict[str, list[dict[str, t.Union[str, t.Union[str, int]]]]]:
+        return {
+            "assets": [rec.to_json() for rec in self.assets],
+            "refs": [rec.to_json() for rec in self.refs],
+            "targets": [rec.to_json() for rec in self.targets],
+        }
+
+    def __str__(self) -> str:
+        return "%s(assets=[%s], refs=[%s], targets=[%s])" % (
+            self.__class__.__name__,
+            ", ".join(str(rec) for rec in self.assets),
+            ", ".join(str(rec) for rec in self.refs),
+            ", ".join(str(rec) for rec in self.targets),
+        )

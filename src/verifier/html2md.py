@@ -11,11 +11,11 @@ import re
 import typing as t
 
 try:
-    from md_extraction import DocumentMetadata
     from constants import CLS_METADATA_TABLE
+    from preparer.metadata import DocumentMetadata
 except (ImportError, ModuleNotFoundError):
-    from .md_extraction import DocumentMetadata
     from .constants import CLS_METADATA_TABLE
+    from .metadata import DocumentMetadata
 
     # from src.preparer.md_extraction import (
     #     DocumentMetadata,

@@ -69,6 +69,7 @@ dropbox/make: dropbox/build dropbox/tag dropbox/push
 preparer/build:
 	cp src/_common/constants.py src/preparer/constants.py
 	cp src/_common/keys.py src/preparer/keys.py
+	cp src/_common/metadata.py src/preparer/metadata.py
 	docker build -t dgtmon-dev-preparer src/preparer
 
 preparer/tag:
@@ -114,8 +115,8 @@ github/make: github/build github/tag github/push
 verifier/build:
 	cp src/_common/constants.py src/verifier/constants.py
 	cp src/_common/keys.py src/verifier/keys.py
+	cp src/_common/metadata.py src/verifier/metadata.py
 	cp src/preparer/html2md.py src/verifier/html2md.py
-	cp src/preparer/md_extraction.py src/verifier/md_extraction.py
 	docker build -t dgtmon-dev-verifier src/verifier
 
 verifier/tag:

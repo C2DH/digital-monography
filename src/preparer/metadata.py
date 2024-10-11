@@ -1,3 +1,11 @@
+# ===== IMPORTANT =====
+# Remember, the only source of truth for metadata.py is the one defined in
+# `src/_common/metadata.py`. metadata.py file in the src/ folder will be
+# replaced with `src/_common/metadata.py` before building the image.
+# We advise that you always build the containers using Makefile commands,
+# as the copy command is already included.
+# ======================
+
 import dataclasses
 import functools
 import itertools
