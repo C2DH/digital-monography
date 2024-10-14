@@ -105,3 +105,84 @@ def _wrap_caption_contents_into_anchor_tag(
         a.append(el)
     caption.contents = []
     caption.insert(0, a)
+
+
+class SplitResult:
+    """
+    Splits link/cross-reference target into parts.
+    Based on urllib.parse.urlsplit()
+    """
+
+    _scheme_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-."
+    _unsafe_url_bytes_to_remove = ["\t", "\r", "\n"]
+
+    def __init__(self, url: str, scheme: str = ""):
+        scheme, netloc, path, query, fragment = self._urlsplit(url, scheme)
+        self.scheme: str = scheme
+        self.netloc: str = netloc
+        self.path: str = path
+        self.query: str = query
+        self.fragment: str = fragment
+
+    def _urlsplit(self, url: str, scheme: str) -> tuple[str, str, str, str, str]:
+        """
+        Splits url into the following parts:
+            <scheme>://<net_loc>/<path>;<params>?<query>#<fragment>
+        Relative references, like
+            <a href="#Heading">Link</a>
+        result in fragment="Heading"
+            <a href="filename.docx#Heading">Link</a>
+        result in path="filename.docx", fragment="Heading"
+        """
+        for b in self._unsafe_url_bytes_to_remove:
+            url = url.replace(b, "")
+            scheme = scheme.replace(b, "")
+
+        query = fragment = ""
+        i = url.find(":")
+        if i > 0 and url[0].isascii() and url[0].isalpha():
+            for c in url[:i]:
+                if c not in self._scheme_chars:
+                    break
+            else:
+                scheme, url = url[:i].lower(), url[i + 1 :]
+
+        netloc, url = self._get_netloc(url)
+        if "#" in url:
+            url, fragment = url.split("#", 1)
+        if "?" in url:
+            url, query = url.split("?", 1)
+        return scheme, netloc, url, query, fragment
+
+    def _get_netloc(self, url: str) -> tuple[str, str]:
+        """
+        Network location, as per [RFC 1808](https://datatracker.ietf.org/doc/html/rfc1808.html)
+        """
+        start = 2
+        netloc = ""
+        if url[:start] == "//":
+            delim = len(url)  # position of end of domain part of url, default is end
+            for c in "/?#":  # look for delimiters; the order is NOT important
+                wdelim = url.find(c, start)  # find first of this delim
+                if wdelim >= 0:  # if found
+                    delim = min(delim, wdelim)  # use earliest delim position
+            netloc = url[start:delim]  # domain
+            url = url[delim:]  # rest
+        return netloc, url
+
+    def is_external_url(self) -> bool:
+        """E.g. 'https://example.com'"""
+        return all([self.scheme, self.netloc])
+
+    def is_cross_file_reference(self) -> bool:
+        """E.g. 'filename.docx#Heading'"""
+        if self.is_external_url():
+            return False
+        return all([self.fragment, self.path])
+
+    def is_inner_reference(self) -> bool:
+        """E.g. '#Heading'"""
+        return self.is_external_url() == False and self.fragment and not self.path
+
+    def __str__(self) -> str:
+        return f"SplitResult(scheme={self.scheme}, netloc={self.netloc}, path={self.path}, query={self.query}, fragment={self.fragment})"

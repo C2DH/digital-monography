@@ -71,3 +71,45 @@ class TestManagingReferences:
             '<p class="dgt-mon-caption"><a id="_Ref178606190"><strong>Figure {{ _Ref178606190 }}:</strong> Caption with a <a href="example.com">link</a> and a bookmark.</a></p>'
             in self.html_str
         ), "Handling a caption with a link and a bookmark failed."
+
+
+def test_if_string_is_url_or_cross_file_reference():
+    sp = SplitResult("https://c2dh.uni.lu/")
+    assert sp.scheme == "https"
+    assert sp.netloc == "c2dh.uni.lu"
+    assert sp.path == "/"
+    assert sp.query == ""
+    assert sp.fragment == ""
+    assert sp.is_external_url() == True
+    assert sp.is_cross_file_reference() == False
+    assert sp.is_inner_reference() == False
+
+    sp = SplitResult("http://c2dh.uni.lu/people/")
+    assert sp.scheme == "http"
+    assert sp.netloc == "c2dh.uni.lu"
+    assert sp.path == "/people/"
+    assert sp.query == ""
+    assert sp.fragment == ""
+    assert sp.is_external_url() == True
+    assert sp.is_cross_file_reference() == False
+    assert sp.is_inner_reference() == False
+
+    sp = SplitResult("#_Ref177042490")
+    assert sp.scheme == ""
+    assert sp.netloc == ""
+    assert sp.path == ""
+    assert sp.query == ""
+    assert sp.fragment == "_Ref177042490"
+    assert sp.is_external_url() == False
+    assert sp.is_cross_file_reference() == False
+    assert sp.is_inner_reference() == True
+
+    sp = SplitResult("filename.docx#heading1")
+    assert sp.scheme == ""
+    assert sp.netloc == ""
+    assert sp.path == "filename.docx"
+    assert sp.query == ""
+    assert sp.fragment == "heading1"
+    assert sp.is_external_url() == False
+    assert sp.is_cross_file_reference() == True
+    assert sp.is_inner_reference() == False
