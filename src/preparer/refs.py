@@ -2,12 +2,15 @@ import bs4
 import copy
 import secrets
 import string
+import functools
 import typing as t
 
 try:
     from metadata import DocumentMetadata, TargetDatapoint
 except (ImportError, ModuleNotFoundError):
     from .metadata import DocumentMetadata, TargetDatapoint
+
+# targets ############
 
 
 def handle_targets_in_caption(
@@ -77,7 +80,6 @@ def _extract_anchor_tag(
         a_id = "".join(secrets.choice(string.digits) for i in range(9))
         a["id"] = "_Unref" + a_id
     else:
-        # a_id = a["id"]
         a = a.extract()
     return a
 
@@ -107,10 +109,27 @@ def _wrap_caption_contents_into_anchor_tag(
     caption.insert(0, a)
 
 
-class SplitResult:
+# references ############
+
+
+def handle_refs(
+    html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata
+) -> bs4.BeautifulSoup:
+    for a_tag in html_soup.find_all("a", href=True):
+        href = a_tag["href"]
+        link = LinkMystifier(href)
+        target = (
+            metadata.get_target(attrib="full_id", val=link.fragment)
+            if link.is_inner_reference()
+            else None
+        )
+        a_tag.string = link.markdownify(a_tag.text, target)
+    return html_soup
+
+
+class LinkMystifier:
     """
-    Splits link/cross-reference target into parts.
-    Based on urllib.parse.urlsplit()
+    Translate html anchor tags to MyST/markdown link syntax.
     """
 
     _scheme_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-."
@@ -118,16 +137,26 @@ class SplitResult:
 
     def __init__(self, url: str, scheme: str = ""):
         scheme, netloc, path, query, fragment = self._urlsplit(url, scheme)
+        self.uri = url
         self.scheme: str = scheme
         self.netloc: str = netloc
         self.path: str = path
         self.query: str = query
         self.fragment: str = fragment
+        # cached functions
+        self.is_external_url = functools.lru_cache()(self._is_external_url__uncached)
+        self.is_cross_file_reference = functools.lru_cache()(
+            self._is_cross_file_reference__uncached
+        )
+        self.is_inner_reference = functools.lru_cache()(
+            self._is_inner_reference__uncached
+        )
 
     def _urlsplit(self, url: str, scheme: str) -> tuple[str, str, str, str, str]:
         """
         Splits url into the following parts:
             <scheme>://<net_loc>/<path>;<params>?<query>#<fragment>
+        Function is based on urllib.parse.urlsplit()
         Relative references, like
             <a href="#Heading">Link</a>
         result in fragment="Heading"
@@ -170,19 +199,63 @@ class SplitResult:
             url = url[delim:]  # rest
         return netloc, url
 
-    def is_external_url(self) -> bool:
+    def _is_external_url__uncached(self) -> bool:
         """E.g. 'https://example.com'"""
         return all([self.scheme, self.netloc])
 
-    def is_cross_file_reference(self) -> bool:
+    def _is_cross_file_reference__uncached(self) -> bool:
         """E.g. 'filename.docx#Heading'"""
         if self.is_external_url():
             return False
         return all([self.fragment, self.path])
 
-    def is_inner_reference(self) -> bool:
+    def _is_inner_reference__uncached(self) -> bool:
         """E.g. '#Heading'"""
-        return self.is_external_url() == False and self.fragment and not self.path
+        if self.is_external_url() or self.path:
+            return False
+        return bool(self.fragment)
+
+    @property
+    def destination(self) -> str:
+        """
+        Markdown destination to be placed in `[...](destination)` syntax.
+        """
+        if self.is_cross_file_reference():
+            # TODO: when filename tracking is in place, add handling changing paths
+            path = (
+                self.path.replace(".docx", ".md")
+                if self.path.endswith(".docx")
+                else self.path
+            )
+            return f"./{path}#{self.fragment}"
+        elif self.is_inner_reference():
+            return f"#{self.fragment}"
+        return self.uri
+
+    def markdownify(
+        self, tag_text: str, target: t.Optional[TargetDatapoint] = None
+    ) -> str:
+        start = " " if tag_text.startswith(" ") else ""
+        end = " " if tag_text.endswith(" ") else ""
+        if self.is_cross_file_reference():
+            to_replace = ""
+            for i in range(len(tag_text)):
+                if tag_text[i].isdigit():
+                    to_replace += tag_text[i]
+                if to_replace and not tag_text[i].isdigit():
+                    break
+
+            replace_with = r"{{ " + self.path + "#" + self.fragment + r" }}"
+            if to_replace:
+                tag_text = tag_text.replace(to_replace, replace_with)
+            return start + f"[{tag_text}]({self.destination})" + end
+        elif self.is_inner_reference():
+            if target is not None:
+                to_replace = target.text
+                replace_with = r"{{ " + self.fragment + r" }}"
+                tag_text = tag_text.replace(to_replace, replace_with)
+            return start + f"[{tag_text}]({self.destination})" + end
+        return start + f"[{tag_text}]({self.destination})" + end
 
     def __str__(self) -> str:
         return f"SplitResult(scheme={self.scheme}, netloc={self.netloc}, path={self.path}, query={self.query}, fragment={self.fragment})"
