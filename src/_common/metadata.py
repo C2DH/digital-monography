@@ -131,12 +131,13 @@ class DocumentMetadata:
         records.append(record)
 
     def get(
-        self, records_name: str, pk: str
-    ) -> t.Union[AssetDatapoint, RefDatapoint, TargetDatapoint]:
+        self, records_name: str, val: str, attrib: str = "pk"
+    ) -> t.Optional[t.Union[AssetDatapoint, RefDatapoint, TargetDatapoint]]:
         records = getattr(self, records_name)
-        print("pk", pk)
-        print("records", records)
-        return next(rec for rec in records if rec["pk"] == pk)
+        try:
+            return next(rec for rec in records if rec[attrib] == val)
+        except StopIteration:
+            return None
 
     def filter(
         self, records_name: str, attrib: str, val: str
