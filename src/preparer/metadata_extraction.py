@@ -131,10 +131,6 @@ def _hide_metadata_in_scripts_html_tag(
     json_elem["type"] = "application/json"
     json_elem["class"] = CLS_METADATA_TABLE_JSONDATA
     json_elem["hidden"] = "hidden"
-    # print(
-    #     'document_metadata.to_json()["assets"]', document_metadata.to_json()["assets"]
-    # )
-    # TODO: integrate preparer and verifier
     json_elem.string = json.dumps(document_metadata.to_json())
     html_soup.append(json_elem)
 
