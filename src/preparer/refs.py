@@ -116,14 +116,13 @@ def handle_refs(
     html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata
 ) -> bs4.BeautifulSoup:
     for a_tag in html_soup.find_all("a", href=True):
-        href = a_tag["href"]
-        link = LinkMystifier(href)
+        link = LinkMystifier(a_tag)
         target = (
             metadata.get_target(attrib="full_id", val=link.fragment)
             if link.is_inner_reference()
             else None
         )
-        a_tag.string = link.markdownify(a_tag.text, target)
+        a_tag.string = link.make_text(target)
     return html_soup
 
 
@@ -135,9 +134,10 @@ class LinkMystifier:
     _scheme_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-."
     _unsafe_url_bytes_to_remove = ["\t", "\r", "\n"]
 
-    def __init__(self, url: str, scheme: str = ""):
-        scheme, netloc, path, query, fragment = self._urlsplit(url, scheme)
-        self.uri = url
+    def __init__(self, tag: bs4.element.Tag):
+        self.anchor_tag = tag
+        self.uri = self.anchor_tag["href"]
+        scheme, netloc, path, query, fragment = self._urlsplit(self.uri)
         self.scheme: str = scheme
         self.netloc: str = netloc
         self.path: str = path
@@ -152,7 +152,7 @@ class LinkMystifier:
             self._is_inner_reference__uncached
         )
 
-    def _urlsplit(self, url: str, scheme: str) -> tuple[str, str, str, str, str]:
+    def _urlsplit(self, url: str, scheme: str = "") -> tuple[str, str, str, str, str]:
         """
         Splits url into the following parts:
             <scheme>://<net_loc>/<path>;<params>?<query>#<fragment>
@@ -215,8 +215,7 @@ class LinkMystifier:
             return False
         return bool(self.fragment)
 
-    @property
-    def destination(self) -> str:
+    def make_destination(self) -> str:
         """
         Markdown destination to be placed in `[...](destination)` syntax.
         """
@@ -232,11 +231,15 @@ class LinkMystifier:
             return f"#{self.fragment}"
         return self.uri
 
-    def markdownify(
-        self, tag_text: str, target: t.Optional[TargetDatapoint] = None
-    ) -> str:
-        start = " " if tag_text.startswith(" ") else ""
-        end = " " if tag_text.endswith(" ") else ""
+    # @property
+    # def destination(self) -> str:
+    #     return self.make_destination()
+
+    def make_text(self, target: t.Optional[TargetDatapoint] = None) -> str:
+        """
+        Markdown link text to be placed in `[text](...)` syntax.
+        """
+        tag_text = self.anchor_tag.text
         if self.is_cross_file_reference():
             to_replace = ""
             for i in range(len(tag_text)):
@@ -244,18 +247,26 @@ class LinkMystifier:
                     to_replace += tag_text[i]
                 if to_replace and not tag_text[i].isdigit():
                     break
-
             replace_with = r"{{ " + self.path + "#" + self.fragment + r" }}"
             if to_replace:
                 tag_text = tag_text.replace(to_replace, replace_with)
-            return start + f"[{tag_text}]({self.destination})" + end
         elif self.is_inner_reference():
             if target is not None:
                 to_replace = target.text
                 replace_with = r"{{ " + self.fragment + r" }}"
                 tag_text = tag_text.replace(to_replace, replace_with)
-            return start + f"[{tag_text}]({self.destination})" + end
-        return start + f"[{tag_text}]({self.destination})" + end
+        return tag_text
+
+    def markdownify(
+        self, tag_text: str, target: t.Optional[TargetDatapoint] = None
+    ) -> str:
+        start = " " if tag_text.startswith(" ") else ""
+        end = " " if tag_text.endswith(" ") else ""
+        return (
+            start
+            + f"[{self.make_text(tag_text, target)}]({self.make_destination()})"
+            + end
+        )
 
     def __str__(self) -> str:
         return f"SplitResult(scheme={self.scheme}, netloc={self.netloc}, path={self.path}, query={self.query}, fragment={self.fragment})"

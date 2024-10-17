@@ -1,7 +1,7 @@
 import bs4
 import re
 
-from src.preparer.refs import handle_targets_in_caption, handle_refs, LinkMystifier
+from src.preparer.refs import handle_targets_in_caption, LinkMystifier
 from src.preparer.metadata import DocumentMetadata, TargetDatapoint
 
 
@@ -73,140 +73,137 @@ class TestManagingTargetsInCaptions:
 
 
 def test_is_external_url():
-    sp = LinkMystifier("https://c2dh.uni.lu/")
-    assert sp.uri == "https://c2dh.uni.lu/"
-    assert sp.scheme == "https"
-    assert sp.netloc == "c2dh.uni.lu"
-    assert sp.path == "/"
-    assert sp.query == ""
-    assert sp.fragment == ""
-    assert sp.is_external_url() == True
-    assert sp.is_cross_file_reference() == False
-    assert sp.is_inner_reference() == False
+    sample_html = '<a href="https://c2dh.uni.lu/">the website</a>'
+    bs = bs4.BeautifulSoup(sample_html, "html.parser")
+    link = LinkMystifier(bs.a)
+    assert link.uri == "https://c2dh.uni.lu/"
+    assert link.scheme == "https"
+    assert link.netloc == "c2dh.uni.lu"
+    assert link.path == "/"
+    assert link.query == ""
+    assert link.fragment == ""
+    assert link.is_external_url() == True
+    assert link.is_cross_file_reference() == False
+    assert link.is_inner_reference() == False
 
 
 def test_is_external_url_with_path():
-    sp = LinkMystifier("http://c2dh.uni.lu/people/")
-    assert sp.uri == "http://c2dh.uni.lu/people/"
-    assert sp.scheme == "http"
-    assert sp.netloc == "c2dh.uni.lu"
-    assert sp.path == "/people/"
-    assert sp.query == ""
-    assert sp.fragment == ""
-    assert sp.is_external_url() == True
-    assert sp.is_cross_file_reference() == False
-    assert sp.is_inner_reference() == False
+    sample_html = '<a href="http://c2dh.uni.lu/people/">the website</a>'
+    bs = bs4.BeautifulSoup(sample_html, "html.parser")
+    link = LinkMystifier(bs.a)
+    assert link.uri == "http://c2dh.uni.lu/people/"
+    assert link.scheme == "http"
+    assert link.netloc == "c2dh.uni.lu"
+    assert link.path == "/people/"
+    assert link.query == ""
+    assert link.fragment == ""
+    assert link.is_external_url() == True
+    assert link.is_cross_file_reference() == False
+    assert link.is_inner_reference() == False
 
 
 def test_is_inner_reference():
-    sp = LinkMystifier("#_Ref177042490")
-    assert sp.uri == "#_Ref177042490"
-    assert sp.scheme == ""
-    assert sp.netloc == ""
-    assert sp.path == ""
-    assert sp.query == ""
-    assert sp.fragment == "_Ref177042490"
-    assert sp.is_external_url() == False
-    assert sp.is_cross_file_reference() == False
-    assert sp.is_inner_reference() == True
+    sample_html = '<a href="#_Ref177042490">Figure <strong>1</strong></a>'
+    bs = bs4.BeautifulSoup(sample_html, "html.parser")
+    link = LinkMystifier(bs.a)
+    assert link.uri == "#_Ref177042490"
+    assert link.scheme == ""
+    assert link.netloc == ""
+    assert link.path == ""
+    assert link.query == ""
+    assert link.fragment == "_Ref177042490"
+    assert link.is_external_url() == False
+    assert link.is_cross_file_reference() == False
+    assert link.is_inner_reference() == True
 
 
 def test_is_cross_file_reference():
-    sp = LinkMystifier("filename.docx#heading1")
-    assert sp.scheme == ""
-    assert sp.netloc == ""
-    assert sp.path == "filename.docx"
-    assert sp.query == ""
-    assert sp.fragment == "heading1"
-    assert sp.is_external_url() == False
-    assert sp.is_cross_file_reference() == True
-    assert sp.is_inner_reference() == False
+    sample_html = '<a href="filename.docx#h-target">see Chapter 2</a>'
+    bs = bs4.BeautifulSoup(sample_html, "html.parser")
+    link = LinkMystifier(bs.a)
+    assert link.scheme == ""
+    assert link.netloc == ""
+    assert link.path == "filename.docx"
+    assert link.query == ""
+    assert link.fragment == "h-target"
+    assert link.is_external_url() == False
+    assert link.is_cross_file_reference() == True
+    assert link.is_inner_reference() == False
 
 
 def test_is_not_external_url_nor_cross_file_ref_nor_inner_ref():
-    sp = LinkMystifier("example.com")
-    assert sp.is_external_url() == False
-    assert sp.is_cross_file_reference() == False
-    assert sp.is_inner_reference() == False
+    sample_html = '<a href="example.com">the website</a>'
+    bs = bs4.BeautifulSoup(sample_html, "html.parser")
+    link = LinkMystifier(bs.a)
+    assert link.is_external_url() == False
+    assert link.is_cross_file_reference() == False
+    assert link.is_inner_reference() == False
 
 
-def test_myst_md_target__is_cross_file_reference():
-    sp = LinkMystifier("filename.docx#heading1")
-    assert sp.destination == "./filename.md#heading1"
-
-
-# LinkMystifier.markdownify()
+# LinkMystifier methods
 
 
 def test_markownify_anchor_if_is_external_url():
     sample_html = '<a href="https://c2dh.uni.lu">the website</a>'
     bs = bs4.BeautifulSoup(sample_html, "html.parser")
-    a_tag = bs.a
-    link = LinkMystifier(a_tag["href"])
-    assert link.markdownify(a_tag.text) == "[the website](https://c2dh.uni.lu)"
+    link = LinkMystifier(bs.a)
+    assert link.make_text() == "the website"
+    assert link.make_destination() == "https://c2dh.uni.lu"
 
 
 def test_markownify_anchor_if_is_external_url_with_path():
     sample_html = '<a href="http://c2dh.uni.lu/people/">a website</a>'
-    expected_html = "[a website](http://c2dh.uni.lu/people/)"
     bs = bs4.BeautifulSoup(sample_html, "html.parser")
-    a_tag = bs.a
-    link = LinkMystifier(a_tag["href"])
-    assert link.markdownify(a_tag.text) == expected_html
+    link = LinkMystifier(bs.a)
+    assert link.make_text() == "a website"
+    assert link.make_destination() == "http://c2dh.uni.lu/people/"
 
 
 def test_markownify_anchor_if_is_inner_reference__complex_a_tag():
     sample_html = '<a href="#_Ref177042490">Figure <strong>1</strong></a>'
-    expected_html = r"[Figure {{ _Ref177042490 }}](#_Ref177042490)"
     bs = bs4.BeautifulSoup(sample_html, "html.parser")
-    a_tag = bs.a
-    link = LinkMystifier(a_tag["href"])
+    link = LinkMystifier(bs.a)
     target = TargetDatapoint(
         full_id="_Ref177042490",
         html='<data value=" SEQ Figure \\* ARABIC ">1</data>',
         text="1",
     )
-    assert link.markdownify(a_tag.text, target) == expected_html
+    assert link.make_text(target) == r"Figure {{ _Ref177042490 }}"
+    assert link.make_destination() == "#_Ref177042490"
 
 
 def test_markownify_anchor_if_is_inner_reference__simple_a_tag():
     sample_html = '<a href="#_Ref177042491">Figure 2</a>'
-    expected_html = r"[Figure {{ _Ref177042491 }}](#_Ref177042491)"
     bs = bs4.BeautifulSoup(sample_html, "html.parser")
-    a_tag = bs.a
-    link = LinkMystifier(a_tag["href"])
+    link = LinkMystifier(bs.a)
     target = TargetDatapoint(
         full_id="_Ref177042491",
         html='<data value=" SEQ Figure \\* ARABIC ">2</data>',
         text="2",
     )
-    assert link.markdownify(a_tag.text, target) == expected_html
+    assert link.make_text(target) == r"Figure {{ _Ref177042491 }}"
+    assert link.make_destination() == "#_Ref177042491"
 
 
 def test_markownify_anchor_if_is_cross_file_reference():
     sample_html = '<a href="filename.docx#h-target">see Chapter 2</a>'
-    expected_html = (
-        r"[see Chapter {{ filename.docx#h-target }}](./filename.md#h-target)"
-    )
     bs = bs4.BeautifulSoup(sample_html, "html.parser")
-    a_tag = bs.a
-    link = LinkMystifier(a_tag["href"])
-    assert link.markdownify(a_tag.text) == expected_html
+    link = LinkMystifier(bs.a)
+    assert link.make_text() == r"see Chapter {{ filename.docx#h-target }}"
+    assert link.make_destination() == "./filename.md#h-target"
 
 
 def test_markownify_anchor_if_is_cross_file_reference__nothing_to_replace():
     sample_html = '<a href="filename.docx#h-target">see heading in other file</a>'
-    expected_html = r"[see heading in other file](./filename.md#h-target)"
     bs = bs4.BeautifulSoup(sample_html, "html.parser")
-    a_tag = bs.a
-    link = LinkMystifier(a_tag["href"])
-    assert link.markdownify(a_tag.text) == expected_html
+    link = LinkMystifier(bs.a)
+    assert link.make_text() == "see heading in other file"
+    assert link.make_destination() == "./filename.md#h-target"
 
 
 def test_markownify_anchor_if_is_not_external_url_nor_cross_file_ref_nor_inner_ref():
     sample_html = '<a href="example.com">the website</a>'
-    expected_html = r"[the website](example.com)"
     bs = bs4.BeautifulSoup(sample_html, "html.parser")
-    a_tag = bs.a
-    link = LinkMystifier(a_tag["href"])
-    assert link.markdownify(a_tag.text) == expected_html
+    link = LinkMystifier(bs.a)
+    assert link.make_text() == "the website"
+    assert link.make_destination() == "example.com"
