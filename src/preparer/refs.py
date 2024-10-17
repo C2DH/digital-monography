@@ -122,6 +122,7 @@ def handle_refs(
             if link.is_inner_reference()
             else None
         )
+        a_tag["href"] = link.make_destination()
         a_tag.string = link.make_text(target)
     return html_soup
 
@@ -231,10 +232,6 @@ class LinkMystifier:
             return f"#{self.fragment}"
         return self.uri
 
-    # @property
-    # def destination(self) -> str:
-    #     return self.make_destination()
-
     def make_text(self, target: t.Optional[TargetDatapoint] = None) -> str:
         """
         Markdown link text to be placed in `[text](...)` syntax.
@@ -262,11 +259,7 @@ class LinkMystifier:
     ) -> str:
         start = " " if tag_text.startswith(" ") else ""
         end = " " if tag_text.endswith(" ") else ""
-        return (
-            start
-            + f"[{self.make_text(tag_text, target)}]({self.make_destination()})"
-            + end
-        )
+        return start + f"[{self.make_text(target)}]({self.make_destination()})" + end
 
     def __str__(self) -> str:
         return f"SplitResult(scheme={self.scheme}, netloc={self.netloc}, path={self.path}, query={self.query}, fragment={self.fragment})"
