@@ -35,7 +35,10 @@ class RefRecord(t.TypedDict):
     pk: int
     target_id: int
     target_full_id: str
-    content: str
+    text: str
+    href: str
+    prev_string: str
+    prev_href: str
 
 
 class TargetRecord(t.TypedDict):
@@ -74,7 +77,10 @@ class RefDatapoint:
     pk: int = dataclasses.field(default_factory=itertools.count().__next__, init=False)
     target_id: int
     target_full_id: str
-    content: str
+    text: str
+    href: str
+    prev_string: str
+    prev_href: str
 
     def to_json(self) -> dict[str, t.Union[str, int]]:
         return {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}

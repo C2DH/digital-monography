@@ -6,9 +6,9 @@ import functools
 import typing as t
 
 try:
-    from metadata import DocumentMetadata, TargetDatapoint
+    from metadata import DocumentMetadata, TargetDatapoint, RefDatapoint
 except (ImportError, ModuleNotFoundError):
-    from .metadata import DocumentMetadata, TargetDatapoint
+    from .metadata import DocumentMetadata, TargetDatapoint, RefDatapoint
 
 # targets ############
 
@@ -122,8 +122,22 @@ def handle_refs(
             if link.is_inner_reference()
             else None
         )
-        a_tag["href"] = link.make_destination()
-        a_tag.string = link.make_text(target)
+        link_text = link.make_text(target)
+        link_dest = link.make_destination()
+        prev_string = a_tag.string
+        prev_href = a_tag["href"]
+        a_tag.string = link_text
+        a_tag["href"] = link_dest
+        metadata.add_ref(
+            RefDatapoint(
+                target_id=target.pk if target else 0,
+                target_full_id=target.full_id if target else "",
+                text=link_text,
+                href=link_dest,
+                prev_string=prev_string,
+                prev_href=prev_href,
+            )
+        )
     return html_soup
 
 
@@ -257,6 +271,9 @@ class LinkMystifier:
     def markdownify(
         self, tag_text: str, target: t.Optional[TargetDatapoint] = None
     ) -> str:
+        """
+        Markdown link in `[link-text](link-destination)` syntax.
+        """
         start = " " if tag_text.startswith(" ") else ""
         end = " " if tag_text.endswith(" ") else ""
         return start + f"[{self.make_text(target)}]({self.make_destination()})" + end
