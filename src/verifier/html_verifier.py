@@ -500,7 +500,7 @@ class HtmlVerifier:
         if item == "Figure":
             uuid = tag.get("dgt-mon-metadata-uuid", "")
             if uuid:
-                asset = self._metadata.get_asset(pk=uuid)
+                asset = self._metadata.get_asset(uuid)
                 licensename = asset.kwargs.get("licensename", "").lower()
                 if licensename in tag.text.lower():
                     return False
@@ -584,7 +584,7 @@ class HtmlVerifier:
     def _apply_metadatatables_verification(self) -> None:
         for elem in self._metadata_tables:
             uuid = elem.get("id")
-            asset_datapoint = self._metadata.get_asset(pk=uuid)
+            asset_datapoint = self._metadata.get_asset(uuid)
             # whole metadata table verification
             missing_req_fields = self._check_tbl_missing_fields(asset_datapoint)
             if missing_req_fields:
