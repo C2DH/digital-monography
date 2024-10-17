@@ -72,8 +72,8 @@ class MystMdConverter(markdownify.MarkdownConverter):
             return "[^%s]" % identif
         if identif.startswith("_Ref"):
             return '<html><a id="%s">%s</a></html>' % (identif, text)
-        if href.startswith("#_Ref"):
-            return '<html><a href="%s">%s</a></html>' % (href, text)
+        # if href.startswith("#_Ref"):
+        #     return '<html><a href="%s">%s</a></html>' % (href, text)
         return super().convert_a(el, text, convert_as_inline)
 
     def convert_p(self, el, text, convert_as_inline):
