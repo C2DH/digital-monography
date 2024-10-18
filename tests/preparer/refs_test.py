@@ -1,7 +1,7 @@
 import bs4
 import re
 
-from src.preparer.refs import handle_targets_in_caption, LinkMystifier
+from src.preparer.refs import prepare_ref_targets_in_captions, LinkMystifier
 from src.preparer.metadata import DocumentMetadata, TargetDatapoint
 
 
@@ -24,7 +24,10 @@ class TestManagingTargetsInCaptions:
     def setup_class(cls):
         cls.html_soup = bs4.BeautifulSoup(CAPTIONS_HTML, "html.parser")
         cls.metadata = DocumentMetadata()
-        cls.html_soup = handle_targets_in_caption(cls.html_soup, cls.metadata)
+        captions = cls.html_soup.find_all("p", {"class": "dgt-mon-caption"})
+        cls.html_soup = prepare_ref_targets_in_captions(
+            cls.html_soup, cls.metadata, captions
+        )
         cls.html_str = str(cls.html_soup)
 
     def test_id_was_added_to_unreferenced(self):

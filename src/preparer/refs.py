@@ -1,5 +1,6 @@
 import bs4
 import copy
+import re
 import secrets
 import string
 import functools
@@ -10,13 +11,49 @@ try:
 except (ImportError, ModuleNotFoundError):
     from .metadata import DocumentMetadata, TargetDatapoint, RefDatapoint
 
+
+def is_header(tag: bs4.element.Tag) -> bool:
+    return bool(re.match(r"^h\d$", tag.name))
+
+
+def is_caption(tag: bs4.element.Tag) -> bool:
+    # "p", {"class": "dgt-mon-caption"}
+    return bool(tag.name == "p" and "dgt-mon-caption" in tag.attrs.get("class", []))
+
+
+def is_reference(tag: bs4.element.Tag) -> bool:
+    # "a", href=True
+    return bool(tag.name == "a" and tag.attrs.get("href"))
+
+
 # targets ############
 
 
-def handle_targets_in_caption(
-    html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata
+def prepare_ref_targets_in_headers(
+    html_soup: bs4.BeautifulSoup,
+    metadata: DocumentMetadata,
+    headers: list[bs4.element.Tag],
 ) -> bs4.BeautifulSoup:
-    for caption in html_soup.find_all("p", {"class": "dgt-mon-caption"}):
+    for tag in headers:
+        tag: bs4.element.Tag
+        print("tag", tag)
+        # heading_targets = []
+        # for child in tag.children:
+        #     if child.name == "a":
+        #         print('child["id"]', child["id"])
+        #         heading_targets.append(child)
+        #         # tag.insert(0, f"({child['id']})=")
+        # for ht in heading_targets:
+        #     tag.insert_before(f"({ht['id']})=")
+    return html_soup
+
+
+def prepare_ref_targets_in_captions(
+    html_soup: bs4.BeautifulSoup,
+    metadata: DocumentMetadata,
+    captions: list[bs4.element.Tag],
+) -> bs4.BeautifulSoup:
+    for caption in captions:
         a = _extract_anchor_tag(html_soup, caption)
         ref_stack = []
 
@@ -63,6 +100,75 @@ def handle_targets_in_caption(
         _wrap_caption_contents_into_anchor_tag(caption, a)
 
     return html_soup
+
+
+# def handle_targets_in_headers(
+#     html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata
+# ) -> bs4.BeautifulSoup:
+#     for tag in html_soup.find_all(re.compile(r"^h\d$")):
+#         tag: bs4.element.Tag
+#         print("tag", tag)
+#         heading_targets = []
+#         for child in tag.children:
+#             if child.name == "a":
+#                 print('child["id"]', child["id"])
+#                 heading_targets.append(child)
+#                 # tag.insert(0, f"({child['id']})=")
+#         for ht in heading_targets:
+#             tag.insert_before(f"({ht['id']})=")
+#     return html_soup
+
+
+# def handle_targets_in_caption(
+#     html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata
+# ) -> bs4.BeautifulSoup:
+#     for caption in html_soup.find_all("p", {"class": "dgt-mon-caption"}):
+#         a = _extract_anchor_tag(html_soup, caption)
+#         ref_stack = []
+
+#         def _replace_data_tag(
+#             tag: bs4.element.PageElement,
+#             prev: t.Optional[bs4.element.PageElement],
+#             sep: str,
+#             a_id: str,
+#         ) -> None:
+#             """
+#             Recurse over the caption's elements to replace bookmarks
+#             e.g. `<data value=" SEQ Figure \\* ARABIC ">1</data>`
+#             with `{{ _Ref123456789 }}`, incl. numbering separated with a char.
+#             Replace the n-th
+#             """
+#             if not hasattr(tag, "children"):
+#                 return
+#             for child in tag.children:
+#                 if child.name == "data" and not ref_stack:
+#                     # handle 1-st <data> tag
+#                     child.replace_with("{{ %s }}" % a_id)
+#                     sep = ""
+#                     ref_stack.append(child)
+#                 elif child.name == "data":
+#                     # handle separator
+#                     if len(sep) > 0 and len(sep) < 3:
+#                         prev.extract()
+#                         ref_stack.append(sep)
+#                     # handle n-th <data> tag to the stack
+#                     ref_stack.append(child)
+#                     child.extract()
+#                 elif prev and prev.name == "data":
+#                     sep += child.string
+#                 prev = child
+#                 _replace_data_tag(child, prev, sep, a_id)
+
+#         _replace_data_tag(caption, None, "", a["id"])
+#         target = TargetDatapoint(
+#             full_id=a["id"],
+#             html="".join(str(elem) for elem in ref_stack),
+#             text=_get_plain_text_numbering(ref_stack),
+#         )
+#         metadata.add_target(target)
+#         _wrap_caption_contents_into_anchor_tag(caption, a)
+
+#     return html_soup
 
 
 def _extract_anchor_tag(
@@ -112,10 +218,11 @@ def _wrap_caption_contents_into_anchor_tag(
 # references ############
 
 
-def handle_refs(
-    html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata
+def prepare_references(
+    html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata, references
 ) -> bs4.BeautifulSoup:
-    for a_tag in html_soup.find_all("a", href=True):
+    for a_tag in references:
+        a_tag: bs4.element.Tag
         link = LinkMystifier(a_tag)
         target = (
             metadata.get_target(attrib="full_id", val=link.fragment)
@@ -139,6 +246,36 @@ def handle_refs(
             )
         )
     return html_soup
+
+
+# def handle_refs(
+#     html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata
+# ) -> bs4.BeautifulSoup:
+#     for a_tag in html_soup.find_all("a", href=True):
+#         a_tag: bs4.element.Tag
+#         link = LinkMystifier(a_tag)
+#         target = (
+#             metadata.get_target(attrib="full_id", val=link.fragment)
+#             if link.is_inner_reference()
+#             else None
+#         )
+#         link_text = link.make_text(target)
+#         link_dest = link.make_destination()
+#         prev_string = a_tag.string
+#         prev_href = a_tag["href"]
+#         a_tag.string = link_text
+#         a_tag["href"] = link_dest
+#         metadata.add_ref(
+#             RefDatapoint(
+#                 target_id=target.pk if target else 0,
+#                 target_full_id=target.full_id if target else "",
+#                 text=link_text,
+#                 href=link_dest,
+#                 prev_string=prev_string,
+#                 prev_href=prev_href,
+#             )
+#         )
+#     return html_soup
 
 
 class LinkMystifier:

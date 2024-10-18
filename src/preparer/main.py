@@ -1,5 +1,6 @@
 import datetime
 import pathlib
+import re
 import bs4
 import boto3
 import json
@@ -21,7 +22,17 @@ try:
     from metadata_extraction import replace_assets_with_directives
     from remove_empty_tables import remove_empty_tables
     from replace_alt_texts import replace_alt_texts
-    from refs import handle_targets_in_caption
+    from refs import (
+        # handle_targets_in_caption,
+        # handle_targets_in_headers,
+        prepare_ref_targets_in_headers,
+        prepare_ref_targets_in_captions,
+        prepare_references,
+        # handle_refs,
+        is_header,
+        is_caption,
+        is_reference,
+    )
     from html2md import convert_to_md
     from ipynb_prep import tags_to_myst_crossref_targets
     from keys import KeyPath
@@ -38,7 +49,17 @@ except (ImportError, ModuleNotFoundError):
     from .metadata_extraction import replace_assets_with_directives
     from .remove_empty_tables import remove_empty_tables
     from .replace_alt_texts import replace_alt_texts
-    from .refs import handle_targets_in_caption
+    from .refs import (
+        # handle_targets_in_caption,
+        # handle_targets_in_headers,
+        prepare_ref_targets_in_headers,
+        prepare_ref_targets_in_captions,
+        prepare_references,
+        # handle_refs,
+        is_header,
+        is_caption,
+        is_reference,
+    )
     from .html2md import convert_to_md
     from .ipynb_prep import tags_to_myst_crossref_targets
     from .keys import KeyPath
@@ -68,6 +89,12 @@ else:
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
+    images_with_alt = []
+    citation_spans = []
+    tables = []
+    headers = []
+    captions = []
+    references = []
     key = _get_key(event)
     src = _get_source_bucket(event)
     _download_fileobj(src, key)
@@ -84,15 +111,58 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         return {"statusCode": 200, "body": ""}
     if key.suffix.lower() == ".docx":
         html_str = _convert_to_html(key.efs_filepath)
-        html_soup = _get_html_soup(html_str)
-        metadata = _get_book_metadata()
+        metadata = DocumentMetadata()
+        html_soup = bs4.BeautifulSoup(html_str, "html.parser")
+        # old tree traversal
         html_soup = _replace_alt_texts(html_soup)
         html_soup = _add_citations_and_bibliography(html_soup)
         html_soup = _replace_assets_with_directives(html_soup, metadata)
-        html_soup = _handle_targets_in_caption(html_soup, metadata)
         html_soup = _remove_empty_tables(html_soup)
+        # html_soup = _handle_targets_and_references(html_soup, metadata)
+
+        # callbacks = [
+        # imgs alt=True (to replace_alt_texts)
+        # spans {"class": "citation"} (to _find_all_citation_spans)
+        # tables (to extract data from metadata tables and hide them)
+        # headers (for targets)
+        # captions (p with class) (for targets)
+        # anchor tags with href (for refs)
+        # tables (to remove empty ones)
+        # ]
+
+        classifiers = [
+            # (is_img_with_alt_text, images_with_alt),
+            # (is_citation_span, citation_spans),
+            # (is_table, tables),
+            (is_header, headers),
+            (is_caption, captions),
+            (is_reference, references),
+        ]
+
+        def _mark_html_elements_recursively(
+            node: bs4.element.PageElement, lvl=0
+        ) -> None:
+            """
+            Before applying the processing, this function traverses the tree and
+            puts relevant bs4 objects (html elements) inside respective
+            lists. Processing is then applied on the marked elements.
+            """
+            if not hasattr(node, "children"):
+                return
+            for child in node.children:
+                if isinstance(child, bs4.element.Tag):
+                    for meets_criteria, container in classifiers:
+                        if meets_criteria(child):
+                            container.append(child)
+                _mark_html_elements_recursively(child, lvl + 1)
+
+        _mark_html_elements_recursively(html_soup)
+        html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
+        html_soup = prepare_ref_targets_in_headers(html_soup, metadata, headers)
+        html_soup = prepare_references(html_soup, metadata, references)
+
         html_soup_str = str(html_soup)
-        # IMPORTANT: other services depend on html produced at this stage, make sure that:
+        # IMPORTANT NOTE: other services depend on html produced at this stage, make sure that:
         # 1) all reversible transformations are made before saving html file;
         # 2) irreversible transformations are omited to avoid not being able to recreate a book
         # as html files written at this stage will be the basis for a paper version of a book.
@@ -169,12 +239,12 @@ def _get_html_soup(html: str) -> bs4.BeautifulSoup:
         raise
 
 
-def _get_book_metadata() -> DocumentMetadata:
-    try:
-        return DocumentMetadata()
-    except Exception as e:
-        logger.exception(f"Creation of BookMetadata object failed. Error: {repr(e)}")
-        raise
+# def _get_book_metadata() -> DocumentMetadata:
+#     try:
+#         return DocumentMetadata()
+#     except Exception as e:
+#         logger.exception(f"Creation of BookMetadata object failed. Error: {repr(e)}")
+#         raise
 
 
 def _add_citations_and_bibliography(html_soup: bs4.BeautifulSoup) -> bs4.BeautifulSoup:
@@ -197,15 +267,54 @@ def _replace_assets_with_directives(
         raise
 
 
-def _handle_targets_in_caption(
+def _handle_targets_and_references(
     html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata
 ) -> bs4.BeautifulSoup:
     try:
-        return handle_targets_in_caption(html_soup, metadata)
+
+        def _is_header(tag: bs4.element.Tag) -> bool:
+            return bool(re.match(r"^h\d$", tag.name) is not None)
+
+        def _just_print(tag: bs4.element.Tag) -> None:
+            print(">>>>>", tag)
+
+        callbacks = [
+            # (on, callback),
+            (_is_header, _just_print),
+            # imgs alt=True (to replace_alt_texts)
+            # spans {"class": "citation"} (to _find_all_citation_spans)
+            # tables (to extract data from metadata tables and hide them)
+            # headers (for targets)
+            # captions (p with class) (for targets)
+            # anchor tags with href (for refs)
+            # tables (to remove empty ones)
+        ]
+
+        def _mark_html_elements_recursively(
+            node: bs4.element.PageElement, lvl=0
+        ) -> None:
+            """
+            Before applying the verification, this function traverses the tree and
+            puts relevant beautiful soup objects (html elements) inside respective
+            lists. Transformation is then applied on the marked elements.
+            """
+            if not hasattr(node, "children"):
+                return
+            for child in node.children:
+                if isinstance(child, bs4.element.Tag):
+                    print("child", child)
+                    for meets_criteria, callback in callbacks:
+                        if meets_criteria(child):
+                            callback(child)
+                _mark_html_elements_recursively(child, lvl + 1)
+
+        _mark_html_elements_recursively(html_soup)
+
+        html_soup = handle_targets_in_caption(html_soup, metadata)
+        html_soup = handle_targets_in_headers(html_soup, metadata)
+        return handle_refs(html_soup, metadata)
     except Exception as e:
-        logger.exception(
-            f"Handling reference targets in captions failed. Error: {repr(e)}"
-        )
+        logger.exception(f"Handling targets and references failed. Error: {repr(e)}")
         raise
 
 
