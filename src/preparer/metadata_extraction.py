@@ -44,13 +44,15 @@ FALSE_EQUIVALENTS = [
 ]
 
 
-def replace_assets_with_directives(
-    html_soup: bs4.BeautifulSoup, document_metadata: DocumentMetadata
+def prepare_metadata_tables(
+    html_soup: bs4.BeautifulSoup,
+    document_metadata: DocumentMetadata,
+    tables: list[bs4.element.Tag],
 ) -> bs4.BeautifulSoup:
     """
     Find, hide and add UUID to metadata tables.
     """
-    for table in html_soup.find_all(["table"]):
+    for table in tables:
         if "##" in table.text:
             metadata_tbl = MetadataTable()
             key, val = "", ""

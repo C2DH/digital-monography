@@ -1,8 +1,18 @@
 import bs4
 
+try:
+    from metadata import DocumentMetadata
+except (ImportError, ModuleNotFoundError):
+    from .metadata import DocumentMetadata
 
-def remove_empty_tables(html_soup: bs4.BeautifulSoup) -> bs4.BeautifulSoup:
-    for table in html_soup.find_all("table"):
+
+def remove_empty_tables(
+    html_soup: bs4.BeautifulSoup,
+    metadata: DocumentMetadata,
+    tables: list[bs4.element.Tag],
+) -> bs4.BeautifulSoup:
+    # for table in html_soup.find_all("table"):
+    for table in tables:
         res = _is_table_empty(table)
         if res:
             p = html_soup.new_tag("p")

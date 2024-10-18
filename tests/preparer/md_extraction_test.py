@@ -3,7 +3,7 @@ import mammoth
 import pathlib
 
 from src.preparer.citations import add_citations_and_bibliography
-from src.preparer.metadata_extraction import replace_assets_with_directives
+from src.preparer.metadata_extraction import prepare_metadata_tables
 from src.preparer.html2md import convert_to_md
 from src.preparer.metadata import DocumentMetadata
 from src.preparer.constants import (
@@ -22,8 +22,9 @@ class TestHtml2MdMetadataExtraction:
             result = mammoth.convert_to_html(f)
         cls.html_soup = bs4.BeautifulSoup(result.value, "html.parser")
         cls.metadata = DocumentMetadata()
+        tables = cls.html_soup.find_all("table")
         cls.html_soup = add_citations_and_bibliography(cls.html_soup)
-        cls.html_soup = replace_assets_with_directives(cls.html_soup, cls.metadata)
+        cls.html_soup = prepare_metadata_tables(cls.html_soup, cls.metadata, tables)
         cls.md = convert_to_md(cls.html_soup, cls.metadata)
         cls.assets_meta = cls.metadata.to_dict()
         assets_ids = [dp.pk for dp in cls.metadata.assets]

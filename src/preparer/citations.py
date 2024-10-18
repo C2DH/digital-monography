@@ -4,6 +4,11 @@ import json
 import typing as t
 import citeproc
 
+try:
+    from metadata import DocumentMetadata
+except (ImportError, ModuleNotFoundError):
+    from .metadata import DocumentMetadata
+
 
 class CitationItem(t.TypedDict):
     id: t.Union[int, str]
@@ -24,6 +29,10 @@ class Citation(t.TypedDict):
     schema: str
 
 
+def is_citation_span(tag: bs4.element.Tag) -> bool:
+    return bool(tag.name == "span" and "citation" in tag.attrs.get("class", []))
+
+
 def _find_all_citation_spans(html_soup: bs4.BeautifulSoup) -> bs4.element.ResultSet:
     return html_soup.find_all("span", {"class": "citation"})
 
@@ -33,8 +42,13 @@ def _has_inner_json_data(span: bs4.Tag) -> bool:
 
 
 def add_citations_and_bibliography(
-    html_soup: bs4.BeautifulSoup, citation_style: str = "harvard1"
+    html_soup: bs4.BeautifulSoup,
+    citation_style: str = "harvard1",
+    # html_soup: bs4.BeautifulSoup,
+    # metadata: DocumentMetadata,
+    # citation_spans: list[bs4.element.Tag],
 ) -> bs4.BeautifulSoup:
+    citation_style = "harvard1"  # TODO make it configurable
     citations = extract_citations(html_soup)
     json_data = prepare_citations_for_citeproc(citations)
     bib_source = citeproc.source.json.CiteProcJSON(json_data)
@@ -50,6 +64,7 @@ def add_citations_and_bibliography(
     return html_soup
 
 
+# def extract_citations(citation_spans: list[bs4.element.Tag]) -> list[Citation]:
 def extract_citations(html_soup: bs4.BeautifulSoup) -> list[Citation]:
     citations = []
     for span in _find_all_citation_spans(html_soup):
