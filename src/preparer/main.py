@@ -1,6 +1,5 @@
 import datetime
 import pathlib
-import re
 import bs4
 import boto3
 import json
@@ -17,18 +16,15 @@ try:
         IR_APKG_MD_BUCKET_NAME,
         IS_DEBUG,
     )
-    from citations import add_citations_and_bibliography, is_citation_span
+    from citations import add_citations_and_bibliography
     from metadata import DocumentMetadata
     from metadata_extraction import prepare_metadata_tables
     from remove_empty_tables import remove_empty_tables
     from replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
     from refs import (
-        # handle_targets_in_caption,
-        # handle_targets_in_headers,
         prepare_ref_targets_in_headers,
         prepare_ref_targets_in_captions,
         prepare_references,
-        # handle_refs,
         is_header,
         is_caption,
         is_reference,
@@ -44,18 +40,15 @@ except (ImportError, ModuleNotFoundError):
         IR_APKG_MD_BUCKET_NAME,
         IS_DEBUG,
     )
-    from .citations import add_citations_and_bibliography, is_citation_span
+    from .citations import add_citations_and_bibliography
     from .metadata import DocumentMetadata
     from .metadata_extraction import prepare_metadata_tables
     from .remove_empty_tables import remove_empty_tables
     from .replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
     from .refs import (
-        # handle_targets_in_caption,
-        # handle_targets_in_headers,
         prepare_ref_targets_in_headers,
         prepare_ref_targets_in_captions,
         prepare_references,
-        # handle_refs,
         is_header,
         is_caption,
         is_reference,
@@ -93,7 +86,6 @@ def is_table(tag: bs4.element.Tag) -> bool:
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
-    citation_spans = []
     images_with_alttxt = []
     tables = []
     headers = []
@@ -117,25 +109,13 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_str = _convert_to_html(key.efs_filepath)
         metadata = DocumentMetadata()
         html_soup = bs4.BeautifulSoup(html_str, "html.parser")
-        # old tree traversal
-        # html_soup = _replace_alt_texts(html_soup)
-        html_soup = add_citations_and_bibliography(html_soup)
-        # html_soup = _replace_assets_with_directives(html_soup, metadata)
-        # html_soup = _handle_targets_and_references(html_soup, metadata)
-
-        # callbacks = [
-        # imgs alt=True (to replace_alt_texts)
-        # spans {"class": "citation"} (to _find_all_citation_spans)
-        # tables (to extract data from metadata tables and hide them)
-        # headers (for targets)
-        # captions (p with class) (for targets)
-        # anchor tags with href (for refs)
-        # tables (to remove empty ones)
-        # ]
+        html_soup = add_citations_and_bibliography(
+            html_soup
+        )  # TODO: use recurse tree traversal
 
         classifiers = [
             (is_img_with_alt_text, images_with_alttxt),
-            (is_citation_span, citation_spans),
+            # (is_citation_span, citation_spans),
             (is_table, tables),
             (is_header, headers),
             (is_caption, captions),
@@ -161,7 +141,6 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
 
         _mark_html_elements_recursively(html_soup)
 
-        # html_soup = add_citations_and_bibliography(html_soup, metadata, citation_spans)
         html_soup = prepare_metadata_tables(html_soup, metadata, captions)
         html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
         html_soup = prepare_ref_targets_in_headers(html_soup, metadata, headers)
@@ -237,109 +216,6 @@ def _convert_to_html(key: KeyPath) -> str:
     except Exception as e:
         logger.exception(f"Converting {key} to html failed. Error: {repr(e)}")
         raise
-
-
-# def _get_html_soup(html: str) -> bs4.BeautifulSoup:
-#     try:
-#         return bs4.BeautifulSoup(html, "html.parser")
-#     except Exception as e:
-#         logger.exception(f"Creation of bs4.BeautifulSoup failed. Error: {repr(e)}")
-#         raise
-
-
-# def _get_book_metadata() -> DocumentMetadata:
-#     try:
-#         return DocumentMetadata()
-#     except Exception as e:
-#         logger.exception(f"Creation of BookMetadata object failed. Error: {repr(e)}")
-#         raise
-
-
-# def _add_citations_and_bibliography(html_soup: bs4.BeautifulSoup) -> bs4.BeautifulSoup:
-#     try:
-#         return add_citations_and_bibliography(html_soup)
-#     except Exception as e:
-#         logger.exception(
-#             f"Adding citations and bibliographies failed. Error: {repr(e)}"
-#         )
-#         raise
-
-
-# def _replace_assets_with_directives(
-#     html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata
-# ) -> bs4.BeautifulSoup:
-#     try:
-#         return replace_assets_with_directives(html_soup, metadata)
-#     except Exception as e:
-#         logger.exception(f"Replacing assets with directives failed. Error: {repr(e)}")
-#         raise
-
-
-# def _handle_targets_and_references(
-#     html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata
-# ) -> bs4.BeautifulSoup:
-#     try:
-
-#         def _is_header(tag: bs4.element.Tag) -> bool:
-#             return bool(re.match(r"^h\d$", tag.name) is not None)
-
-#         def _just_print(tag: bs4.element.Tag) -> None:
-#             print(">>>>>", tag)
-
-#         callbacks = [
-#             # (on, callback),
-#             (_is_header, _just_print),
-#             # imgs alt=True (to replace_alt_texts)
-#             # spans {"class": "citation"} (to _find_all_citation_spans)
-#             # tables (to extract data from metadata tables and hide them)
-#             # headers (for targets)
-#             # captions (p with class) (for targets)
-#             # anchor tags with href (for refs)
-#             # tables (to remove empty ones)
-#         ]
-
-#         def _mark_html_elements_recursively(
-#             node: bs4.element.PageElement, lvl=0
-#         ) -> None:
-#             """
-#             Before applying the verification, this function traverses the tree and
-#             puts relevant beautiful soup objects (html elements) inside respective
-#             lists. Transformation is then applied on the marked elements.
-#             """
-#             if not hasattr(node, "children"):
-#                 return
-#             for child in node.children:
-#                 if isinstance(child, bs4.element.Tag):
-#                     print("child", child)
-#                     for meets_criteria, callback in callbacks:
-#                         if meets_criteria(child):
-#                             callback(child)
-#                 _mark_html_elements_recursively(child, lvl + 1)
-
-#         _mark_html_elements_recursively(html_soup)
-
-#         html_soup = handle_targets_in_caption(html_soup, metadata)
-#         html_soup = handle_targets_in_headers(html_soup, metadata)
-#         return handle_refs(html_soup, metadata)
-#     except Exception as e:
-#         logger.exception(f"Handling targets and references failed. Error: {repr(e)}")
-#         raise
-
-
-# def _remove_empty_tables(html_soup: bs4.BeautifulSoup) -> bs4.BeautifulSoup:
-#     try:
-#         return remove_empty_tables(html_soup)
-#     except Exception as e:
-#         logger.exception(f"Removing empty tables failed. Error: {repr(e)}")
-#         raise
-
-
-# def _replace_alt_texts(html_soup: bs4.BeautifulSoup) -> bs4.BeautifulSoup:
-#     try:
-#         return replace_alt_texts(html_soup)
-#     except Exception as e:
-#         logger.exception(f"Replacing alt texts failed. Error: {repr(e)}")
-#         raise
 
 
 def _convert_to_md(html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata) -> str:
