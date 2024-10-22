@@ -1,10 +1,11 @@
 import bs4
-import copy
 import re
 import secrets
 import string
 import functools
 import typing as t
+
+# import copy
 
 try:
     from metadata import DocumentMetadata, TargetDatapoint, RefDatapoint
@@ -128,24 +129,24 @@ def prepare_ref_targets_in_captions(
         link = LinkMystifier()
         link.set_filepath(metadata.filepath)
         link.set_from_id(anchors[0]["id"])
-        _replace_data_tag(caption, None, "", link.fragment)
+        _replace_data_tag(caption, None, "", link.id)
 
+        # TODO: maybe there should be some id for the caption
+        # to group bookmarks that relate to the same object
         for a in anchors:
+            link = LinkMystifier()
+            link.set_filepath(metadata.filepath)
+            link.set_from_id(a["id"])
             target = TargetDatapoint(
-                full_id=a["id"],
+                pk=link.id,
                 html="".join(str(elem) for elem in ref_stack),
                 text=_get_plain_text_numbering(ref_stack),
             )
             metadata.add_target(target)
-            # _wrap_caption_contents_into_anchor_tag(caption, a)
-            link = LinkMystifier()
-            link.set_filepath(metadata.filepath)
-            link.set_from_id(a["id"])
-            # a["id"] = f"#{link.fragment}"
-
             target_tag = html_soup.new_tag("pre")
             # target_tag.string = link.mystify_p_target()
             target_tag.string = link.mystify_target()
+            print("target_tag.string", target_tag.string)
             caption.insert_before(target_tag)
 
     return html_soup
@@ -238,7 +239,8 @@ def _extract_anchor_tags(
     else:
         for a in anchors:
             a = a.extract()
-    return [a for a in anchors if a["id"].startswith("_Ref")]
+    return anchors
+    # return [a for a in anchors if a["id"].startswith("_Ref")]
 
 
 # def _extract_anchor_tag(
@@ -297,11 +299,7 @@ def prepare_references(
         link = LinkMystifier()
         link.set_filepath(metadata.filepath)
         link.set_from_href(a_tag["href"])
-        target = (
-            metadata.get_target(attrib="full_id", val=link.fragment)
-            if link.is_inner_reference()
-            else None
-        )
+        target = metadata.get_target(link.id) if link.is_inner_reference() else None
         link_text = link.make_text(a_tag.text, target)
         link_dest = link.make_destination()
         prev_string = a_tag.string
@@ -310,8 +308,7 @@ def prepare_references(
         a_tag["href"] = link_dest
         metadata.add_ref(
             RefDatapoint(
-                target_id=target.pk if target else 0,
-                target_full_id=target.full_id if target else "",
+                target_id=target.pk if target else "",
                 text=link_text,
                 href=link_dest,
                 prev_string=prev_string,
@@ -379,6 +376,10 @@ class LinkMystifier:
         self.is_inner_reference = functools.lru_cache()(
             self._is_inner_reference__uncached
         )
+
+    @property
+    def id(self) -> str:
+        return self.fragment
 
     def mystify_target(self) -> str:
         """

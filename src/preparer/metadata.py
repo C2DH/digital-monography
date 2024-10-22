@@ -40,13 +40,14 @@ class AssetRecord(t.TypedDict):
 class RefRecord(t.TypedDict):
     pk: int
     target_id: int
-    target_full_id: str
-    content: str
+    text: str
+    href: str
+    prev_string: str
+    prev_href: str
 
 
 class TargetRecord(t.TypedDict):
     pk: int
-    full_id: str
     html: str
     text: str
 
@@ -78,8 +79,7 @@ class AssetDatapoint:
 @dataclasses.dataclass
 class RefDatapoint:
     pk: int = dataclasses.field(default_factory=itertools.count().__next__, init=False)
-    target_id: int
-    target_full_id: str
+    target_id: str
     text: str
     href: str
     prev_string: str
@@ -98,14 +98,9 @@ class RefDatapoint:
 
 @dataclasses.dataclass
 class TargetDatapoint:
-    pk: int = dataclasses.field(init=False)
-    full_id: str
+    pk: str
     html: str
     text: str
-
-    def __post_init__(self):
-        "Get 241403112 from _Unref241403112."
-        self.pk = int("".join(ch for ch in self.full_id if ch.isdigit()))
 
     def to_json(self) -> dict[str, t.Union[str, int]]:
         return {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}
