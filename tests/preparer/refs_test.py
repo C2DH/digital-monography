@@ -13,15 +13,6 @@ from src.preparer.keys import KeyPath
 # targets in headers
 
 
-# def test_testing():
-#     HEADERS_HTML = """\
-# <h1></a>Chapter title</h1>
-# <h2><a id="_Heading">Heading</h2>
-# <p>A <a href="#_Heading">link</a>.</p>
-# <p>B <a href="other_file.docx#_Heading">link</a>.</p>
-# """
-
-
 def test_targets_in_headers__heading_reference_targets():
     sample_html = '<h1><a id="_Heading">XXX</h1>'
     bs = bs4.BeautifulSoup(sample_html, "html.parser")
