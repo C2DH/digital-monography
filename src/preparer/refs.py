@@ -42,44 +42,39 @@ def prepare_ref_targets_in_headers(
         tag: bs4.element.Tag
         print("tag", tag)
         # print("tag.previous_sibling", tag.previous_sibling)
-        prev = tag.find_previous_sibling()
-        print("prev", prev)
-
-        heading_targets = []
+        # prev = tag.find_previous_sibling()
+        # print("prev", prev)
+        anchors = []
+        # heading_targets = []
         for child in tag.children:
             if child.name == "a":
                 print('child["id"]', child["id"])
-                heading_targets.append(child)
+                # heading_targets.append(child)
                 # tag.insert(0, f"({child['id']})=")
-
-        for ht in heading_targets:
-            # tag.insert_before(f"({ht['id']})=")
-            # tag.previous_sibling
-            # print(prev.insert(0, f"({ht['id']})="))
-            """
-            tag.insert_before("[")
-            tag.insert_after("]{#" + ht["id"] + "}")
-            """
-            target_tag = html_soup.new_tag("pre")
-            # target_tag.string = f"({ht['id']})="
-            # header_id = metadata.filepath.name + "#" + ht["id"]
-
-            # path = metadata.filepath.name.replace(".docx", ".md") if metadata.filepath.suffix.lower() == ".docx" else metadata.filepath.name
-            # path = (
-            #     metadata.filepath.with_suffix(".md").name
-            #     if metadata.filepath.suffix.lower() == ".docx"
-            #     else metadata.filepath.name
-            # )
-            # header_id = f"./{path}#{ht['id']}"
-            # target_tag.string = f"({header_id})="
-            link = LinkMystifier()
-            link.set_filepath(metadata.filepath)
-            link.set_from_id(ht["id"])
-            target_tag.string = link.mystify_target()
-            if prev:
-                prev.insert_after(target_tag)
-            else:
+                ######################################
+                target_tag = html_soup.new_tag("pre")
+                link = LinkMystifier()
+                link.set_filepath(metadata.filepath)
+                link.set_from_id(child["id"])
+                target_tag.string = link.mystify_target()
+                # if prev:
+                #     prev.insert_after(target_tag)
+                # else:
                 tag.insert_before(target_tag)
+                anchors.append(child)
+                # child.extract()
+        # for ht in heading_targets:
+        #     target_tag = html_soup.new_tag("pre")
+        #     link = LinkMystifier()
+        #     link.set_filepath(metadata.filepath)
+        #     link.set_from_id(ht["id"])
+        #     target_tag.string = link.mystify_target()
+        #     if prev:
+        #         prev.insert_after(target_tag)
+        #     else:
+        #         tag.insert_before(target_tag)
+        for a in anchors:
+            a.extract()
     return html_soup
 
 

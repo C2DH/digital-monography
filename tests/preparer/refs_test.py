@@ -2,6 +2,7 @@ import bs4
 
 from src.preparer.refs import (
     is_caption,
+    is_header,
     prepare_ref_targets_in_headers,
     prepare_ref_targets_in_captions,
     LinkMystifier,
@@ -21,7 +22,7 @@ from src.preparer.keys import KeyPath
 # """
 
 
-def test_heading_reference_targets():
+def test_targets_in_headers__heading_reference_targets():
     sample_html = '<h1><a id="_Heading">XXX</h1>'
     bs = bs4.BeautifulSoup(sample_html, "html.parser")
     link = LinkMystifier()
@@ -30,10 +31,39 @@ def test_heading_reference_targets():
     assert link.make_destination() == "#_Heading"
 
 
+def test_targets_in_headers__heading_crossref_targets_were_added():
+    sample_html = (
+        # '<!-- targets -->'
+        '<h1><a id="_Heading"></a><a id="heading_2"></a>Heading</h1>'
+        "<h2>Heading level 2</h2>"
+        '<h3><a id="heading_3"></a>Heading level 3</h3>'
+        # '<!-- references -->'
+        '<p>A <a href="#_Heading">link</a>.</p>'
+        '<p>B <a href="other_file.docx#_Heading">link</a>.</p>'
+    )
+    bs = bs4.BeautifulSoup(sample_html, "html.parser")
+    metadata = DocumentMetadata(KeyPath("./tmp/sth/file.docx"))
+    headers = [node for node in bs.children if is_header(node)]
+    bs = prepare_ref_targets_in_headers(bs, metadata, headers)
+    pres = bs.find_all("pre")
+    assert len(pres) == 3
+    assert pres[0].text == "(file___Heading)="
+    assert pres[1].text == "(file__heading_2)="
+    assert pres[2].text == "(file__heading_3)="
+    assert str(bs).startswith(
+        "<pre>(file___Heading)=</pre>"
+        "<pre>(file__heading_2)=</pre>"
+        "<h1>Heading</h1>"
+        "<h2>Heading level 2</h2>"
+        "<pre>(file__heading_3)=</pre>"
+        "<h3>Heading level 3</h3>"
+    )
+
+
 # targets in captions
 
 
-def test_insert_pre_tag_before_caption():
+def test_targets_in_captions__insert_pre_tag_before_caption():
     sample_html = (
         '<p class="dgt-mon-caption">'
         '<a id="_Ref178606189"></a>'
@@ -52,7 +82,7 @@ def test_insert_pre_tag_before_caption():
     assert target.text == "1"
 
 
-def test_duplicated_target_id():
+def test_targets_in_captions__duplicated_target_id():
     sample_html = (
         '<p class="dgt-mon-caption">'
         '<a id="_Ref178606187"></a>'
@@ -81,7 +111,7 @@ def test_duplicated_target_id():
     assert target.text == "3"
 
 
-def test_replace_complex_numbering_in_caption():
+def test_targets_in_captions__replace_complex_numbering_in_caption():
     sample_html = (
         '<p class="dgt-mon-caption">'
         '<a id="_Ref178606189"></a>'
@@ -101,7 +131,7 @@ def test_replace_complex_numbering_in_caption():
     assert target.text == "5.B"
 
 
-def test_replace_roman_numbering_in_caption():
+def test_targets_in_captions__replace_roman_numbering_in_caption():
     sample_html = (
         '<p class="dgt-mon-caption">'
         '<a id="_Ref178606189"></a>'
@@ -117,7 +147,7 @@ def test_replace_roman_numbering_in_caption():
     assert target.text == "IV"
 
 
-def test_link_in_caption_is_left_not_changed():
+def test_targets_in_captions__link_in_caption_is_left_not_changed():
     sample_html = (
         '<p class="dgt-mon-caption">'
         '<a id="_Ref178606190"></a>'
