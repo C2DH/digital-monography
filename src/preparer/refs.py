@@ -8,12 +8,15 @@ import typing as t
 
 try:
     from metadata import DocumentMetadata, TargetDatapoint, RefDatapoint
+    from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
     from .metadata import DocumentMetadata, TargetDatapoint, RefDatapoint
+    from .keys import KeyPath
 
 
 def is_header(tag: bs4.element.Tag) -> bool:
-    return bool(re.match(r"^h\d$", tag.name))
+    return bool(re.match(r"^h[1-6]$", tag.name))
+    # return bool(re.match(r"^h\d$", tag.name))
 
 
 def is_caption(tag: bs4.element.Tag) -> bool:
@@ -37,14 +40,45 @@ def prepare_ref_targets_in_headers(
     for tag in headers:
         tag: bs4.element.Tag
         print("tag", tag)
-        # heading_targets = []
-        # for child in tag.children:
-        #     if child.name == "a":
-        #         print('child["id"]', child["id"])
-        #         heading_targets.append(child)
-        #         # tag.insert(0, f"({child['id']})=")
-        # for ht in heading_targets:
-        #     tag.insert_before(f"({ht['id']})=")
+        # print("tag.previous_sibling", tag.previous_sibling)
+        prev = tag.find_previous_sibling()
+        print("prev", prev)
+
+        heading_targets = []
+        for child in tag.children:
+            if child.name == "a":
+                print('child["id"]', child["id"])
+                heading_targets.append(child)
+                # tag.insert(0, f"({child['id']})=")
+
+        for ht in heading_targets:
+            # tag.insert_before(f"({ht['id']})=")
+            # tag.previous_sibling
+            # print(prev.insert(0, f"({ht['id']})="))
+            """
+            tag.insert_before("[")
+            tag.insert_after("]{#" + ht["id"] + "}")
+            """
+            target_tag = html_soup.new_tag("pre")
+            # target_tag.string = f"({ht['id']})="
+            # header_id = metadata.filepath.name + "#" + ht["id"]
+
+            # path = metadata.filepath.name.replace(".docx", ".md") if metadata.filepath.suffix.lower() == ".docx" else metadata.filepath.name
+            # path = (
+            #     metadata.filepath.with_suffix(".md").name
+            #     if metadata.filepath.suffix.lower() == ".docx"
+            #     else metadata.filepath.name
+            # )
+            # header_id = f"./{path}#{ht['id']}"
+            # target_tag.string = f"({header_id})="
+            link = LinkMystifier()
+            link.set_filepath(metadata.filepath)
+            link.set_from_id(ht["id"])
+            target_tag.string = link.mystify_target()
+            if prev:
+                prev.insert_after(target_tag)
+            else:
+                tag.insert_before(target_tag)
     return html_soup
 
 
@@ -54,7 +88,8 @@ def prepare_ref_targets_in_captions(
     captions: list[bs4.element.Tag],
 ) -> bs4.BeautifulSoup:
     for caption in captions:
-        a = _extract_anchor_tag(html_soup, caption)
+        # a = _extract_anchor_tag(html_soup, caption)
+        anchors = _extract_anchor_tags(html_soup, caption)
         ref_stack = []
 
         def _replace_data_tag(
@@ -90,14 +125,28 @@ def prepare_ref_targets_in_captions(
                 prev = child
                 _replace_data_tag(child, prev, sep, a_id)
 
-        _replace_data_tag(caption, None, "", a["id"])
-        target = TargetDatapoint(
-            full_id=a["id"],
-            html="".join(str(elem) for elem in ref_stack),
-            text=_get_plain_text_numbering(ref_stack),
-        )
-        metadata.add_target(target)
-        _wrap_caption_contents_into_anchor_tag(caption, a)
+        link = LinkMystifier()
+        link.set_filepath(metadata.filepath)
+        link.set_from_id(anchors[0]["id"])
+        _replace_data_tag(caption, None, "", link.fragment)
+
+        for a in anchors:
+            target = TargetDatapoint(
+                full_id=a["id"],
+                html="".join(str(elem) for elem in ref_stack),
+                text=_get_plain_text_numbering(ref_stack),
+            )
+            metadata.add_target(target)
+            # _wrap_caption_contents_into_anchor_tag(caption, a)
+            link = LinkMystifier()
+            link.set_filepath(metadata.filepath)
+            link.set_from_id(a["id"])
+            # a["id"] = f"#{link.fragment}"
+
+            target_tag = html_soup.new_tag("pre")
+            # target_tag.string = link.mystify_p_target()
+            target_tag.string = link.mystify_target()
+            caption.insert_before(target_tag)
 
     return html_soup
 
@@ -171,23 +220,44 @@ def prepare_ref_targets_in_captions(
 #     return html_soup
 
 
-def _extract_anchor_tag(
+def _extract_anchor_tags(
     html_soup: bs4.BeautifulSoup, caption: bs4.element.Tag
-) -> bs4.element.Tag:
+) -> list[bs4.element.Tag]:
     """
     Return an anchor tag like `<a id="_Ref178606187">`
     or `<a id="_Unref723089458">` if a caption had no bookmark
     extracted from a caption (after this func anchor is not in caption).
     In later functs, the contents of anchor tag will be wrapped into this anchor.
     """
-    a = caption.find("a", id=True)
-    if a is None:
+    anchors = caption.find_all("a", id=True)
+    if not anchors:
         a = html_soup.new_tag("a")
         a_id = "".join(secrets.choice(string.digits) for i in range(9))
         a["id"] = "_Unref" + a_id
+        return [a]
     else:
-        a = a.extract()
-    return a
+        for a in anchors:
+            a = a.extract()
+    return [a for a in anchors if a["id"].startswith("_Ref")]
+
+
+# def _extract_anchor_tag(
+#     html_soup: bs4.BeautifulSoup, caption: bs4.element.Tag
+# ) -> bs4.element.Tag:
+#     """
+#     Return an anchor tag like `<a id="_Ref178606187">`
+#     or `<a id="_Unref723089458">` if a caption had no bookmark
+#     extracted from a caption (after this func anchor is not in caption).
+#     In later functs, the contents of anchor tag will be wrapped into this anchor.
+#     """
+#     a = caption.find("a", id=True)
+#     if a is None:
+#         a = html_soup.new_tag("a")
+#         a_id = "".join(secrets.choice(string.digits) for i in range(9))
+#         a["id"] = "_Unref" + a_id
+#     else:
+#         a = a.extract()
+#     return a
 
 
 def _get_plain_text_numbering(ref_stack: list[bs4.element.PageElement]) -> str:
@@ -200,19 +270,19 @@ def _get_plain_text_numbering(ref_stack: list[bs4.element.PageElement]) -> str:
     return res
 
 
-def _wrap_caption_contents_into_anchor_tag(
-    caption: bs4.element.Tag, a: bs4.element.Tag
-) -> None:
-    """
-    Wrap caption contents into anchor tag
-    so simplified `<p><a id="_Ref178606187"><a/>XXX</p>`
-    will become `<p><a id="_Ref178606187">XXX<a/></p>`
-    """
-    contents = copy.copy(caption.contents)
-    for el in contents:
-        a.append(el)
-    caption.contents = []
-    caption.insert(0, a)
+# def _wrap_caption_contents_into_anchor_tag(
+#     caption: bs4.element.Tag, a: bs4.element.Tag
+# ) -> None:
+#     """
+#     Wrap caption contents into anchor tag
+#     so simplified `<p><a id="_Ref178606187"><a/>XXX</p>`
+#     will become `<p><a id="_Ref178606187">XXX<a/></p>`
+#     """
+#     contents = copy.copy(caption.contents)
+#     for el in contents:
+#         a.append(el)
+#     caption.contents = []
+#     caption.insert(0, a)
 
 
 # references ############
@@ -223,13 +293,16 @@ def prepare_references(
 ) -> bs4.BeautifulSoup:
     for a_tag in references:
         a_tag: bs4.element.Tag
-        link = LinkMystifier(a_tag)
+        # link = LinkMystifier(a_tag)
+        link = LinkMystifier()
+        link.set_filepath(metadata.filepath)
+        link.set_from_href(a_tag["href"])
         target = (
             metadata.get_target(attrib="full_id", val=link.fragment)
             if link.is_inner_reference()
             else None
         )
-        link_text = link.make_text(target)
+        link_text = link.make_text(a_tag.text, target)
         link_dest = link.make_destination()
         prev_string = a_tag.string
         prev_href = a_tag["href"]
@@ -286,15 +359,18 @@ class LinkMystifier:
     _scheme_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-."
     _unsafe_url_bytes_to_remove = ["\t", "\r", "\n"]
 
-    def __init__(self, tag: bs4.element.Tag):
-        self.anchor_tag = tag
-        self.uri = self.anchor_tag["href"]
-        scheme, netloc, path, query, fragment = self._urlsplit(self.uri)
-        self.scheme: str = scheme
-        self.netloc: str = netloc
-        self.path: str = path
-        self.query: str = query
-        self.fragment: str = fragment
+    def __init__(self):
+        self.filepath: t.Optional[KeyPath] = None
+        self.scheme: str = ""
+        self.netloc: str = ""
+        self.path: str = ""
+        self.query: str = ""
+        self.fragment: str = ""
+        # self._fragment: str = ""
+        # self.anchor_tag = tag
+        # self.uri = self.anchor_tag["href"]
+        # scheme, netloc, path, query, fragment = self._urlsplit(self.uri)
+        ##################################
         # cached functions
         self.is_external_url = functools.lru_cache()(self._is_external_url__uncached)
         self.is_cross_file_reference = functools.lru_cache()(
@@ -303,6 +379,54 @@ class LinkMystifier:
         self.is_inner_reference = functools.lru_cache()(
             self._is_inner_reference__uncached
         )
+
+    def mystify_target(self) -> str:
+        """
+        MyST markdown target in one of the appropriate syntaxes:
+            `(heading-target)=`
+        See the [docs](https://myst-parser.readthedocs.io/en/latest/syntax/cross-referencing.html)
+        for more information.
+        """
+        # TODO: `{#paragraph-target}`
+        # TODO: `[span_with_an_id]{#span-target}`
+        return f"({self.fragment})="
+
+    # def mystify_reference(
+    #     self, tag_text: str, target: t.Optional[TargetDatapoint] = None
+    # ) -> str:
+    #     """
+    #     Markdown link in `[link-text](link-destination)` syntax.
+    #     """
+    #     start = " " if tag_text.startswith(" ") else ""
+    #     end = " " if tag_text.endswith(" ") else ""
+    #     ref_text = self.make_text(tag_text, target)
+    #     ref_dest = self.make_destination()
+    #     return start + f"[{ref_text}]({ref_dest})" + end
+
+    def set_filepath(self, fn: t.Optional[KeyPath]) -> None:
+        self.filepath = fn
+
+    def set_from_href(self, href: str) -> None:
+        self.uri = href
+        self.scheme, self.netloc, self.path, self.query, self.fragment = self._urlsplit(
+            href
+        )
+
+    def set_from_id(self, id: str) -> None:
+        self.fragment = id
+
+    @property
+    def fragment(self) -> str:
+        return self._fragment
+
+    @fragment.setter
+    def fragment(self, val: str):
+        if self.path:
+            self._fragment = f"{self.path}__{val}"
+        if self.filepath and not self.path:
+            self._fragment = f"{self.filepath.stem}__{val}"
+        else:
+            self._fragment = val
 
     def _urlsplit(self, url: str, scheme: str = "") -> tuple[str, str, str, str, str]:
         """
@@ -383,11 +507,13 @@ class LinkMystifier:
             return f"#{self.fragment}"
         return self.uri
 
-    def make_text(self, target: t.Optional[TargetDatapoint] = None) -> str:
+    def make_text(
+        self, tag_text: str, target: t.Optional[TargetDatapoint] = None
+    ) -> str:
         """
         Markdown link text to be placed in `[text](...)` syntax.
         """
-        tag_text = self.anchor_tag.text
+        # tag_text = self.anchor_tag.text
         if self.is_cross_file_reference():
             to_replace = ""
             for i in range(len(tag_text)):
@@ -405,15 +531,34 @@ class LinkMystifier:
                 tag_text = tag_text.replace(to_replace, replace_with)
         return tag_text
 
-    def markdownify(
-        self, tag_text: str, target: t.Optional[TargetDatapoint] = None
-    ) -> str:
-        """
-        Markdown link in `[link-text](link-destination)` syntax.
-        """
-        start = " " if tag_text.startswith(" ") else ""
-        end = " " if tag_text.endswith(" ") else ""
-        return start + f"[{self.make_text(target)}]({self.make_destination()})" + end
+    # def markdownify(
+    #     self, tag_text: str, target: t.Optional[TargetDatapoint] = None
+    # ) -> str:
+    #     """
+    #     Markdown link in `[link-text](link-destination)` syntax.
+    #     """
+    #     start = " " if tag_text.startswith(" ") else ""
+    #     end = " " if tag_text.endswith(" ") else ""
+    #     return start + f"[{self.make_text(target)}]({self.make_destination()})" + end
 
     def __str__(self) -> str:
-        return f"SplitResult(scheme={self.scheme}, netloc={self.netloc}, path={self.path}, query={self.query}, fragment={self.fragment})"
+        return f"LinkMystifier(scheme={self.scheme}, netloc={self.netloc}, path={self.path}, query={self.query}, fragment={self.fragment})"
+
+
+# def make_destination(fragment: str, path: str = None) -> str:
+#     """
+#     Markdown destination to be placed in
+#         `[...](destination)` for links OR
+#         `(destination)=` for header targets
+#     syntax.
+#     """
+#     # TODO: when filename tracking is in place, add handling changing paths
+#     if path:
+#         path = (
+#             path.replace(".docx", ".md")
+#             if path.endswith(".docx")
+#             else path
+#         )
+#         return f"./{path}#{fragment}"
+#     else:
+#         return f"#{fragment}"

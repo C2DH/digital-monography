@@ -60,6 +60,18 @@ class MystMdConverter(markdownify.MarkdownConverter):
         sub_symbol = "{sub}"
         sup_symbol = "{sup}"
 
+    # def escape(self, text):
+    #     if not text:
+    #         return ''
+    #     if self.options['escape_misc']:
+    #         text = re.sub(r'([\\&<`[>~#=+|-])', r'\\\1', text)
+    #         text = re.sub(r'([0-9])([.)])', r'\1\\\2', text)
+    #     if self.options['escape_asterisks']:
+    #         text = text.replace('*', r'\*')
+    #     if self.options['escape_underscores']:
+    #         text = text.replace('_', r'\_')
+    #     return text
+
     # TODO: use regex to find _Ref patterns and better handle making data safe
 
     def convert_a(self, el, text, convert_as_inline):
@@ -77,10 +89,11 @@ class MystMdConverter(markdownify.MarkdownConverter):
         return super().convert_a(el, text, convert_as_inline)
 
     def convert_p(self, el, text, convert_as_inline):
-        re_match = re.match(r"\s*%\s*:::{dgt-mon-asset}\s*", text)
-        if self._metadata is not None and re_match is not None:
+
+        asset_directive_match = re.match(r"\s*%\s*:::{dgt-mon-asset}\s*", text)
+        if self._metadata is not None and asset_directive_match is not None:
             uuidv4_len = 36
-            uuid = text[re_match.span()[1] :][:uuidv4_len]
+            uuid = text[asset_directive_match.span()[1] :][:uuidv4_len]
             asset_meta = self._metadata[uuid]
             default_height = "100%"
             height = asset_meta.get("height", default_height)
@@ -109,6 +122,12 @@ class MystMdConverter(markdownify.MarkdownConverter):
             text = text.replace("<", "", 1)
             text = text.replace(">", "", 1)
         return super().convert_p(el, text, convert_as_inline)
+
+    def convert_pre(self, el, text, convert_as_inline):
+        h_target_match = re.match(r"^\([\w\-_]+\)=$", text)
+        if h_target_match is not None:
+            return "\n%s\n" % text
+        return super().convert_pre(el, text, convert_as_inline)
 
     def convert_hn(self, n, el, text, convert_as_inline):
         if '<a href="' in text or '<a id="' in text:

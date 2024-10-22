@@ -107,7 +107,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         return {"statusCode": 200, "body": ""}
     if key.suffix.lower() == ".docx":
         html_str = _convert_to_html(key.efs_filepath)
-        metadata = DocumentMetadata()
+        metadata = DocumentMetadata(key)
         html_soup = bs4.BeautifulSoup(html_str, "html.parser")
         html_soup = add_citations_and_bibliography(
             html_soup
@@ -140,13 +140,20 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
                 _mark_html_elements_recursively(child, lvl + 1)
 
         _mark_html_elements_recursively(html_soup)
-
+        print("=" * 50)
+        print(key)
+        print("-" * 50)
+        print("html_soup", html_soup)
+        print("-" * 50)
         html_soup = prepare_metadata_tables(html_soup, metadata, captions)
-        html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
         html_soup = prepare_ref_targets_in_headers(html_soup, metadata, headers)
+        html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
         html_soup = prepare_references(html_soup, metadata, references)
         html_soup = remove_empty_tables(html_soup, metadata, tables)
         html_soup = prepare_alt_texts(html_soup, metadata, images_with_alttxt)
+        print("-" * 50)
+        print("html_soup", html_soup)
+        print("-" * 50)
 
         html_soup_str = str(html_soup)
         # IMPORTANT NOTE: other services depend on html produced at this stage, make sure that:

@@ -12,6 +12,12 @@ import itertools
 import pathlib
 import typing as t
 
+try:
+    from keys import KeyPath
+except (ImportError, ModuleNotFoundError):
+    from .keys import KeyPath
+
+
 type AcceptedValues = t.Union[str, bool, pathlib.Path]
 T = t.TypeVar("T")
 
@@ -35,10 +41,7 @@ class RefRecord(t.TypedDict):
     pk: int
     target_id: int
     target_full_id: str
-    text: str
-    href: str
-    prev_string: str
-    prev_href: str
+    content: str
 
 
 class TargetRecord(t.TypedDict):
@@ -123,7 +126,8 @@ class DocumentMetadata:
         targets: reference targets (e.g. headings, captions)
     """
 
-    def __init__(self) -> None:
+    def __init__(self, fp: t.Optional[KeyPath] = None) -> None:
+        self.filepath = fp
         self.assets: list[AssetDatapoint] = []
         self.refs: list[RefDatapoint] = []
         self.targets: list[TargetDatapoint] = []

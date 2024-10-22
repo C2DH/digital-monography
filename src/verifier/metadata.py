@@ -12,6 +12,12 @@ import itertools
 import pathlib
 import typing as t
 
+try:
+    from keys import KeyPath
+except (ImportError, ModuleNotFoundError):
+    from .keys import KeyPath
+
+
 type AcceptedValues = t.Union[str, bool, pathlib.Path]
 T = t.TypeVar("T")
 
@@ -74,7 +80,10 @@ class RefDatapoint:
     pk: int = dataclasses.field(default_factory=itertools.count().__next__, init=False)
     target_id: int
     target_full_id: str
-    content: str
+    text: str
+    href: str
+    prev_string: str
+    prev_href: str
 
     def to_json(self) -> dict[str, t.Union[str, int]]:
         return {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}
@@ -117,7 +126,8 @@ class DocumentMetadata:
         targets: reference targets (e.g. headings, captions)
     """
 
-    def __init__(self) -> None:
+    def __init__(self, fp: t.Optional[KeyPath] = None) -> None:
+        self.filepath = fp
         self.assets: list[AssetDatapoint] = []
         self.refs: list[RefDatapoint] = []
         self.targets: list[TargetDatapoint] = []
