@@ -1,5 +1,4 @@
 import bs4
-import re
 
 from src.preparer.refs import (
     is_caption,
@@ -8,7 +7,6 @@ from src.preparer.refs import (
     LinkMystifier,
 )
 from src.preparer.metadata import DocumentMetadata, TargetDatapoint
-from src.preparer.html2md import convert_to_md
 from src.preparer.keys import KeyPath
 
 # targets in headers
@@ -21,31 +19,6 @@ from src.preparer.keys import KeyPath
 # <p>A <a href="#_Heading">link</a>.</p>
 # <p>B <a href="other_file.docx#_Heading">link</a>.</p>
 # """
-#     html_soup = bs4.BeautifulSoup(HEADERS_HTML, "html.parser")
-#     print("html_soup", html_soup)
-#     print("-" * 25)
-#     metadata = DocumentMetadata(KeyPath("./tmp/sth/file.docx"))
-#     headers = html_soup.find_all(["h1", "h2"])
-#     print("headers", headers)
-#     html_soup = prepare_ref_targets_in_headers(html_soup, metadata, headers)
-#     print("html_soup", html_soup)
-
-#     h2 = html_soup.find("h2")
-#     print("h2", h2)
-
-#     assert h2.a["id"] == "_Heading"
-#     prev = h2.find_previous_sibling()
-#     print("h2.find_previous_sibling", h2.find_previous_sibling())
-#     assert prev is not None
-#     assert prev.name == "pre"
-#     assert prev.text == "(./file.md#_Heading)="
-#     print("prev.string", prev.string)
-#     print("prev.text", prev.text)
-
-#     md = convert_to_md(html_soup, metadata)
-#     print("md", md)
-
-#     assert 1 == 2
 
 
 def test_heading_reference_targets():
@@ -75,6 +48,8 @@ def test_insert_pre_tag_before_caption():
     assert pre
     assert pre.text == "(file___Ref178606189)="
     assert pre.find_next_sibling() == captions[0]
+    target = metadata.get_target("file___Ref178606189")
+    assert target.text == "1"
 
 
 def test_duplicated_target_id():
@@ -100,6 +75,10 @@ def test_duplicated_target_id():
         "<strong>Figure {{ file___Ref178606187 }}:</strong>"
         " Duplicated bookmarks.</p>"
     )
+    target = metadata.get_target("file___Ref178606187")
+    assert target.text == "3"
+    target = metadata.get_target("file___Ref178606188")
+    assert target.text == "3"
 
 
 def test_replace_complex_numbering_in_caption():
@@ -109,7 +88,7 @@ def test_replace_complex_numbering_in_caption():
         "<strong>Figure "
         r'<data value=" STYLEREF 1 \s ">5</data><i>.</i><data value=" SEQ Equation \* ALPHABETIC \s 1 ">B</data>'
         ":</strong> Complex numbering with separator.</p>"
-    )  # 5.A -> {{ file___Ref178606189 }}
+    )
     bs = bs4.BeautifulSoup(sample_html, "html.parser")
     metadata = DocumentMetadata(KeyPath("./tmp/sth/file.docx"))
     captions = [node for node in bs.children if is_caption(node)]
@@ -118,6 +97,8 @@ def test_replace_complex_numbering_in_caption():
         captions[0].text
         == "Figure {{ file___Ref178606189 }}: Complex numbering with separator."
     )
+    target = metadata.get_target("file___Ref178606189")
+    assert target.text == "5.B"
 
 
 def test_replace_roman_numbering_in_caption():
@@ -132,6 +113,8 @@ def test_replace_roman_numbering_in_caption():
     captions = [node for node in bs.children if is_caption(node)]
     bs = prepare_ref_targets_in_captions(bs, metadata, captions)
     assert captions[0].text == "Figure {{ file___Ref178606189 }}: Roman numbering."
+    target = metadata.get_target("file___Ref178606189")
+    assert target.text == "IV"
 
 
 def test_link_in_caption_is_left_not_changed():
@@ -151,32 +134,8 @@ def test_link_in_caption_is_left_not_changed():
     assert a["href"] == "https://example.com"
     assert a.string == "link"
     assert captions[0].text == "Figure {{ file___Ref178606190 }}: Caption with a link."
-
-
-def test_duplicated_target_id():
-    sample_html = (
-        '<p class="dgt-mon-caption">'
-        '<a id="_Ref178606187"></a>'
-        '<a id="_Ref178606188"></a>'
-        r'<strong>Figure <data value=" SEQ Figure \* ARABIC ">3</data>'
-        ":</strong> Duplicated bookmarks.</p>"
-    )
-    bs = bs4.BeautifulSoup(sample_html, "html.parser")
-    metadata = DocumentMetadata(KeyPath("./tmp/sth/file.docx"))
-    captions = [node for node in bs.children if is_caption(node)]
-    bs = prepare_ref_targets_in_captions(bs, metadata, captions)
-    pres = bs.find_all("pre")
-    assert len(pres) == 2
-
-    assert pres[0].text == "(file___Ref178606187)="
-    assert pres[1].text == "(file___Ref178606188)="
-    assert str(bs) == (
-        "<pre>(file___Ref178606187)=</pre>"
-        "<pre>(file___Ref178606188)=</pre>"
-        '<p class="dgt-mon-caption">'
-        "<strong>Figure {{ file___Ref178606187 }}:</strong>"
-        " Duplicated bookmarks.</p>"
-    )
+    target = metadata.get_target("file___Ref178606190")
+    assert target.text == "2"
 
 
 # LinkMystifier attributes
@@ -282,7 +241,7 @@ def test_markownify_anchor_if_is_inner_reference__complex_a_tag():
     link = LinkMystifier()
     link.set_from_href(bs.a["href"])
     target = TargetDatapoint(
-        full_id="_Ref177042490",
+        pk="_Ref177042490",
         html='<data value=" SEQ Figure \\* ARABIC ">1</data>',
         text="1",
     )
@@ -296,7 +255,7 @@ def test_markownify_anchor_if_is_inner_reference__simple_a_tag():
     link = LinkMystifier()
     link.set_from_href(bs.a["href"])
     target = TargetDatapoint(
-        full_id="_Ref177042491",
+        pk="_Ref177042491",
         html='<data value=" SEQ Figure \\* ARABIC ">2</data>',
         text="2",
     )
