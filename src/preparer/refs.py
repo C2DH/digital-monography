@@ -1,3 +1,4 @@
+import pathlib
 import bs4
 import re
 import secrets
@@ -47,6 +48,12 @@ def prepare_ref_targets_in_headers(
                 target_tag.string = link.mystify_target()
                 tag.insert_before(target_tag)
                 anchors.append(child)
+                target = TargetDatapoint(
+                    pk=link.id,
+                    html=str(tag),
+                    text=link.id,
+                )
+                metadata.add_target(target)
         for a in anchors:
             a.extract()
     return html_soup
@@ -113,7 +120,6 @@ def prepare_ref_targets_in_captions(
             metadata.add_target(target)
             target_tag = html_soup.new_tag("pre")
             target_tag.string = link.mystify_target()
-            print("target_tag.string", target_tag.string)
             caption.insert_before(target_tag)
 
     return html_soup
@@ -154,7 +160,9 @@ def _get_plain_text_numbering(ref_stack: list[bs4.element.PageElement]) -> str:
 
 
 def prepare_references(
-    html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata, references
+    html_soup: bs4.BeautifulSoup,
+    metadata: DocumentMetadata,
+    references: list[bs4.element.Tag],
 ) -> bs4.BeautifulSoup:
     for a_tag in references:
         a_tag: bs4.element.Tag
@@ -226,9 +234,8 @@ class LinkMystifier:
 
     def set_from_href(self, href: str) -> None:
         self.uri = href
-        self.scheme, self.netloc, self.path, self.query, self.fragment = self._urlsplit(
-            href
-        )
+        self.scheme, self.netloc, self.path, self.query, fragment = self._urlsplit(href)
+        self.fragment = fragment
 
     def set_from_id(self, id: str) -> None:
         self.fragment = id
@@ -239,12 +246,22 @@ class LinkMystifier:
 
     @fragment.setter
     def fragment(self, val: str):
-        if self.path:
-            self._fragment = f"{self.path}__{val}"
-        if self.filepath and not self.path:
+        if self.filepath and self.path:
+            path = pathlib.Path(self.path)
+            self._fragment = f"{path.stem}__{val}"
+        elif self.filepath and not self.path:
             self._fragment = f"{self.filepath.stem}__{val}"
         else:
             self._fragment = val
+
+    # def _add_prefix(self, val: str) -> str:
+    #     if self.path:
+    #         self._fragment = f"{self.path}__{val}"
+    #     if self.filepath and not self.path:
+    #         self._fragment = f"{self.filepath.stem}__{val}"
+    #     else:
+    #         self._fragment = val
+    #     return self._fragment
 
     def _urlsplit(self, url: str, scheme: str = "") -> tuple[str, str, str, str, str]:
         """
@@ -320,8 +337,10 @@ class LinkMystifier:
                 if self.path.endswith(".docx")
                 else self.path
             )
+            # return f"./{path}#{self.fragment}"
             return f"./{path}#{self.fragment}"
         elif self.is_inner_reference():
+            # return f"#{self.fragment}"
             return f"#{self.fragment}"
         return self.uri
 

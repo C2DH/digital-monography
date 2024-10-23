@@ -3,8 +3,10 @@ import bs4
 from src.preparer.refs import (
     is_caption,
     is_header,
+    is_reference,
     prepare_ref_targets_in_headers,
     prepare_ref_targets_in_captions,
+    prepare_references,
     LinkMystifier,
 )
 from src.preparer.metadata import DocumentMetadata, TargetDatapoint
@@ -49,6 +51,50 @@ def test_targets_in_headers__heading_crossref_targets_were_added():
         "<pre>(file__heading_3)=</pre>"
         "<h3>Heading level 3</h3>"
     )
+
+
+def test_targets_in_headers__corresponding_href_and_id():
+    sample_html = (
+        # '<!-- targets -->'
+        '<h1><a id="_Heading"></a><a id="heading_2"></a>Heading</h1>'
+        "<h2>Heading level 2</h2>"
+        '<h3><a id="heading_3"></a>Heading level 3</h3>'
+        # '<!-- references -->'
+        '<p>A <a href="#_Heading">link</a>.</p>'
+        '<p>B <a href="other_file.docx#_Heading">link</a>.</p>'
+    )
+    bs = bs4.BeautifulSoup(sample_html, "html.parser")
+    metadata = DocumentMetadata(KeyPath("./tmp/sth/file.docx"))
+    headers = [node for node in bs.children if is_header(node)]
+
+    references = []
+    classifiers = [
+        (is_reference, references),
+    ]
+
+    def _mark_html_elements_recursively(node: bs4.element.PageElement, lvl=0) -> None:
+        """
+        Before applying the processing, this function traverses the tree and
+        puts relevant bs4 objects (html elements) inside respective
+        lists. Processing is then applied on the marked elements.
+        """
+        if not hasattr(node, "children"):
+            return
+        for child in node.children:
+            if isinstance(child, bs4.element.Tag):
+                for meets_criteria, container in classifiers:
+                    if meets_criteria(child):
+                        container.append(child)
+            _mark_html_elements_recursively(child, lvl + 1)
+
+    _mark_html_elements_recursively(bs)
+    bs = prepare_ref_targets_in_headers(bs, metadata, headers)
+    bs = prepare_references(bs, metadata, references)
+    pre = bs.find("pre")
+    assert pre.text == "(file___Heading)="
+    anchors = bs.find_all("a", href=True)
+    assert anchors[0]["href"] == "#file___Heading"
+    assert anchors[1]["href"] == "./other_file.md#other_file___Heading"
 
 
 # targets in captions
