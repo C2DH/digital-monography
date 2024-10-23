@@ -66,7 +66,6 @@ def test_targets_in_headers__corresponding_href_and_id():
     bs = bs4.BeautifulSoup(sample_html, "html.parser")
     metadata = DocumentMetadata(KeyPath("./tmp/sth/file.docx"))
     headers = [node for node in bs.children if is_header(node)]
-
     references = []
     classifiers = [
         (is_reference, references),
@@ -95,6 +94,55 @@ def test_targets_in_headers__corresponding_href_and_id():
     anchors = bs.find_all("a", href=True)
     assert anchors[0]["href"] == "#file___Heading"
     assert anchors[1]["href"] == "./other_file.md#other_file___Heading"
+
+
+def test_targets_in_headers__refs_and_targets_written_to_metadata():
+    sample_html = (
+        # '<!-- targets -->'
+        '<h1><a id="_Heading"></a><a id="heading_2"></a>Heading</h1>'
+        "<h2>Heading level 2</h2>"
+        '<h3><a id="heading_3"></a>Heading level 3</h3>'
+        # '<!-- references -->'
+        '<p>A <a href="#_Heading">link</a>.</p>'
+        '<p>B <a href="other_file.docx#_Heading">link</a>.</p>'
+    )
+    bs = bs4.BeautifulSoup(sample_html, "html.parser")
+    metadata = DocumentMetadata(KeyPath("./tmp/sth/file.docx"))
+    headers = [node for node in bs.children if is_header(node)]
+    references = []
+    classifiers = [
+        (is_reference, references),
+    ]
+
+    def _mark_html_elements_recursively(node: bs4.element.PageElement, lvl=0) -> None:
+        """
+        Before applying the processing, this function traverses the tree and
+        puts relevant bs4 objects (html elements) inside respective
+        lists. Processing is then applied on the marked elements.
+        """
+        if not hasattr(node, "children"):
+            return
+        for child in node.children:
+            if isinstance(child, bs4.element.Tag):
+                for meets_criteria, container in classifiers:
+                    if meets_criteria(child):
+                        container.append(child)
+            _mark_html_elements_recursively(child, lvl + 1)
+
+    _mark_html_elements_recursively(bs)
+    bs = prepare_ref_targets_in_headers(bs, metadata, headers)
+    bs = prepare_references(bs, metadata, references)
+    assert len(metadata.targets) == 3
+    assert len(metadata.refs) == 2
+    assert metadata.get_target("file___Heading") is not None
+    assert metadata.get_target("file__heading_2") is not None
+    assert metadata.get_target("file__heading_3") is not None
+    ref = metadata.get_ref(attrib="href", val="#file___Heading")
+    assert ref is not None
+    assert ref.target_id == "file___Heading"
+    ref = metadata.get_ref(attrib="href", val="./other_file.md#other_file___Heading")
+    assert ref is not None
+    assert ref.target_id == ""  # no target found since it is in another file
 
 
 # targets in captions
