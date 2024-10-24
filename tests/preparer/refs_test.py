@@ -20,8 +20,8 @@ def test_targets_in_headers__heading_reference_targets():
     bs = bs4.BeautifulSoup(sample_html, "html.parser")
     link = LinkMystifier()
     link.set_from_id(bs.h1.a["id"])
-    assert link.mystify_target() == "(_Heading)="
-    assert link.make_destination() == "#_Heading"
+    assert link.mystify_target() == "(f-heading)="
+    assert link.make_destination() == "#f-heading"
 
 
 def test_targets_in_headers__heading_crossref_targets_were_added():
@@ -40,15 +40,15 @@ def test_targets_in_headers__heading_crossref_targets_were_added():
     bs = prepare_ref_targets_in_headers(bs, metadata, headers)
     pres = bs.find_all("pre")
     assert len(pres) == 3
-    assert pres[0].text == "(file___Heading)="
-    assert pres[1].text == "(file__heading_2)="
-    assert pres[2].text == "(file__heading_3)="
+    assert pres[0].text == "(f-file-heading)="
+    assert pres[1].text == "(f-file-heading-2)="
+    assert pres[2].text == "(f-file-heading-3)="
     assert str(bs).startswith(
-        "<pre>(file___Heading)=</pre>"
-        "<pre>(file__heading_2)=</pre>"
+        "<pre>(f-file-heading)=</pre>"
+        "<pre>(f-file-heading-2)=</pre>"
         "<h1>Heading</h1>"
         "<h2>Heading level 2</h2>"
-        "<pre>(file__heading_3)=</pre>"
+        "<pre>(f-file-heading-3)=</pre>"
         "<h3>Heading level 3</h3>"
     )
 
@@ -90,10 +90,10 @@ def test_targets_in_headers__corresponding_href_and_id():
     bs = prepare_ref_targets_in_headers(bs, metadata, headers)
     bs = prepare_references(bs, metadata, references)
     pre = bs.find("pre")
-    assert pre.text == "(file___Heading)="
+    assert pre.text == "(f-file-heading)="
     anchors = bs.find_all("a", href=True)
-    assert anchors[0]["href"] == "#file___Heading"
-    assert anchors[1]["href"] == "./other_file.md#other_file___Heading"
+    assert anchors[0]["href"] == "#f-file-heading"
+    assert anchors[1]["href"] == "./other_file.md#f-other-file-heading"
 
 
 def test_targets_in_headers__refs_and_targets_written_to_metadata():
@@ -134,13 +134,13 @@ def test_targets_in_headers__refs_and_targets_written_to_metadata():
     bs = prepare_references(bs, metadata, references)
     assert len(metadata.targets) == 3
     assert len(metadata.refs) == 2
-    assert metadata.get_target("file___Heading") is not None
-    assert metadata.get_target("file__heading_2") is not None
-    assert metadata.get_target("file__heading_3") is not None
-    ref = metadata.get_ref(attrib="href", val="#file___Heading")
+    assert metadata.get_target("f-file-heading") is not None
+    assert metadata.get_target("f-file-heading-2") is not None
+    assert metadata.get_target("f-file-heading-3") is not None
+    ref = metadata.get_ref(attrib="href", val="#f-file-heading")
     assert ref is not None
-    assert ref.target_id == "file___Heading"
-    ref = metadata.get_ref(attrib="href", val="./other_file.md#other_file___Heading")
+    assert ref.target_id == "f-file-heading"
+    ref = metadata.get_ref(attrib="href", val="./other_file.md#f-other-file-heading")
     assert ref is not None
     assert ref.target_id == ""  # no target found since it is in another file
 
@@ -161,9 +161,9 @@ def test_targets_in_captions__insert_pre_tag_before_caption():
     bs = prepare_ref_targets_in_captions(bs, metadata, captions)
     pre = bs.find("pre")
     assert pre
-    assert pre.text == "(file___Ref178606189)="
+    assert pre.text == "(f-file-ref178606189)="
     assert pre.find_next_sibling() == captions[0]
-    target = metadata.get_target("file___Ref178606189")
+    target = metadata.get_target("f-file-ref178606189")
     assert target.text == "1"
 
 
@@ -181,18 +181,18 @@ def test_targets_in_captions__duplicated_target_id():
     bs = prepare_ref_targets_in_captions(bs, metadata, captions)
     pres = bs.find_all("pre")
     assert len(pres) == 2
-    assert pres[0].text == "(file___Ref178606187)="
-    assert pres[1].text == "(file___Ref178606188)="
+    assert pres[0].text == "(f-file-ref178606187)="
+    assert pres[1].text == "(f-file-ref178606188)="
     assert str(bs) == (
-        "<pre>(file___Ref178606187)=</pre>"
-        "<pre>(file___Ref178606188)=</pre>"
+        "<pre>(f-file-ref178606187)=</pre>"
+        "<pre>(f-file-ref178606188)=</pre>"
         '<p class="dgt-mon-caption">'
-        "<strong>Figure {{ file___Ref178606187 }}:</strong>"
+        "<strong>Figure {{ f-file-ref178606187 }}:</strong>"
         " Duplicated bookmarks.</p>"
     )
-    target = metadata.get_target("file___Ref178606187")
+    target = metadata.get_target("f-file-ref178606187")
     assert target.text == "3"
-    target = metadata.get_target("file___Ref178606188")
+    target = metadata.get_target("f-file-ref178606188")
     assert target.text == "3"
 
 
@@ -210,9 +210,9 @@ def test_targets_in_captions__replace_complex_numbering_in_caption():
     bs = prepare_ref_targets_in_captions(bs, metadata, captions)
     assert (
         captions[0].text
-        == "Figure {{ file___Ref178606189 }}: Complex numbering with separator."
+        == "Figure {{ f-file-ref178606189 }}: Complex numbering with separator."
     )
-    target = metadata.get_target("file___Ref178606189")
+    target = metadata.get_target("f-file-ref178606189")
     assert target.text == "5.B"
 
 
@@ -227,8 +227,8 @@ def test_targets_in_captions__replace_roman_numbering_in_caption():
     metadata = DocumentMetadata(KeyPath("./tmp/sth/file.docx"))
     captions = [node for node in bs.children if is_caption(node)]
     bs = prepare_ref_targets_in_captions(bs, metadata, captions)
-    assert captions[0].text == "Figure {{ file___Ref178606189 }}: Roman numbering."
-    target = metadata.get_target("file___Ref178606189")
+    assert captions[0].text == "Figure {{ f-file-ref178606189 }}: Roman numbering."
+    target = metadata.get_target("f-file-ref178606189")
     assert target.text == "IV"
 
 
@@ -248,8 +248,8 @@ def test_targets_in_captions__link_in_caption_is_left_not_changed():
     assert a
     assert a["href"] == "https://example.com"
     assert a.string == "link"
-    assert captions[0].text == "Figure {{ file___Ref178606190 }}: Caption with a link."
-    target = metadata.get_target("file___Ref178606190")
+    assert captions[0].text == "Figure {{ f-file-ref178606190 }}: Caption with a link."
+    target = metadata.get_target("f-file-ref178606190")
     assert target.text == "2"
 
 
@@ -298,7 +298,7 @@ def test_is_inner_reference():
     assert link.netloc == ""
     assert link.path == ""
     assert link.query == ""
-    assert link.fragment == "_Ref177042490"
+    assert link.fragment == "f-ref177042490"
     assert link.is_external_url() == False
     assert link.is_cross_file_reference() == False
     assert link.is_inner_reference() == True
@@ -313,7 +313,7 @@ def test_is_cross_file_reference():
     assert link.netloc == ""
     assert link.path == "filename.docx"
     assert link.query == ""
-    assert link.fragment == "h-target"
+    assert link.fragment == "f-h-target"
     assert link.is_external_url() == False
     assert link.is_cross_file_reference() == True
     assert link.is_inner_reference() == False
@@ -360,8 +360,8 @@ def test_markownify_anchor_if_is_inner_reference__complex_a_tag():
         html='<data value=" SEQ Figure \\* ARABIC ">1</data>',
         text="1",
     )
-    assert link.make_text(bs.a.text, target) == r"Figure {{ _Ref177042490 }}"
-    assert link.make_destination() == "#_Ref177042490"
+    assert link.make_text(bs.a.text, target) == r"Figure {{ f-ref177042490 }}"
+    assert link.make_destination() == "#f-ref177042490"
 
 
 def test_markownify_anchor_if_is_inner_reference__simple_a_tag():
@@ -374,8 +374,8 @@ def test_markownify_anchor_if_is_inner_reference__simple_a_tag():
         html='<data value=" SEQ Figure \\* ARABIC ">2</data>',
         text="2",
     )
-    assert link.make_text(bs.a.text, target) == r"Figure {{ _Ref177042491 }}"
-    assert link.make_destination() == "#_Ref177042491"
+    assert link.make_text(bs.a.text, target) == r"Figure {{ f-ref177042491 }}"
+    assert link.make_destination() == "#f-ref177042491"
 
 
 def test_markownify_anchor_if_is_cross_file_reference():
@@ -383,8 +383,8 @@ def test_markownify_anchor_if_is_cross_file_reference():
     bs = bs4.BeautifulSoup(sample_html, "html.parser")
     link = LinkMystifier()
     link.set_from_href(bs.a["href"])
-    assert link.make_text(bs.a.text) == r"see Chapter {{ filename.docx#h-target }}"
-    assert link.make_destination() == "./filename.md#h-target"
+    assert link.make_text(bs.a.text) == r"see Chapter {{ filename.docx#f-h-target }}"
+    assert link.make_destination() == "./filename.md#f-h-target"
 
 
 def test_markownify_anchor_if_is_cross_file_reference__nothing_to_replace():
@@ -393,7 +393,7 @@ def test_markownify_anchor_if_is_cross_file_reference__nothing_to_replace():
     link = LinkMystifier()
     link.set_from_href(bs.a["href"])
     assert link.make_text(bs.a.text) == "see heading in other file"
-    assert link.make_destination() == "./filename.md#h-target"
+    assert link.make_destination() == "./filename.md#f-h-target"
 
 
 def test_markownify_anchor_if_is_not_external_url_nor_cross_file_ref_nor_inner_ref():

@@ -1,5 +1,6 @@
 import pathlib
 import bs4
+import docutils.nodes
 import re
 import secrets
 import string
@@ -248,20 +249,12 @@ class LinkMystifier:
     def fragment(self, val: str):
         if self.filepath and self.path:
             path = pathlib.Path(self.path)
-            self._fragment = f"{path.stem}__{val}"
+            self._fragment = docutils.nodes.make_id(f"f-{path.stem}-{val}")
         elif self.filepath and not self.path:
-            self._fragment = f"{self.filepath.stem}__{val}"
+            self._fragment = docutils.nodes.make_id(f"f-{self.filepath.stem}-{val}")
         else:
-            self._fragment = val
-
-    # def _add_prefix(self, val: str) -> str:
-    #     if self.path:
-    #         self._fragment = f"{self.path}__{val}"
-    #     if self.filepath and not self.path:
-    #         self._fragment = f"{self.filepath.stem}__{val}"
-    #     else:
-    #         self._fragment = val
-    #     return self._fragment
+            val = "f-" + val if val else val
+            self._fragment = docutils.nodes.make_id(val)
 
     def _urlsplit(self, url: str, scheme: str = "") -> tuple[str, str, str, str, str]:
         """
@@ -337,10 +330,8 @@ class LinkMystifier:
                 if self.path.endswith(".docx")
                 else self.path
             )
-            # return f"./{path}#{self.fragment}"
             return f"./{path}#{self.fragment}"
         elif self.is_inner_reference():
-            # return f"#{self.fragment}"
             return f"#{self.fragment}"
         return self.uri
 
