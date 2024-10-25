@@ -3,9 +3,11 @@ import bs4
 from src.preparer.refs import (
     is_caption,
     is_header,
+    is_footnote,
     is_reference,
     prepare_ref_targets_in_headers,
     prepare_ref_targets_in_captions,
+    prepare_ref_targets_in_footnotes,
     prepare_references,
     LinkMystifier,
 )
@@ -256,21 +258,23 @@ def test_targets_in_captions__link_in_caption_is_left_not_changed():
 # targets and refs in footnotes
 
 
-def test_footnotes():
+def test_ref_and_target_from_footnote():
     sample_html = (
         '<sup><a href="#footnote-1" id="footnote-ref-1">[1]</a></sup>'
         '<ol><li id="footnote-1">'
         "<p>"
-        ' <a href="http://www.example.com/">Link to an external website</a>'
-        ' <a href="#f-01-a-footnote-ref-1">↑</a>'
+        " Standard footnote without links."
+        ' <a href="#footnote-ref-1">↑</a>'
         "</p>"
         "</li></ol>"
     )
     bs = bs4.BeautifulSoup(sample_html, "html.parser")
     metadata = DocumentMetadata(KeyPath("./tmp/sth/file.docx"))
     references = []
+    footnotes = []
     classifiers = [
         (is_reference, references),
+        (is_footnote, footnotes),
     ]
 
     def _mark_html_elements_recursively(node: bs4.element.PageElement, lvl=0) -> None:
@@ -289,17 +293,35 @@ def test_footnotes():
             _mark_html_elements_recursively(child, lvl + 1)
 
     _mark_html_elements_recursively(bs)
+    bs = prepare_ref_targets_in_footnotes(bs, metadata, footnotes)
     bs = prepare_references(bs, metadata, references)
     sup = bs.find("sup")
-    assert sup.a.text == r"[{{ f-file-footnote-1 }}]"
-    assert sup.a["id"] == "f-file-footnote-ref-1"
-    print("bs", bs)
-    print("metadata", metadata)
-    assert 1 == 8
-    # assert pre.text == "(f-file-heading)="
-    # anchors = bs.find_all("a", href=True)
-    # assert anchors[0]["href"] == "#f-file-heading"
-    # assert anchors[1]["href"] == "./other_file.md#f-other-file-heading"
+    assert sup.a.text == r"[fn-file-1]"
+    assert sup.a["href"] == "#footnote-fn-file-1"
+    assert sup.a["id"] == "footnote-ref-fn-file-1"
+    li = bs.find("li")
+    assert li["id"] == "footnote-fn-file-1"
+    a = li.find("a")
+    assert a["href"] == "#footnote-ref-fn-file-1"
+    # not added to refs nor targets
+    assert len(metadata.refs) == 0
+    assert len(metadata.targets) == 0
+
+
+# TODO
+# def test_ref_and_target_from_footnote_with_link():
+#     sample_html = (
+#         '<sup><a href="#footnote-99" id="footnote-ref-99">[99]</a></sup>'
+#         '<ol><li id="footnote-99">'
+#         "<p>"
+#         ' <a href="http://www.example.com/">Link to an external website</a>'
+#         ' <a href="#footnote-ref-fn-02-a-99">↑</a>'
+#         "</p>"
+#         "</li></ol>"
+#     )
+#     bs = bs4.BeautifulSoup(sample_html, "html.parser")
+#     metadata = DocumentMetadata(KeyPath("./tmp/sth/file.docx"))
+#     assert 1 == 2
 
 
 # LinkMystifier attributes

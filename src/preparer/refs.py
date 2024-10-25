@@ -25,6 +25,10 @@ def is_caption(tag: bs4.element.Tag) -> bool:
     return bool(tag.name == "p" and "dgt-mon-caption" in tag.attrs.get("class", []))
 
 
+def is_footnote(tag: bs4.element.Tag) -> bool:
+    return bool(tag.name == "li" and tag.attrs.get("id").startswith("footnote-"))
+
+
 def is_reference(tag: bs4.element.Tag) -> bool:
     # "a", href=True
     return bool(tag.name == "a" and tag.attrs.get("href"))
@@ -158,6 +162,26 @@ def _get_plain_text_numbering(ref_stack: list[bs4.element.PageElement]) -> str:
     return res
 
 
+def prepare_ref_targets_in_footnotes(
+    html_soup: bs4.BeautifulSoup,
+    metadata: DocumentMetadata,
+    footnotes: list[bs4.element.Tag],
+) -> bs4.BeautifulSoup:
+    for li_tag in footnotes:
+        li_tag: bs4.element.Tag
+        footnote = FootnoteMystifier()
+        footnote.set_filepath(metadata.filepath)
+        footnote.from_target(li_tag["id"])
+        li_tag["id"] = footnote.id
+        for tag in li_tag.descendants:
+            if isinstance(tag, bs4.element.Tag) and tag.attrs.get(
+                "href", ""
+            ).startswith("#footnote-ref-"):
+                tag["href"] = footnote.href
+                break
+    return html_soup
+
+
 # references ############
 
 
@@ -168,37 +192,46 @@ def prepare_references(
 ) -> bs4.BeautifulSoup:
     for a_tag in references:
         a_tag: bs4.element.Tag
-        link = LinkMystifier()
-        link.set_filepath(metadata.filepath)
-        link.set_from_href(a_tag["href"])
-        if _is_footnote(a_tag):
-            target = metadata.get_target(link.id)
-            link_text = link.make_footnote_text()
-            a_tag["id"] = link.make_footnote_id(a_tag)
+        if _is_ref_footnote(a_tag):
+            footnote = FootnoteMystifier()
+            footnote.set_filepath(metadata.filepath)
+            footnote.from_ref(a_tag["id"])
+            a_tag["href"] = footnote.href
+            a_tag["id"] = footnote.id
+            a_tag.string = footnote.string
+        elif _is_target_footnote(a_tag):
+            pass
         else:
+            link = LinkMystifier()
+            link.set_filepath(metadata.filepath)
+            link.set_from_href(a_tag["href"])
             target = metadata.get_target(link.id) if link.is_inner_reference() else None
             link_text = link.make_text(a_tag.text, target)
-        link_dest = link.make_destination()
-        prev_string = a_tag.string
-        prev_href = a_tag["href"]
-        a_tag.string = link_text
-        a_tag["href"] = link_dest
-        metadata.add_ref(
-            RefDatapoint(
-                target_id=target.pk if target else "",
-                text=link_text,
-                href=link_dest,
-                prev_string=prev_string,
-                prev_href=prev_href,
+            link_dest = link.make_destination()
+            prev_string = a_tag.string
+            prev_href = a_tag["href"]
+            a_tag.string = link_text
+            a_tag["href"] = link_dest
+            metadata.add_ref(
+                RefDatapoint(
+                    target_id=target.pk if target else "",
+                    text=link_text,
+                    href=link_dest,
+                    prev_string=prev_string,
+                    prev_href=prev_href,
+                )
             )
-        )
     return html_soup
 
 
-def _is_footnote(a_tag: bs4.element.Tag) -> bool:
+def _is_ref_footnote(a_tag: bs4.element.Tag) -> bool:
     if "footnote" not in a_tag["href"]:
         return False
     return bool(a_tag.attrs.get("id", "").startswith("footnote-ref-"))
+
+
+def _is_target_footnote(a_tag: bs4.element.Tag) -> bool:
+    return bool(a_tag.attrs.get("href", "").startswith("#footnote-ref-"))
 
 
 class LinkMystifier:
@@ -208,9 +241,11 @@ class LinkMystifier:
 
     _scheme_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-."
     _unsafe_url_bytes_to_remove = ["\t", "\r", "\n"]
+    _prefix = "f"
 
     def __init__(self):
         self.filepath: t.Optional[KeyPath] = None
+        self.uri: str = ""
         self.scheme: str = ""
         self.netloc: str = ""
         self.path: str = ""
@@ -260,14 +295,15 @@ class LinkMystifier:
         self._fragment = self._slugify(val)
 
     def _slugify(self, val: str) -> str:
+        if not val:
+            return val
         if self.filepath and self.path:
             path = pathlib.Path(self.path)
-            return docutils.nodes.make_id(f"f-{path.stem}-{val}")
+            return docutils.nodes.make_id(f"{self._prefix}-{path.stem}-{val}")
         elif self.filepath and not self.path:
-            return docutils.nodes.make_id(f"f-{self.filepath.stem}-{val}")
+            return docutils.nodes.make_id(f"{self._prefix}-{self.filepath.stem}-{val}")
         else:
-            val = "f-" + val if val else val
-            return docutils.nodes.make_id(val)
+            return docutils.nodes.make_id(f"{self._prefix}-{val}")
 
     def _urlsplit(self, url: str, scheme: str = "") -> tuple[str, str, str, str, str]:
         """
@@ -384,3 +420,62 @@ class LinkMystifier:
 
     def __str__(self) -> str:
         return f"LinkMystifier(scheme={self.scheme}, netloc={self.netloc}, path={self.path}, query={self.query}, fragment={self.fragment})"
+
+
+class FootnoteMystifier:
+    """
+    After translation, the html should follow MyST/pandoc syntax:
+        ```html
+        <p> Ref of a footnote
+            <sup>
+                <a href="#footnote-$ID" id="footnote-ref-$ID">[footnote-$ID]</a>
+            </sup>
+        .</p>
+        <ol>
+            <li id="footnote-$ID">
+              <p> Target of a footnote. <a href="#footnote-ref-$ID">↑</a></p>
+            </li>
+        </ol>
+        ```
+    where $ID is the unique_id of an instance of a footnote.
+
+    This should be transformed by `html2md` to
+        ```md
+        Ref of a footnote[^footnote-$ID].
+        [^footnote-$ID]: Target of a footnote.
+        ```
+
+    For more info see [docs](https://myst-parser.readthedocs.io/en/latest/syntax/typography.html#syntax-footnotes)
+    """
+
+    # def __init__(self, filepath: KeyPath, href: str, id: str):
+    def __init__(self):
+        self.filepath: t.Optional[KeyPath] = None
+        self.href: str = ""
+        self.id: str = ""
+        self.string: str = ""
+
+    def set_filepath(self, fn: t.Optional[KeyPath]) -> None:
+        self.filepath = fn
+
+    def _get_unique_id(self, old_id: str) -> str:
+        return docutils.nodes.make_id(f"fn-{self.filepath.stem}-{old_id}")
+
+    def from_ref(self, a_id: str):
+        assert a_id.startswith("footnote-ref-") == True
+        unique_id = self._get_unique_id(a_id[len("footnote-ref-") :])
+        self.href = f"#footnote-{unique_id}"
+        self.string = f"[{unique_id}]"
+        # only for going back from target to ref in html, irrelevant in md
+        self.id = f"footnote-ref-{unique_id}"
+
+    def from_target(self, li_id: str):
+        assert li_id.startswith("footnote-ref-") == False
+        assert li_id.startswith("footnote-") == True
+        unique_id = self._get_unique_id(li_id[len("footnote-") :])
+        self.id = f"footnote-{unique_id}"
+        # only for going back from target to ref in html, irrelevant in md
+        self.href = f"#footnote-ref-{unique_id}"
+
+    def __str__(self) -> str:
+        return f"FootnoteMystifier(href={self.href}, id={self.id})"

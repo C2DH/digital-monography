@@ -24,9 +24,11 @@ try:
     from refs import (
         prepare_ref_targets_in_headers,
         prepare_ref_targets_in_captions,
+        prepare_ref_targets_in_footnotes,
         prepare_references,
         is_header,
         is_caption,
+        is_footnote,
         is_reference,
     )
     from html2md import convert_to_md
@@ -48,9 +50,11 @@ except (ImportError, ModuleNotFoundError):
     from .refs import (
         prepare_ref_targets_in_headers,
         prepare_ref_targets_in_captions,
+        prepare_ref_targets_in_footnotes,
         prepare_references,
         is_header,
         is_caption,
+        is_footnote,
         is_reference,
     )
     from .html2md import convert_to_md
@@ -73,6 +77,14 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
+FIXED_SUBSTITUTIONS = {
+    "01_a___Ref177042490": "1",
+    "01_a___Ref177044323": "1",
+    "02_b.docx#02_b__tblSimpleTable": "2",
+    "02_b.docx#02_b__h1HyperlinksB": "1",
+}
+
+
 if IS_DEBUG:
     s3 = Faker("s3")
     sqs = Faker("sqs")
@@ -90,6 +102,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     tables = []
     headers = []
     captions = []
+    footnotes = []
     references = []
     key = _get_key(event)
     src = _get_source_bucket(event)
@@ -119,6 +132,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
             (is_table, tables),
             (is_header, headers),
             (is_caption, captions),
+            (is_footnote, footnotes),
             (is_reference, references),
         ]
 
@@ -148,6 +162,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_soup = prepare_metadata_tables(html_soup, metadata, captions)
         html_soup = prepare_ref_targets_in_headers(html_soup, metadata, headers)
         html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
+        html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, footnotes)
         html_soup = prepare_references(html_soup, metadata, references)
         html_soup = remove_empty_tables(html_soup, metadata, tables)
         html_soup = prepare_alt_texts(html_soup, metadata, images_with_alttxt)
@@ -163,6 +178,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _write_processed_html_to_efs(html_soup_str, key)
         _put_html_to_s3(html_soup_str, key)
         md = _convert_to_md(html_soup, metadata)
+        # for to_subs, with_subs in FIXED_SUBSTITUTIONS.items():
+        #     md = md.replace("{{ %s }}" % to_subs, with_subs)
         _write_processed_md_to_efs(md, key)
         _put_md_to_s3(md, key)
         ARCHIVE = '_put_to_archive_s3(key.s3_key.with_suffix(".md"), md)'
