@@ -407,17 +407,6 @@ class LinkMystifier:
                 tag_text = tag_text.replace(to_replace, replace_with)
         return tag_text
 
-    def make_footnote_text(
-        self,
-    ) -> str:
-        """
-        Pandoc markdown footnote text to be placed in `<a href="" id="">[text]</a>` syntax.
-        """
-        return "[{{ %s }}]" % self.fragment
-
-    def make_footnote_id(self, a_tag: bs4.element.Tag) -> str:
-        return self._slugify(a_tag["id"])
-
     def __str__(self) -> str:
         return f"LinkMystifier(scheme={self.scheme}, netloc={self.netloc}, path={self.path}, query={self.query}, fragment={self.fragment})"
 
