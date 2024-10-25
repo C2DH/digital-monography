@@ -1,3 +1,4 @@
+import json
 import pathlib
 import bs4
 import docutils.nodes
@@ -167,12 +168,16 @@ def prepare_references(
 ) -> bs4.BeautifulSoup:
     for a_tag in references:
         a_tag: bs4.element.Tag
-        # link = LinkMystifier(a_tag)
         link = LinkMystifier()
         link.set_filepath(metadata.filepath)
         link.set_from_href(a_tag["href"])
-        target = metadata.get_target(link.id) if link.is_inner_reference() else None
-        link_text = link.make_text(a_tag.text, target)
+        if _is_footnote(a_tag):
+            target = metadata.get_target(link.id)
+            link_text = link.make_footnote_text()
+            a_tag["id"] = link.make_footnote_id(a_tag)
+        else:
+            target = metadata.get_target(link.id) if link.is_inner_reference() else None
+            link_text = link.make_text(a_tag.text, target)
         link_dest = link.make_destination()
         prev_string = a_tag.string
         prev_href = a_tag["href"]
@@ -190,6 +195,12 @@ def prepare_references(
     return html_soup
 
 
+def _is_footnote(a_tag: bs4.element.Tag) -> bool:
+    if "footnote" not in a_tag["href"]:
+        return False
+    return bool(a_tag.attrs.get("id", "").startswith("footnote-ref-"))
+
+
 class LinkMystifier:
     """
     Translate html anchor tags to MyST/markdown link syntax.
@@ -205,7 +216,6 @@ class LinkMystifier:
         self.path: str = ""
         self.query: str = ""
         self.fragment: str = ""
-        ##################################
         # cached functions
         self.is_external_url = functools.lru_cache()(self._is_external_url__uncached)
         self.is_cross_file_reference = functools.lru_cache()(
@@ -247,14 +257,17 @@ class LinkMystifier:
 
     @fragment.setter
     def fragment(self, val: str):
+        self._fragment = self._slugify(val)
+
+    def _slugify(self, val: str) -> str:
         if self.filepath and self.path:
             path = pathlib.Path(self.path)
-            self._fragment = docutils.nodes.make_id(f"f-{path.stem}-{val}")
+            return docutils.nodes.make_id(f"f-{path.stem}-{val}")
         elif self.filepath and not self.path:
-            self._fragment = docutils.nodes.make_id(f"f-{self.filepath.stem}-{val}")
+            return docutils.nodes.make_id(f"f-{self.filepath.stem}-{val}")
         else:
             val = "f-" + val if val else val
-            self._fragment = docutils.nodes.make_id(val)
+            return docutils.nodes.make_id(val)
 
     def _urlsplit(self, url: str, scheme: str = "") -> tuple[str, str, str, str, str]:
         """
@@ -357,6 +370,17 @@ class LinkMystifier:
                 replace_with = r"{{ " + self.fragment + r" }}"
                 tag_text = tag_text.replace(to_replace, replace_with)
         return tag_text
+
+    def make_footnote_text(
+        self,
+    ) -> str:
+        """
+        Pandoc markdown footnote text to be placed in `<a href="" id="">[text]</a>` syntax.
+        """
+        return "[{{ %s }}]" % self.fragment
+
+    def make_footnote_id(self, a_tag: bs4.element.Tag) -> str:
+        return self._slugify(a_tag["id"])
 
     def __str__(self) -> str:
         return f"LinkMystifier(scheme={self.scheme}, netloc={self.netloc}, path={self.path}, query={self.query}, fragment={self.fragment})"

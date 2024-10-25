@@ -253,6 +253,55 @@ def test_targets_in_captions__link_in_caption_is_left_not_changed():
     assert target.text == "2"
 
 
+# targets and refs in footnotes
+
+
+def test_footnotes():
+    sample_html = (
+        '<sup><a href="#footnote-1" id="footnote-ref-1">[1]</a></sup>'
+        '<ol><li id="footnote-1">'
+        "<p>"
+        ' <a href="http://www.example.com/">Link to an external website</a>'
+        ' <a href="#f-01-a-footnote-ref-1">↑</a>'
+        "</p>"
+        "</li></ol>"
+    )
+    bs = bs4.BeautifulSoup(sample_html, "html.parser")
+    metadata = DocumentMetadata(KeyPath("./tmp/sth/file.docx"))
+    references = []
+    classifiers = [
+        (is_reference, references),
+    ]
+
+    def _mark_html_elements_recursively(node: bs4.element.PageElement, lvl=0) -> None:
+        """
+        Before applying the processing, this function traverses the tree and
+        puts relevant bs4 objects (html elements) inside respective
+        lists. Processing is then applied on the marked elements.
+        """
+        if not hasattr(node, "children"):
+            return
+        for child in node.children:
+            if isinstance(child, bs4.element.Tag):
+                for meets_criteria, container in classifiers:
+                    if meets_criteria(child):
+                        container.append(child)
+            _mark_html_elements_recursively(child, lvl + 1)
+
+    _mark_html_elements_recursively(bs)
+    bs = prepare_references(bs, metadata, references)
+    sup = bs.find("sup")
+    assert sup.a.text == r"[{{ f-file-footnote-1 }}]"
+    assert sup.a["id"] == "f-file-footnote-ref-1"
+    print("bs", bs)
+    print("metadata", metadata)
+    assert 1 == 8
+    # assert pre.text == "(f-file-heading)="
+    # anchors = bs.find_all("a", href=True)
+    # assert anchors[0]["href"] == "#f-file-heading"
+    # assert anchors[1]["href"] == "./other_file.md#f-other-file-heading"
+
+
 # LinkMystifier attributes
 
 
