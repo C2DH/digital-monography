@@ -143,14 +143,18 @@ def add_bibliography(
     if not bib.bibliography():
         return html_soup
     div = html_soup.new_tag("div", {"class": "dgtmon-bibliography"})
-    h1 = html_soup.new_tag("h1")
-    h1.string = "Bibliography"  # maybe give ability to change that in config.yaml
+    h2 = html_soup.new_tag("h2")
+    h2.string = "Bibliography"  # maybe give ability to change that in config.yaml
     ol = html_soup.new_tag("ol")
     for citation in bib.bibliography():
+        citation: citeproc.string.MixedString
         li = html_soup.new_tag("li")
-        li.string = f"<small>{str(citation)}</small>"
+        small = html_soup.new_tag("small")
+        cit = bs4.BeautifulSoup(str(citation), "html.parser")
+        small.append(cit)
+        li.append(small)
         ol.append(li)
-    div.append(h1)
+    div.append(h2)
     div.append(ol)
     html_soup.append(div)
     return html_soup
