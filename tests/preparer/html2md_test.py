@@ -55,14 +55,12 @@ class TestHtml2MdFootnotes:
         assert md == expected_md
 
 
-# def test_u():
-#     html = "<pre>(heading-target)=</pre><h1>Title</h1>"
-#     html_soup = bs4.BeautifulSoup(html, "html.parser")
-#     metadata = DocumentMetadata()
-#     md = convert_to_md(html_soup, metadata)
-#     print("md", repr(md))
-#     assert md == "\n(heading-target)=\n# Title\n\n"
-#     assert 1 == 555
+def test_heading_targets_markdownification():
+    html = "<pre>(heading-target)=</pre><h1>Title</h1>"
+    html_soup = bs4.BeautifulSoup(html, "html.parser")
+    metadata = DocumentMetadata()
+    md = convert_to_md(html_soup, metadata)
+    assert md == "\n(heading-target)=\n# Title\n\n"
 
 
 class TestHtml2MdGreedy:
