@@ -1,4 +1,3 @@
-import json
 import pathlib
 import bs4
 import docutils.nodes
@@ -437,7 +436,8 @@ class FootnoteMystifier:
     For more info see [docs](https://myst-parser.readthedocs.io/en/latest/syntax/typography.html#syntax-footnotes)
     """
 
-    # def __init__(self, filepath: KeyPath, href: str, id: str):
+    # TODO: handle endnotes the same way as footnotes
+
     def __init__(self):
         self.filepath: t.Optional[KeyPath] = None
         self.href: str = ""

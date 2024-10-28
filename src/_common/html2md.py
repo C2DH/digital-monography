@@ -5,7 +5,6 @@
 # building the image. We advise that you always build the containers
 # using Makefile commands, as the copy command is already included.
 # ======================
-import json
 import bs4
 import markdownify
 import re
