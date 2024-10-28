@@ -26,7 +26,7 @@ def is_caption(tag: bs4.element.Tag) -> bool:
 
 
 def is_footnote(tag: bs4.element.Tag) -> bool:
-    return bool(tag.name == "li" and tag.attrs.get("id").startswith("footnote-"))
+    return bool(tag.name == "li" and tag.attrs.get("id", "").startswith("footnote-"))
 
 
 def is_reference(tag: bs4.element.Tag) -> bool:

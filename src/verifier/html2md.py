@@ -5,6 +5,7 @@
 # building the image. We advise that you always build the containers
 # using Makefile commands, as the copy command is already included.
 # ======================
+import json
 import bs4
 import markdownify
 import re
@@ -140,16 +141,28 @@ class MystMdConverter(markdownify.MarkdownConverter):
         identif = el.get("id", "")
         if identif.startswith("footnote-") or identif.startswith("endnote-"):
             inner = next(el.children)
-            a = inner.findChild("a")
+            try:
+                a = next(
+                    node
+                    for node in inner.children
+                    if node.name == "a"
+                    and (
+                        node["href"].startswith("#footnote-ref-")
+                        or node["href"].startswith("#endnote-ref-")
+                    )
+                )
+            except StopIteration:
+                return ""
+            if a is None:
+                return ""
+            a.extract()
             text = inner.text.strip()
             if text.endswith(" ↑"):
                 text = text[:-2]
-            if a is None:
-                return ""
             href = a.get("href", "")
             if href.startswith("#"):
                 href = href[1:]
-            return "[^%s]: %s\n" % (href, text)
+            return "[^%s]: %s" % (href, self.convert_soup(el))
         return super().convert_li(el, text, convert_as_inline)
 
     def convert_blockquote(self, el, text, convert_as_inline):

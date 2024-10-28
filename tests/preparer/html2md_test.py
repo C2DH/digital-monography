@@ -24,10 +24,45 @@ class TestHtml2MdFootnotes:
         assert self.md.startswith(expected_md_start)
 
     def test_footnotes_properly_converted_to_myst_syntax(self):
-        expected_md_includes = (
-            "[^footnote-ref-1]: Joe Schmoe, „Just no“, Opinions, 1, Nr. 1 (2035): 1–2."
-        )
+        expected_md_includes = r"[^footnote-ref-1]:  Joe Schmoe, „Just no“, Opinions, 1, Nr. 1 (2035\): 1–2\."
         assert expected_md_includes in self.md
+
+    def test_footnote_with_link_to_myst(self):
+        sample_html = (
+            # ref
+            "<p>Claim"
+            "<sup>"
+            '<a href="#footnote-fn-02-a-99" id="footnote-ref-fn-02-a-99">[fn-02-a-99]</a>'
+            "</sup>"
+            ".</p>"
+            # target
+            "<ol>"
+            '<li id="footnote-fn-02-a-99">'
+            "<p>"
+            ' <a href="http://www.example.com/">Link to an external website</a>'
+            ' <a href="#footnote-ref-fn-02-a-99">↑</a>'
+            "</p>"
+            "</li>"
+            "</ol>"
+        )
+        expected_md = (
+            "Claim[^footnote-ref-fn-02-a-99].\n\n"
+            "[^footnote-ref-fn-02-a-99]:  [Link to an external website](http://www.example.com/) \n\n"
+        )
+        html_soup = bs4.BeautifulSoup(sample_html, "html.parser")
+        metadata = DocumentMetadata()
+        md = convert_to_md(html_soup, metadata)
+        assert md == expected_md
+
+
+# def test_u():
+#     html = "<pre>(heading-target)=</pre><h1>Title</h1>"
+#     html_soup = bs4.BeautifulSoup(html, "html.parser")
+#     metadata = DocumentMetadata()
+#     md = convert_to_md(html_soup, metadata)
+#     print("md", repr(md))
+#     assert md == "\n(heading-target)=\n# Title\n\n"
+#     assert 1 == 555
 
 
 class TestHtml2MdGreedy:

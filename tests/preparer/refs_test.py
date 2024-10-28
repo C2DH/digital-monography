@@ -308,22 +308,6 @@ def test_ref_and_target_from_footnote():
     assert len(metadata.targets) == 0
 
 
-# TODO
-# def test_ref_and_target_from_footnote_with_link():
-#     sample_html = (
-#         '<sup><a href="#footnote-99" id="footnote-ref-99">[99]</a></sup>'
-#         '<ol><li id="footnote-99">'
-#         "<p>"
-#         ' <a href="http://www.example.com/">Link to an external website</a>'
-#         ' <a href="#footnote-ref-fn-02-a-99">↑</a>'
-#         "</p>"
-#         "</li></ol>"
-#     )
-#     bs = bs4.BeautifulSoup(sample_html, "html.parser")
-#     metadata = DocumentMetadata(KeyPath("./tmp/sth/file.docx"))
-#     assert 1 == 2
-
-
 # LinkMystifier attributes
 
 
