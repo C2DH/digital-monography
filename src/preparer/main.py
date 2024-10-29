@@ -16,7 +16,7 @@ try:
         IR_APKG_MD_BUCKET_NAME,
         IS_DEBUG,
     )
-    from citations_copy import add_bibliography, is_citation, prepare_citations
+    from citations import add_bibliography, is_citation, prepare_citations
     from metadata import DocumentMetadata
     from metadata_extraction import prepare_metadata_tables
     from remove_empty_tables import remove_empty_tables
@@ -42,7 +42,7 @@ except (ImportError, ModuleNotFoundError):
         IR_APKG_MD_BUCKET_NAME,
         IS_DEBUG,
     )
-    from .citations_copy import add_bibliography, is_citation, prepare_citations
+    from .citations import add_bibliography, is_citation, prepare_citations
     from .metadata import DocumentMetadata
     from .metadata_extraction import prepare_metadata_tables
     from .remove_empty_tables import remove_empty_tables

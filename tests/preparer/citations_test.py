@@ -2,18 +2,7 @@ import bs4
 import mammoth
 import pathlib
 
-# from src.preparer.citations import (
-#     add_citations,
-#     create_citations_to_register,
-#     extract_citations,
-#     prepare_citations_for_citeproc,
-# )
-# from src.preparer.citations import add_bibliography as add_bib
-from src.preparer.citations_copy import (
-    is_citation,
-    add_bibliography,
-    prepare_citations,
-)
+from src.preparer.citations import add_bibliography, prepare_citations, is_citation
 from src.preparer.metadata import DocumentMetadata
 
 

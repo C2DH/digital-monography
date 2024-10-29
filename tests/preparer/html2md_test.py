@@ -2,7 +2,7 @@ import bs4
 import mammoth
 import pathlib
 
-from src.preparer.citations import add_citations_and_bibliography
+from src.preparer.citations import add_bibliography, prepare_citations, is_citation
 from src.preparer.html2md import convert_to_md
 from src.preparer.metadata import DocumentMetadata
 
@@ -14,10 +14,15 @@ class TestHtml2MdFootnotes:
     def setup_class(cls):
         with open(cls.fp, "rb") as f:
             result = mammoth.convert_to_html(f)
-        cls.html_soup = bs4.BeautifulSoup(result.value, "html.parser")
-        cls.html_soup = add_citations_and_bibliography(cls.html_soup)
+        cls.soup = bs4.BeautifulSoup(result.value, "html.parser")
         metadata = DocumentMetadata()
-        cls.md = convert_to_md(cls.html_soup, metadata)
+        citations = []
+        for node in cls.soup.descendants:
+            if is_citation(node):
+                citations.append(node)
+        cls.soup, bibliography = prepare_citations(cls.soup, metadata, citations)
+        cls.soup = add_bibliography(cls.soup, bibliography)
+        cls.md = convert_to_md(cls.soup, metadata)
 
     def test_footnote_ref_properly_converted_to_myst_syntax(self):
         expected_md_start = "Claim A[^footnote-ref-1]. Claim B[^footnote-ref-2]."
