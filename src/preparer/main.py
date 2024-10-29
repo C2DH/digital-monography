@@ -16,7 +16,7 @@ try:
         IR_APKG_MD_BUCKET_NAME,
         IS_DEBUG,
     )
-    from citations import add_citations_and_bibliography
+    from citations_copy import add_bibliography, is_citation, prepare_citations
     from metadata import DocumentMetadata
     from metadata_extraction import prepare_metadata_tables
     from remove_empty_tables import remove_empty_tables
@@ -42,7 +42,7 @@ except (ImportError, ModuleNotFoundError):
         IR_APKG_MD_BUCKET_NAME,
         IS_DEBUG,
     )
-    from .citations import add_citations_and_bibliography
+    from .citations_copy import add_bibliography, is_citation, prepare_citations
     from .metadata import DocumentMetadata
     from .metadata_extraction import prepare_metadata_tables
     from .remove_empty_tables import remove_empty_tables
@@ -102,6 +102,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     tables = []
     headers = []
     captions = []
+    citations = []
     footnotes = []
     references = []
     key = _get_key(event)
@@ -122,13 +123,13 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_str = _convert_to_html(key.efs_filepath)
         metadata = DocumentMetadata(key)
         html_soup = bs4.BeautifulSoup(html_str, "html.parser")
-        html_soup = add_citations_and_bibliography(
-            html_soup
-        )  # TODO: use recurse tree traversal
+        # html_soup = add_citations_and_bibliography(
+        #     html_soup
+        # )  # TODO: use recurse tree traversal
 
         classifiers = [
             (is_img_with_alt_text, images_with_alttxt),
-            # (is_citation_span, citation_spans),
+            (is_citation, citations),
             (is_table, tables),
             (is_header, headers),
             (is_caption, captions),
@@ -154,11 +155,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
                 _mark_html_elements_recursively(child, lvl + 1)
 
         _mark_html_elements_recursively(html_soup)
-        print("=" * 50)
-        print(key)
-        print("-" * 50)
-        print("html_soup", html_soup)
-        print("-" * 50)
+        html_soup, bibliography = prepare_citations(html_soup, metadata, citations)
+        html_soup = add_bibliography(html_soup, bibliography)
         html_soup = prepare_metadata_tables(html_soup, metadata, captions)
         html_soup = prepare_ref_targets_in_headers(html_soup, metadata, headers)
         html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
@@ -166,10 +164,6 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_soup = prepare_references(html_soup, metadata, references)
         html_soup = remove_empty_tables(html_soup, metadata, tables)
         html_soup = prepare_alt_texts(html_soup, metadata, images_with_alttxt)
-        print("-" * 50)
-        print("html_soup", html_soup)
-        print("-" * 50)
-
         html_soup_str = str(html_soup)
         # IMPORTANT NOTE: other services depend on html produced at this stage, make sure that:
         # 1) all reversible transformations are made before saving html file;

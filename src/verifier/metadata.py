@@ -113,6 +113,43 @@ class TargetDatapoint:
         return getattr(self, name)
 
 
+@dataclasses.dataclass
+class CitationItemDatapoint:
+    pk: t.Union[int, str]
+    citationId: str
+    uris: list[str]
+    itemData: dict[str, t.Any]
+
+    def to_json(self) -> dict[str, t.Union[str, int]]:
+        return {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}
+
+    @staticmethod
+    def from_json(jsml: dict[str, t.Union[str, int]]) -> "CitationItemDatapoint":
+        return CitationItemDatapoint(**jsml)
+
+    def __getitem__(self, name: str) -> t.Union[int, str]:
+        return getattr(self, name)
+
+
+@dataclasses.dataclass
+class CitationGroupDatapoint:
+    pk: str
+    schema: str
+    formattedCitation: str
+    noteIndex: int
+    plainCitation: str
+
+    def to_json(self) -> dict[str, t.Union[str, int]]:
+        return {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}
+
+    @staticmethod
+    def from_json(jsml: dict[str, t.Union[str, int]]) -> "CitationGroupDatapoint":
+        return CitationGroupDatapoint(**jsml)
+
+    def __getitem__(self, name: str) -> t.Union[int, str]:
+        return getattr(self, name)
+
+
 class DocumentMetadata:
     """
     Collection of records (lists of dictionaries) about:
@@ -126,6 +163,8 @@ class DocumentMetadata:
         self.assets: list[AssetDatapoint] = []
         self.refs: list[RefDatapoint] = []
         self.targets: list[TargetDatapoint] = []
+        self.citation_groups: list[CitationGroupDatapoint] = []
+        self.citation_items: list[CitationItemDatapoint] = []
 
     def add(
         self,
@@ -159,11 +198,19 @@ class DocumentMetadata:
     add_target = functools.partialmethod(add, "targets")
     get_target = functools.partialmethod(get, "targets")
 
+    add_citation_group = functools.partialmethod(add, "citation_groups")
+    get_citation_group = functools.partialmethod(get, "citation_groups")
+
+    add_citation_item = functools.partialmethod(add, "citation_items")
+    get_citation_item = functools.partialmethod(get, "citation_items")
+
     def to_dict(self) -> dict[str, list[dict[str, AcceptedValues]]]:
         return {
             "assets": self.assets,
             "refs": self.refs,
             "targets": self.targets,
+            "citation_groups": self.citation_groups,
+            "citation_items": self.citation_items,
         }
 
     def to_json(self) -> dict[str, list[dict[str, t.Union[str, t.Union[str, int]]]]]:
@@ -171,19 +218,36 @@ class DocumentMetadata:
             "assets": [rec.to_json() for rec in self.assets],
             "refs": [rec.to_json() for rec in self.refs],
             "targets": [rec.to_json() for rec in self.targets],
+            "citation_groups": [rec.to_json() for rec in self.citation_groups],
+            "citation_items": [rec.to_json() for rec in self.citation_items],
         }
 
     def from_json(
         self, jsml: dict[str, t.Union[AssetRecord, RefRecord, TargetRecord]]
     ) -> None:
-        self.assets = [AssetDatapoint.from_json(rec) for rec in jsml["assets"]]
-        self.refs = [RefDatapoint.from_json(rec) for rec in jsml["refs"]]
-        self.targets = [TargetDatapoint.from_json(rec) for rec in jsml["targets"]]
+        self.assets = [AssetDatapoint.from_json(rec) for rec in jsml.get("assets", [])]
+        self.refs = [RefDatapoint.from_json(rec) for rec in jsml.get("refs", [])]
+        self.targets = [
+            TargetDatapoint.from_json(rec) for rec in jsml.get("targets", [])
+        ]
+        self.citation_groups = [
+            CitationGroupDatapoint.from_json(rec)
+            for rec in jsml.get("citation_groups", [])
+        ]
+        self.citation_items = [
+            CitationItemDatapoint.from_json(rec)
+            for rec in jsml.get("citation_items", [])
+        ]
 
     def __str__(self) -> str:
-        return "%s(assets=[%s], refs=[%s], targets=[%s])" % (
-            self.__class__.__name__,
-            ", ".join(str(rec) for rec in self.assets),
-            ", ".join(str(rec) for rec in self.refs),
-            ", ".join(str(rec) for rec in self.targets),
+        return (
+            "%s(assets=[%s], refs=[%s], targets=[%s], citation_groups=[%s], citation_items=[%s])"
+            % (
+                self.__class__.__name__,
+                ", ".join(str(rec) for rec in self.assets),
+                ", ".join(str(rec) for rec in self.refs),
+                ", ".join(str(rec) for rec in self.targets),
+                ", ".join(str(rec) for rec in self.citation_groups),
+                ", ".join(str(rec) for rec in self.citation_items),
+            )
         )
