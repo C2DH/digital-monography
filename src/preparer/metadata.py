@@ -90,6 +90,7 @@ class RefDatapoint:
 
     @staticmethod
     def from_json(jsml: dict[str, t.Union[str, int]]) -> "RefDatapoint":
+        del jsml["pk"]
         return RefDatapoint(**jsml)
 
     def __getitem__(self, name: str) -> t.Union[int, str]:

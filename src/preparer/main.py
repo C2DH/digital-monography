@@ -17,6 +17,7 @@ try:
         IS_DEBUG,
     )
     from citations import add_bibliography, is_citation, prepare_citations
+    from hide_metadata_in_html import hide_metadata_in_html
     from metadata import DocumentMetadata
     from metadata_extraction import prepare_metadata_tables
     from remove_empty_tables import remove_empty_tables
@@ -43,6 +44,7 @@ except (ImportError, ModuleNotFoundError):
         IS_DEBUG,
     )
     from .citations import add_bibliography, is_citation, prepare_citations
+    from .hide_metadata_in_html import hide_metadata_in_html
     from .metadata import DocumentMetadata
     from .metadata_extraction import prepare_metadata_tables
     from .remove_empty_tables import remove_empty_tables
@@ -112,20 +114,12 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         ipynb: nbformat.NotebookNode = _unmarshall_json(key.efs_filepath)
         tags_to_myst_crossref_targets(ipynb)
         _write_processed_ipynb_to_efs(ipynb, key)
-        # TODO
-        """
-        This is becoming too much.
-        Replace multiple search operations with one recursion.
-        """
         ARCHIVE = "_put_to_archive_s3(key)"
         return {"statusCode": 200, "body": ""}
     if key.suffix.lower() == ".docx":
         html_str = _convert_to_html(key.efs_filepath)
         metadata = DocumentMetadata(key)
         html_soup = bs4.BeautifulSoup(html_str, "html.parser")
-        # html_soup = add_citations_and_bibliography(
-        #     html_soup
-        # )  # TODO: use recurse tree traversal
 
         classifiers = [
             (is_img_with_alt_text, images_with_alttxt),
@@ -164,6 +158,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_soup = prepare_references(html_soup, metadata, references)
         html_soup = remove_empty_tables(html_soup, metadata, tables)
         html_soup = prepare_alt_texts(html_soup, metadata, images_with_alttxt)
+        html_soup = hide_metadata_in_html(html_soup, metadata)  # last step
         html_soup_str = str(html_soup)
         # IMPORTANT NOTE: other services depend on html produced at this stage, make sure that:
         # 1) all reversible transformations are made before saving html file;
@@ -172,8 +167,6 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _write_processed_html_to_efs(html_soup_str, key)
         _put_html_to_s3(html_soup_str, key)
         md = _convert_to_md(html_soup, metadata)
-        # for to_subs, with_subs in FIXED_SUBSTITUTIONS.items():
-        #     md = md.replace("{{ %s }}" % to_subs, with_subs)
         _write_processed_md_to_efs(md, key)
         _put_md_to_s3(md, key)
         ARCHIVE = '_put_to_archive_s3(key.s3_key.with_suffix(".md"), md)'

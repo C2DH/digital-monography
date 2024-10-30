@@ -1,4 +1,3 @@
-import json
 import bs4
 import pathlib
 import re
@@ -10,7 +9,6 @@ try:
     from constants import (
         ATTRIB_METADATA_UUID,
         CLS_METADATA_TABLE,
-        CLS_METADATA_TABLE_JSONDATA,
         FIELD_DELETE_PREVIOUS,
         FIELD_DIGITAL_SOURCE,
         FIELD_PAPER_SOURCE,
@@ -21,7 +19,6 @@ except (ImportError, ModuleNotFoundError):
     from .constants import (
         ATTRIB_METADATA_UUID,
         CLS_METADATA_TABLE,
-        CLS_METADATA_TABLE_JSONDATA,
         FIELD_DELETE_PREVIOUS,
         FIELD_DIGITAL_SOURCE,
         FIELD_PAPER_SOURCE,
@@ -50,7 +47,9 @@ def prepare_metadata_tables(
     tables: list[bs4.element.Tag],
 ) -> bs4.BeautifulSoup:
     """
-    Find, hide and add UUID to metadata tables.
+    Find metadata tables, hide and add UUID to metadata tables.
+    Hidden tables will be replaced with uuid-comment during
+    transformation to markdown.
     """
     for table in tables:
         if "##" in table.text:
@@ -65,8 +64,6 @@ def prepare_metadata_tables(
                 if key:
                     metadata_tbl.add(key, val)
             if metadata_tbl:
-                # TODO: store as records
-                # document_metadata.add_asset_metadata(metadata_tbl)  ## <===
                 described_el = _find_described_element(table)
                 caption_el = _find_related_caption(described_el)
                 if (
@@ -86,8 +83,6 @@ def prepare_metadata_tables(
 
             asset = AssetDatapoint(pk=metadata_tbl.uuid, kwargs=metadata_tbl.to_dict())
             document_metadata.add_asset(asset)
-    # TODO: only records, nothing else
-    _hide_metadata_in_scripts_html_tag(html_soup, document_metadata)  ## <===
     return html_soup
 
 
@@ -119,22 +114,6 @@ def _find_related_caption(
         ):
             break
     return None
-
-
-def _hide_metadata_in_scripts_html_tag(
-    html_soup: bs4.BeautifulSoup, document_metadata: DocumentMetadata
-) -> None:
-    """
-    Hide all document metadata in a hidden script at the end of
-    a file. Hidden tables will be replaced with uuid-comment during
-    transformation to markdown.
-    """
-    json_elem = html_soup.new_tag("script")
-    json_elem["type"] = "application/json"
-    json_elem["class"] = CLS_METADATA_TABLE_JSONDATA
-    json_elem["hidden"] = "hidden"
-    json_elem.string = json.dumps(document_metadata.to_json())
-    html_soup.append(json_elem)
 
 
 class MetadataTable:
