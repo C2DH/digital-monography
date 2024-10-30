@@ -5,7 +5,6 @@
 # We advise that you always build the containers using Makefile commands,
 # as the copy command is already included.
 # ======================
-
 import dataclasses
 import functools
 import itertools
@@ -18,8 +17,22 @@ except (ImportError, ModuleNotFoundError):
     from .keys import KeyPath
 
 
-type AcceptedValues = t.Union[str, bool, pathlib.Path]
 T = t.TypeVar("T")
+type AcceptedValues = t.Union[str, bool, pathlib.Path]
+type DatapointUnion = t.Union[
+    AssetDatapoint,
+    RefDatapoint,
+    TargetDatapoint,
+    CitationGroupDatapoint,
+    CitationItemDatapoint,
+]
+type RecordsUnion = t.Union[
+    AssetRecord,
+    RefRecord,
+    TargetRecord,
+    CitationGroupRecord,
+    CitationItemRecord,
+]
 
 
 class FieldTypeRecord(t.TypedDict):
@@ -50,6 +63,21 @@ class TargetRecord(t.TypedDict):
     pk: int
     html: str
     text: str
+
+
+class CitationGroupRecord(t.TypedDict):
+    pk: str
+    schema: str
+    formattedCitation: str
+    noteIndex: int
+    plainCitation: str
+
+
+class CitationItemRecord(t.TypedDict):
+    pk: t.Union[int, str]
+    citationId: str
+    uris: list[str]
+    itemData: dict[str, t.Any]
 
 
 @dataclasses.dataclass
@@ -115,24 +143,6 @@ class TargetDatapoint:
 
 
 @dataclasses.dataclass
-class CitationItemDatapoint:
-    pk: t.Union[int, str]
-    citationId: str
-    uris: list[str]
-    itemData: dict[str, t.Any]
-
-    def to_json(self) -> dict[str, t.Union[str, int]]:
-        return {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}
-
-    @staticmethod
-    def from_json(jsml: dict[str, t.Union[str, int]]) -> "CitationItemDatapoint":
-        return CitationItemDatapoint(**jsml)
-
-    def __getitem__(self, name: str) -> t.Union[int, str]:
-        return getattr(self, name)
-
-
-@dataclasses.dataclass
 class CitationGroupDatapoint:
     pk: str
     schema: str
@@ -151,12 +161,32 @@ class CitationGroupDatapoint:
         return getattr(self, name)
 
 
+@dataclasses.dataclass
+class CitationItemDatapoint:
+    pk: t.Union[int, str]
+    citationId: str
+    uris: list[str]
+    itemData: dict[str, t.Any]
+
+    def to_json(self) -> dict[str, t.Union[str, int]]:
+        return {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}
+
+    @staticmethod
+    def from_json(jsml: dict[str, t.Union[str, int]]) -> "CitationItemDatapoint":
+        return CitationItemDatapoint(**jsml)
+
+    def __getitem__(self, name: str) -> t.Union[int, str]:
+        return getattr(self, name)
+
+
 class DocumentMetadata:
     """
     Collection of records (lists of dictionaries) about:
         assets: data from the Metadata tables describing assets
         refs: references (links and cross-references)
         targets: reference targets (e.g. headings, captions)
+        citation_groups: groupings of one or more citation
+        citation_items: citations of a single source
     """
 
     def __init__(self, fp: t.Optional[KeyPath] = None) -> None:
@@ -170,23 +200,21 @@ class DocumentMetadata:
     def add(
         self,
         records_name: str,
-        record: t.Union[AssetDatapoint, RefDatapoint, TargetDatapoint],
+        record: DatapointUnion,
     ) -> None:
         records = getattr(self, records_name)
         records.append(record)
 
     def get(
         self, records_name: str, val: str, attrib: str = "pk"
-    ) -> t.Optional[t.Union[AssetDatapoint, RefDatapoint, TargetDatapoint]]:
+    ) -> t.Optional[DatapointUnion]:
         records = getattr(self, records_name)
         try:
             return next(rec for rec in records if rec[attrib] == val)
         except StopIteration:
             return None
 
-    def filter(
-        self, records_name: str, attrib: str, val: str
-    ) -> list[t.Union[AssetDatapoint, RefDatapoint, TargetDatapoint]]:
+    def filter(self, records_name: str, attrib: str, val: str) -> list[DatapointUnion]:
         records = getattr(self, records_name)
         return [rec for rec in records if getattr(rec, attrib) == val]
 
@@ -223,9 +251,7 @@ class DocumentMetadata:
             "citation_items": [rec.to_json() for rec in self.citation_items],
         }
 
-    def from_json(
-        self, jsml: dict[str, t.Union[AssetRecord, RefRecord, TargetRecord]]
-    ) -> None:
+    def from_json(self, jsml: dict[str, RecordsUnion]) -> None:
         self.assets = [AssetDatapoint.from_json(rec) for rec in jsml.get("assets", [])]
         self.refs = [RefDatapoint.from_json(rec) for rec in jsml.get("refs", [])]
         self.targets = [

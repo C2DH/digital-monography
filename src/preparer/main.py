@@ -120,7 +120,6 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_str = _convert_to_html(key.efs_filepath)
         metadata = DocumentMetadata(key)
         html_soup = bs4.BeautifulSoup(html_str, "html.parser")
-
         classifiers = [
             (is_img_with_alt_text, images_with_alttxt),
             (is_citation, citations),
@@ -130,25 +129,15 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
             (is_footnote, footnotes),
             (is_reference, references),
         ]
-
-        def _mark_html_elements_recursively(
-            node: bs4.element.PageElement, lvl=0
-        ) -> None:
-            """
-            Before applying the processing, this function traverses the tree and
-            puts relevant bs4 objects (html elements) inside respective
-            lists. Processing is then applied on the marked elements.
-            """
-            if not hasattr(node, "children"):
-                return
-            for child in node.children:
-                if isinstance(child, bs4.element.Tag):
-                    for meets_criteria, container in classifiers:
-                        if meets_criteria(child):
-                            container.append(child)
-                _mark_html_elements_recursively(child, lvl + 1)
-
-        _mark_html_elements_recursively(html_soup)
+        """
+        Before applying the processing, this subprocedure traverses the tree
+        recursively and puts relevant bs4 objects (html elements) inside 
+        respective lists. Processing is then applied on the marked elements.
+        """
+        for node in html_soup.descendants:
+            for check_if_meets_criteria, container in classifiers:
+                if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
+                    container.append(node)
         html_soup, bibliography = prepare_citations(html_soup, metadata, citations)
         html_soup = add_bibliography(html_soup, bibliography)
         html_soup = prepare_metadata_tables(html_soup, metadata, captions)

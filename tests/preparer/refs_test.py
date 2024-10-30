@@ -72,23 +72,10 @@ def test_targets_in_headers__corresponding_href_and_id():
     classifiers = [
         (is_reference, references),
     ]
-
-    def _mark_html_elements_recursively(node: bs4.element.PageElement, lvl=0) -> None:
-        """
-        Before applying the processing, this function traverses the tree and
-        puts relevant bs4 objects (html elements) inside respective
-        lists. Processing is then applied on the marked elements.
-        """
-        if not hasattr(node, "children"):
-            return
-        for child in node.children:
-            if isinstance(child, bs4.element.Tag):
-                for meets_criteria, container in classifiers:
-                    if meets_criteria(child):
-                        container.append(child)
-            _mark_html_elements_recursively(child, lvl + 1)
-
-    _mark_html_elements_recursively(bs)
+    for node in bs.descendants:
+        for check_if_meets_criteria, container in classifiers:
+            if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
+                container.append(node)
     bs = prepare_ref_targets_in_headers(bs, metadata, headers)
     bs = prepare_references(bs, metadata, references)
     pre = bs.find("pre")
@@ -115,23 +102,10 @@ def test_targets_in_headers__refs_and_targets_written_to_metadata():
     classifiers = [
         (is_reference, references),
     ]
-
-    def _mark_html_elements_recursively(node: bs4.element.PageElement, lvl=0) -> None:
-        """
-        Before applying the processing, this function traverses the tree and
-        puts relevant bs4 objects (html elements) inside respective
-        lists. Processing is then applied on the marked elements.
-        """
-        if not hasattr(node, "children"):
-            return
-        for child in node.children:
-            if isinstance(child, bs4.element.Tag):
-                for meets_criteria, container in classifiers:
-                    if meets_criteria(child):
-                        container.append(child)
-            _mark_html_elements_recursively(child, lvl + 1)
-
-    _mark_html_elements_recursively(bs)
+    for node in bs.descendants:
+        for check_if_meets_criteria, container in classifiers:
+            if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
+                container.append(node)
     bs = prepare_ref_targets_in_headers(bs, metadata, headers)
     bs = prepare_references(bs, metadata, references)
     assert len(metadata.targets) == 3
@@ -276,23 +250,10 @@ def test_ref_and_target_from_footnote():
         (is_reference, references),
         (is_footnote, footnotes),
     ]
-
-    def _mark_html_elements_recursively(node: bs4.element.PageElement, lvl=0) -> None:
-        """
-        Before applying the processing, this function traverses the tree and
-        puts relevant bs4 objects (html elements) inside respective
-        lists. Processing is then applied on the marked elements.
-        """
-        if not hasattr(node, "children"):
-            return
-        for child in node.children:
-            if isinstance(child, bs4.element.Tag):
-                for meets_criteria, container in classifiers:
-                    if meets_criteria(child):
-                        container.append(child)
-            _mark_html_elements_recursively(child, lvl + 1)
-
-    _mark_html_elements_recursively(bs)
+    for node in bs.descendants:
+        for check_if_meets_criteria, container in classifiers:
+            if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
+                container.append(node)
     bs = prepare_ref_targets_in_footnotes(bs, metadata, footnotes)
     bs = prepare_references(bs, metadata, references)
     sup = bs.find("sup")
