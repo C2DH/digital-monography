@@ -17,11 +17,6 @@ except (ImportError, ModuleNotFoundError):
     from .constants import CLS_METADATA_TABLE
     from .metadata import DocumentMetadata
 
-    # from src.preparer.md_extraction import (
-    #     DocumentMetadata,
-    # )
-    # from src.preparer.constants import CLS_METADATA_TABLE
-
 
 line_beginning_re = re.compile(r"^", re.MULTILINE)
 
@@ -60,17 +55,18 @@ class MystMdConverter(markdownify.MarkdownConverter):
         sub_symbol = "{sub}"
         sup_symbol = "{sup}"
 
-    # def escape(self, text):
-    #     if not text:
-    #         return ''
-    #     if self.options['escape_misc']:
-    #         text = re.sub(r'([\\&<`[>~#=+|-])', r'\\\1', text)
-    #         text = re.sub(r'([0-9])([.)])', r'\1\\\2', text)
-    #     if self.options['escape_asterisks']:
-    #         text = text.replace('*', r'\*')
-    #     if self.options['escape_underscores']:
-    #         text = text.replace('_', r'\_')
-    #     return text
+    def escape(self, text):
+        if not text:
+            return ""
+        if self.options["escape_misc"]:
+            # text = re.sub(r'([\\&<`[>~#=+|-])', r'\\\1', text)
+            text = re.sub(r"([\\&<`[>~#=+|])", r"\\\1", text)
+            text = re.sub(r"([0-9])([.)])", r"\1\\\2", text)
+        if self.options["escape_asterisks"]:
+            text = text.replace("*", r"\*")
+        if self.options["escape_underscores"]:
+            text = text.replace("_", r"\_")
+        return text
 
     # TODO: use regex to find _Ref patterns and better handle making data safe
 

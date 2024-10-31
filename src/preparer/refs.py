@@ -101,8 +101,14 @@ def prepare_ref_targets_in_captions(
             for child in tag.children:
                 if child.name == "data" and not ref_stack:
                     # handle 1-st <data> tag
-                    child.replace_with("{{ %s }}" % a_id)
-                    unique_id.append(a_id)
+                    escaped_id = (
+                        a_id.replace("-", "")
+                        .replace(".", "")
+                        .replace("#", "")
+                        .replace("_", "")
+                    )
+                    child.replace_with("{{ %s }}" % escaped_id)
+                    unique_id.append(escaped_id)
                     sep = ""
                     ref_stack.append(child)
                 elif child.name == "data":
@@ -336,11 +342,17 @@ class LinkMystifier:
     @property
     def unique_id(self) -> str:
         if self.is_cross_file_reference():
-            return self.path + "#" + self.fragment
+            unique_id = self.path + "#" + self.fragment
         elif self.is_inner_reference():
-            return self.fragment
+            unique_id = self.fragment
         else:
-            return self.fragment
+            unique_id = self.fragment
+        return (
+            unique_id.replace("-", "")
+            .replace(".", "")
+            .replace("#", "")
+            .replace("_", "")
+        )
 
     def _urlsplit(self, url: str, scheme: str = "") -> tuple[str, str, str, str, str]:
         """

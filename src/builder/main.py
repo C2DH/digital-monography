@@ -7,6 +7,7 @@ import logging
 import pathlib
 import sys
 import typing as t
+import yaml
 from jupyter_book.cli.main import build
 
 IS_DEBUG = bool(int(os.environ.get("DGTMON_DEBUG", 0)))
@@ -46,6 +47,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     key = _get_key(event)
     _mkdir_read()
     _copy_assets(key)
+    _prepare_config(key)
     _build_book(key)
     _distribute_book(key)
     # this should probably go to another Lambda service
@@ -87,6 +89,47 @@ def _copy_assets(key: KeyPath) -> None:
     except Exception as e:
         logging.exception(f"Unable to copy assets. Error: {repr(e)}")
         raise
+
+
+def _prepare_config(key: KeyPath) -> None:
+    if not (key.efs_slug_dir / "_config.yml").exists():
+        logging.info(
+            f"{key.efs_slug_dir / '_config.yml'} was not found. Skipping build."
+        )
+        return
+    with open(key.efs_slug_dir / "_config.yml") as f:
+        config = yaml.safe_load(f)
+    ROMAN_NUMS = {
+        "1": "I",
+        "2": "II",
+    }
+    IS_ROMAN_NUM = False
+    IS_SEQUENTIAL_NUM = True
+    SEP = "."
+    _substitutions = {
+        "f01aref177042490": ("1", "1"),
+        "f01aref177044323": ("1", "1"),
+        "f02bref177053481": ("2", "1"),
+        "f02bref177053494": ("2", "1"),
+        "02bdocxf02btblsimpletable": ("2", ""),
+    }
+    substitutions = {}
+    i = 1
+    for k, v in _substitutions.items():
+        chapter_no, item_no = v
+        if IS_SEQUENTIAL_NUM:
+            substitutions[k] = str(i)
+        elif item_no and not IS_SEQUENTIAL_NUM:
+            if IS_ROMAN_NUM:
+                substitutions[k] = ROMAN_NUMS[chapter_no] + SEP + item_no
+            else:
+                substitutions[k] = chapter_no + SEP + item_no
+        else:
+            substitutions[k] = ""
+        i += 1
+    config["sphinx"]["config"]["myst_substitutions"] = substitutions
+    with open(key.efs_slug_dir / "_config.yml", "w") as f:
+        yaml.dump(config, f)
 
 
 def _build_book(key: KeyPath) -> None:
