@@ -103,15 +103,6 @@ def prepare_ref_targets_in_captions(
                     # handle 1-st <data> tag
                     child.replace_with("{{ %s }}" % a_id)
                     unique_id.append(a_id)
-                    print(">>>>", unique_id)
-                    # if a_id:
-                    # print(
-                    #     {
-                    #         "prev": caption,
-                    #         "to_subs": a_id,
-                    #     }
-                    # )
-                    # metadata.add_substitution(SubstitutionDatapoint(src=a_id))
                     sep = ""
                     ref_stack.append(child)
                 elif child.name == "data":
@@ -144,15 +135,6 @@ def prepare_ref_targets_in_captions(
                 text=_get_plain_text_numbering(ref_stack),
             )
             metadata.add_target(target)
-            print("ref_stack", ref_stack)
-            print(
-                {
-                    "prev": caption,
-                    "link.id": link.id,
-                    "before": target.text,
-                    "unique_id[0]": unique_id[0],
-                }
-            )
             if metadata.get_substitution(unique_id[0]) is None:
                 metadata.add_substitution(
                     SubstitutionDatapoint(
