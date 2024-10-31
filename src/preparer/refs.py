@@ -8,10 +8,20 @@ import functools
 import typing as t
 
 try:
-    from metadata import DocumentMetadata, TargetDatapoint, RefDatapoint
+    from metadata import (
+        DocumentMetadata,
+        TargetDatapoint,
+        RefDatapoint,
+        SubstitutionDatapoint,
+    )
     from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
-    from .metadata import DocumentMetadata, TargetDatapoint, RefDatapoint
+    from .metadata import (
+        DocumentMetadata,
+        TargetDatapoint,
+        RefDatapoint,
+        SubstitutionDatapoint,
+    )
     from .keys import KeyPath
 
 
@@ -71,6 +81,7 @@ def prepare_ref_targets_in_captions(
 ) -> bs4.BeautifulSoup:
     for caption in captions:
         anchors = _extract_anchor_tags(html_soup, caption)
+        unique_id = []
         ref_stack = []
 
         def _replace_data_tag(
@@ -91,6 +102,16 @@ def prepare_ref_targets_in_captions(
                 if child.name == "data" and not ref_stack:
                     # handle 1-st <data> tag
                     child.replace_with("{{ %s }}" % a_id)
+                    unique_id.append(a_id)
+                    print(">>>>", unique_id)
+                    # if a_id:
+                    # print(
+                    #     {
+                    #         "prev": caption,
+                    #         "to_subs": a_id,
+                    #     }
+                    # )
+                    # metadata.add_substitution(SubstitutionDatapoint(src=a_id))
                     sep = ""
                     ref_stack.append(child)
                 elif child.name == "data":
@@ -123,6 +144,23 @@ def prepare_ref_targets_in_captions(
                 text=_get_plain_text_numbering(ref_stack),
             )
             metadata.add_target(target)
+            print("ref_stack", ref_stack)
+            print(
+                {
+                    "prev": caption,
+                    "link.id": link.id,
+                    "before": target.text,
+                    "unique_id[0]": unique_id[0],
+                }
+            )
+            if metadata.get_substitution(unique_id[0]) is None:
+                metadata.add_substitution(
+                    SubstitutionDatapoint(
+                        pk=unique_id[0],
+                        was=target.text,
+                        placeholder=unique_id[0],
+                    )
+                )
             target_tag = html_soup.new_tag("pre")
             target_tag.string = link.mystify_target()
             caption.insert_before(target_tag)
@@ -220,6 +258,14 @@ def prepare_references(
                     prev_href=prev_href,
                 )
             )
+            if link.unique_id and metadata.get_substitution(link.unique_id) is None:
+                metadata.add_substitution(
+                    SubstitutionDatapoint(
+                        pk=link.unique_id,
+                        was=link.text_to_replace,
+                        placeholder=link.unique_id,
+                    )
+                )
     return html_soup
 
 
@@ -250,6 +296,7 @@ class LinkMystifier:
         self.path: str = ""
         self.query: str = ""
         self.fragment: str = ""
+        self.text_to_replace: str = ""
         # cached functions
         self.is_external_url = functools.lru_cache()(self._is_external_url__uncached)
         self.is_cross_file_reference = functools.lru_cache()(
@@ -303,6 +350,15 @@ class LinkMystifier:
             return docutils.nodes.make_id(f"{self._prefix}-{self.filepath.stem}-{val}")
         else:
             return docutils.nodes.make_id(f"{self._prefix}-{val}")
+
+    @property
+    def unique_id(self) -> str:
+        if self.is_cross_file_reference():
+            return self.path + "#" + self.fragment
+        elif self.is_inner_reference():
+            return self.fragment
+        else:
+            return self.fragment
 
     def _urlsplit(self, url: str, scheme: str = "") -> tuple[str, str, str, str, str]:
         """
@@ -396,14 +452,18 @@ class LinkMystifier:
                     to_replace += tag_text[i]
                 if to_replace and not tag_text[i].isdigit():
                     break
-            replace_with = r"{{ " + self.path + "#" + self.fragment + r" }}"
+            # replace_with = r"{{ " + self.path + "#" + self.fragment + r" }}"
+            replace_with = r"{{ " + self.unique_id + r" }}"
             if to_replace:
                 tag_text = tag_text.replace(to_replace, replace_with)
+            self.text_to_replace = to_replace
         elif self.is_inner_reference():
             if target is not None:
                 to_replace = target.text
-                replace_with = r"{{ " + self.fragment + r" }}"
+                # replace_with = r"{{ " + self.fragment + r" }}"
+                replace_with = r"{{ " + self.unique_id + r" }}"
                 tag_text = tag_text.replace(to_replace, replace_with)
+                self.text_to_replace = to_replace
         return tag_text
 
     def __str__(self) -> str:

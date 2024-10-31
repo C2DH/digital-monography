@@ -23,6 +23,7 @@ type DatapointUnion = t.Union[
     AssetDatapoint,
     RefDatapoint,
     TargetDatapoint,
+    SubstitutionDatapoint,
     CitationGroupDatapoint,
     CitationItemDatapoint,
 ]
@@ -30,6 +31,7 @@ type RecordsUnion = t.Union[
     AssetRecord,
     RefRecord,
     TargetRecord,
+    SubstitutionRecord,
     CitationGroupRecord,
     CitationItemRecord,
 ]
@@ -63,6 +65,11 @@ class TargetRecord(t.TypedDict):
     pk: int
     html: str
     text: str
+
+
+class SubstitutionRecord(t.TypedDict):
+    pk: str
+    src: str
 
 
 class CitationGroupRecord(t.TypedDict):
@@ -143,6 +150,23 @@ class TargetDatapoint:
 
 
 @dataclasses.dataclass
+class SubstitutionDatapoint:
+    pk: str
+    was: str
+    placeholder: str
+
+    def to_json(self) -> dict[str, t.Union[str, int]]:
+        return {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}
+
+    @staticmethod
+    def from_json(jsml: dict[str, t.Union[str, int]]) -> "SubstitutionDatapoint":
+        return SubstitutionDatapoint(**jsml)
+
+    def __getitem__(self, name: str) -> t.Union[int, str]:
+        return getattr(self, name)
+
+
+@dataclasses.dataclass
 class CitationGroupDatapoint:
     pk: str
     schema: str
@@ -185,6 +209,7 @@ class DocumentMetadata:
         assets: data from the Metadata tables describing assets
         refs: references (links and cross-references)
         targets: reference targets (e.g. headings, captions)
+        substitutions: used to replace text with other text
         citation_groups: groupings of one or more citation
         citation_items: citations of a single source
     """
@@ -194,6 +219,7 @@ class DocumentMetadata:
         self.assets: list[AssetDatapoint] = []
         self.refs: list[RefDatapoint] = []
         self.targets: list[TargetDatapoint] = []
+        self.substitutions: list[SubstitutionDatapoint] = []
         self.citation_groups: list[CitationGroupDatapoint] = []
         self.citation_items: list[CitationItemDatapoint] = []
 
@@ -227,6 +253,9 @@ class DocumentMetadata:
     add_target = functools.partialmethod(add, "targets")
     get_target = functools.partialmethod(get, "targets")
 
+    add_substitution = functools.partialmethod(add, "substitutions")
+    get_substitution = functools.partialmethod(get, "substitutions")
+
     add_citation_group = functools.partialmethod(add, "citation_groups")
     get_citation_group = functools.partialmethod(get, "citation_groups")
 
@@ -238,6 +267,7 @@ class DocumentMetadata:
             "assets": self.assets,
             "refs": self.refs,
             "targets": self.targets,
+            "substitutions": self.substitutions,
             "citation_groups": self.citation_groups,
             "citation_items": self.citation_items,
         }
@@ -247,6 +277,7 @@ class DocumentMetadata:
             "assets": [rec.to_json() for rec in self.assets],
             "refs": [rec.to_json() for rec in self.refs],
             "targets": [rec.to_json() for rec in self.targets],
+            "substitutions": [rec.to_json() for rec in self.substitutions],
             "citation_groups": [rec.to_json() for rec in self.citation_groups],
             "citation_items": [rec.to_json() for rec in self.citation_items],
         }
@@ -256,6 +287,10 @@ class DocumentMetadata:
         self.refs = [RefDatapoint.from_json(rec) for rec in jsml.get("refs", [])]
         self.targets = [
             TargetDatapoint.from_json(rec) for rec in jsml.get("targets", [])
+        ]
+        self.substitutions = [
+            SubstitutionDatapoint.from_json(rec)
+            for rec in jsml.get("substitutions", [])
         ]
         self.citation_groups = [
             CitationGroupDatapoint.from_json(rec)
@@ -268,12 +303,13 @@ class DocumentMetadata:
 
     def __str__(self) -> str:
         return (
-            "%s(assets=[%s], refs=[%s], targets=[%s], citation_groups=[%s], citation_items=[%s])"
+            "%s(assets=[%s], refs=[%s], targets=[%s], substitutions=[%s], citation_groups=[%s], citation_items=[%s])"
             % (
                 self.__class__.__name__,
                 ", ".join(str(rec) for rec in self.assets),
                 ", ".join(str(rec) for rec in self.refs),
                 ", ".join(str(rec) for rec in self.targets),
+                ", ".join(str(rec) for rec in self.substitutions),
                 ", ".join(str(rec) for rec in self.citation_groups),
                 ", ".join(str(rec) for rec in self.citation_items),
             )
