@@ -107,18 +107,21 @@ def _prepare_config(key: KeyPath) -> None:
     IS_SEQUENTIAL_NUM = True
     SEP = "."
     _substitutions = {
-        "f01aref177042490": ("1", "1"),
-        "f01aref177044323": ("1", "1"),
-        "f02bref177053481": ("2", "1"),
-        "f02bref177053494": ("2", "1"),
-        "02bdocxf02btblsimpletable": ("2", ""),
+        "f01aref177042490": ("1", "1", "fig"),
+        "f01aref177044323": ("1", "1", "tbl"),
+        "f02bref177053481": ("2", "1", "fig"),
+        "f02bref177053494": ("2", "1", "tbl"),
+        "02bdocxf02btblsimpletable": ("2", "", "tbl"),
     }
+    _items_count = {"fig": 0, "tbl": 0}
     substitutions = {}
     i = 1
     for k, v in _substitutions.items():
-        chapter_no, item_no = v
+        chapter_no, item_no, item_type = v
         if IS_SEQUENTIAL_NUM:
-            substitutions[k] = str(i)
+            # substitutions[k] = str(i)
+            _items_count[item_type] += 1
+            substitutions[k] = _items_count[item_type]
         elif item_no and not IS_SEQUENTIAL_NUM:
             if IS_ROMAN_NUM:
                 substitutions[k] = ROMAN_NUMS[chapter_no] + SEP + item_no
