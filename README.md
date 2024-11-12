@@ -2,6 +2,11 @@
 
 Platform for scholars of digital humanities to publish their digital work
 
+## Pipeline status
+
+[![main pipeline status](https://gitlab.com/C2DH/digital-monography/badges/main/pipeline.svg)](https://gitlab.com/C2DH/digital-monography/-/commits/main)
+[![develop pipeline status](https://gitlab.com/C2DH/digital-monography/badges/develop/pipeline.svg)](https://gitlab.com/C2DH/digital-monography/-/commits/develop)
+
 ## Design principles
 
 * Rely on features of MS Word for `.docx` input, JupyterLab/Notebook for `.ipynb` input and on JupyterBook/Sphinx-doc for output as much as possible.
