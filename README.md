@@ -143,8 +143,9 @@ Once the role is created, navigate to it in the console under "Roles" by searchi
             "Condition": {
                 "StringLike": {
                     "gitlab.com:sub": [
-                        "project_path:C2DH/digital-monography:ref_type:branch:ref:main",
-                        "project_path:C2DH/digital-monography:ref_type:branch:ref:develop"
+                        "project_path:<PATH_TO_THE_REPO>:ref_type:branch:ref:main",
+                        "project_path:<PATH_TO_THE_REPO>:ref_type:branch:ref:develop"
+
                     ]
                 }
             }
