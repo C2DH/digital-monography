@@ -4,8 +4,9 @@ Platform for scholars of digital humanities to publish their digital work
 
 ## Pipeline status
 
-[![main pipeline status](https://gitlab.com/C2DH/digital-monography/badges/main/pipeline.svg)](https://gitlab.com/C2DH/digital-monography/-/commits/main)
-[![develop pipeline status](https://gitlab.com/C2DH/digital-monography/badges/develop/pipeline.svg)](https://gitlab.com/C2DH/digital-monography/-/commits/develop)
+Status of the main branch: 
+[![pipeline status](https://gitlab.com/uniluxembourg/c2dh/private/degruyter/digital-monography/badges/main/pipeline.svg)](https://gitlab.com/uniluxembourg/c2dh/private/degruyter/digital-monography/-/commits/main)
+Status of the develop branch: [![pipeline status](https://gitlab.com/uniluxembourg/c2dh/private/degruyter/digital-monography/badges/develop/pipeline.svg)](https://gitlab.com/uniluxembourg/c2dh/private/degruyter/digital-monography/-/commits/develop)
 
 ## Design principles
 
