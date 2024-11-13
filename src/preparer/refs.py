@@ -347,6 +347,7 @@ class LinkMystifier:
             unique_id = self.fragment
         else:
             unique_id = self.fragment
+        # removal of escape chars is important for substitution
         return (
             unique_id.replace("-", "")
             .replace(".", "")
