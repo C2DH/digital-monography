@@ -37,6 +37,25 @@ dev/test:
 dev/draft:
 	docker compose run main python scripts/prepare_and_build.py book_path=data/input/$(SLUG)
 
+copy/constants:
+	cp src/_common/constants.py src/entrypoint/constants.py
+	cp src/_common/constants.py src/dropbox/constants.py
+	cp src/_common/constants.py src/preparer/constants.py
+	cp src/_common/constants.py src/github/constants.py
+	cp src/_common/constants.py src/verifier/constants.py
+
+copy/keys:
+	cp src/_common/keys.py src/dropbox/keys.py
+	cp src/_common/keys.py src/preparer/keys.py
+	cp src/_common/keys.py src/builder/keys.py
+	cp src/_common/keys.py src/github/keys.py
+	cp src/_common/keys.py src/verifier/keys.py
+
+copy/metadata:
+	cp src/_common/metadata.py src/preparer/metadata.py
+	cp src/_common/metadata.py src/builder/metadata.py
+	cp src/_common/metadata.py src/verifier/metadata.py
+
 entrypoint/build:
 	cp src/_common/constants.py src/entrypoint/constants.py
 	docker build -t dgtmon-dev-entrypoint src/entrypoint
@@ -86,6 +105,7 @@ preparer/make: preparer/build preparer/tag preparer/push
 builder/build:
 	cp src/_common/constants.py src/builder/constants.py
 	cp src/_common/keys.py src/builder/keys.py
+	cp src/_common/metadata.py src/builder/metadata.py
 	docker build -t dgtmon-dev-builder src/builder
 
 builder/tag:
