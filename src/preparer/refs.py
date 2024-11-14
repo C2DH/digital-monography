@@ -15,6 +15,12 @@ try:
         SubstitutionDatapoint,
     )
     from keys import KeyPath
+    from constants import (
+        CAPTION_ITEM_TYPE_FIGURE,
+        CAPTION_ITEM_TYPE_TABLE,
+        CAPTION_ITEM_TYPE_GRAPH,
+        CAPTION_ITEM_TYPE_OTHER,
+    )
 except (ImportError, ModuleNotFoundError):
     from .metadata import (
         DocumentMetadata,
@@ -23,6 +29,12 @@ except (ImportError, ModuleNotFoundError):
         SubstitutionDatapoint,
     )
     from .keys import KeyPath
+    from .constants import (
+        CAPTION_ITEM_TYPE_FIGURE,
+        CAPTION_ITEM_TYPE_TABLE,
+        CAPTION_ITEM_TYPE_GRAPH,
+        CAPTION_ITEM_TYPE_OTHER,
+    )
 
 
 def is_header(tag: bs4.element.Tag) -> bool:
@@ -81,6 +93,7 @@ def prepare_ref_targets_in_captions(
 ) -> bs4.BeautifulSoup:
     for caption in captions:
         anchors = _extract_anchor_tags(html_soup, caption)
+        item_type = _get_item_type(caption)
         unique_id = []
         ref_stack = []
 
@@ -147,6 +160,7 @@ def prepare_ref_targets_in_captions(
                         pk=unique_id[0],
                         was=target.text,
                         placeholder=unique_id[0],
+                        item_type=item_type,
                     )
                 )
             target_tag = html_soup.new_tag("pre")
@@ -175,6 +189,23 @@ def _extract_anchor_tags(
         for a in anchors:
             a = a.extract()
     return anchors
+
+
+def _get_item_type(caption: bs4.element.Tag) -> str:
+    caption_match = re.match(r"^\s*(\w+) (\d+):\s*", caption.text)
+    if caption_match is not None:
+        item = caption_match.group(1)
+    else:
+        return CAPTION_ITEM_TYPE_OTHER
+    item_types_mapping = {
+        "fig": CAPTION_ITEM_TYPE_FIGURE,
+        "figure": CAPTION_ITEM_TYPE_FIGURE,
+        "table": CAPTION_ITEM_TYPE_TABLE,
+        "graph": CAPTION_ITEM_TYPE_GRAPH,
+    }
+    if item not in item_types_mapping.keys():
+        return CAPTION_ITEM_TYPE_OTHER
+    return item_types_mapping[item]
 
 
 def _get_plain_text_numbering(ref_stack: list[bs4.element.PageElement]) -> str:
@@ -217,6 +248,9 @@ def prepare_references(
 ) -> bs4.BeautifulSoup:
     for a_tag in references:
         a_tag: bs4.element.Tag
+        # item_type =
+        print(">> a_tag.parent", a_tag.parent)
+        print(">> a_tag", a_tag)
         if _is_ref_footnote(a_tag):
             footnote = FootnoteMystifier()
             footnote.set_filepath(metadata.filepath)
@@ -237,6 +271,7 @@ def prepare_references(
             prev_href = a_tag["href"]
             a_tag.string = link_text
             a_tag["href"] = link_dest
+            print(">> target", target)
             metadata.add_ref(
                 RefDatapoint(
                     target_id=target.pk if target else "",
@@ -252,6 +287,7 @@ def prepare_references(
                         pk=link.unique_id,
                         was=link.text_to_replace,
                         placeholder=link.unique_id,
+                        item_type="",  # item_type,
                     )
                 )
     return html_soup

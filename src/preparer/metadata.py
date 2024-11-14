@@ -16,7 +16,6 @@ try:
 except (ImportError, ModuleNotFoundError):
     from .keys import KeyPath
 
-
 T = t.TypeVar("T")
 type AcceptedValues = t.Union[str, bool, pathlib.Path]
 type DatapointUnion = t.Union[
@@ -154,6 +153,10 @@ class SubstitutionDatapoint:
     pk: str
     was: str
     placeholder: str
+    # make sure that literal options are equal to constants.CAPTION_ITEM_TYPE_*
+    item_type: t.Literal["fig", "tbl", "graph", "nul"]
+    # TODO: for now item_type doesn't do anything, but it can be crucial e.g. for
+    # adding counting numbers of figures and tables upon substitution
 
     def to_json(self) -> dict[str, t.Union[str, int]]:
         return {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}

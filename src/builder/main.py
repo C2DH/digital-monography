@@ -16,15 +16,17 @@ if not IS_DEBUG:
     sys.path.append(current_dir)
 
 try:
-    from keys import KeyPath
     from constants import IS_DEBUG, DEFAULT_SFS_DIR, STATICWS_WIP_BUCKET_NAME
+    from metadata import DocumentMetadata, SubstitutionDatapoint
+    from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
-    from .keys import KeyPath
     from .constants import (
         IS_DEBUG,
         DEFAULT_SFS_DIR,
         STATICWS_WIP_BUCKET_NAME,
     )
+    from .metadata import DocumentMetadata, SubstitutionDatapoint
+    from .keys import KeyPath
 
 
 if IS_DEBUG:
@@ -93,46 +95,90 @@ def _copy_assets(key: KeyPath) -> None:
 
 def _prepare_config(key: KeyPath) -> None:
     if not (key.efs_slug_dir / "_config.yml").exists():
-        logging.info(
-            f"{key.efs_slug_dir / '_config.yml'} was not found. Skipping build."
-        )
+        logging.info(f"{key.efs_slug_dir / '_config.yml'} was not found.")
         return
     with open(key.efs_slug_dir / "_config.yml") as f:
         config = yaml.safe_load(f)
-    ROMAN_NUMS = {
-        "1": "I",
-        "2": "II",
-    }
-    IS_ROMAN_NUM = False
-    IS_SEQUENTIAL_NUM = True
-    SEP = "."
-    _substitutions = {
-        "f01aref177042490": ("1", "1", "fig"),
-        "f01aref177044323": ("1", "1", "tbl"),
-        "f02bref177053481": ("2", "1", "fig"),
-        "f02bref177053494": ("2", "1", "tbl"),
-        "02bdocxf02btblsimpletable": ("2", "", "tbl"),
-    }
-    _items_count = {"fig": 0, "tbl": 0}
+
+    metadatas = {}
+    for meta_file in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
+        meta_file: KeyPath
+        with meta_file.open("r") as f:
+            metadata = DocumentMetadata(meta_file)
+            metadata.from_json(json.load(f))
+            metadatas[meta_file.stem] = metadata
+    THIS_IS_HOW_WE_CAN_ACHIEVE_COUNTING_FIGURES_ETC = """
+    # ROMAN_NUMS = {
+    #     "1": "I",
+    #     "2": "II",
+    # }
+    # IS_ROMAN_NUM = False
+    # IS_SEQUENTIAL_NUM = True
+    # SEP = "."
+    # _substitutions = {
+    #     "f01aref177042490": ("1", "1", "fig"),
+    #     "f01aref177044323": ("1", "1", "tbl"),
+    #     "f02bref177053481": ("2", "1", "fig"),
+    #     "f02bref177053494": ("2", "1", "tbl"),
+    #     "02bdocxf02btblsimpletable": ("2", "", "tbl"),
+    # }
+    # _items_count = {"fig": 0, "tbl": 0}
+    # substitutions = {}
+    # i = 1
+    # for k, v in _substitutions.items():
+    #     chapter_no, item_no, item_type = v
+    #     if IS_SEQUENTIAL_NUM:
+    #         # substitutions[k] = str(i)
+    #         _items_count[item_type] += 1
+    #         substitutions[k] = _items_count[item_type]
+    #     elif item_no and not IS_SEQUENTIAL_NUM:
+    #         if IS_ROMAN_NUM:
+    #             substitutions[k] = ROMAN_NUMS[chapter_no] + SEP + item_no
+    #         else:
+    #             substitutions[k] = chapter_no + SEP + item_no
+    #     else:
+    #         substitutions[k] = ""
+    #     i += 1
+    """
     substitutions = {}
-    i = 1
-    for k, v in _substitutions.items():
-        chapter_no, item_no, item_type = v
-        if IS_SEQUENTIAL_NUM:
-            # substitutions[k] = str(i)
-            _items_count[item_type] += 1
-            substitutions[k] = _items_count[item_type]
-        elif item_no and not IS_SEQUENTIAL_NUM:
-            if IS_ROMAN_NUM:
-                substitutions[k] = ROMAN_NUMS[chapter_no] + SEP + item_no
-            else:
-                substitutions[k] = chapter_no + SEP + item_no
-        else:
-            substitutions[k] = ""
-        i += 1
+    for metadata in metadatas.values():
+        metadata: DocumentMetadata
+        # TODO:
+        file_no = _get_file_number(metadata.filepath.stem)
+        for dp in metadata.substitutions:
+            dp: SubstitutionDatapoint
+            if not dp.was.isdigit() and not _is_roman_numeral(dp.was):
+                pass
+            elif dp.was and not file_no:
+                substitutions[dp.placeholder] = dp.was
+            elif dp.was:
+                substitutions[dp.placeholder] = file_no + "." + dp.was
     config["sphinx"]["config"]["myst_substitutions"] = substitutions
     with open(key.efs_slug_dir / "_config.yml", "w") as f:
         yaml.dump(config, f)
+
+
+def _get_file_number(filename: str) -> str:
+    """Extract '1' from file name '01_book_chapter'."""
+    number = ""
+    for ch in filename:
+        if number and not ch.isdigit():
+            return number
+        elif number == "" and ch == "0":
+            pass
+        elif ch.isdigit():
+            number += ch
+    return number
+
+
+def _is_roman_numeral(was: str) -> bool:
+    roman_num_chars = ["I", "V", "X", "L", "C", "D", "M"]
+    if not was:
+        return False
+    for ch in was:
+        if ch not in roman_num_chars:
+            return False
+    return True
 
 
 def _build_book(key: KeyPath) -> None:

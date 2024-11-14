@@ -156,6 +156,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         # 2) irreversible transformations are omited to avoid not being able to recreate a book
         # as html files written at this stage will be the basis for a paper version of a book.
         _write_config_to_efs(metadata, key)
+        _write_metadata_to_efs(metadata, key)
         _write_processed_html_to_efs(html_soup_str, key)
         _put_html_to_s3(html_soup_str, key)
         md = _convert_to_md(html_soup, metadata)
@@ -307,6 +308,22 @@ def _write_processed_md_to_efs(md: str, key: KeyPath) -> None:
     new_efs_filepath = key.efs_filepath.with_suffix(".md")
     with open(new_efs_filepath, "w") as f:
         f.write(md)
+
+
+def _write_metadata_to_efs(metadata: DocumentMetadata, key: KeyPath) -> None:
+    try:
+        json_data = metadata.to_json()
+        fp = key.add_to_efs_slug_dir("_metadata").parent / key.github_path.with_suffix(
+            ".json"
+        )
+        with open(fp, "w") as f:
+            json.dump(json_data, f)
+        logger.info(f"Metadata was saved to {str(fp)}")
+    except Exception as e:
+        logger.exception(
+            f"Writing metadata in json to /efs directory failed. Error: {repr(e)}"
+        )
+        raise
 
 
 def _write_processed_ipynb_to_efs(ipynb: nbformat.NotebookNode, key: KeyPath) -> None:

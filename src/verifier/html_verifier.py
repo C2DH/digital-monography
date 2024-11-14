@@ -16,6 +16,10 @@ try:
         FIELD_LICENSE_NAME,
         FIELD_DIGITAL_SOURCE,
         FIELD_PAPER_SOURCE,
+        CAPTION_ITEM_TYPE_FIGURE,
+        CAPTION_ITEM_TYPE_TABLE,
+        CAPTION_ITEM_TYPE_GRAPH,
+        CAPTION_ITEM_TYPE_OTHER,
     )
     from local_constants import RECOGNIZED_LICENSE_NAMES
     from path_handler import PathHandler, SUPPORTED_SUFFIXES
@@ -30,12 +34,15 @@ except (ImportError, ModuleNotFoundError):
         FIELD_LICENSE_NAME,
         FIELD_DIGITAL_SOURCE,
         FIELD_PAPER_SOURCE,
+        CAPTION_ITEM_TYPE_FIGURE,
+        CAPTION_ITEM_TYPE_TABLE,
+        CAPTION_ITEM_TYPE_GRAPH,
+        CAPTION_ITEM_TYPE_OTHER,
     )
     from .local_constants import RECOGNIZED_LICENSE_NAMES
     from .path_handler import PathHandler, SUPPORTED_SUFFIXES
     from .verif_warnings import VerifierMessages
     from .metadata import AssetDatapoint, DocumentMetadata
-
 
 CAPTION_TYPES = ["Figure", "Table", "Graph"]
 IS_HEADING_TITLE_CASED_REQUIRED = True
