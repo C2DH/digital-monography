@@ -1,19 +1,13 @@
-import typing as t
-
 try:
     from metadata import (
-        AssetRecord,
         CitationGroupDatapoint,
-        CitationItemDatapoint,
         DocumentMetadata,
         RefDatapoint,
         TargetDatapoint,
     )
 except (ImportError, ModuleNotFoundError):
     from .metadata import (
-        AssetRecord,
         CitationGroupDatapoint,
-        CitationItemDatapoint,
         DocumentMetadata,
         RefDatapoint,
         TargetDatapoint,

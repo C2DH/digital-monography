@@ -236,6 +236,20 @@ def _build_verification_report(key: KeyPath) -> None:
     dst = key.efs_slug_dir / "_warnings"
     shutil.copyfile(src / "_config.yml", dst / "_config.yml")
     shutil.copyfile(src / "_toc.yml", dst / "_toc.yml")
+    #####################
+    with open(key.efs_slug_dir / "_toc.yml") as f:
+        config = yaml.safe_load(f)
+    chapters = config.get("chapters", [])
+    for i, chapter in enumerate(chapters):
+        if chapter.get("file"):
+            chapters.insert(i + 1, {"newFile": "refs_" + chapter["file"]})
+    for chapter in chapters:
+        if chapter.get("newFile"):
+            chapter.update({"file": chapter["newFile"]})
+            del chapter["newFile"]
+    with open(key.efs_slug_dir / "_toc.yml", "w") as f:
+        yaml.dump(config, f)
+    #####################
     try:
         params = {
             "path_source": dst,
