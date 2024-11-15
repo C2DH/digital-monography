@@ -11,6 +11,8 @@ import itertools
 import pathlib
 import typing as t
 
+import bs4
+
 try:
     from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
@@ -118,6 +120,7 @@ class RefDatapoint:
     href: str
     prev_string: str
     prev_href: str
+    elem: str
 
     def to_json(self) -> dict[str, t.Union[str, int]]:
         return {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}
@@ -136,6 +139,7 @@ class TargetDatapoint:
     pk: str
     html: str
     text: str
+    elem: str
 
     def to_json(self) -> dict[str, t.Union[str, int]]:
         return {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}

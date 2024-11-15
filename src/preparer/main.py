@@ -9,8 +9,6 @@ import nbformat
 import typing as t
 import urllib.parse
 
-# import yaml
-
 try:
     from constants import (
         ARCHIVE_APKG_ALL,
@@ -38,6 +36,7 @@ try:
     from ipynb_prep import tags_to_myst_crossref_targets
     from keys import KeyPath
     from fakers import Faker
+    from make_metadata_report import make_metadata_report
 except (ImportError, ModuleNotFoundError):
     from .constants import (
         ARCHIVE_APKG_ALL,
@@ -65,6 +64,7 @@ except (ImportError, ModuleNotFoundError):
     from .ipynb_prep import tags_to_myst_crossref_targets
     from .keys import KeyPath
     from .fakers import Faker
+    from .make_metadata_report import make_metadata_report
 
 
 if IS_DEBUG:
@@ -162,6 +162,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         md = _convert_to_md(html_soup, metadata)
         _write_processed_md_to_efs(md, key)
         _put_md_to_s3(md, key)
+        _make_metadata_report(metadata, key)
         ARCHIVE = '_put_to_archive_s3(key.s3_key.with_suffix(".md"), md)'
         return {"statusCode": 200, "body": ""}
     else:
@@ -334,3 +335,23 @@ def _unmarshall_json(key: KeyPath) -> nbformat.NotebookNode:
     with open(key, "r") as f:
         nb = nbformat.read(f, as_version=nbformat.NO_CONVERT)
     return nb
+
+
+def _make_metadata_report(
+    metadata: DocumentMetadata,
+    key: KeyPath,
+) -> None:
+    try:
+        fp = key.add_to_efs_slug_dir("_warnings").parent / key.github_path.with_suffix(
+            ".md"
+        )
+        fp = fp.with_name("refs_" + fp.name)
+        file_name = str(key.with_suffix(".docx").name)
+        with open(fp, "w") as f:
+            f.write(make_metadata_report(metadata, file_name))
+        logger.info(f"Metadata markdown report was saved to {str(fp)}")
+    except Exception as e:
+        logger.exception(
+            f"Writing DocumentMetadata to /efs directory failed. Error: {repr(e)}"
+        )
+        raise

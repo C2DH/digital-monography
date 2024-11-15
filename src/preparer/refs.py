@@ -79,6 +79,7 @@ def prepare_ref_targets_in_headers(
                     pk=link.id,
                     html=str(tag),
                     text=link.id,
+                    elem=str(tag),
                 )
                 metadata.add_target(target)
         for a in anchors:
@@ -152,6 +153,7 @@ def prepare_ref_targets_in_captions(
                 pk=link.id,
                 html="".join(str(elem) for elem in ref_stack),
                 text=_get_plain_text_numbering(ref_stack),
+                elem=str(caption),
             )
             metadata.add_target(target)
             if metadata.get_substitution(unique_id[0]) is None:
@@ -279,6 +281,7 @@ def prepare_references(
                     href=link_dest,
                     prev_string=prev_string,
                     prev_href=prev_href,
+                    elem=str(a_tag.parent),
                 )
             )
             if link.unique_id and metadata.get_substitution(link.unique_id) is None:

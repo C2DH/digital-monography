@@ -125,7 +125,7 @@ def _make_fwarning_dropdown(msg: FileVerificationMessageJson) -> str:
 👉 {_escape_md(msg["curr_elem"])} 👈\n
 {_escape_md(msg["next_elem"])}
 :::
-::::\n"""
+::::\n\n"""
 
 
 # def _make_fwarning_dropdown(msg: FileVerificationMessageJson) -> str:
