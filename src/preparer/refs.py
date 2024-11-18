@@ -156,7 +156,7 @@ def prepare_ref_targets_in_captions(
                 elem=str(caption),
             )
             metadata.add_target(target)
-            if metadata.get_substitution(unique_id[0]) is None:
+            if unique_id and metadata.get_substitution(unique_id[0]) is None:
                 metadata.add_substitution(
                     SubstitutionDatapoint(
                         pk=unique_id[0],
@@ -250,9 +250,6 @@ def prepare_references(
 ) -> bs4.BeautifulSoup:
     for a_tag in references:
         a_tag: bs4.element.Tag
-        # item_type =
-        print(">> a_tag.parent", a_tag.parent)
-        print(">> a_tag", a_tag)
         if _is_ref_footnote(a_tag):
             footnote = FootnoteMystifier()
             footnote.set_filepath(metadata.filepath)
@@ -273,7 +270,6 @@ def prepare_references(
             prev_href = a_tag["href"]
             a_tag.string = link_text
             a_tag["href"] = link_dest
-            print(">> target", target)
             metadata.add_ref(
                 RefDatapoint(
                     target_id=target.pk if target else "",
