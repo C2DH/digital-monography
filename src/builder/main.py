@@ -242,6 +242,7 @@ def _build_verification_report(key: KeyPath) -> None:
     chapters = config.get("chapters", [])
     for i, chapter in enumerate(chapters):
         if chapter.get("file"):
+            # rewriting "file" key causes infinite loop
             chapters.insert(i + 1, {"newFile": "refs_" + chapter["file"]})
     for chapter in chapters:
         if chapter.get("newFile"):
