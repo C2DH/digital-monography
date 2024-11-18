@@ -153,7 +153,14 @@ def _prepare_config(key: KeyPath) -> None:
                 substitutions[dp.placeholder] = dp.was
             elif dp.was:
                 substitutions[dp.placeholder] = file_no + "." + dp.was
-    config["sphinx"]["config"]["myst_substitutions"] = substitutions
+    try:
+        config["sphinx"]["config"]["myst_substitutions"] = substitutions
+    except KeyError:
+        if "sphinx" not in config:
+            config["sphinx"] = {}
+        if "config" not in config["sphinx"]:
+            config["sphinx"]["config"] = {}
+        config["sphinx"]["config"]["myst_substitutions"] = substitutions
     with open(key.efs_slug_dir / "_config.yml", "w") as f:
         yaml.dump(config, f)
 
