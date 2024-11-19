@@ -31,11 +31,12 @@ build:
   image: node:20
   before_script:
     - cd staticws/dashboard/
-    # - npm install
     - npm i -g pnpm
     - pnpm i
   script:
     - npm run build
+    - ls staticws/dashboard/
+    - cat staticws/dashboard/out/index.html
   cache:
     # key: ${CI_COMMIT_REF_SLUG}
     paths:
@@ -61,6 +62,8 @@ deploy:
     GITLAB_OIDC_TOKEN:
       aud: https://gitlab.com
   before_script:
+    - ls staticws/dashboard/
+    - cat staticws/dashboard/out/index.html
     - cp -a infra/. .
     - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
     - mkdir ~/.aws
