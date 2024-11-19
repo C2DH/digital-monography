@@ -75,7 +75,7 @@ resource "aws_s3_bucket_policy" "public_staticws_dashboard" {
   policy = data.aws_iam_policy_document.public_staticws_dashboard.json
 }
 
-resource "aws_s3_object" "index_html" {
+resource "aws_s3_object" "dashboard_index" {
   bucket       = aws_s3_bucket.staticws_dashboard.id
   key          = "index.html"
   source       = "./staticws/dashboard/out/index.html"
