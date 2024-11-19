@@ -1,5 +1,6 @@
 stages:
   - init
+  - build
   - deploy
   - destroy
 
@@ -21,6 +22,28 @@ init:
     # expire_in: 1 day # TODO: consider TTL
     paths:
       - secrets/dev.tfvars.json
+
+build:
+  stage: init
+  only:
+    - main
+    - develop
+  image: node:20
+  before_script:
+    - npm i pnpm
+    - pnpm i
+  script:
+    - pnpm run build
+  cache:
+    # key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - staticws/dashboard/node_modules/
+      - staticws/dashboard/.next/cache/
+  artifacts:
+    paths:
+      - staticws/dashboard/.next
+      - staticws/dashboard/out
+    expire_in: 1 day
 
 deploy:
   stage: deploy
