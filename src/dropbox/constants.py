@@ -23,6 +23,7 @@ APKG_UPLOAD_BUCKET_NAME = "cpy-dgtmon-dev-apkg-upload"
 IR_APKG_HTML_BUCKET_NAME = "cpy-dgtmon-dev-ir-apkg-html"
 IR_APKG_MD_BUCKET_NAME = "cpy-dgtmon-dev-ir-apkg-md"
 STATICWS_WIP_BUCKET_NAME = "cpy-dgtmon-dev-staticws-wip"
+STATICWS_DASHBOARD_BUCKET_NAME = "cpy-dgtmon-dev-staticws-dashboard"
 VERIFIER_MSGS = "cpy-dgtmon-dev-verifier-msgs"
 # html classes
 CLS_METADATA_TABLE = "dgt-mon-metadata-table"
@@ -111,3 +112,119 @@ METADATA_FIELDS_KEYS = []
 for field in METADATA_FIELDS:
     METADATA_FIELDS_KEYS.append(field["key"])
     METADATA_FIELDS_KEYS.extend(field["aliases"])
+# status management fields
+STATUS_MGMT_FIELDS = [
+    # metadata fields, be sure to correspond with METADATA_FIELDS
+    {
+        "key": "author",
+        "type": "S",
+        "is_read_only": True,
+        "rel": "one_to_one",
+    },
+    {
+        "key": FIELD_DIGITAL_SOURCE,
+        "type": "S",
+        "is_read_only": True,
+        "rel": "one_to_one",
+    },
+    {
+        "key": FIELD_PAPER_SOURCE,
+        "type": "S",
+        "is_read_only": True,
+        "rel": "one_to_one",
+    },
+    {
+        "key": "original",
+        "type": "S",
+        "is_read_only": True,
+        "rel": "one_to_one",
+    },
+    {
+        "key": FIELD_LICENSE_NAME,
+        "type": "S",
+        "is_read_only": True,
+        "rel": "one_to_one",
+    },
+    {
+        "key": "licenseurl",
+        "type": "S",
+        "is_read_only": True,
+        "rel": "one_to_one",
+    },
+    {
+        "key": "alttext",
+        "type": "S",
+        "is_read_only": True,
+        "rel": "one_to_one",
+    },
+    {
+        "key": FIELD_DELETE_PREVIOUS,
+        "type": "BOOL",
+        "is_read_only": True,
+        "rel": "one_to_one",
+    },
+    {
+        "key": "uuid",
+        "type": "S",
+        "is_read_only": True,
+        "rel": "one_to_one",
+    },
+    # read only fields
+    {
+        "key": "filesize",
+        "type": "N",
+        "is_read_only": True,
+        "rel": "one_to_one",
+    },
+    {
+        "key": "filetype",
+        "type": "S",
+        "is_read_only": True,
+        "rel": "one_to_one",
+    },
+    # misc
+    {
+        "key": "status",
+        "type": "N",  # TODO: make some enum to set the status
+        "is_read_only": False,
+        "rel": "one_to_one",
+        # "rel": "many_to_one",
+    },
+    {
+        "key": "tags",
+        "type": "L",
+        "is_read_only": False,
+        "rel": "many_to_one",
+        "children": [
+            {
+                "key": "tag",
+                "type": "S",
+                "is_read_only": False,
+            },
+        ],
+    },
+    {
+        "key": "comments",
+        "type": "L",
+        "is_read_only": False,
+        "rel": "many_to_one",
+        "children": [
+            {
+                "key": "date",
+                "type": "S",
+                "is_read_only": True,
+            },
+            {
+                "key": "comment",
+                "type": "S",
+                "is_read_only": True,
+            },
+        ],
+    },
+    {
+        "key": "desc",
+        "type": "S",
+        "is_read_only": False,
+        "rel": "one_to_one",
+    },
+]
