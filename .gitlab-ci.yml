@@ -30,10 +30,11 @@ build:
     - develop
   image: node:20
   before_script:
-    - npm i pnpm
-    - pnpm i
+    - cd staticws/dashboard/
+    # - npm i pnpm
+    # - pnpm i
   script:
-    - pnpm run build
+    - npm run build
   cache:
     # key: ${CI_COMMIT_REF_SLUG}
     paths:
