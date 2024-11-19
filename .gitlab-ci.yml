@@ -31,6 +31,7 @@ build:
   image: node:20
   before_script:
     - cd staticws/dashboard/
+    - npm install
     # - npm i pnpm
     # - pnpm i
   script:
