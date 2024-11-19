@@ -18,4 +18,4 @@ data/warnings/*
 
 node_modules
 .next
-
+out/
