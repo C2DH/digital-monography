@@ -14,3 +14,8 @@ data/input/*
 data/output/*
 data/warnings/*
 
+# JS/TS
+
+node_modules
+.next
+
