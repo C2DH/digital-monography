@@ -25,11 +25,14 @@ init:
 build:
   stage: init
   only:
-    refs:
-      - main
-      - develop
-    changes:
-      - "staticws/dashboard/*"
+    - main
+    - develop
+    # # Files get removed from s3 if build is not run
+    # refs:
+    #   - main
+    #   - develop
+    # changes:
+    #   - "staticws/dashboard/*"
   image: node:20
   before_script:
     - cd staticws/dashboard/
