@@ -75,9 +75,18 @@ resource "aws_s3_bucket_policy" "public_staticws_dashboard" {
   policy = data.aws_iam_policy_document.public_staticws_dashboard.json
 }
 
-resource "aws_s3_object" "dashboard_index" {
-  bucket       = aws_s3_bucket.staticws_dashboard.id
-  key          = "index.html"
-  source       = "./staticws/dashboard/out/index.html"
-  content_type = "text/html"
+# resource "aws_s3_object" "dashboard_index" {
+#   bucket       = aws_s3_bucket.staticws_dashboard.id
+#   key          = "index.html"
+#   source       = "./staticws/dashboard/out/index.html"
+#   content_type = "text/html"
+# }
+
+resource "aws_s3_object" "dashboard_dir" {
+  for_each = fileset("./staticws/dashboard/out/", "*")
+  bucket   = aws_s3_bucket.staticws_dashboard.id
+  source   = "./staticws/dashboard/out/${each.value}"
+  key      = each.value
+  # etag makes the file update when it changes; see https://stackoverflow.com/questions/56107258/terraform-upload-file-to-s3-on-every-apply
+  etag = filemd5("./staticws/dashboard/out/${each.value}")
 }
