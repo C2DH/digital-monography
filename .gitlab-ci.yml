@@ -25,8 +25,11 @@ init:
 build:
   stage: init
   only:
-    - main
-    - develop
+    refs:
+      - main
+      - develop
+    changes:
+      - "staticws/dashboard/*"
   image: node:20
   before_script:
     - cd staticws/dashboard/
@@ -37,7 +40,7 @@ build:
     - ls -la .
     - cat out/index.html
   cache:
-    # key: ${CI_COMMIT_REF_SLUG}
+    key: ${CI_COMMIT_REF_SLUG}
     paths:
       - staticws/dashboard/node_modules/
       - staticws/dashboard/.next/cache/
@@ -45,7 +48,6 @@ build:
     paths:
       - staticws/dashboard/.next
       - staticws/dashboard/out
-    expire_in: 1 day
 
 deploy:
   stage: deploy
