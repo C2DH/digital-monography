@@ -2,8 +2,12 @@
 
 import { useState, useEffect } from 'react'
 
+type InputData = {
+  id: number, quote: string, author: string
+};
+
 export default function Page() {
-  const [data, setData] = useState(null);
+  const [data, setData] = useState<InputData[]>([]);
   const [isLoading, setLoading] = useState(true);
   useEffect(() => {
     fetch("https://dummyjson.com/quotes/random/3")
@@ -22,7 +26,7 @@ export default function Page() {
     <h1>Invoices Page</h1>
     {/* {data && <p>{JSON.stringify(data)}</p>} */}
     <ul>
-      {data && data.map(({ id, quote, author }) => <li key={id}>* {quote} - {author}</li>)}
+      {data && data.map(({ id, quote, author }: InputData) => <li key={id}>* {quote} - {author}</li>)}
     </ul>
 
   </div>);
