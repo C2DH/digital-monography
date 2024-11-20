@@ -82,11 +82,31 @@ resource "aws_s3_bucket_policy" "public_staticws_dashboard" {
 #   content_type = "text/html"
 # }
 
+# resource "aws_s3_object" "dashboard_dir" {
+#   for_each = fileset("./staticws/dashboard/out/", "*")
+#   bucket   = aws_s3_bucket.staticws_dashboard.id
+#   source   = "./staticws/dashboard/out/${each.value}"
+#   key      = each.value
+#   # etag makes the file update when it changes; see https://stackoverflow.com/questions/56107258/terraform-upload-file-to-s3-on-every-apply
+#   etag = filemd5("./staticws/dashboard/out/${each.value}")
+# }
+
+module "dashboard_files" {
+  source   = "hashicorp/dir/template"
+  base_dir = "./staticws/dashboard/out/"
+}
+
 resource "aws_s3_object" "dashboard_dir" {
-  for_each = fileset("./staticws/dashboard/out/", "*")
-  bucket   = aws_s3_bucket.staticws_dashboard.id
-  source   = "./staticws/dashboard/out/${each.value}"
-  key      = each.value
-  # etag makes the file update when it changes; see https://stackoverflow.com/questions/56107258/terraform-upload-file-to-s3-on-every-apply
-  etag = filemd5("./staticws/dashboard/out/${each.value}")
+  for_each     = module.dashboard_files.files
+  bucket       = aws_s3_bucket.staticws_dashboard.id
+  key          = each.key
+  content_type = each.value.content_type
+  # The template_files module guarantees that only one of these two attributes
+  # will be set for each file, depending on whether it is an in-memory template
+  # rendering result or a static file on disk.
+  source  = each.value.source_path
+  content = each.value.content
+  # Unless the bucket has encryption enabled, the ETag of each object is an
+  # MD5 hash of that object.
+  etag = each.value.digests.md5
 }
