@@ -128,7 +128,7 @@ export default function Page() {
       <tbody>
         {dyndbData &&
           dyndbData.map((row: any, idx: number) => (
-            <tr scope="row" key={idx} className="border-b dark:border-gray-700">
+            <tr key={idx} className="border-b dark:border-gray-700">
               <td className="text-center py-3">{row.first_name}</td>
               <td className="text-center py-3">{row.last_name}</td>
               <td className="text-center py-3">{row.city}</td>
