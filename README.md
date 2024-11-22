@@ -13,7 +13,7 @@ Platform for scholars of digital humanities to publish their digital work.
 
 The development cycle is based on release cycles 4 months each. The direction of development is coordinated with project's partners during monthly meetings.
 
-## Pipeline status
+## CI/CD pipeline status
 
 | Branch  | Status |
 | ------- | ------ |
@@ -236,10 +236,9 @@ One way to upload changes to the guidelines repository is to clone the github re
 git config --add --local core.sshCommand 'ssh -i ~/.ssh/filename'
 ```
 
-### TODO
+### Minor development todos
 
 * limit permissions linked to the AWS Role connected to the CI/CD pipeline
-* change python-mammoth from being a wheel file to being installed from github fork
 * more unit tests
 * add integration testing
 * add e2e cloud testing on actual Lambdas
