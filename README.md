@@ -7,7 +7,7 @@ Platform for scholars of digital humanities to publish their digital work.
 [Notes and materials related with the project](https://uniluxembourg-my.sharepoint.com/:f:/r/personal/pawel_kaminski_uni_lu/Documents/Digital%20Monography%20Documents?csf=1&web=1&e=YYBKgk) can be found on the University's OneDrive shared directory. Access to the directory is given upon request. Some of other important project documents include:
 * [Jira board](https://degruyter.atlassian.net/jira/software/projects/TNB/boards/59);
 * [concept document](https://docs.google.com/document/d/1-iBdDUBQe8O8vU5hF83HuAKAacU7xEpgUfpdi975-CM/edit?exids=71471482,71471477&tab=t.0);
-* [notes from meeting related to the project](https://uniluxembourg-my.sharepoint.com/:f:/r/personal/pawel_kaminski_uni_lu/Documents/Digital%20Monography%20Documents/Meeting%20Notes?csf=1&web=1&e=Mbc9E9);
+* [notes from meetings related to the project](https://uniluxembourg-my.sharepoint.com/:f:/r/personal/pawel_kaminski_uni_lu/Documents/Digital%20Monography%20Documents/Meeting%20Notes?csf=1&web=1&e=Mbc9E9);
 * [notes from workshop of 7th December 2023](https://docs.google.com/document/d/1DniLbpg7pNBygPI1s-L6i6DjEW4tjvXVBhYtyFm1wyg/edit?tab=t.0);
 * [author's guidelines for drafting manuscripts](https://cpy-dgtmon-dev-staticws-wip.s3.eu-west-1.amazonaws.com/read/guidelines-for-drafting-manuscripts/index.html).
 
@@ -15,9 +15,11 @@ The development cycle is based on release cycles 4 months each. The direction of
 
 ## Pipeline status
 
-Status of the main branch: 
-[![pipeline status](https://gitlab.com/uniluxembourg/c2dh/private/degruyter/digital-monography/badges/main/pipeline.svg)](https://gitlab.com/uniluxembourg/c2dh/private/degruyter/digital-monography/-/commits/main)
-Status of the develop branch: [![pipeline status](https://gitlab.com/uniluxembourg/c2dh/private/degruyter/digital-monography/badges/develop/pipeline.svg)](https://gitlab.com/uniluxembourg/c2dh/private/degruyter/digital-monography/-/commits/develop)
+| ------- | ------ |
+| Branch  | Status |
+| ------- | ------ |
+|   main  | [![pipeline status](https://gitlab.com/uniluxembourg/c2dh/private/degruyter/digital-monography/badges/main/pipeline.svg)](https://gitlab.com/uniluxembourg/c2dh/private/degruyter/digital-monography/-/commits/main) |
+| develop | [![pipeline status](https://gitlab.com/uniluxembourg/c2dh/private/degruyter/digital-monography/badges/develop/pipeline.svg)](https://gitlab.com/uniluxembourg/c2dh/private/degruyter/digital-monography/-/commits/develop) |
 
 ## Design principles
 
