@@ -1,6 +1,17 @@
 # Digital monography
 
-Platform for scholars of digital humanities to publish their digital work
+Platform for scholars of digital humanities to publish their digital work.
+
+## Documentation
+
+[Notes and materials related with the project](https://uniluxembourg-my.sharepoint.com/:f:/r/personal/pawel_kaminski_uni_lu/Documents/Digital%20Monography%20Documents?csf=1&web=1&e=YYBKgk) can be found on the University's OneDrive shared directory. Access to the directory is given upon request. Some of other important project documents include:
+* [Jira board](https://degruyter.atlassian.net/jira/software/projects/TNB/boards/59);
+* [concept document](https://docs.google.com/document/d/1-iBdDUBQe8O8vU5hF83HuAKAacU7xEpgUfpdi975-CM/edit?exids=71471482,71471477&tab=t.0);
+* [notes from meeting related to the project](https://uniluxembourg-my.sharepoint.com/:f:/r/personal/pawel_kaminski_uni_lu/Documents/Digital%20Monography%20Documents/Meeting%20Notes?csf=1&web=1&e=Mbc9E9);
+* [notes from workshop of 7th December 2023](https://docs.google.com/document/d/1DniLbpg7pNBygPI1s-L6i6DjEW4tjvXVBhYtyFm1wyg/edit?tab=t.0);
+* [author's guidelines for drafting manuscripts](https://cpy-dgtmon-dev-staticws-wip.s3.eu-west-1.amazonaws.com/read/guidelines-for-drafting-manuscripts/index.html).
+
+The development cycle is based on release cycles 4 months each. The direction of development is coordinated with project's partners during monthly meetings.
 
 ## Pipeline status
 
@@ -28,7 +39,7 @@ The platform consists of the following modules (Lambda functions):
 | **dropbox**       | false | Calls Dropbox API to retrieve files from Dropbox and writes them to s3. |
 | **preparer**      | true  | Does all the transformations of the files in the author package. |
 | **verifier**      | true  | Checks the author package against the verification rules. |
-| **github**        | false  | Pushes the processed documents to GitHub remote repository. |
+| **github**        | false | Pushes the processed documents to GitHub remote repository. |
 | **builder**       | true  | Runs Jupyter Book to build a book out of processed documents. |
 
 ## Local development
@@ -237,8 +248,6 @@ git config --add --local core.sshCommand 'ssh -i ~/.ssh/filename'
 ### Tech stack for the frontend
 
 - React - as ui framework
-- Bootstrap - for ui components
-- Astro - for static site generation
-- AWS Amplify - tiny backend for authentication and AWS integration (this is a similar to Firebase or Supabase)
-
-https://github.com/aws-samples/amplify-authentication-for-astro
+- Tailwind - for ui components
+- Astro? - for static site generation
+~~- AWS Amplify? - tiny backend for authentication and AWS integration (this is a similar to Firebase or Supabase), see https://github.com/aws-samples/amplify-authentication-for-astro~~
