@@ -15,7 +15,6 @@ The development cycle is based on release cycles 4 months each. The direction of
 
 ## Pipeline status
 
-| ------- | ------ |
 | Branch  | Status |
 | ------- | ------ |
 |   main  | [![pipeline status](https://gitlab.com/uniluxembourg/c2dh/private/degruyter/digital-monography/badges/main/pipeline.svg)](https://gitlab.com/uniluxembourg/c2dh/private/degruyter/digital-monography/-/commits/main) |
@@ -252,4 +251,4 @@ git config --add --local core.sshCommand 'ssh -i ~/.ssh/filename'
 - React - as ui framework
 - Tailwind - for ui components
 - Astro? - for static site generation
-~~- AWS Amplify? - tiny backend for authentication and AWS integration (this is a similar to Firebase or Supabase), see https://github.com/aws-samples/amplify-authentication-for-astro~~
+- ~~AWS Amplify? - tiny backend for authentication and AWS integration (this is a similar to Firebase or Supabase), see https://github.com/aws-samples/amplify-authentication-for-astro~~
