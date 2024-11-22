@@ -208,7 +208,7 @@ Also, add the "AWS_DEFAULT_REGION" variable with value equal to the AWS region s
 When adding a new Lambda function (a new module), please follow these steps:
 1. Add the module code to the `src/ ` directory.
 1. Add the test code to the `tests/ ` directory.
-1. Copy and modify one of the `.tf` files that define a Lambda function. Usually you can reuse all of the IaC code changing only the <old-function-name> to <new-function-name>.
+1. Copy and modify one of the `.tf` files that define a Lambda function. Usually you can reuse all of the IaC code changing only the `<old-function-name>` to `<new-function-name>`.
 1. Update the `Makefile`.
 1. Update the `.versions.json`.
 1. Update the `secrets/dev.tfvars.enc.json` (remember to use the `sops` tool) and `variables.tf`.
@@ -226,7 +226,7 @@ To generate a visualization of an infrastructure as defined by .tf IaC files fol
 1. Initalize terraform locally with `terraform init`.
 1. Run `terraform graph`.
 1. Copy output from terraform graph command to [WebGraphViz](http://www.webgraphviz.com/?tab=map) and select on "Generate Graph".
-1. Save the '<div id="graphviz_svg_div">' tag as "graphviz.html" in the root of the project.
+1. Save the `<div id="graphviz_svg_div">` tag as "graphviz.html" in the root of the project.
 
 ### Changing guidelines github repo 
 
