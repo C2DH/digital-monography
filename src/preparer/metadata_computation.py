@@ -69,8 +69,8 @@ def compute_additional_metadata_fields(metadata: DocumentMetadata) -> None:
 | x | last_mod | | 
 | x | caption | | 
 | x | alttext | | 
-|   | file asset is included in | | 
-|   | bookmark | but how? | 
+| x | file asset is included in | | 
+|   | bookmark | how? | 
 |   | url to digital book | how? | 
 |   | url to OneDrive | how? | 
 |   | downloadable link to s3 | how? | 

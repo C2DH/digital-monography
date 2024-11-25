@@ -54,9 +54,9 @@ class TestHtml2MdMetadataExtraction:
         assert len(self.metadata.assets) == 3
 
     def test_all_metadata_rows_were_extracted(self):
-        assert len(self.asset_0.kwargs) == 6
-        assert len(self.asset_1.kwargs) == 4
-        assert len(self.asset_2.kwargs) == 3
+        assert len(self.asset_0.kwargs) == 7
+        assert len(self.asset_1.kwargs) == 5
+        assert len(self.asset_2.kwargs) == 4
 
     def test_string_values(self):
         assert (
