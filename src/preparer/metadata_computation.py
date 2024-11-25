@@ -15,6 +15,7 @@ def compute_additional_metadata_fields(metadata: DocumentMetadata) -> None:
             if digitalsource.exists():
                 digital_stats = digitalsource.stat()
                 digital_name = digitalsource.name
+                digital_type = digitalsource.suffix
                 digital_size = digital_stats.st_size  # in bytes
                 digital_mtime = (
                     digital_stats.st_mtime
@@ -22,6 +23,7 @@ def compute_additional_metadata_fields(metadata: DocumentMetadata) -> None:
                 asset.kwargs.update(
                     {
                         "digitalname": digital_name,
+                        "digitaltype": digital_type,
                         "digitalsize": digital_size,
                         "digitalmtime": digital_mtime,
                     }
@@ -32,6 +34,7 @@ def compute_additional_metadata_fields(metadata: DocumentMetadata) -> None:
             if papersource.exists():
                 paper_stats = papersource.stat()
                 paper_name = papersource.name
+                paper_type = papersource.suffix
                 paper_size = paper_stats.st_size  # in bytes
                 paper_mtime = (
                     paper_stats.st_mtime
@@ -39,6 +42,7 @@ def compute_additional_metadata_fields(metadata: DocumentMetadata) -> None:
                 asset.kwargs.update(
                     {
                         "papername": paper_name,
+                        "papertype": paper_type,
                         "papersize": paper_size,
                         "papermtime": paper_mtime,
                     }
@@ -58,6 +62,7 @@ def compute_additional_metadata_fields(metadata: DocumentMetadata) -> None:
 
 """
 | x | file_name | | 
+| x | file_type | | 
 | x | file_size | | 
 | x | last_mod | | 
 | x | caption | | 

@@ -47,6 +47,10 @@ class TestHtml2MdMetadataCoptutation:
         assert self.red_square_2.kwargs.get("digitalname") == "tiny-picture.png"
         assert self.red_square_2.kwargs.get("papername") is None
 
+    def test_file_type(self):
+        assert self.red_square_1.kwargs.get("digitaltype") == ".png"
+        assert self.red_square_2.kwargs.get("digitaltype") == ".png"
+
     def test_file_size(self):
         assert self.red_square_1.kwargs.get("digitalsize") == 110
         assert self.red_square_2.kwargs.get("digitalsize") == 110
