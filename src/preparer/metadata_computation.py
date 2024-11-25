@@ -51,6 +51,8 @@ def compute_additional_metadata_fields(metadata: DocumentMetadata) -> None:
         caption: bs4.element.PageElement
         asset.kwargs["caption"] = caption.text
 
+        asset.kwargs["location"] = metadata.filepath
+
         # in case of a conflict, alt text in a Metadata Table wins over embedded alt text
         if asset.kwargs.get("alttext") is None:
             elem = asset.kwargs.get("elem")
@@ -67,6 +69,7 @@ def compute_additional_metadata_fields(metadata: DocumentMetadata) -> None:
 | x | last_mod | | 
 | x | caption | | 
 | x | alttext | | 
+|   | file asset is included in | | 
 |   | bookmark | but how? | 
 |   | url to digital book | how? | 
 |   | url to OneDrive | how? | 

@@ -62,6 +62,9 @@ class TestHtml2MdMetadataCoptutation:
         assert t.month == 12
         assert t.day == 20
 
+    def test_asset_location(self):
+        assert self.red_square_1.kwargs.get("location").name == "index.docx"
+
     def test_caption(self):
         assert (
             self.red_square_1.kwargs.get("caption")
