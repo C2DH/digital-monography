@@ -41,6 +41,13 @@ FIELD_DELETE_PREVIOUS = "deleteprevious"
 FIELD_LICENSE_NAME = "licensename"
 METADATA_FIELDS = [
     {
+        "key": "id",
+        "is_bool": False,
+        "is_required": True,
+        "aliases": ["identifier"],
+        "desc": "Manual ID of the asset. Does not have to be unique.",
+    },
+    {
         "key": "author",
         "is_bool": False,
         "is_required": False,
@@ -99,6 +106,20 @@ METADATA_FIELDS = [
             "removeprevious",
         ],
         "desc": "",
+    },
+    {
+        "key": "status",
+        "is_bool": False,
+        "is_required": False,
+        "aliases": [],
+        "desc": "Copyright status to be filled by editor.",
+    },
+    {
+        "key": "isready",
+        "is_bool": True,
+        "is_required": False,
+        "aliases": ["ready", "ok", "isok"],
+        "desc": "Copyright status to be filled by editor.",
     },
     {
         "key": "uuid",
