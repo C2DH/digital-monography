@@ -76,12 +76,14 @@ def prepare_metadata_tables(
                 table["class"] = CLS_METADATA_TABLE
                 table["id"] = metadata_tbl.uuid
                 table[ATTRIB_METADATA_UUID] = metadata_tbl.uuid
+                kwargs = metadata_tbl.to_dict()
                 if described_el:
                     described_el[ATTRIB_METADATA_UUID] = metadata_tbl.uuid
+                    kwargs.update({"elem": described_el})
                 if caption_el:
                     caption_el[ATTRIB_METADATA_UUID] = metadata_tbl.uuid
-
-            asset = AssetDatapoint(pk=metadata_tbl.uuid, kwargs=metadata_tbl.to_dict())
+                    kwargs.update({"caption": caption_el})
+            asset = AssetDatapoint(pk=metadata_tbl.uuid, kwargs=kwargs)
             document_metadata.add_asset(asset)
     return html_soup
 

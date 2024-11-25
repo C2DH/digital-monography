@@ -20,6 +20,7 @@ try:
     from hide_metadata_in_html import hide_metadata_in_html
     from metadata import DocumentMetadata
     from metadata_extraction import prepare_metadata_tables
+    from metadata_computation import compute_additional_metadata_fields
     from remove_empty_tables import remove_empty_tables
     from replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
     from refs import (
@@ -48,6 +49,7 @@ except (ImportError, ModuleNotFoundError):
     from .hide_metadata_in_html import hide_metadata_in_html
     from .metadata import DocumentMetadata
     from .metadata_extraction import prepare_metadata_tables
+    from .metadata_computation import compute_additional_metadata_fields
     from .remove_empty_tables import remove_empty_tables
     from .replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
     from .refs import (
@@ -149,6 +151,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_soup = prepare_references(html_soup, metadata, references)
         html_soup = remove_empty_tables(html_soup, metadata, tables)
         html_soup = prepare_alt_texts(html_soup, metadata, images_with_alttxt)
+        metadata = compute_additional_metadata_fields(metadata)
         html_soup = hide_metadata_in_html(html_soup, metadata)  # last step
         html_soup_str = str(html_soup)
         # IMPORTANT NOTE: other services depend on html produced at this stage, make sure that:
