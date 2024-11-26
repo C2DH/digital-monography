@@ -47,17 +47,18 @@ def compute_additional_metadata_fields(metadata: DocumentMetadata) -> None:
                         "papermtime": paper_mtime,
                     }
                 )
-        caption = asset.kwargs.get("caption")
-        caption: bs4.element.PageElement
-        asset.kwargs["caption"] = caption.text
 
         asset.kwargs["location"] = metadata.filepath
 
+        elem = asset.kwargs.get("elem")
+
         # in case of a conflict, alt text in a Metadata Table wins over embedded alt text
         if asset.kwargs.get("alttext") is None:
-            elem = asset.kwargs.get("elem")
             elem_with_alttext = elem.find(alt=True)
             asset.kwargs["alttext"] = elem_with_alttext.get("alt")
+
+        if elem is not None:
+            asset.kwargs["elem"] = str(elem)
 
     return metadata
 

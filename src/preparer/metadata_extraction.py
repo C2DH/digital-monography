@@ -82,7 +82,7 @@ def prepare_metadata_tables(
                     kwargs.update({"elem": described_el})
                 if caption_el:
                     caption_el[ATTRIB_METADATA_UUID] = metadata_tbl.uuid
-                    kwargs.update({"caption": caption_el})
+                    kwargs.update({"caption": caption_el.text})
             asset = AssetDatapoint(pk=metadata_tbl.uuid, kwargs=kwargs)
             document_metadata.add_asset(asset)
     return html_soup
