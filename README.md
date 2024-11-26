@@ -244,6 +244,8 @@ git config --add --local core.sshCommand 'ssh -i ~/.ssh/filename'
 * add e2e cloud testing on actual Lambdas
 * mypy type checking
 * flake8 linting
+* refactor link management (refs.py)
+* preserve bs4.element.Tag elem attributes in metadata records, stringify on to_json() method
 
 ### Tech stack for the frontend
 
