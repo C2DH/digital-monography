@@ -55,7 +55,8 @@ def compute_additional_metadata_fields(metadata: DocumentMetadata) -> None:
         # in case of a conflict, alt text in a Metadata Table wins over embedded alt text
         if asset.kwargs.get("alttext") is None:
             elem_with_alttext = elem.find(alt=True)
-            asset.kwargs["alttext"] = elem_with_alttext.get("alt")
+            if elem_with_alttext is not None:
+                asset.kwargs["alttext"] = elem_with_alttext.get("alt")
 
         if elem is not None:
             asset.kwargs["elem"] = str(elem)
