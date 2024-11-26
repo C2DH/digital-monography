@@ -68,6 +68,7 @@ def prepare_ref_targets_in_headers(
     for tag in headers:
         tag: bs4.element.Tag
         anchors = []
+        link = None
         for child in tag.children:
             if child.name == "a":
                 target_tag = html_soup.new_tag("pre")
@@ -84,13 +85,13 @@ def prepare_ref_targets_in_headers(
                     elem=str(tag),
                 )
                 metadata.add_target(target)
-                heading = HeadingDatapoint(
-                    text=tag.text,
-                    target=link.fragment,
-                    level=tag.name,
-                    elem=str(tag),
-                )
-                metadata.add_heading(heading)
+        heading = HeadingDatapoint(
+            text=tag.text,
+            target=link.fragment if link else "",
+            level=tag.name,
+            elem=str(tag),
+        )
+        metadata.add_heading(heading)
         for a in anchors:
             a.extract()
     return html_soup
