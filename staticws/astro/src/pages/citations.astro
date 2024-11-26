@@ -1,5 +1,17 @@
 ---
+import { citation_groups as a00 } from "../data/links/index.json";
+import { citation_groups as a01 } from "../data/links/01_a.json";
+import { citation_groups as a02 } from "../data/links/02_b.json";
+import { citation_groups as a05 } from "../data/links/05_citation_in_fields.json";
+import { citation_groups as a06 } from "../data/links/06_citation_in_footnotes.json";
 
+const citation_groups = {
+    "index.json": a00,
+    "01_a.json": a01,
+    "02_b.json": a02,
+    "05_citation_in_fields.json": a05,
+    "06_citation_in_footnotes.json": a06,
+};
 ---
 
 <html lang="en">
@@ -20,5 +32,21 @@
         <a href="/warnings/">Warnings</a>
 
         <h1>Citations</h1>
+        <!-- {JSON.stringify(citation_groups)} -->
+        {
+            citation_groups &&
+                Object.entries(citation_groups).map(([key, values]) => (
+                    <>
+                        {values.length > 0 && (
+                            <ul>
+                                <b>{key}.docx</b>
+                                {values.map((val) => (
+                                    <li>{val.plainCitation}</li>
+                                ))}
+                            </ul>
+                        )}
+                    </>
+                ))
+        }
     </body>
 </html>
