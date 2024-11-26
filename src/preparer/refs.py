@@ -10,9 +10,10 @@ import typing as t
 try:
     from metadata import (
         DocumentMetadata,
-        TargetDatapoint,
+        HeadingDatapoint,
         RefDatapoint,
         SubstitutionDatapoint,
+        TargetDatapoint,
     )
     from keys import KeyPath
     from constants import (
@@ -24,9 +25,10 @@ try:
 except (ImportError, ModuleNotFoundError):
     from .metadata import (
         DocumentMetadata,
-        TargetDatapoint,
+        HeadingDatapoint,
         RefDatapoint,
         SubstitutionDatapoint,
+        TargetDatapoint,
     )
     from .keys import KeyPath
     from .constants import (
@@ -82,6 +84,13 @@ def prepare_ref_targets_in_headers(
                     elem=str(tag),
                 )
                 metadata.add_target(target)
+                heading = HeadingDatapoint(
+                    text=tag.text,
+                    target=link.fragment,
+                    level=tag.name,
+                    elem=str(tag),
+                )
+                metadata.add_heading(heading)
         for a in anchors:
             a.extract()
     return html_soup

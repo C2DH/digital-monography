@@ -22,6 +22,7 @@ T = t.TypeVar("T")
 type AcceptedValues = t.Union[str, bool, pathlib.Path]
 type DatapointUnion = t.Union[
     AssetDatapoint,
+    HeadingDatapoint,
     RefDatapoint,
     TargetDatapoint,
     SubstitutionDatapoint,
@@ -30,6 +31,7 @@ type DatapointUnion = t.Union[
 ]
 type RecordsUnion = t.Union[
     AssetRecord,
+    HeadingRecord,
     RefRecord,
     TargetRecord,
     SubstitutionRecord,
@@ -51,6 +53,14 @@ class FieldTypeRecord(t.TypedDict):
 class AssetRecord(t.TypedDict):
     pk: str
     kwargs: dict[str, AcceptedValues]
+
+
+class HeadingRecord(t.TypedDict):
+    pk: int
+    elem: str
+    level: str
+    text: str
+    target: str
 
 
 class RefRecord(t.TypedDict):
@@ -88,6 +98,10 @@ class CitationItemRecord(t.TypedDict):
     itemData: dict[str, t.Any]
 
 
+# TODO: elem attributes should be left as bs4.element.PageElement,
+# not immediatly stringified.
+
+
 @dataclasses.dataclass
 class AssetDatapoint:
     pk: str
@@ -109,6 +123,26 @@ class AssetDatapoint:
         return AssetDatapoint(pk=pk, kwargs=jsml)
 
     def __getitem__(self, name: str) -> t.Union[AcceptedValues]:
+        return getattr(self, name)
+
+
+@dataclasses.dataclass
+class HeadingDatapoint:
+    pk: int = dataclasses.field(default_factory=itertools.count().__next__, init=False)
+    elem: str
+    level: str
+    text: str
+    target: str
+
+    def to_json(self) -> dict[str, t.Union[str, int]]:
+        return {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}
+
+    @staticmethod
+    def from_json(jsml: dict[str, t.Union[str, int]]) -> "HeadingDatapoint":
+        del jsml["pk"]
+        return HeadingDatapoint(**jsml)
+
+    def __getitem__(self, name: str) -> t.Union[int, str]:
         return getattr(self, name)
 
 
@@ -224,6 +258,7 @@ class DocumentMetadata:
     def __init__(self, fp: t.Optional[KeyPath] = None) -> None:
         self.filepath = fp
         self.assets: list[AssetDatapoint] = []
+        self.headings: list[HeadingDatapoint] = []
         self.refs: list[RefDatapoint] = []
         self.targets: list[TargetDatapoint] = []
         self.substitutions: list[SubstitutionDatapoint] = []
@@ -257,6 +292,9 @@ class DocumentMetadata:
     add_ref = functools.partialmethod(add, "refs")
     get_ref = functools.partialmethod(get, "refs")
 
+    add_heading = functools.partialmethod(add, "headings")
+    get_heading = functools.partialmethod(get, "headings")
+
     add_target = functools.partialmethod(add, "targets")
     get_target = functools.partialmethod(get, "targets")
 
@@ -272,6 +310,7 @@ class DocumentMetadata:
     def to_dict(self) -> dict[str, list[dict[str, AcceptedValues]]]:
         return {
             "assets": self.assets,
+            "headings": self.headings,
             "refs": self.refs,
             "targets": self.targets,
             "substitutions": self.substitutions,
@@ -282,6 +321,7 @@ class DocumentMetadata:
     def to_json(self) -> dict[str, list[dict[str, t.Union[str, t.Union[str, int]]]]]:
         return {
             "assets": [rec.to_json() for rec in self.assets],
+            "headings": [rec.to_json() for rec in self.headings],
             "refs": [rec.to_json() for rec in self.refs],
             "targets": [rec.to_json() for rec in self.targets],
             "substitutions": [rec.to_json() for rec in self.substitutions],
@@ -291,6 +331,9 @@ class DocumentMetadata:
 
     def from_json(self, jsml: dict[str, RecordsUnion]) -> None:
         self.assets = [AssetDatapoint.from_json(rec) for rec in jsml.get("assets", [])]
+        self.headings = [
+            HeadingDatapoint.from_json(rec) for rec in jsml.get("headings", [])
+        ]
         self.refs = [RefDatapoint.from_json(rec) for rec in jsml.get("refs", [])]
         self.targets = [
             TargetDatapoint.from_json(rec) for rec in jsml.get("targets", [])
@@ -310,10 +353,11 @@ class DocumentMetadata:
 
     def __str__(self) -> str:
         return (
-            "%s(assets=[%s], refs=[%s], targets=[%s], substitutions=[%s], citation_groups=[%s], citation_items=[%s])"
+            "%s(assets=[%s], headings=[%s], refs=[%s], targets=[%s], substitutions=[%s], citation_groups=[%s], citation_items=[%s])"
             % (
                 self.__class__.__name__,
                 ", ".join(str(rec) for rec in self.assets),
+                ", ".join(str(rec) for rec in self.headings),
                 ", ".join(str(rec) for rec in self.refs),
                 ", ".join(str(rec) for rec in self.targets),
                 ", ".join(str(rec) for rec in self.substitutions),
