@@ -503,7 +503,7 @@ class HtmlVerifier:
     ) -> bool:
         if item is None:
             match = re.match(r"^\w+", tag.text)
-            item = match.group(0)
+            item = match.group(0) if match is not None else ""
         if item == "Figure":
             uuid = tag.get("dgt-mon-metadata-uuid", "")
             if uuid:
