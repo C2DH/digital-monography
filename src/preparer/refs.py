@@ -177,8 +177,10 @@ def prepare_ref_targets_in_captions(
                 )
             target_tag = html_soup.new_tag("pre")
             target_tag.string = link.mystify_target()
-            caption.insert_before(target_tag)
-
+            try:
+                caption.insert_before(target_tag)
+            except ValueError:
+                caption.insert(0, target_tag)
     return html_soup
 
 
