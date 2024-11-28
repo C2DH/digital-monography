@@ -160,7 +160,9 @@ def _put_file_from_dbx_to_s3(body: bytes, key: KeyPath) -> None:
             + json.dumps(resp, default=str)
         )
     except Exception as e:
-        logger.exception(f"Putting file from Dropbox to {dst} bucket failed. Error: {repr(e)}")
+        logger.exception(
+            f"Putting file from Dropbox to {dst} bucket failed. Error: {repr(e)}"
+        )
         raise
 
 
