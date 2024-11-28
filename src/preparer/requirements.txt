@@ -2,5 +2,6 @@ beautifulsoup4==4.12.*
 boto3==1.34.*
 git+https://github.com/kaminski-pawel/python-mammoth.git@1.6.0+1.1.1#egg=mammoth
 citeproc-py==0.6.*
+docutils==0.20.*
 markdownify==0.13.*
 nbformat==5.10.*
