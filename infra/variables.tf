@@ -136,3 +136,13 @@ variable "dgtmon_dev_dyndb_assets_tbl" {
   type        = string
   description = "Name of the table for editors managing the status of assets"
 }
+
+variable "dgtmon_dev_dyndb_headings_tbl" {
+  type        = string
+  description = "Name of the table for editors to list publication's headings"
+}
+
+variable "dgtmon_dev_dyndb_citations_tbl" {
+  type        = string
+  description = "Name of the table for editors to list publication's citations"
+}
