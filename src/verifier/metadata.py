@@ -212,6 +212,7 @@ class SubstitutionDatapoint:
 @dataclasses.dataclass
 class CitationGroupDatapoint:
     pk: str
+    file_name: str
     schema: str
     formattedCitation: str
     noteIndex: int
@@ -231,6 +232,7 @@ class CitationGroupDatapoint:
 @dataclasses.dataclass
 class CitationItemDatapoint:
     pk: t.Union[int, str]
+    file_name: str
     citationId: str
     uris: list[str]
     itemData: dict[str, t.Any]

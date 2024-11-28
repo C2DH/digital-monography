@@ -51,6 +51,7 @@ def prepare_citations(
         metadata.add_citation_group(
             CitationGroupDatapoint(
                 pk=citation_group.get("citationID"),
+                file_name=metadata.filepath.name if metadata.filepath else "",
                 schema=citation_group.get("schema"),
                 formattedCitation=props.get("formattedCitation"),
                 noteIndex=props.get("noteIndex"),
@@ -61,6 +62,7 @@ def prepare_citations(
             metadata.add_citation_item(
                 CitationItemDatapoint(
                     pk=citation_item.get("id"),
+                    file_name=metadata.filepath.name if metadata.filepath else "",
                     citationId=citation_group.get("citationID"),
                     itemData=citation_item.get("itemData"),
                     uris=citation_item.get("uris"),
