@@ -41,6 +41,7 @@ copy/constants:
 	cp src/_common/constants.py src/entrypoint/constants.py
 	cp src/_common/constants.py src/dropbox/constants.py
 	cp src/_common/constants.py src/preparer/constants.py
+	cp src/_common/constants.py src/builder/constants.py
 	cp src/_common/constants.py src/github/constants.py
 	cp src/_common/constants.py src/verifier/constants.py
 
