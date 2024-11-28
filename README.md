@@ -43,6 +43,16 @@ The platform consists of the following modules (Lambda functions):
 | **github**        | false | Pushes the processed documents to GitHub remote repository. |
 | **builder**       | true  | Runs Jupyter Book to build a book out of processed documents. |
 
+Deployment of each module should be done in order:
+
+| Order | Stage name    | Command               | Description |
+| ---   | ---           | ---                   | --- |
+| 1     | **version**   | `vim .versions.json`  | In `.versions.json` appropriately increment a _stable_ version number of a module you've made changes to in the `src/<module>` dir |
+| 2     | **build**     | `make <module>/build` | Builds Docker image |
+| 3     | **tag**       | `make <module>/tag`   | Tags the image with a tag specified in `.versions.json` |
+| 4     | **push**      | `make <module>/push`  | Pushes the image to docker registry (remember to login to the registry with `make login`) |
+| 5     | **apply**     | `git push`            | As you push your changes to GitLab, the CI/CD pipeline is run, including deployment of changes to the infrastructure; if the _stable_ version changed in the `.versions.json`, the Docker container will be updated on the cloud |
+
 ## Local development
 
 You can check the basic workflow of the platform by running local scripts. To do that, follow these steps:
