@@ -86,6 +86,7 @@ def prepare_ref_targets_in_headers(
                 )
                 metadata.add_target(target)
         heading = HeadingDatapoint(
+            file_name=metadata.filepath.name if metadata.filepath else "",
             text=tag.text,
             target=link.fragment if link else "",
             level=tag.name,

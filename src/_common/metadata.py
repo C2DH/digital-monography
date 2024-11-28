@@ -57,6 +57,7 @@ class AssetRecord(t.TypedDict):
 
 class HeadingRecord(t.TypedDict):
     pk: int
+    file: str
     elem: str
     level: str
     text: str
@@ -129,6 +130,7 @@ class AssetDatapoint:
 @dataclasses.dataclass
 class HeadingDatapoint:
     pk: int = dataclasses.field(default_factory=itertools.count().__next__, init=False)
+    file_name: str
     elem: str
     level: str
     text: str
