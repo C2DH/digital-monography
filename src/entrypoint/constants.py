@@ -17,6 +17,10 @@ GITHUB_SECRET_ID = "dgtmon-dev-github-api-secrets"
 DROPBOX_SECRET_ID = "dgtmon-dev-github-api-secrets"
 DYNAMODB_TOKENS_TBL = "dgtmon-dev-dyndb-tokens-tbl"
 DYNAMODB_CURSORS_TBL = "dgtmon-dev-dyndb-cursors-tbl"
+# dynamodb table for publisher to manage content
+DYNAMODB_ASSETS_TBL = "dgtmon-dev-dyndb-assets-tbl"
+DYNAMODB_CITATIONS_TBL = "dgtmon-dev-dyndb-headings-tbl"
+DYNAMODB_HEADINGS_TBL = "dgtmon-dev-dyndb-citations-tbl"
 # S3 bucket names
 ARCHIVE_APKG_ALL = "cpy-dgtmon-dev-archive-apkg-all"
 APKG_UPLOAD_BUCKET_NAME = "cpy-dgtmon-dev-apkg-upload"
