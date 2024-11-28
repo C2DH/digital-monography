@@ -194,7 +194,7 @@ data "aws_iam_policy_document" "builder" {
   statement {
     sid       = "AllowReadAndWriteToDynamoDB"
     effect    = "Allow"
-    resources = [aws_dynamodb_table.headings_tbl]
+    resources = [aws_dynamodb_table.headings_tbl.arn]
     actions = [
       "dynamodb:PutItem",
       # "dynamodb:GetItem",
