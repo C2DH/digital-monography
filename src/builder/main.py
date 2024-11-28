@@ -1,3 +1,4 @@
+import boto3
 import datetime
 import json
 import shutil
@@ -16,13 +17,19 @@ if not IS_DEBUG:
     sys.path.append(current_dir)
 
 try:
-    from constants import IS_DEBUG, DEFAULT_SFS_DIR, STATICWS_WIP_BUCKET_NAME
+    from constants import (
+        IS_DEBUG,
+        DEFAULT_SFS_DIR,
+        DYNAMODB_HEADINGS_TBL,
+        STATICWS_WIP_BUCKET_NAME,
+    )
     from metadata import DocumentMetadata, SubstitutionDatapoint
     from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
     from .constants import (
         IS_DEBUG,
         DEFAULT_SFS_DIR,
+        DYNAMODB_HEADINGS_TBL,
         STATICWS_WIP_BUCKET_NAME,
     )
     from .metadata import DocumentMetadata, SubstitutionDatapoint
@@ -43,18 +50,25 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
+if IS_DEBUG:
+    dynamodb = None  # TODO: add fakers
+else:
+    dynamodb = boto3.resource("dynamodb")
+
+
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info("Event: " + json.dumps(event, default=str))
     logger.info("Context: " + json.dumps(context, default=str))
     key = _get_key(event)
     _mkdir_read()
+    _write_metadata_to_db(key)
     _copy_assets(key)
     _prepare_config(key)
     _build_book(key)
     _distribute_book(key)
     # this should probably go to another Lambda service
-    _build_verification_report(key)
-    _distribute_report(key)
+    # _build_verification_report(key)
+    # _distribute_report(key)
     logging.info("Builder Lambda function finished.")
     return {"statusCode": 200, "body": ""}
 
@@ -78,6 +92,43 @@ def _mkdir_read():
     new_path = pathlib.Path(DEFAULT_SFS_DIR) / "read"
     if not new_path.exists():
         new_path.mkdir(exist_ok=True)
+
+
+def _write_metadata_to_db(key: KeyPath) -> None:
+    try:
+        tables = {
+            "headings": DYNAMODB_HEADINGS_TBL,
+        }
+        records = {
+            "headings": [],
+        }
+        # merge json per file to json per domain like headings, citations, etc.
+        for fp in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
+            with open(fp, "r") as infile:
+                for domain, tbl in tables.items():
+                    records_in_one_file = json.load(infile)
+                    records[domain].extend(records_in_one_file.get(domain, []))
+        logger.info(f"{json.dumps(records, default=str)}")
+        # write to db
+        for domain, tbl in tables.items():
+            table = dynamodb.Table(tbl)
+            resp = table.put_item(Item={"slug": key.slug, "records": records[domain]})
+            logger.info(
+                f"Response from dynamodb.Table({tbl}).put_item: {json.dumps(resp, default=str)}"
+            )
+    except Exception as e:
+        logging.exception(f"Unable to write metadata to dynamodb. Error: {repr(e)}")
+        raise
+
+
+# def merge_jsons(path, key: str):
+#     result = []
+#     for fp in path.glob("**/*.json"):
+#         with open(fp, "r") as infile:
+#             records = json.load(infile)
+#             result.extend(records[key])
+#     with open("new_file.json", "w") as f:
+#         json.dump(result, f)
 
 
 def _copy_assets(key: KeyPath) -> None:

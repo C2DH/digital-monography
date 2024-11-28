@@ -192,6 +192,19 @@ data "aws_iam_policy_document" "builder" {
     ]
   }
   statement {
+    sid       = "AllowReadAndWriteToDynamoDB"
+    effect    = "Allow"
+    resources = [aws_dynamodb_table.headings_tbl]
+    actions = [
+      "dynamodb:PutItem",
+      # "dynamodb:GetItem",
+      # "dynamodb:UpdateItem",
+      # "dynamodb:DeleteItem",
+      # "dynamodb:Scan",
+      # "dynamodb:Query"
+    ]
+  }
+  statement {
     sid       = "AllowLambdaVPCNetworking"
     effect    = "Allow"
     resources = ["*"]
