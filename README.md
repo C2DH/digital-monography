@@ -48,10 +48,12 @@ Deployment of each module should be done in order:
 | Order | Stage name    | Command               | Description |
 | ---   | ---           | ---                   | --- |
 | 1     | **version**   | `vim .versions.json`  | In `.versions.json` appropriately increment a _stable_ version number of a module you've made changes to in the `src/<module>` dir |
-| 2     | **build**     | `make <module>/build` | Builds Docker image |
-| 3     | **tag**       | `make <module>/tag`   | Tags the image with a tag specified in `.versions.json` |
-| 4     | **push**      | `make <module>/push`  | Pushes the image to docker registry (remember to login to the registry with `make login`) |
-| 5     | **apply**     | `git push`            | As you push your changes to GitLab, the CI/CD pipeline is run, including deployment of changes to the infrastructure; if the _stable_ version changed in the `.versions.json`, the Docker container will be updated on the cloud |
+| 2     | **apply**     | `git push`            | As you push your changes to GitLab, the CI/CD pipeline is run, including deployment of changes to the infrastructure; if the _stable_ version changed in the `.versions.json`, the Docker container will be updated on the cloud |
+| 3     | **build**     | `make <module>/build` | Builds Docker image |
+| 4     | **tag**       | `make <module>/tag`   | Tags the image with a tag specified in `.versions.json` |
+| 5     | **push**      | `make <module>/push`  | Pushes the image to docker registry (remember to login to the registry with `make login`) |
+
+Note that there is a race condition - docker container has to be built, tagged and pushed before the apply stage pulls the image from registry. If CI/CD pipeline job fails with error `Source image <registry>/<image>:<tag> does not exist. Provide a valid source image.` re-run that job. Make sure that you had built, tagged and pushed the image in question.
 
 ## Local development
 
