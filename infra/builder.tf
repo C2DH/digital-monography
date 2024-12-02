@@ -192,9 +192,13 @@ data "aws_iam_policy_document" "builder" {
     ]
   }
   statement {
-    sid       = "AllowReadAndWriteToDynamoDB"
-    effect    = "Allow"
-    resources = [aws_dynamodb_table.headings_tbl.arn]
+    sid    = "AllowReadAndWriteToDynamoDB"
+    effect = "Allow"
+    resources = [
+      aws_dynamodb_table.assets_tbl.arn,
+      aws_dynamodb_table.headings_tbl.arn,
+      aws_dynamodb_table.citations_tbl.arn
+    ]
     actions = [
       "dynamodb:PutItem",
       # "dynamodb:GetItem",
@@ -243,6 +247,14 @@ resource "aws_lambda_permission" "allow_builder_access_s3_via_vpc_endpoint" {
   principal     = "s3.amazonaws.com"
   source_arn    = aws_vpc_endpoint.s3_endpoint.arn
 }
+
+# resource "aws_lambda_permission" "allow_builder_access_dynamodb_via_vpc_endpoint" {
+#   statement_id  = "AllowDynamoDbAccessViaVPCEndpoint"
+#   action        = "lambda:InvokeFunction"
+#   function_name = aws_lambda_function.builder_func.arn
+#   principal     = "dynamodb.amazonaws.com"
+#   source_arn    = aws_vpc_endpoint.dynamodb_endpoint.arn
+# }
 
 resource "aws_lambda_function" "builder_func" {
   function_name = "builder"
