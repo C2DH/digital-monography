@@ -1,6 +1,7 @@
 import collections
 import bs4
 import datetime
+import logging
 import json
 import pathlib
 import re
@@ -9,6 +10,7 @@ import typing as t
 
 try:
     from constants import (
+        IS_DEBUG,
         METADATA_FIELDS,
         METADATA_FIELDS_KEYS,
         CLS_METADATA_TABLE,
@@ -27,6 +29,7 @@ try:
     from metadata import AssetDatapoint, DocumentMetadata
 except (ImportError, ModuleNotFoundError):
     from .constants import (
+        IS_DEBUG,
         METADATA_FIELDS,
         METADATA_FIELDS_KEYS,
         CLS_METADATA_TABLE,
@@ -98,6 +101,20 @@ MSG_PROBLEMS = {
         "check_tbl_non_supported_suffix": "Unsupported file extension found.",
     },
 }
+
+
+if IS_DEBUG:
+    today = datetime.date.today().isoformat()
+    log_target = pathlib.Path(f"/tmp/efs/_LOGS/{today}_verifier.log")
+    log_target.parent.mkdir(parents=True, exist_ok=True)
+    logging.basicConfig(
+        filename=log_target,
+        encoding="utf-8",
+        level=logging.DEBUG,
+        format="%(asctime)s::%(name)s::%(levelname)s::%(message)s",
+    )
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
 class HtmlVerifier:
@@ -589,12 +606,21 @@ class HtmlVerifier:
     # metadata tables ###################################################################
 
     def _apply_metadatatables_verification(self) -> None:
+        logger.info("_apply_metadatatables_verification")
+        logger.info(
+            f"Metadata tables: {';'.join(str(tbl) for tbl in self._metadata_tables)}"
+        )
         for elem in self._metadata_tables:
+            logger.info(f"Current html element: {elem}")
             uuid = elem.get("id")
+            logger.info(f"UUID of current metadata table: {uuid}")
             asset_datapoint = self._metadata.get_asset(uuid)
+            logger.info(f"Asset datapoint: {asset_datapoint}")
             # whole metadata table verification
             missing_req_fields = self._check_tbl_missing_fields(asset_datapoint)
+            logger.info(f"if missing_req_fields")
             if missing_req_fields:
+                logger.info(f"missing_req_fields == True")
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[TABLES]["check_tbl_missing_fields"],
                     recommend=f"The following obligatory metadata fields are missing: {missing_req_fields}.",
@@ -604,7 +630,9 @@ class HtmlVerifier:
                     tags=[TABLES, METADATA_TABLES],
                 )
             duplicated_fields = self._check_tbl_for_duplicated_fields(elem)
+            logger.info(f"if duplicated_fields")
             if duplicated_fields:
+                logger.info(f"duplicated_fields == True")
                 self._messages.add_msg(
                     problem=MSG_PROBLEMS[TABLES]["check_tbl_for_duplicated_fields"],
                     recommend=f"The following metadata fields are used more than once: {duplicated_fields}.",
@@ -615,12 +643,15 @@ class HtmlVerifier:
                 )
             # single field verification
             for key, val in asset_datapoint.kwargs.items():
+                logger.info(f"key: {key}, val: {val}")
                 if key in (FIELD_DIGITAL_SOURCE, FIELD_PAPER_SOURCE):
                     vpath = PathHandler(val, self._slug)
                 else:
                     vpath = None
                 val = str(val)
+                logger.info("if self._check_tbl_unrecognized_field(key):")
                 if self._check_tbl_unrecognized_field(key):
+                    logger.info("_check_tbl_unrecognized_field == True")
                     self._messages.add_msg(
                         problem=MSG_PROBLEMS[TABLES]["check_tbl_unrecognized_field"],
                         recommend=f"Field `{key}` does not match any of the recognized names: {[field['key'] for field in METADATA_FIELDS]}.",
@@ -629,7 +660,9 @@ class HtmlVerifier:
                         timestamp=self._timestamp,
                         tags=[TABLES, METADATA_TABLES],
                     )
+                logger.info("if _check_tbl_empty_field")
                 if self._check_tbl_empty_field(val):
+                    logger.info("_check_tbl_empty_field == True")
                     self._messages.add_msg(
                         problem=MSG_PROBLEMS[TABLES]["check_tbl_empty_field"],
                         recommend=f'Field "`{key}`" is empty.',
@@ -638,7 +671,9 @@ class HtmlVerifier:
                         timestamp=self._timestamp,
                         tags=[TABLES, METADATA_TABLES],
                     )
+                logger.info("if _check_tbl_unrecognized_license")
                 if self._check_tbl_unrecognized_license(key, val):
+                    logger.info("_check_tbl_unrecognized_license == True")
                     self._messages.add_msg(
                         problem=MSG_PROBLEMS[TABLES]["check_tbl_unrecognized_license"],
                         recommend=f'Name "{val}" does not match any of the recognized License Identifiers.',
@@ -647,7 +682,9 @@ class HtmlVerifier:
                         timestamp=self._timestamp,
                         tags=[TABLES, METADATA_TABLES],
                     )
+                logger.info("if _check_tbl_not_in_assets")
                 if self._check_tbl_not_in_assets(vpath):
+                    logger.info("_check_tbl_not_in_assets == True")
                     self._messages.add_msg(
                         problem=MSG_PROBLEMS[TABLES]["check_tbl_not_in_assets"],
                         recommend=f'`{val}` does not correctly point to this directory. Valid path looks closer to "`./assets/path/to/a/file.txt`".',
@@ -656,7 +693,9 @@ class HtmlVerifier:
                         timestamp=self._timestamp,
                         tags=[TABLES, METADATA_TABLES],
                     )
+                logger.info("if _check_tbl_non_relative_path")
                 if self._check_tbl_non_relative_path(vpath):
+                    logger.info("_check_tbl_non_relative_path == True")
                     self._messages.add_msg(
                         problem=MSG_PROBLEMS[TABLES]["check_tbl_non_relative_path"],
                         recommend=f'`{val}` is not a correct relative path. Valid path looks closer to "`./assets/path/to/a/file.txt`" (note the `./assets` at the beginning).',
@@ -665,7 +704,9 @@ class HtmlVerifier:
                         timestamp=self._timestamp,
                         tags=[TABLES, METADATA_TABLES],
                     )
+                logger.info("if _check_tbl_no_file")
                 if self._check_tbl_no_file(vpath):
+                    logger.info("_check_tbl_no_file == True")
                     self._messages.add_msg(
                         problem=MSG_PROBLEMS[TABLES]["check_tbl_no_file"],
                         recommend=f"`{val}` was not found. Check carefully if a path to a file is correct.",
@@ -674,7 +715,9 @@ class HtmlVerifier:
                         timestamp=self._timestamp,
                         tags=[TABLES, METADATA_TABLES],
                     )
+                logger.info("if _check_tbl_is_dir")
                 if self._check_tbl_is_dir(vpath):
+                    logger.info("_check_tbl_is_dir == True")
                     self._messages.add_msg(
                         problem=MSG_PROBLEMS[TABLES]["check_tbl_is_dir"],
                         recommend=f"`{val}` seems to be a directory.",
@@ -683,7 +726,9 @@ class HtmlVerifier:
                         timestamp=self._timestamp,
                         tags=[TABLES, METADATA_TABLES],
                     )
+                logger.info("if _check_tbl_non_supported_suffix")
                 if self._check_tbl_non_supported_suffix(vpath):
+                    logger.info("_check_tbl_non_supported_suffix == True")
                     self._messages.add_msg(
                         problem=MSG_PROBLEMS[TABLES]["check_tbl_non_supported_suffix"],
                         recommend=f'Consider conversion of the "`{val}`" to one of supported file suffixes: {SUPPORTED_SUFFIXES}.',
