@@ -20,6 +20,8 @@ try:
     from constants import (
         IS_DEBUG,
         DEFAULT_SFS_DIR,
+        DYNAMODB_ASSETS_TBL,
+        DYNAMODB_CITATIONS_TBL,
         DYNAMODB_HEADINGS_TBL,
         STATICWS_WIP_BUCKET_NAME,
     )
@@ -29,6 +31,8 @@ except (ImportError, ModuleNotFoundError):
     from .constants import (
         IS_DEBUG,
         DEFAULT_SFS_DIR,
+        DYNAMODB_ASSETS_TBL,
+        DYNAMODB_CITATIONS_TBL,
         DYNAMODB_HEADINGS_TBL,
         STATICWS_WIP_BUCKET_NAME,
     )
@@ -95,11 +99,17 @@ def _mkdir_read():
 
 
 def _write_metadata_to_db(key: KeyPath) -> None:
+    if dynamodb is None:
+        return
     try:
         tables = {
+            "assets": DYNAMODB_ASSETS_TBL,
+            "citations": DYNAMODB_CITATIONS_TBL,
             "headings": DYNAMODB_HEADINGS_TBL,
         }
         records = {
+            "assets": [],
+            "citations": [],
             "headings": [],
         }
         # merge json per file to json per domain like headings, citations, etc.
