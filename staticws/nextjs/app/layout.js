@@ -1,5 +1,8 @@
 import localFont from "next/font/local";
-import "./globals.css";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "./_styles/globals.css";
+import TnbHeader from "./_components/TnbHeader";
+import TnbFooter from "./_components/TnbFooter";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -23,7 +26,15 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <TnbHeader></TnbHeader>
+        <main role="main" className="container">
+          {children}
+        </main>
+        <TnbFooter></TnbFooter>
+        {/* <script
+          src="https://code.jquery.com/jquery-3.7.1.slim.min.js"
+          integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8="
+          crossOrigin="anonymous"></script> */}
       </body>
     </html>
   );
