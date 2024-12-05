@@ -7,11 +7,6 @@ resource "aws_dynamodb_table" "audit_tbl" {
     name = "slug"
     type = "S"
   }
-
-  attribute {
-    name = "module"
-    type = "S"
-  }
 }
 
 resource "aws_dynamodb_table" "assets_tbl" {
