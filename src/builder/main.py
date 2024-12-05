@@ -431,7 +431,7 @@ def _sync_efs_to_staticws(src: pathlib.Path, dstdir: str, slug: str) -> None:
 def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:
     event = AuditEvent(
         slug=key.slug,
-        timestamp=datetime.datetime.now(),
+        timestamp=datetime.datetime.now().isoformat(),
         module=ModuleEnum.BUILDER.value,
         filename="",
         status=status,

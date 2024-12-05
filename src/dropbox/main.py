@@ -209,7 +209,7 @@ def _download_file(dbx: dropbox.Dropbox, entry: dropbox.files.FileMetadata) -> N
 def _log_audit_event(slug: str, status: int, msg: str, fn: str = "") -> None:
     event = AuditEvent(
         slug=slug,
-        timestamp=datetime.datetime.now(),
+        timestamp=datetime.datetime.now().isoformat(),
         module=ModuleEnum.DROPBOX.value,
         filename=fn,
         status=status,

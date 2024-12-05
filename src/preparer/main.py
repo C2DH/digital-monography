@@ -396,7 +396,7 @@ def _unmarshall_json(key: KeyPath) -> nbformat.NotebookNode:
 def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:
     event = AuditEvent(
         slug=key.slug,
-        timestamp=datetime.datetime.now(),
+        timestamp=datetime.datetime.now().isoformat(),
         module=ModuleEnum.PREPARER.value,
         filename=key.name,
         status=status,
