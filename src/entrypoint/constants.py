@@ -7,6 +7,17 @@
 # ======================
 
 import os
+import enum
+
+
+class ModuleEnum(enum.Enum):
+    ENTRYPOINT = 10
+    DROPBOX = 20
+    PREPARER = 30
+    VERIFIER = 40
+    GITHUB = 60
+    BUILDER = 70
+
 
 IS_DEBUG = bool(int(os.environ.get("DGTMON_DEBUG", 0)))
 if IS_DEBUG:
@@ -18,6 +29,7 @@ DROPBOX_SECRET_ID = "dgtmon-dev-github-api-secrets"
 DYNAMODB_TOKENS_TBL = "dgtmon-dev-dyndb-tokens-tbl"
 DYNAMODB_CURSORS_TBL = "dgtmon-dev-dyndb-cursors-tbl"
 # dynamodb table for publisher to manage content
+DYNAMODB_AUDIT_TBL = "dgtmon-dev-dyndb-audit-tbl"
 DYNAMODB_ASSETS_TBL = "dgtmon-dev-dyndb-assets-tbl"
 DYNAMODB_CITATIONS_TBL = "dgtmon-dev-dyndb-citations-tbl"
 DYNAMODB_HEADINGS_TBL = "dgtmon-dev-dyndb-headings-tbl"

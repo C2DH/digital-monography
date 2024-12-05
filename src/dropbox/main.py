@@ -4,14 +4,16 @@ import datetime
 import dropbox
 import json
 import pathlib
+import dropbox.exceptions
+import requests
 import logging
 import typing as t
 
-import requests
-
 
 try:
+    from audit import AuditEvent, AuditStatus
     from constants import (
+        ModuleEnum,
         APKG_UPLOAD_BUCKET_NAME,
         DYNAMODB_TOKENS_TBL,
         DYNAMODB_CURSORS_TBL,
@@ -19,7 +21,9 @@ try:
     )
     from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
+    from .audit import AuditEvent, AuditStatus
     from .constants import (
+        ModuleEnum,
         APKG_UPLOAD_BUCKET_NAME,
         DYNAMODB_TOKENS_TBL,
         DYNAMODB_CURSORS_TBL,
@@ -83,50 +87,69 @@ def process_user(account):
     # cursor for the user (None the first time)
     cursors_resp = dynamodb_get(DYNAMODB_CURSORS_TBL, {"account": account})
     cursor = cursors_resp.get("Item", {}).get("cursor")
+    msg, slug = "", ""
+    filenames = []
 
-    dbx = dropbox.Dropbox(token)
-    has_more = True
+    try:
+        dbx = dropbox.Dropbox(token)
+        has_more = True
 
-    while has_more:
-        if cursor is None:
-            logger.info(">.> dbx.files_list_folder")
-            result = dbx.files_list_folder(path="", recursive=True)
+        while has_more:
+            if cursor is None:
+                logger.info(">.> dbx.files_list_folder")
+                result = dbx.files_list_folder(path="", recursive=True)
+            else:
+                logger.info(">.> dbx.files_list_folder_continue")
+                result = dbx.files_list_folder_continue(cursor)
+            logger.info(f"result.entries {result.entries}")
+            if len(result.entries) == 0:
+                logger.info(f"result {result}")
+            for entry in result.entries:
+                logger.info("dir(entry)" + json.dumps(dir(entry), default=str))
+                logger.info(f"type(entry) {type(entry)}")
+                logger.info(f"entry.name {entry.name}")
+                logger.info(f"entry.path_lower {entry.path_lower}")
+                slug = next(part for part in entry.path_lower.split("/") if part)
+
+                if isinstance(entry, dropbox.files.FolderMetadata):
+                    logger.info("Object is a folder.")
+                    logger.info(f"{entry}")
+                    msg += f"Folder {entry.name} detected, no action taken. "
+                elif isinstance(entry, dropbox.files.DeletedMetadata):
+                    logger.info("Object is a deleted file.")
+                    logger.info(f"{entry}")
+                    logger.info("For now we don't handle file deletions.")
+                    msg += f"System refuses to delete {entry.name}. "
+                    # TODO: Call s3.delete_object to remove it.
+                    # This will require to implement it across all modules!
+                elif isinstance(entry, dropbox.files.FileMetadata):
+                    logger.info(f"Object path_lower is {entry.path_lower}.")
+                    _download_file(dbx, entry)
+                    filenames.append(entry.name)
+                    msg += f"File {entry.name} successfully uploaded. "
+
+            # Update cursor
+            cursor = result.cursor
+            dynamodb_set(DYNAMODB_CURSORS_TBL, **{"account": account, "cursor": cursor})
+
+            # Repeat only if there's more to do
+            has_more = result.has_more
+            logger.info("result.has_more loop in process_user has ended.")
+        logger.info("process_user has ended.")
+        if filenames:
+            _log_audit_event(slug, AuditStatus.SUCCESS, msg, filenames[0])
         else:
-            logger.info(">.> dbx.files_list_folder_continue")
-            result = dbx.files_list_folder_continue(cursor)
-        logger.info(f"result.entries {result.entries}")
-        if len(result.entries) == 0:
-            logger.info(f"result {result}")
-        for entry in result.entries:
-            logger.info("dir(entry)" + json.dumps(dir(entry), default=str))
-            logger.info(f"type(entry) {type(entry)}")
-            logger.info(f"entry.name {entry.name}")
-            logger.info(f"entry.path_lower {entry.path_lower}")
-
-            if isinstance(entry, dropbox.files.FolderMetadata):
-                logger.info("Object is a folder.")
-                logger.info(f"{entry}")
-            elif isinstance(entry, dropbox.files.DeletedMetadata):
-                logger.info("Object is a deleted file.")
-                logger.info(f"{entry}")
-                logger.info("For now we don't handle file deletions.")
-                # TODO: Call s3.delete_object to remove it.
-                # This will require to implement it across all modules!
-            elif isinstance(entry, dropbox.files.FileMetadata):
-                logger.info(f"Object path_lower is {entry.path_lower}.")
-                _download_file(dbx, entry)
-
-        # Update cursor
-        cursor = result.cursor
-        dynamodb_set(DYNAMODB_CURSORS_TBL, **{"account": account, "cursor": cursor})
-
-        # Repeat only if there's more to do
-        has_more = result.has_more
-        logger.info("result.has_more loop in process_user has ended.")
-    logger.info("process_user has ended.")
-
-    logger.info("process_user has ended.")
-    return {"statusCode": 200, "body": ""}
+            _log_audit_event(slug, AuditStatus.SUCCESS, msg)
+        return {"statusCode": 200, "body": ""}
+    except dropbox.exceptions.AuthError as e:
+        # TODO: "Dropbox" str and API Gateway endpoint should not be constant
+        _log_audit_event(
+            slug,
+            AuditStatus.FAILED,
+            "Access denied. Please log in to Dropbox from 'https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com/test/login'",
+        )
+        logger.exception("Access denied. Error: " + repr(e))
+        return {"statusCode": 401, "body": "dropbox.exceptions.AuthError"}
 
 
 def dynamodb_set(tbl: str, **kwargs) -> None:
@@ -163,6 +186,9 @@ def _put_file_from_dbx_to_s3(body: bytes, key: KeyPath) -> None:
         logger.exception(
             f"Putting file from Dropbox to {dst} bucket failed. Error: {repr(e)}"
         )
+        _log_audit_event(
+            key.slug, AuditStatus.FAILED, "Error upon synchronization.", key.name
+        )
         raise
 
 
@@ -178,3 +204,16 @@ def _download_file(dbx: dropbox.Dropbox, entry: dropbox.files.FileMetadata) -> N
     logger.info(f"keypath: {key}")
     logger.info(f"type(resp.content): {type(resp.content)}")
     _put_file_from_dbx_to_s3(resp.content, key)
+
+
+def _log_audit_event(slug: str, status: int, msg: str, fn: str = "") -> None:
+    event = AuditEvent(
+        slug=slug,
+        timestamp=datetime.datetime.now(),
+        module=ModuleEnum.DROPBOX,
+        filename=fn,
+        status=status,
+        msg=msg,
+    )
+    event.send(dynamodb)
+    logger.info(f"Audit event logged.")

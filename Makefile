@@ -37,6 +37,15 @@ dev/test:
 dev/draft:
 	docker compose run main python scripts/prepare_and_build.py book_path=data/input/$(SLUG)
 
+
+copy/audit:
+	cp src/_common/audit.py src/dropbox/audit.py
+	cp src/_common/audit.py src/preparer/audit.py
+	cp src/_common/audit.py src/builder/audit.py
+	cp src/_common/audit.py src/github/audit.py
+	cp src/_common/audit.py src/verifier/audit.py
+
+
 copy/constants:
 	cp src/_common/constants.py src/entrypoint/constants.py
 	cp src/_common/constants.py src/dropbox/constants.py

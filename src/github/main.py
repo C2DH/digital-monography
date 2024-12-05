@@ -1,19 +1,24 @@
 import base64
-import json
 import boto3
+import datetime
+import json
 import logging
 import requests
 import typing as t
 import urllib.parse
 
 try:
+    from audit import AuditEvent, AuditStatus
     from constants import (
+        ModuleEnum,
         ARCHIVE_APKG_ALL,
         GITHUB_SECRET_ID,
     )
     from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
+    from .audit import AuditEvent, AuditStatus
     from .constants import (
+        ModuleEnum,
         ARCHIVE_APKG_ALL,
         GITHUB_SECRET_ID,
     )
@@ -26,6 +31,7 @@ logger.setLevel(logging.INFO)
 
 s3 = boto3.client("s3")
 secretsmanager = boto3.client("secretsmanager")
+dynamodb = boto3.resource("dynamodb")
 
 
 class GitHubSecret(t.TypedDict):
@@ -43,7 +49,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     if key.suffix not in [".md", ".MD", ".ipynb", ".IPYNB"]:
         return {"statusCode": 200, "body": ""}
 
-    secret = _get_api_key(GITHUB_SECRET_ID)
+    secret = _get_api_key(key, GITHUB_SECRET_ID)
 
     # naively try to create repo without checking if it exists
     _create_github_repo(key, secret)
@@ -51,6 +57,11 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     prev_obj = _get_from_github_repo(key, secret)
     prev_v_sha = prev_obj.json().get("sha", None)
     _put_to_github_repo(key, secret, new_bytes, prev_v_sha, event)
+    _log_audit_event(
+        key,
+        AuditStatus.SUCCESS,
+        "Changes saved to GitHub repository.",
+    )
     return {"statusCode": 200, "body": ""}
 
 
@@ -65,13 +76,18 @@ def _get_key(event) -> KeyPath:
         raise
 
 
-def _get_api_key(secret_id: str) -> GitHubSecret:
+def _get_api_key(key: KeyPath, secret_id: str) -> GitHubSecret:
     try:
         resp = secretsmanager.get_secret_value(SecretId=secret_id)
         return json.loads(resp["SecretString"])
     except Exception as e:
         logging.exception(
             f"Error while getting secret value for {secret_id}: {repr(e)}"
+        )
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED,
+            "Error upon internal authentication.",
         )
         raise
 
@@ -116,6 +132,11 @@ def _create_github_repo(key: KeyPath, secret: GitHubSecret) -> requests.Response
         logging.exception(
             f"Error while sending request to update github repo: {repr(e)}"
         )
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED,
+            "Error upon creating GitHub repository.",
+        )
         raise
 
 
@@ -134,6 +155,11 @@ def _get_obj_from_archive_s3(key: KeyPath) -> bytes:
         return contents
     except Exception as e:
         logging.exception(f"Error while getting object from s3: {repr(e)}")
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED,
+            "Error while retrieving object from AWS.",
+        )
         raise
 
 
@@ -153,6 +179,11 @@ def _get_from_github_repo(key: KeyPath, secret: GitHubSecret) -> requests.Respon
     except Exception as e:
         logger.error(
             f"Unable to retrieve the previous version of the {key.s3_key} file. Error: {repr(e)}"
+        )
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED,
+            "Error while retrieving previous version of the file from GitHub.",
         )
         raise
 
@@ -211,4 +242,22 @@ def _put_to_github_repo(
         logging.exception(
             f"Error while sending request to update github repo: {repr(e)}"
         )
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED,
+            "Error while sending request to update GitHub repo.",
+        )
         raise
+
+
+def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:
+    event = AuditEvent(
+        slug=key.slug,
+        timestamp=datetime.datetime.now(),
+        module=ModuleEnum.PREPARER,
+        filename=key.name,
+        status=status,
+        msg=msg,
+    )
+    event.send(dynamodb)
+    logger.info(f"Audit event logged.")

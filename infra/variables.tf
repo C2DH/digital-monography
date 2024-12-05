@@ -132,6 +132,11 @@ variable "dgtmon_dev_dyndb_cursors_tbl" {
   description = "Name of the table for holding Dropbox account and cursor data (relevant for DBX `/files/list_folder/continue`)"
 }
 
+variable "dgtmon_dev_dyndb_audit_tbl" {
+  type        = string
+  description = "Name of the table to log audit trail of checkpoints reached"
+}
+
 variable "dgtmon_dev_dyndb_assets_tbl" {
   type        = string
   description = "Name of the table for editors managing the status of assets"

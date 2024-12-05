@@ -181,6 +181,14 @@ data "aws_iam_policy_document" "builder" {
     ]
   }
   statement {
+    sid       = "AllowWritingAuditEvents"
+    effect    = "Allow"
+    resources = [aws_dynamodb_table.audit_tbl.arn]
+    actions = [
+      "dynamodb:PutItem",
+    ]
+  }
+  statement {
     sid       = "AllowReceivingSQSMessages"
     effect    = "Allow"
     resources = [aws_sqs_queue.pre_builder_queue.arn]

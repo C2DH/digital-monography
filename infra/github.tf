@@ -110,6 +110,14 @@ data "aws_iam_policy_document" "github" {
     ]
   }
   statement {
+    sid       = "AllowWritingAuditEvents"
+    effect    = "Allow"
+    resources = [aws_dynamodb_table.audit_tbl.arn]
+    actions = [
+      "dynamodb:PutItem",
+    ]
+  }
+  statement {
     sid       = "AllowSecretsFetching"
     effect    = "Allow"
     resources = ["arn:aws:secretsmanager:${var.region}:*:secret:dgtmon-${var.environment}-github-api-secrets*"]

@@ -17,7 +17,9 @@ if not IS_DEBUG:
     sys.path.append(current_dir)
 
 try:
+    from audit import AuditEvent, AuditStatus
     from constants import (
+        ModuleEnum,
         IS_DEBUG,
         DEFAULT_SFS_DIR,
         DYNAMODB_ASSETS_TBL,
@@ -28,7 +30,9 @@ try:
     from metadata import DocumentMetadata, SubstitutionDatapoint
     from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
+    from .audit import AuditEvent, AuditStatus
     from .constants import (
+        ModuleEnum,
         IS_DEBUG,
         DEFAULT_SFS_DIR,
         DYNAMODB_ASSETS_TBL,
@@ -64,12 +68,14 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info("Event: " + json.dumps(event, default=str))
     logger.info("Context: " + json.dumps(context, default=str))
     key = _get_key(event)
+    _log_audit_event(key, AuditStatus.PENDING, "Building book in progress...")
     _mkdir_read()
     _write_metadata_to_db(key)
     _copy_assets(key)
     _prepare_config(key)
     _build_book(key)
     _distribute_book(key)
+    _log_audit_event(key, AuditStatus.SUCCESS, "Digital version was created.")
     # this should probably go to another Lambda service
     # _build_verification_report(key)
     # _distribute_report(key)
@@ -128,6 +134,7 @@ def _write_metadata_to_db(key: KeyPath) -> None:
             )
     except Exception as e:
         logging.exception(f"Unable to write metadata to dynamodb. Error: {repr(e)}")
+        _log_audit_event(key, AuditStatus.FAILED, "Exception while saving metadata.")
         raise
 
 
@@ -151,6 +158,7 @@ def _copy_assets(key: KeyPath) -> None:
             shutil.copytree(src, dst, dirs_exist_ok=True)
     except Exception as e:
         logging.exception(f"Unable to copy assets. Error: {repr(e)}")
+        _log_audit_event(key, AuditStatus.FAILED, "Error while copying assets.")
         raise
 
 
@@ -255,10 +263,16 @@ def _build_book(key: KeyPath) -> None:
             logging.info(
                 f"{key.efs_slug_dir / '_config.yml'} was not found. Skipping build."
             )
+            _log_audit_event(
+                key, AuditStatus.FAILED, "Invalid configuration. Operation aborted."
+            )
             return
         if not (key.efs_slug_dir / "_toc.yml").exists():
             logging.info(
                 f"{key.efs_slug_dir / '_toc.yml'} was not found. Skipping build."
+            )
+            _log_audit_event(
+                key, AuditStatus.FAILED, "Invalid table of contents. Operation aborted."
             )
             return
         params = {
@@ -286,8 +300,14 @@ def _build_book(key: KeyPath) -> None:
         logging.info(f"Builder finished building the book at {key.efs_slug_dir}.")
     except RuntimeError as e:
         logging.exception(f"Unable to build book. Error: {repr(e)}")
+        _log_audit_event(
+            key, AuditStatus.FAILED, "Runtime error while Jupyter Book build operation."
+        )
     except Exception as e:
         logging.exception(f"Unable to build book. Error: {repr(e)}")
+        _log_audit_event(
+            key, AuditStatus.FAILED, "Error while Jupyter Book build operation."
+        )
         raise
 
 
@@ -360,6 +380,9 @@ def _distribute_book(key: KeyPath) -> None:
     except Exception as e:
         msg = f"Failed to copy post-build warnings report. Error: {repr(e)}"
         logging.exception(msg)
+        _log_audit_event(
+            key, AuditStatus.FAILED, "Error while updating the digital version."
+        )
         raise
 
 
@@ -395,3 +418,16 @@ def _sync_efs_to_staticws(src: pathlib.Path, dstdir: str, slug: str) -> None:
     logging.info(f"Syncing files from {src} to {dst}.")
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p.wait()
+
+
+def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:
+    event = AuditEvent(
+        slug=key.slug,
+        timestamp=datetime.datetime.now(),
+        module=ModuleEnum.BUILDER,
+        filename="",
+        status=status,
+        msg=msg,
+    )
+    event.send(dynamodb)
+    logger.info(f"Audit event logged.")

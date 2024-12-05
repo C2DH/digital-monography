@@ -10,7 +10,9 @@ import typing as t
 import urllib.parse
 
 try:
+    from audit import AuditEvent, AuditStatus
     from constants import (
+        ModuleEnum,
         ARCHIVE_APKG_ALL,
         IR_APKG_HTML_BUCKET_NAME,
         IR_APKG_MD_BUCKET_NAME,
@@ -39,7 +41,9 @@ try:
     from fakers import Faker
     from make_metadata_report import make_metadata_report
 except (ImportError, ModuleNotFoundError):
+    from .audit import AuditEvent, AuditStatus
     from .constants import (
+        ModuleEnum,
         ARCHIVE_APKG_ALL,
         IR_APKG_HTML_BUCKET_NAME,
         IR_APKG_MD_BUCKET_NAME,
@@ -92,9 +96,11 @@ FIXED_SUBSTITUTIONS = {
 
 
 if IS_DEBUG:
+    dynamodb = None
     s3 = Faker("s3")
     sqs = Faker("sqs")
 else:
+    dynamodb = boto3.resource("dynamodb")
     s3 = boto3.client("s3")
     sqs = boto3.client("sqs")
 
@@ -162,11 +168,16 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _write_metadata_to_efs(metadata, key)
         _write_processed_html_to_efs(html_soup_str, key)
         _put_html_to_s3(html_soup_str, key)
-        md = _convert_to_md(html_soup, metadata)
+        md = _convert_to_md(key, html_soup, metadata)
         _write_processed_md_to_efs(md, key)
         _put_md_to_s3(md, key)
-        _make_metadata_report(metadata, key)
+        # _make_metadata_report(metadata, key)
         ARCHIVE = '_put_to_archive_s3(key.s3_key.with_suffix(".md"), md)'
+        _log_audit_event(
+            key,
+            AuditStatus.SUCCESS,
+            "Contents of the file prepared for further processing.",
+        )
         return {"statusCode": 200, "body": ""}
     else:
         return {"statusCode": 200, "body": ""}
@@ -204,6 +215,11 @@ def _download_fileobj(src: str, key: KeyPath) -> None:
                 f"Response from s3.download_fileobj(Bucket={src}, Key={s3_key}): "
                 + json.dumps(resp, default=str)
             )
+            _log_audit_event(
+                key,
+                AuditStatus.FAILED,
+                "Error upon internal download.",
+            )
     except Exception as e:
         logger.exception(
             f"Downloading fileobj {str(key)} from {src} failed. Error: {repr(e)}"
@@ -223,14 +239,26 @@ def _convert_to_html(key: KeyPath) -> str:
             return result.value
     except Exception as e:
         logger.exception(f"Converting {key} to html failed. Error: {repr(e)}")
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED,
+            "Error upon preparing html.",
+        )
         raise
 
 
-def _convert_to_md(html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata) -> str:
+def _convert_to_md(
+    key: KeyPath, html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata
+) -> str:
     try:
         return convert_to_md(html_soup, metadata)
     except Exception as e:
         logger.exception(f"Converting to md failed. Error: {repr(e)}")
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED,
+            "Error upon preparing markdown.",
+        )
         raise
 
 
@@ -245,6 +273,11 @@ def _put_object(body: bytes, dst: str, key: KeyPath) -> t.Any:
         return resp
     except Exception as e:
         logger.exception(f"Put object {key} to bucket {dst} failed. Error: {repr(e)}")
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED,
+            "Error upon internal synchronization.",
+        )
         raise
 
 
@@ -258,6 +291,11 @@ def _put_html_to_s3(contents: str, key: KeyPath) -> None:
         )
     except Exception as e:
         logger.exception(f"Putting html to s3 bucket failed. Error: {repr(e)}")
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED,
+            "Error upon internal html synchronization.",
+        )
         raise
 
 
@@ -271,6 +309,11 @@ def _put_md_to_s3(contents: str, key: KeyPath) -> None:
         )
     except Exception as e:
         logger.exception(f"Putting md to s3 bucket failed. Error: {repr(e)}")
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED,
+            "Error upon internal markdown synchronization.",
+        )
         raise
 
 
@@ -291,6 +334,11 @@ def _put_to_archive_s3(key: KeyPath, contents: t.Optional[str] = None) -> None:
         )
     except Exception as e:
         logger.exception(f"Putting file to archive s3 bucket failed. Error: {repr(e)}")
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED,
+            "Error upon archiving.",
+        )
         raise
 
 
@@ -327,6 +375,11 @@ def _write_metadata_to_efs(metadata: DocumentMetadata, key: KeyPath) -> None:
         logger.exception(
             f"Writing metadata in json to /efs directory failed. Error: {repr(e)}"
         )
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED,
+            "Error upon writing metadata.",
+        )
         raise
 
 
@@ -340,21 +393,34 @@ def _unmarshall_json(key: KeyPath) -> nbformat.NotebookNode:
     return nb
 
 
-def _make_metadata_report(
-    metadata: DocumentMetadata,
-    key: KeyPath,
-) -> None:
-    try:
-        fp = key.add_to_efs_slug_dir("_warnings").parent / key.github_path.with_suffix(
-            ".md"
-        )
-        fp = fp.with_name("refs_" + fp.name)
-        file_name = str(key.with_suffix(".docx").name)
-        with open(fp, "w") as f:
-            f.write(make_metadata_report(metadata, file_name))
-        logger.info(f"Metadata markdown report was saved to {str(fp)}")
-    except Exception as e:
-        logger.exception(
-            f"Writing DocumentMetadata to /efs directory failed. Error: {repr(e)}"
-        )
-        raise
+def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:
+    event = AuditEvent(
+        slug=key.slug,
+        timestamp=datetime.datetime.now(),
+        module=ModuleEnum.PREPARER,
+        filename=key.name,
+        status=status,
+        msg=msg,
+    )
+    event.send(dynamodb)
+    logger.info(f"Audit event logged.")
+
+
+# def _make_metadata_report(
+#     metadata: DocumentMetadata,
+#     key: KeyPath,
+# ) -> None:
+#     try:
+#         fp = key.add_to_efs_slug_dir("_warnings").parent / key.github_path.with_suffix(
+#             ".md"
+#         )
+#         fp = fp.with_name("refs_" + fp.name)
+#         file_name = str(key.with_suffix(".docx").name)
+#         with open(fp, "w") as f:
+#             f.write(make_metadata_report(metadata, file_name))
+#         logger.info(f"Metadata markdown report was saved to {str(fp)}")
+#     except Exception as e:
+#         logger.exception(
+#             f"Writing DocumentMetadata to /efs directory failed. Error: {repr(e)}"
+#         )
+#         raise

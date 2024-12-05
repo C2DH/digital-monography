@@ -10,13 +10,15 @@ import urllib.parse
 
 
 try:
-    from constants import IS_DEBUG, VERIFIER_MSGS
+    from audit import AuditEvent, AuditStatus
+    from constants import ModuleEnum, IS_DEBUG, VERIFIER_MSGS
     from fakers import Faker
     from html_verifier import HtmlVerifier
     from make_warnings_report import make_warnings_report
     from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
-    from .constants import IS_DEBUG, VERIFIER_MSGS
+    from .audit import AuditEvent, AuditStatus
+    from .constants import ModuleEnum, IS_DEBUG, VERIFIER_MSGS
     from .fakers import Faker
     from .html_verifier import HtmlVerifier
     from .make_warnings_report import make_warnings_report
@@ -36,9 +38,11 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 if IS_DEBUG:
+    dynamodb = None
     s3 = Faker("s3")
     sqs = Faker("sqs")
 else:
+    dynamodb = boto3.resource("dynamodb")
     s3 = boto3.client("s3")
     sqs = boto3.client("sqs")
 
@@ -67,6 +71,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _put_json_to_s3(json.dumps(warnings_json, default=str), key)
         _send_msg_to_sqs(key)
     logger.info("Handler ended successfully.")
+    _log_audit_event(key, AuditStatus.SUCCESS, "Verification of the file is finished.")
     return {"statusCode": 200, "body": ""}
 
 
@@ -109,6 +114,9 @@ def _write_json_to_efs(json_data: t.Any, key: KeyPath) -> None:
         logger.info(f"Warnings raw data was saved to {str(fp)}")
     except Exception as e:
         logger.exception(f"Writing json to /efs directory failed. Error: {repr(e)}")
+        _log_audit_event(
+            key, AuditStatus.FAILED, "Writing verification warnings failed."
+        )
         raise
 
 
@@ -128,6 +136,9 @@ def _make_warnings_report(
         logger.info(f"Warnings markdown report was saved to {str(fp)}")
     except Exception as e:
         logger.exception(f"Writing json to /efs directory failed. Error: {repr(e)}")
+        _log_audit_event(
+            key, AuditStatus.FAILED, "Generating verification warnings failed."
+        )
         raise
 
 
@@ -141,6 +152,9 @@ def _put_json_to_s3(body: str, key: KeyPath) -> None:
         )
     except Exception as e:
         logger.exception(f"Putting json to s3 bucket failed. Error: {repr(e)}")
+        _log_audit_event(
+            key, AuditStatus.FAILED, "Error upon internal synchronization."
+        )
         raise
 
 
@@ -170,4 +184,20 @@ def _send_msg_to_sqs(key: KeyPath) -> None:
         )
     except Exception as e:
         logger.exception(f"Sending a message to sqs queue failed. Error: {repr(e)}")
+        _log_audit_event(
+            key, AuditStatus.FAILED, "Error upon internal synchronization."
+        )
         raise
+
+
+def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:
+    event = AuditEvent(
+        slug=key.slug,
+        timestamp=datetime.datetime.now(),
+        module=ModuleEnum.BUILDER,
+        filename="",
+        status=status,
+        msg=msg,
+    )
+    event.send(dynamodb)
+    logger.info(f"Audit event logged.")
