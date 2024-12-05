@@ -137,15 +137,15 @@ def process_user(account):
             logger.info("result.has_more loop in process_user has ended.")
         logger.info("process_user has ended.")
         if filenames:
-            _log_audit_event(slug, AuditStatus.SUCCESS, msg, filenames[0])
+            _log_audit_event(slug, AuditStatus.SUCCESS.value, msg, filenames[0])
         else:
-            _log_audit_event(slug, AuditStatus.SUCCESS, msg)
+            _log_audit_event(slug, AuditStatus.SUCCESS.value, msg)
         return {"statusCode": 200, "body": ""}
     except dropbox.exceptions.AuthError as e:
         # TODO: "Dropbox" str and API Gateway endpoint should not be constant
         _log_audit_event(
             slug,
-            AuditStatus.FAILED,
+            AuditStatus.FAILED.value,
             "Access denied. Please log in to Dropbox from 'https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com/test/login'",
         )
         logger.exception("Access denied. Error: " + repr(e))
@@ -187,7 +187,7 @@ def _put_file_from_dbx_to_s3(body: bytes, key: KeyPath) -> None:
             f"Putting file from Dropbox to {dst} bucket failed. Error: {repr(e)}"
         )
         _log_audit_event(
-            key.slug, AuditStatus.FAILED, "Error upon synchronization.", key.name
+            key.slug, AuditStatus.FAILED.value, "Error upon synchronization.", key.name
         )
         raise
 
@@ -210,7 +210,7 @@ def _log_audit_event(slug: str, status: int, msg: str, fn: str = "") -> None:
     event = AuditEvent(
         slug=slug,
         timestamp=datetime.datetime.now(),
-        module=ModuleEnum.DROPBOX,
+        module=ModuleEnum.DROPBOX.value,
         filename=fn,
         status=status,
         msg=msg,

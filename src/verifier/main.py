@@ -71,7 +71,9 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _put_json_to_s3(json.dumps(warnings_json, default=str), key)
         _send_msg_to_sqs(key)
     logger.info("Handler ended successfully.")
-    _log_audit_event(key, AuditStatus.SUCCESS, "Verification of the file is finished.")
+    _log_audit_event(
+        key, AuditStatus.SUCCESS.value, "Verification of the file is finished."
+    )
     return {"statusCode": 200, "body": ""}
 
 
@@ -115,7 +117,7 @@ def _write_json_to_efs(json_data: t.Any, key: KeyPath) -> None:
     except Exception as e:
         logger.exception(f"Writing json to /efs directory failed. Error: {repr(e)}")
         _log_audit_event(
-            key, AuditStatus.FAILED, "Writing verification warnings failed."
+            key, AuditStatus.FAILED.value, "Writing verification warnings failed."
         )
         raise
 
@@ -137,7 +139,7 @@ def _make_warnings_report(
     except Exception as e:
         logger.exception(f"Writing json to /efs directory failed. Error: {repr(e)}")
         _log_audit_event(
-            key, AuditStatus.FAILED, "Generating verification warnings failed."
+            key, AuditStatus.FAILED.value, "Generating verification warnings failed."
         )
         raise
 
@@ -153,7 +155,7 @@ def _put_json_to_s3(body: str, key: KeyPath) -> None:
     except Exception as e:
         logger.exception(f"Putting json to s3 bucket failed. Error: {repr(e)}")
         _log_audit_event(
-            key, AuditStatus.FAILED, "Error upon internal synchronization."
+            key, AuditStatus.FAILED.value, "Error upon internal synchronization."
         )
         raise
 
@@ -185,7 +187,7 @@ def _send_msg_to_sqs(key: KeyPath) -> None:
     except Exception as e:
         logger.exception(f"Sending a message to sqs queue failed. Error: {repr(e)}")
         _log_audit_event(
-            key, AuditStatus.FAILED, "Error upon internal synchronization."
+            key, AuditStatus.FAILED.value, "Error upon internal synchronization."
         )
         raise
 
@@ -194,7 +196,7 @@ def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:
     event = AuditEvent(
         slug=key.slug,
         timestamp=datetime.datetime.now(),
-        module=ModuleEnum.BUILDER,
+        module=ModuleEnum.BUILDER.value,
         filename="",
         status=status,
         msg=msg,

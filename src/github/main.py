@@ -59,7 +59,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     _put_to_github_repo(key, secret, new_bytes, prev_v_sha, event)
     _log_audit_event(
         key,
-        AuditStatus.SUCCESS,
+        AuditStatus.SUCCESS.value,
         "Changes saved to GitHub repository.",
     )
     return {"statusCode": 200, "body": ""}
@@ -86,7 +86,7 @@ def _get_api_key(key: KeyPath, secret_id: str) -> GitHubSecret:
         )
         _log_audit_event(
             key,
-            AuditStatus.FAILED,
+            AuditStatus.FAILED.value,
             "Error upon internal authentication.",
         )
         raise
@@ -134,7 +134,7 @@ def _create_github_repo(key: KeyPath, secret: GitHubSecret) -> requests.Response
         )
         _log_audit_event(
             key,
-            AuditStatus.FAILED,
+            AuditStatus.FAILED.value,
             "Error upon creating GitHub repository.",
         )
         raise
@@ -157,7 +157,7 @@ def _get_obj_from_archive_s3(key: KeyPath) -> bytes:
         logging.exception(f"Error while getting object from s3: {repr(e)}")
         _log_audit_event(
             key,
-            AuditStatus.FAILED,
+            AuditStatus.FAILED.value,
             "Error while retrieving object from AWS.",
         )
         raise
@@ -182,7 +182,7 @@ def _get_from_github_repo(key: KeyPath, secret: GitHubSecret) -> requests.Respon
         )
         _log_audit_event(
             key,
-            AuditStatus.FAILED,
+            AuditStatus.FAILED.value,
             "Error while retrieving previous version of the file from GitHub.",
         )
         raise
@@ -244,7 +244,7 @@ def _put_to_github_repo(
         )
         _log_audit_event(
             key,
-            AuditStatus.FAILED,
+            AuditStatus.FAILED.value,
             "Error while sending request to update GitHub repo.",
         )
         raise
@@ -254,7 +254,7 @@ def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:
     event = AuditEvent(
         slug=key.slug,
         timestamp=datetime.datetime.now(),
-        module=ModuleEnum.PREPARER,
+        module=ModuleEnum.PREPARER.value,
         filename=key.name,
         status=status,
         msg=msg,

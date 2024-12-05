@@ -175,7 +175,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         ARCHIVE = '_put_to_archive_s3(key.s3_key.with_suffix(".md"), md)'
         _log_audit_event(
             key,
-            AuditStatus.SUCCESS,
+            AuditStatus.SUCCESS.value,
             "Contents of the file prepared for further processing.",
         )
         return {"statusCode": 200, "body": ""}
@@ -217,7 +217,7 @@ def _download_fileobj(src: str, key: KeyPath) -> None:
             )
             _log_audit_event(
                 key,
-                AuditStatus.FAILED,
+                AuditStatus.FAILED.value,
                 "Error upon internal download.",
             )
     except Exception as e:
@@ -241,7 +241,7 @@ def _convert_to_html(key: KeyPath) -> str:
         logger.exception(f"Converting {key} to html failed. Error: {repr(e)}")
         _log_audit_event(
             key,
-            AuditStatus.FAILED,
+            AuditStatus.FAILED.value,
             "Error upon preparing html.",
         )
         raise
@@ -256,7 +256,7 @@ def _convert_to_md(
         logger.exception(f"Converting to md failed. Error: {repr(e)}")
         _log_audit_event(
             key,
-            AuditStatus.FAILED,
+            AuditStatus.FAILED.value,
             "Error upon preparing markdown.",
         )
         raise
@@ -275,7 +275,7 @@ def _put_object(body: bytes, dst: str, key: KeyPath) -> t.Any:
         logger.exception(f"Put object {key} to bucket {dst} failed. Error: {repr(e)}")
         _log_audit_event(
             key,
-            AuditStatus.FAILED,
+            AuditStatus.FAILED.value,
             "Error upon internal synchronization.",
         )
         raise
@@ -293,7 +293,7 @@ def _put_html_to_s3(contents: str, key: KeyPath) -> None:
         logger.exception(f"Putting html to s3 bucket failed. Error: {repr(e)}")
         _log_audit_event(
             key,
-            AuditStatus.FAILED,
+            AuditStatus.FAILED.value,
             "Error upon internal html synchronization.",
         )
         raise
@@ -311,7 +311,7 @@ def _put_md_to_s3(contents: str, key: KeyPath) -> None:
         logger.exception(f"Putting md to s3 bucket failed. Error: {repr(e)}")
         _log_audit_event(
             key,
-            AuditStatus.FAILED,
+            AuditStatus.FAILED.value,
             "Error upon internal markdown synchronization.",
         )
         raise
@@ -336,7 +336,7 @@ def _put_to_archive_s3(key: KeyPath, contents: t.Optional[str] = None) -> None:
         logger.exception(f"Putting file to archive s3 bucket failed. Error: {repr(e)}")
         _log_audit_event(
             key,
-            AuditStatus.FAILED,
+            AuditStatus.FAILED.value,
             "Error upon archiving.",
         )
         raise
@@ -377,7 +377,7 @@ def _write_metadata_to_efs(metadata: DocumentMetadata, key: KeyPath) -> None:
         )
         _log_audit_event(
             key,
-            AuditStatus.FAILED,
+            AuditStatus.FAILED.value,
             "Error upon writing metadata.",
         )
         raise
@@ -397,7 +397,7 @@ def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:
     event = AuditEvent(
         slug=key.slug,
         timestamp=datetime.datetime.now(),
-        module=ModuleEnum.PREPARER,
+        module=ModuleEnum.PREPARER.value,
         filename=key.name,
         status=status,
         msg=msg,
