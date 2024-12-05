@@ -136,9 +136,9 @@ def process_user(account):
             has_more = result.has_more
             logger.info("result.has_more loop in process_user has ended.")
         logger.info("process_user has ended.")
-        if filenames:
+        if slug and filenames:
             _log_audit_event(slug, AuditStatus.SUCCESS.value, msg, filenames[0])
-        else:
+        elif slug:
             _log_audit_event(slug, AuditStatus.SUCCESS.value, msg)
         return {"statusCode": 200, "body": ""}
     except dropbox.exceptions.AuthError as e:
@@ -207,6 +207,8 @@ def _download_file(dbx: dropbox.Dropbox, entry: dropbox.files.FileMetadata) -> N
 
 
 def _log_audit_event(slug: str, status: int, msg: str, fn: str = "") -> None:
+    if not slug:
+        return
     event = AuditEvent(
         slug=slug,
         timestamp=datetime.datetime.now().isoformat(),
