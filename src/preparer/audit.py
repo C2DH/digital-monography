@@ -1,4 +1,3 @@
-# import boto3
 import dataclasses
 import datetime
 import enum
@@ -31,6 +30,9 @@ class AuditEvent:
         if dynamodb is None:
             return
         table = dynamodb.Table(DYNAMODB_AUDIT_TBL)
+        expire_at = int(
+            (datetime.datetime.now() + datetime.timedelta(days=30)).timestamp()
+        )  # NOTE: if you want to archive the audit trail, disable TTL feature""
         table.put_item(
             Item={
                 "slug": self.slug,
@@ -41,6 +43,7 @@ class AuditEvent:
                     "status": self.status,
                     "msg": self.msg,
                 },
+                "expire_at": expire_at,
             }
         )
 

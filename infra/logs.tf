@@ -18,4 +18,9 @@ resource "aws_dynamodb_table" "audit_tbl" {
     name = "slug"
     type = "S"
   }
+
+  ttl {
+    attribute_name = "expires_at"
+    enabled        = true
+  }
 }
