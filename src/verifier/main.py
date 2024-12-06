@@ -195,7 +195,6 @@ def _send_msg_to_sqs(key: KeyPath) -> None:
 def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:
     event = AuditEvent(
         slug=key.slug,
-        timestamp=datetime.datetime.now().isoformat(),
         module=ModuleEnum.BUILDER.value,
         filename=key.name,
         status=status,

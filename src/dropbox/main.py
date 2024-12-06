@@ -211,7 +211,6 @@ def _log_audit_event(slug: str, status: int, msg: str, fn: str = "") -> None:
         return
     event = AuditEvent(
         slug=slug,
-        timestamp=datetime.datetime.now().isoformat(),
         module=ModuleEnum.DROPBOX.value,
         filename=fn,
         status=status,

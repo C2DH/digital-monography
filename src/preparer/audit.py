@@ -18,11 +18,14 @@ class AuditStatus(enum.Enum):
 @dataclasses.dataclass
 class AuditEvent:
     slug: str
-    timestamp: datetime.datetime
+    timestamp: datetime.datetime = dataclasses.field(init=False)
     module: int
     filename: str
     status: int
     msg: str
+
+    def __post_init__(self):
+        self.timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
     # db: t.Union[boto3.resources.base.ServiceResource, Faker]
     # -> dynamodb put_item response
@@ -31,7 +34,10 @@ class AuditEvent:
             return
         table = dynamodb.Table(DYNAMODB_AUDIT_TBL)
         expire_at = int(
-            (datetime.datetime.now() + datetime.timedelta(days=30)).timestamp()
+            (
+                datetime.datetime.now(datetime.timezone.utc)
+                + datetime.timedelta(days=30)
+            ).timestamp()
         )  # NOTE: if you want to archive the audit trail, disable TTL feature""
         table.put_item(
             Item={
