@@ -26,7 +26,8 @@ class AuditEvent:
     msg: str
 
     # db: t.Union[boto3.resources.base.ServiceResource, Faker]
-    def send(self, dynamodb: t.Any) -> None:
+    # -> dynamodb put_item response
+    def send(self, dynamodb: t.Any) -> t.Any:
         if dynamodb is None:
             return
         table = dynamodb.Table(DYNAMODB_AUDIT_TBL)
@@ -41,4 +42,16 @@ class AuditEvent:
                     "msg": self.msg,
                 },
             }
+        )
+
+    def __str__(self):
+        return (
+            "AuditEvent("
+            f"slug={self.slug}, "
+            f"module={self.module}, "
+            f"timestamp={self.timestamp}, "
+            f"filename={self.filename}, "
+            f"status={self.status}, "
+            f"msg={self.msg}"
+            ")"
         )

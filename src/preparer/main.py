@@ -403,7 +403,7 @@ def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:
         msg=msg,
     )
     event.send(dynamodb)
-    logger.info(f"Audit event logged.")
+    logger.info(f"Audit event logged: {event}")
 
 
 # def _make_metadata_report(

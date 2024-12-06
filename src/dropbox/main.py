@@ -218,4 +218,4 @@ def _log_audit_event(slug: str, status: int, msg: str, fn: str = "") -> None:
         msg=msg,
     )
     event.send(dynamodb)
-    logger.info(f"Audit event logged.")
+    logger.info(f"Audit event logged: {event}")
