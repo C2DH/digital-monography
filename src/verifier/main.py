@@ -197,7 +197,7 @@ def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:
         slug=key.slug,
         timestamp=datetime.datetime.now().isoformat(),
         module=ModuleEnum.BUILDER.value,
-        filename="",
+        filename=key.name,
         status=status,
         msg=msg,
     )
