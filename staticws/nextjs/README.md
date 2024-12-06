@@ -1,5 +1,7 @@
 # Statically vs dynamically rendered
 
+![statically_vs_dynamically_rendered](./statically-vs-dynamically-rendered.png)
+
 ## Statically rendered
 
 This part of HTML is generated at the build time, rather than on each request. Since the HTML is pre-generated, it can be served very quickly to users. 
