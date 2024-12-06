@@ -36,13 +36,11 @@ class AuditEvent:
         table.put_item(
             Item={
                 "slug": self.slug,
+                "timestamp": self.timestamp,
                 "module": self.module,
-                "event": {
-                    "timestamp": self.timestamp,
-                    "filename": self.filename,
-                    "status": self.status,
-                    "msg": self.msg,
-                },
+                "filename": self.filename,
+                "status": self.status,
+                "msg": self.msg,
                 "expire_at": expire_at,
             }
         )
@@ -51,8 +49,8 @@ class AuditEvent:
         return (
             "AuditEvent("
             f"slug={self.slug}, "
-            f"module={self.module}, "
             f"timestamp={self.timestamp}, "
+            f"module={self.module}, "
             f"filename={self.filename}, "
             f"status={self.status}, "
             f"msg={self.msg}"
