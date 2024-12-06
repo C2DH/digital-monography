@@ -1,14 +1,3 @@
-resource "aws_dynamodb_table" "audit_tbl" {
-  name         = var.dgtmon_dev_dyndb_audit_tbl
-  hash_key     = "slug"
-  billing_mode = "PAY_PER_REQUEST"
-
-  attribute {
-    name = "slug"
-    type = "S"
-  }
-}
-
 resource "aws_dynamodb_table" "assets_tbl" {
   name         = var.dgtmon_dev_dyndb_assets_tbl
   hash_key     = "slug"
