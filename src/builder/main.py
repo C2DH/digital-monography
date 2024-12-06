@@ -122,8 +122,9 @@ def _write_metadata_to_db(key: KeyPath) -> None:
         for fp in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
             with open(fp, "r") as infile:
                 for domain, tbl in tables.items():
-                    records_in_one_file = json.load(infile)
-                    records[domain].extend(records_in_one_file.get(domain, []))
+                    if infile:
+                        records_in_one_file = json.load(infile)  # error
+                        records[domain].extend(records_in_one_file.get(domain, []))
         logger.info(f"{json.dumps(records, default=str)}")
         # write to db
         for domain, tbl in tables.items():
