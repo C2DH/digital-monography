@@ -114,7 +114,7 @@ def process_user(account):
                 if isinstance(entry, dropbox.files.FolderMetadata):
                     logger.info("Object is a folder.")
                     logger.info(f"{entry}")
-                    msg += f"Folder {entry.name} detected, no action taken. "
+                    msg += f"Folder '{entry.name}' detected, no action taken. "
                 elif isinstance(entry, dropbox.files.DeletedMetadata):
                     logger.info("Object is a deleted file.")
                     logger.info(f"{entry}")
@@ -126,7 +126,7 @@ def process_user(account):
                     logger.info(f"Object path_lower is {entry.path_lower}.")
                     _download_file(dbx, entry)
                     filenames.append(entry.name)
-                    msg += f"File {entry.name} successfully uploaded. "
+                    msg += f"The file '{entry.name}' successfully uploaded. "
 
             # Update cursor
             cursor = result.cursor

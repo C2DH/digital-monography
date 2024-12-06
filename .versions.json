@@ -2,9 +2,9 @@
     "ENTRYPOINT_STABLE_V": "0.0.41",
     "DROPBOX_STABLE_V": "0.0.29",
     "BUILDER_STABLE_V": "0.1.8",
-    "GITHUB_STABLE_V": "0.0.19",
+    "GITHUB_STABLE_V": "0.0.20",
     "PREPARER_STABLE_V": "0.1.8",
-    "VERIFIER_STABLE_V": "0.1.5",
+    "VERIFIER_STABLE_V": "0.1.6",
     "LOCAL_STABLE_V": "0.1.2"
 }
 
