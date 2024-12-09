@@ -103,9 +103,13 @@ export default function DynamicTable(): JSX.Element {
                 .map(([file, headings], idx: number) => {
                     return (
                         <ul className="list-group" key={idx}>
-                            <li className="list-group-item list-group-item-primary"><b>{file}</b></li>
+                            <li className="list-group-item list-group-item-primary" key={file}><b>{file}</b></li>
                             {headings && headings.map((h: IHeading) => (
-                                <li className="list-group-item"><span className={`indent${h.level}`}></span>{h.text}</li>
+                                <li className="list-group-item"
+                                    key={`${file}#${h.text}`}>
+                                    <span className={`indent${h.level}`}></span>
+                                    {h.text}
+                                </li>
                             ))}
                         </ul>
                     )
