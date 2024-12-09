@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense } from 'react';
-import TnbTree from "./../_components/TnbTree";
+import DynamicTable from "./DynamicTable";
 
 export default function Page() {
 
@@ -17,7 +17,7 @@ export default function Page() {
             <div>
                 <h1>Details</h1>
                 <Suspense>
-                    <TnbTree></TnbTree>
+                    <DynamicTable></DynamicTable>
                 </Suspense>
             </div>
         </>

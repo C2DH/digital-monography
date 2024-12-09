@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense } from 'react';
-import TnbTable from "./../_components/TnbTable";
+import DynamicTable from "./DynamicTable";
 
 export default function Page() {
     return (
@@ -9,9 +9,8 @@ export default function Page() {
             <div>
                 <h1>Assets</h1>
                 <Suspense>
-                    <TnbTable></TnbTable>
+                    <DynamicTable></DynamicTable>
                 </Suspense>
-
             </div>
         </>
     );

@@ -28,11 +28,11 @@ const ddbDocClient = DynamoDBDocumentClient.from(ddbClient, {
     unmarshallOptions,
 });
 
-export default function TnbTable() {
+export default function DynamicTable() {
     const [tableData, setTableData] = useState<any>([]);
     const searchParams = useSearchParams();
     const slug = searchParams?.get("slug");
-    const dbTable = "dgtmon-dev-dyndb-assets-tbl"; // TODO: decouple from specific table
+    const dbTable = "dgtmon-dev-dyndb-headings-tbl";
 
     const fetchRecords = async (pk: string) => {
         try {
