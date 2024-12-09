@@ -41,8 +41,8 @@ const StageName = {
 const StatusIcons = {
     // make sure the values are consistent with src/_common/audit.py
     0: "⚠️",
-    1: "✅",
-    2: "...",
+    1: "...",
+    2: "✅",
 }
 
 
@@ -55,7 +55,7 @@ type IAuditEvent = {
 }
 
 export default function TnbStatusTracker() {
-    const [tableData, setTableData] = useState<any>([]);
+    const [tableData, setTableData] = useState<IAuditEvent[]>([]);
     const searchParams = useSearchParams();
     const slug = searchParams?.get("slug");
     const dbTable = "dgtmon-dev-dyndb-audit-tbl"; // TODO: decouple from specific table
@@ -70,11 +70,11 @@ export default function TnbStatusTracker() {
                 },
             })
             const resp = await ddbDocClient.send(cmd)
-            const records = resp.Items?.map((rec) => {
+            const records = (resp.Items || []).map((rec) => {
                 const timestamp = rec.timestamp.S ? new Date(rec.timestamp.S) : new Date(1970);
                 return {
-                    filename: rec.filename.S,
-                    msg: rec.msg.S,
+                    filename: rec.filename.S ? rec.filename.S : "",
+                    msg: rec.msg.S ? rec.msg.S : "",
                     status: Number(rec.status.N),
                     module: Number(rec.module.N),
                     timestamp: timestamp,
