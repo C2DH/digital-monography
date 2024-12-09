@@ -68,8 +68,8 @@ export default function DynamicTable() {
                 ExpressionAttributeValues: {
                     ":slug": { "S": pk }
                 },
-            })
-            const resp = await ddbDocClient.send(cmd)
+            });
+            const resp = await ddbDocClient.send(cmd);
             const records = (resp.Items || []).map((rec) => {
                 const timestamp = rec.timestamp.S ? new Date(rec.timestamp.S) : new Date(1970);
                 return {
@@ -79,7 +79,7 @@ export default function DynamicTable() {
                     module: Number(rec.module.N),
                     timestamp: timestamp,
                 }
-            }).sort((a: IAuditEvent, b: IAuditEvent) => (a.timestamp > b.timestamp ? 1 : -1))
+            }).sort((a: IAuditEvent, b: IAuditEvent) => (a.timestamp > b.timestamp ? 1 : -1));
             setTableData(records);
         } catch (err) {
             console.log("Error", err);

@@ -1,6 +1,6 @@
 'use client'
 
-// import { useEffect } from "react";
+// import "./_styles/treeView.css";
 
 export default function Home() {
   // useEffect(() => {
@@ -11,6 +11,8 @@ export default function Home() {
     <div>
       <main>
         <p>Main page</p>
+        <p><a href="https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com/test/login">Login</a></p>
+        <p><a href="https://www.dropbox.com/home/Aplikacje/drpb-upload-alert-test">Dropbox</a></p>
       </main>
     </div>
     //     <div className="d-flex 
