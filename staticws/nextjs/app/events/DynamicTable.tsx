@@ -54,7 +54,7 @@ type IAuditEvent = {
     timestamp: Date,
 }
 
-export default function TnbStatusTracker() {
+export default function DynamicTable() {
     const [tableData, setTableData] = useState<IAuditEvent[]>([]);
     const searchParams = useSearchParams();
     const slug = searchParams?.get("slug");

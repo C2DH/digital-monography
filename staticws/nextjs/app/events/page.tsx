@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense } from 'react';
-import TnbStatusTracker from "../_components/TnbStatusTracker";
+import DynamicTable from "./DynamicTable";
 
 
 export default function Page() {
@@ -10,7 +10,7 @@ export default function Page() {
             <div>
                 <h1>Events</h1>
                 <Suspense>
-                    <TnbStatusTracker></TnbStatusTracker>
+                    <DynamicTable></DynamicTable>
                 </Suspense>
             </div>
         </>
