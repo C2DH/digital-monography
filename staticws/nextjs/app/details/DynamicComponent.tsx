@@ -47,7 +47,7 @@ function getNestedStr(rec: any, attr: string): string {
     }
 }
 
-export default function DynamicTable(): JSX.Element {
+export default function DynamicListGroup(): JSX.Element {
     const [data, setData] = useState<IHeadings>({});
     const searchParams = useSearchParams();
     const slug = searchParams?.get("slug");

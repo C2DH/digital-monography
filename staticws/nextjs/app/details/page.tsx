@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense } from 'react';
-import DynamicTable from "./DynamicTable";
+import DynamicListGroup from "./DynamicComponent";
 
 export default function Page() {
 
@@ -17,7 +17,7 @@ export default function Page() {
             <div>
                 <h1>Details</h1>
                 <Suspense>
-                    <DynamicTable></DynamicTable>
+                    <DynamicListGroup></DynamicListGroup>
                 </Suspense>
             </div>
         </>
