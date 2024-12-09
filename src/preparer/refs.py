@@ -85,11 +85,12 @@ def prepare_ref_targets_in_headers(
                     elem=str(tag),
                 )
                 metadata.add_target(target)
+        h_lvl = "".join(ch for ch in tag.name if ch.isdigit())
         heading = HeadingDatapoint(
             file_name=metadata.filepath.name if metadata.filepath else "",
             text=tag.text,
             target=link.fragment if link else "",
-            level=tag.name,
+            level=h_lvl,
             elem=str(tag),
         )
         metadata.add_heading(heading)
