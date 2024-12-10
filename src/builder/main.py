@@ -114,12 +114,12 @@ def _write_metadata_to_db(key: KeyPath) -> None:
     try:
         tables = {
             "assets": DYNAMODB_ASSETS_TBL,
-            "citations": DYNAMODB_CITATIONS_TBL,
+            "citation_groups": DYNAMODB_CITATIONS_TBL,
             "headings": DYNAMODB_HEADINGS_TBL,
         }
         records = {
             "assets": [],
-            "citations": [],
+            "citation_groups": [],
             "headings": [],
         }
         # merge json per file to json per domain like headings, citations, etc.
