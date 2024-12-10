@@ -126,10 +126,13 @@ def _write_metadata_to_db(key: KeyPath) -> None:
         for fp in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
             with open(fp, "r") as infile:
                 logger.info(f"Starting saving/logging")
+                logger.info(f"type(infile): {type(infile)}")
                 resp = s3.put_object(
-                    Body=infile, Bucket="cpy-dgtmon-dev-verifier-msgs", Key=str(fp)
+                    Body=infile.read(),
+                    Bucket="cpy-dgtmon-dev-verifier-msgs",
+                    Key=str(fp),
                 )
-                logger.info(f"{infile}")
+                logger.info(f"{infile.read()}")
                 for domain, tbl in tables.items():
                     if infile:
                         # resp = s3.put_object(Body=body.decode("utf-8"), Bucket=dst, Key=str(key))
