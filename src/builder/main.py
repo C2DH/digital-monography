@@ -128,7 +128,7 @@ def _write_metadata_to_db(key: KeyPath) -> None:
             logger.info(f"{fp} st_size={st_size}")
             if not st_size:
                 continue
-            with open(fp, "r") as infile:
+            with open(fp, "rb") as infile:
                 logger.info(f"type(infile): {type(infile)}")
                 resp = s3.put_object(
                     Body=infile.read(),
@@ -136,6 +136,7 @@ def _write_metadata_to_db(key: KeyPath) -> None:
                     Key=str(fp),
                 )
                 # logger.info(f"{infile.read()}")
+                records_in_one_file = json.load(infile)
                 for domain, tbl in tables.items():
                     # if infile:
                     # resp = s3.put_object(Body=body.decode("utf-8"), Bucket=dst, Key=str(key))
@@ -144,7 +145,6 @@ def _write_metadata_to_db(key: KeyPath) -> None:
                     #     + json.dumps(resp, default=str)
                     # )
                     try:
-                        records_in_one_file = json.load(infile)
                         records[domain].extend(records_in_one_file.get(domain, []))
                     except json.JSONDecodeError as e:
                         logger.exception(
