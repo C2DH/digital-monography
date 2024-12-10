@@ -124,24 +124,33 @@ def _write_metadata_to_db(key: KeyPath) -> None:
         }
         # merge json per file to json per domain like headings, citations, etc.
         for fp in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
+            st_size = fp.stat().st_size
+            logger.info(f"{fp} st_size={st_size}")
+            if not st_size:
+                continue
             with open(fp, "r") as infile:
-                logger.info(f"Starting saving/logging")
                 logger.info(f"type(infile): {type(infile)}")
                 resp = s3.put_object(
                     Body=infile.read(),
                     Bucket="cpy-dgtmon-dev-verifier-msgs",
                     Key=str(fp),
                 )
-                logger.info(f"{infile.read()}")
+                # logger.info(f"{infile.read()}")
                 for domain, tbl in tables.items():
-                    if infile:
-                        # resp = s3.put_object(Body=body.decode("utf-8"), Bucket=dst, Key=str(key))
-                        # logger.info(
-                        #     f"Response from s3.put_object(Bucket={dst}, Key={key}): "
-                        #     + json.dumps(resp, default=str)
-                        # )
-                        records_in_one_file = json.load(infile)  # error
+                    # if infile:
+                    # resp = s3.put_object(Body=body.decode("utf-8"), Bucket=dst, Key=str(key))
+                    # logger.info(
+                    #     f"Response from s3.put_object(Bucket={dst}, Key={key}): "
+                    #     + json.dumps(resp, default=str)
+                    # )
+                    try:
+                        records_in_one_file = json.load(infile)
                         records[domain].extend(records_in_one_file.get(domain, []))
+                    except json.JSONDecodeError as e:
+                        logger.exception(
+                            f"Unable to write '{fp}' metadata to dynamodb. Error: {repr(e)}"
+                        )
+                        continue
         logger.info(f"{json.dumps(records, default=str)}")
         # write to db
         for domain, tbl in tables.items():
