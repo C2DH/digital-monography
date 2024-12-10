@@ -28,6 +28,7 @@ try:
         STATICWS_WIP_BUCKET_NAME,
     )
     from metadata import DocumentMetadata, SubstitutionDatapoint
+    from fakers import Faker
     from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
     from .audit import AuditEvent, AuditStatus
@@ -41,6 +42,7 @@ except (ImportError, ModuleNotFoundError):
         STATICWS_WIP_BUCKET_NAME,
     )
     from .metadata import DocumentMetadata, SubstitutionDatapoint
+    from .fakers import Faker
     from .keys import KeyPath
 
 
@@ -60,8 +62,10 @@ logger.setLevel(logging.INFO)
 
 if IS_DEBUG:
     dynamodb = None  # TODO: add fakers
+    s3 = Faker("s3")
 else:
     dynamodb = boto3.resource("dynamodb")
+    s3 = boto3.client("s3")
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
@@ -121,8 +125,18 @@ def _write_metadata_to_db(key: KeyPath) -> None:
         # merge json per file to json per domain like headings, citations, etc.
         for fp in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
             with open(fp, "r") as infile:
+                logger.info(f"Starting saving/logging")
+                resp = s3.put_object(
+                    Body=infile, Bucket="cpy-dgtmon-dev-verifier-msgs", Key=str(fp)
+                )
+                logger.info(f"{infile}")
                 for domain, tbl in tables.items():
                     if infile:
+                        # resp = s3.put_object(Body=body.decode("utf-8"), Bucket=dst, Key=str(key))
+                        # logger.info(
+                        #     f"Response from s3.put_object(Bucket={dst}, Key={key}): "
+                        #     + json.dumps(resp, default=str)
+                        # )
                         records_in_one_file = json.load(infile)  # error
                         records[domain].extend(records_in_one_file.get(domain, []))
         logger.info(f"{json.dumps(records, default=str)}")
