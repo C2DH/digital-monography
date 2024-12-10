@@ -215,14 +215,14 @@ def _download_fileobj(src: str, key: KeyPath) -> None:
                 f"Response from s3.download_fileobj(Bucket={src}, Key={s3_key}): "
                 + json.dumps(resp, default=str)
             )
-            _log_audit_event(
-                key,
-                AuditStatus.FAILED.value,
-                "Error upon internal download.",
-            )
     except Exception as e:
         logger.exception(
             f"Downloading fileobj {str(key)} from {src} failed. Error: {repr(e)}"
+        )
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            "Error upon internal download.",
         )
         raise
 
