@@ -126,16 +126,10 @@ def _write_metadata_to_db(key: KeyPath) -> None:
         for fp in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
             st_size = fp.stat().st_size
             logger.info(f"{fp} st_size={st_size}")
-            if not st_size:
+            if st_size < 126:
                 continue
             with open(fp, "rb") as infile:
                 logger.info(f"type(infile): {type(infile)}")
-                resp = s3.put_object(
-                    Body=infile.read(),
-                    Bucket="cpy-dgtmon-dev-verifier-msgs",
-                    Key=str(fp),
-                )
-                # logger.info(f"{infile.read()}")
                 records_in_one_file = json.load(infile)
                 for domain, tbl in tables.items():
                     # if infile:
