@@ -368,6 +368,8 @@ def _write_metadata_to_efs(metadata: DocumentMetadata, key: KeyPath) -> None:
         fp = key.add_to_efs_slug_dir("_metadata").parent / key.github_path.with_suffix(
             ".json"
         )
+        logger.info(f"File: {fp}")
+        logger.info(f"Meta: {json.dumps(json_data)}")
         with open(fp, "w") as f:
             json.dump(json_data, f)
         logger.info(f"Metadata was saved to {str(fp)}")
