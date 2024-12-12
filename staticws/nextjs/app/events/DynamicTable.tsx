@@ -58,7 +58,7 @@ export default function DynamicTable() {
     const [tableData, setTableData] = useState<IAuditEvent[]>([]);
     const searchParams = useSearchParams();
     const slug = searchParams?.get("slug");
-    const dbTable = "dgtmon-dev-dyndb-audit-tbl"; // TODO: decouple from specific table
+    const dbTable = "dgtmon-dev-dyndb-audit-tbl";
 
     const fetchRecords = async (pk: string) => {
         try {
