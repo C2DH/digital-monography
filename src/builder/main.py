@@ -341,6 +341,7 @@ def _build_book(key: KeyPath) -> None:
 
 
 def _build_verification_report(key: KeyPath) -> None:
+    return
     if not (key.efs_slug_dir / "_config.yml").exists():
         logging.info(
             f"{key.efs_slug_dir / '_config.yml'} was not found. Skipping build."

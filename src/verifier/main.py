@@ -67,7 +67,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         warnings_json = verifer.to_json(md=True)
         logger.info(json.dumps(warnings_json, default=str))
         _write_json_to_efs(warnings_json, key)
-        _make_warnings_report(verifer.soup, warnings_json, timestamp, key)
+        # _make_warnings_report(verifer.soup, warnings_json, timestamp, key)
         _put_json_to_s3(json.dumps(warnings_json, default=str), key)
         _send_msg_to_sqs(key)
     logger.info("Handler ended successfully.")
@@ -122,26 +122,26 @@ def _write_json_to_efs(json_data: t.Any, key: KeyPath) -> None:
         raise
 
 
-def _make_warnings_report(
-    soup: bs4.BeautifulSoup,
-    json_data: t.Any,
-    timestamp: datetime.datetime,
-    key: KeyPath,
-) -> None:
-    try:
-        fp = key.add_to_efs_slug_dir("_warnings").parent / key.github_path.with_suffix(
-            ".md"
-        )
-        file_name = str(key.with_suffix(".docx").name)
-        with open(fp, "w") as f:
-            f.write(make_warnings_report(soup, json_data, timestamp, file_name))
-        logger.info(f"Warnings markdown report was saved to {str(fp)}")
-    except Exception as e:
-        logger.exception(f"Writing json to /efs directory failed. Error: {repr(e)}")
-        _log_audit_event(
-            key, AuditStatus.FAILED.value, "Generating verification warnings failed."
-        )
-        raise
+# def _make_warnings_report(
+#     soup: bs4.BeautifulSoup,
+#     json_data: t.Any,
+#     timestamp: datetime.datetime,
+#     key: KeyPath,
+# ) -> None:
+#     try:
+#         fp = key.add_to_efs_slug_dir("_warnings").parent / key.github_path.with_suffix(
+#             ".md"
+#         )
+#         file_name = str(key.with_suffix(".docx").name)
+#         with open(fp, "w") as f:
+#             f.write(make_warnings_report(soup, json_data, timestamp, file_name))
+#         logger.info(f"Warnings markdown report was saved to {str(fp)}")
+#     except Exception as e:
+#         logger.exception(f"Writing json to /efs directory failed. Error: {repr(e)}")
+#         _log_audit_event(
+#             key, AuditStatus.FAILED.value, "Generating verification warnings failed."
+#         )
+#         raise
 
 
 def _put_json_to_s3(body: str, key: KeyPath) -> None:
