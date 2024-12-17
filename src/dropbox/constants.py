@@ -51,10 +51,10 @@ CAPTION_ITEM_TYPE_TABLE = "tbl"
 CAPTION_ITEM_TYPE_GRAPH = "graph"
 CAPTION_ITEM_TYPE_OTHER = "oth"
 # metadata fields
-FIELD_DIGITAL_SOURCE = "digitalsource"
-FIELD_PAPER_SOURCE = "papersource"
+FIELD_DIGITAL_SOURCE = "digitalinput"
+FIELD_PAPER_SOURCE = "paperinput"
 FIELD_DELETE_PREVIOUS = "deleteprevious"
-FIELD_LICENSE_NAME = "licensename"
+FIELD_LICENSE_NAME = "license"
 METADATA_FIELDS = [
     {
         "key": "id",
@@ -67,42 +67,35 @@ METADATA_FIELDS = [
         "key": "author",
         "is_bool": False,
         "is_required": False,
-        "aliases": ["authors", "autor", "autors"],
+        "aliases": ["authors", "autor", "autors", "institution", "inst"],
         "desc": "",
     },
     {
         "key": FIELD_DIGITAL_SOURCE,
         "is_bool": False,
         "is_required": True,
-        "aliases": ["digitalsrc", "digital"],
+        "aliases": ["digitalsource", "digitalsrc", "digital"],
         "desc": "",
     },
     {
         "key": FIELD_PAPER_SOURCE,
         "is_bool": False,
-        "is_required": True,
-        "aliases": ["papersrc", "paper"],
-        "desc": "",
-    },
-    {
-        "key": "original",
-        "is_bool": False,
         "is_required": False,
-        "aliases": ["orig", "og", "origin"],
+        "aliases": ["papersource", "papersrc", "paper"],
         "desc": "",
     },
     {
         "key": FIELD_LICENSE_NAME,
         "is_bool": False,
-        "is_required": True,
-        "aliases": ["license"],
+        "is_required": False,
+        "aliases": ["licensename"],
         "desc": "",
     },
     {
-        "key": "licenseurl",
+        "key": "source",
         "is_bool": False,
-        "is_required": False,
-        "aliases": [],
+        "is_required": True,
+        "aliases": ["credit"],
         "desc": "",
     },
     {
@@ -110,6 +103,13 @@ METADATA_FIELDS = [
         "is_bool": False,
         "is_required": True,
         "aliases": ["alt"],
+        "desc": "",
+    },
+    {
+        "key": "iscolor",
+        "is_bool": True,
+        "is_required": False,
+        "aliases": ["color", "colour", "iscolour"],
         "desc": "",
     },
     {
@@ -124,18 +124,18 @@ METADATA_FIELDS = [
         "desc": "",
     },
     {
-        "key": "status",
+        "key": "comments",
         "is_bool": False,
         "is_required": False,
-        "aliases": [],
-        "desc": "Copyright status to be filled by editor.",
+        "aliases": ["comment"],
+        "desc": "",
     },
     {
         "key": "isready",
         "is_bool": True,
         "is_required": False,
         "aliases": ["ready", "ok", "isok"],
-        "desc": "Copyright status to be filled by editor.",
+        "desc": "",
     },
     {
         "key": "uuid",
