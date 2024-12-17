@@ -1,7 +1,7 @@
 # ===== IMPORTANT =====
 # Remember, the only source of truth for html2md.py is the one defined in
-# `src/preparer/html2md.py`. Objects defined in other directories in
-# the src/ folder should be replaced with `src/preparer/html2md.py` before
+# `src/_common/html2md.py`. Objects defined in other directories in
+# the src/ folder should be replaced with `src/_common/html2md.py` before
 # building the image. We advise that you always build the containers
 # using Makefile commands, as the copy command is already included.
 # ======================
@@ -45,7 +45,7 @@ def sub_inline_conversion(markup_fn):
 class MystMdConverter(markdownify.MarkdownConverter):
 
     def __init__(self, metadata: t.Optional[DocumentMetadata], **options):
-        self._metadata = metadata
+        self._metadata: DocumentMetadata = metadata
         self._soup = bs4.BeautifulSoup("", "html.parser")
         super().__init__(**options)
 
@@ -97,6 +97,7 @@ class MystMdConverter(markdownify.MarkdownConverter):
             # if asset_meta.digital_fp and asset_meta.digital_fp.suffix in SUFFIXES_IMAGES:
             #     img_el = self._soup.new_tag('img', src=asset_meta.digital_fp.suffix)
             #     return self.convert_img(img_el, "", convert_as_inline)
+
             if asset_meta.digital_fp and asset_meta.digital_fp.suffix == ".html":
                 text = (
                     "<html>"
