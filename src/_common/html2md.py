@@ -188,10 +188,10 @@ class MystMdConverter(markdownify.MarkdownConverter):
             return "\n"
         return super().convert_script(el, text, convert_as_inline)
 
-    def convert_table(self, el, text, convert_as_inline):
-        if el.get("hidden") and el.get("class") == CLS_METADATA_TABLE:
-            return "\n% :::{dgt-mon-asset} " + el.get("id") + "\n"
-        return super().convert_table(el, text, convert_as_inline)
+    # def convert_table(self, el, text, convert_as_inline):
+    #     if el.get("hidden") and el.get("class") == CLS_METADATA_TABLE:
+    #         return "\n% :::{dgt-mon-asset} " + el.get("id") + "\n"
+    #     return super().convert_table(el, text, convert_as_inline)
 
 
 def convert_to_md(
