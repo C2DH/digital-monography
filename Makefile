@@ -66,6 +66,10 @@ copy/metadata:
 	cp src/_common/metadata.py src/builder/metadata.py
 	cp src/_common/metadata.py src/verifier/metadata.py
 
+copy/html2md:
+	cp src/_common/html2md.py src/preparer/html2md.py
+	cp src/_common/html2md.py src/verifier/html2md.py
+
 entrypoint/build:
 	cp src/_common/constants.py src/entrypoint/constants.py
 	docker build -t dgtmon-dev-entrypoint src/entrypoint
