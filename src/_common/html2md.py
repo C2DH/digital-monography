@@ -85,28 +85,23 @@ class MystMdConverter(markdownify.MarkdownConverter):
         return super().convert_a(el, text, convert_as_inline)
 
     def convert_p(self, el, text, convert_as_inline):
-        asset_directive_match = re.match(r"\s*%\s*:::{dgt-mon-asset}\s*", text)
-        if self._metadata is not None and asset_directive_match is not None:
-            uuidv4_len = 36
-            uuid = text[asset_directive_match.span()[1] :][:uuidv4_len]
-            asset_meta = self._metadata[uuid]
-            default_height = "100%"
-            height = asset_meta.get("height", default_height)
-            # TODO: this does not work, add appending objects from "digitalsrc"
-            # if asset_meta.digital_fp and asset_meta.digital_fp.suffix in SUFFIXES_IMAGES:
-            #     img_el = self._soup.new_tag('img', src=asset_meta.digital_fp.suffix)
-            #     return self.convert_img(img_el, "", convert_as_inline)
-        elif text.startswith(
+        if text.startswith(
             ":::{iframe} <https://www.youtube.com/embed/"
         ) or text.startswith(":::{iframe} <https://player.vimeo.com/video/"):
             text = text.replace("<", "", 1)
             text = text.replace(">", "", 1)
         return super().convert_p(el, text, convert_as_inline)
 
+    def convert_span(self, el, text, convert_as_inline):
+        if text.startswith("% :::{") and text.endswith(":::"):
+            print("\n\n\t\ttext", text)
+            return "\n%s\n\n" % text
+        return super().convert_p(el, text, convert_as_inline)
+
     def convert_pre(self, el, text, convert_as_inline):
         h_target_match = re.match(r"^\([\w\-_]+\)=$", text)
         if h_target_match is not None:
-            return "\n%s\n" % text
+            return "\n\n%s\n" % text
         return super().convert_pre(el, text, convert_as_inline)
 
     def convert_hn(self, n, el, text, convert_as_inline):
@@ -114,6 +109,7 @@ class MystMdConverter(markdownify.MarkdownConverter):
             text = text.replace('<a href="', '<html><a href="')
             text = text.replace('<a id="', '<html><a id="')
             text = text.replace("</html>", "</a></html>")
+        text = "\n" + text
         return super().convert_hn(n, el, text, convert_as_inline)
 
     def convert_li(self, el, text, convert_as_inline):
