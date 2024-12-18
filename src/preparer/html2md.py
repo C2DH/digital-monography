@@ -96,22 +96,6 @@ class MystMdConverter(markdownify.MarkdownConverter):
             # if asset_meta.digital_fp and asset_meta.digital_fp.suffix in SUFFIXES_IMAGES:
             #     img_el = self._soup.new_tag('img', src=asset_meta.digital_fp.suffix)
             #     return self.convert_img(img_el, "", convert_as_inline)
-
-            if asset_meta.digital_fp and asset_meta.digital_fp.suffix == ".html":
-                text = (
-                    "<html>"
-                    f'<iframe src="{str(asset_meta.digital_fp)}" width="100%" height="{str(height)}" frameborder="0">'
-                    "</iframe>"
-                    "</html>"
-                )
-            elif str(asset_meta.get("digitalsrc", "")).startswith("https://"):
-                src = asset_meta["digitalsrc"]
-                text = (
-                    "<html>"
-                    f'<iframe src="{src}" width="100%" height="{str(height)}" frameborder="0">'
-                    "</iframe>"
-                    "</html>"
-                )
         elif text.startswith(
             ":::{iframe} <https://www.youtube.com/embed/"
         ) or text.startswith(":::{iframe} <https://player.vimeo.com/video/"):
