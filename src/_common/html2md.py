@@ -94,7 +94,6 @@ class MystMdConverter(markdownify.MarkdownConverter):
 
     def convert_span(self, el, text, convert_as_inline):
         if text.startswith("% :::{") and text.endswith(":::"):
-            print("\n\n\t\ttext", text)
             return "\n%s\n\n" % text
         return super().convert_p(el, text, convert_as_inline)
 
