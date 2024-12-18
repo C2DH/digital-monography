@@ -763,10 +763,13 @@ class HtmlVerifier:
             for descendent in tr.find_all():
                 if re.match(r"^\s*##\s*\w+", descendent.text):
                     key = descendent.text
-            if key and key in unique_keys:
-                duplicated_keys.append(key)
-            else:
-                unique_keys.append(key)
+            try:
+                if key and key in unique_keys:
+                    duplicated_keys.append(key)
+                else:
+                    unique_keys.append(key)
+            except UnboundLocalError:
+                pass
         return duplicated_keys
 
     def _check_tbl_empty_field(self, val: str) -> bool:
