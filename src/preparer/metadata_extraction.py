@@ -85,6 +85,10 @@ def prepare_metadata_tables(
                     kwargs.update({"caption": caption_el.text})
             asset = AssetDatapoint(pk=metadata_tbl.uuid, kwargs=kwargs)
             document_metadata.add_asset(asset)
+            placeholder = html_soup.new_tag("span")
+            placeholder.string = "% :::{dgt-mon-asset} " + metadata_tbl.uuid + " :::"
+            placeholder["hidden"] = "hidden"
+            table.insert_before(placeholder)
     return html_soup
 
 
