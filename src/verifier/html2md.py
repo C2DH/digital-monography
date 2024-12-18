@@ -1,7 +1,7 @@
 # ===== IMPORTANT =====
 # Remember, the only source of truth for html2md.py is the one defined in
-# `src/preparer/html2md.py`. Objects defined in other directories in
-# the src/ folder should be replaced with `src/preparer/html2md.py` before
+# `src/_common/html2md.py`. Objects defined in other directories in
+# the src/ folder should be replaced with `src/_common/html2md.py` before
 # building the image. We advise that you always build the containers
 # using Makefile commands, as the copy command is already included.
 # ======================
@@ -45,7 +45,7 @@ def sub_inline_conversion(markup_fn):
 class MystMdConverter(markdownify.MarkdownConverter):
 
     def __init__(self, metadata: t.Optional[DocumentMetadata], **options):
-        self._metadata = metadata
+        self._metadata: DocumentMetadata = metadata
         self._soup = bs4.BeautifulSoup("", "html.parser")
         super().__init__(**options)
 
@@ -85,7 +85,6 @@ class MystMdConverter(markdownify.MarkdownConverter):
         return super().convert_a(el, text, convert_as_inline)
 
     def convert_p(self, el, text, convert_as_inline):
-
         asset_directive_match = re.match(r"\s*%\s*:::{dgt-mon-asset}\s*", text)
         if self._metadata is not None and asset_directive_match is not None:
             uuidv4_len = 36
@@ -97,6 +96,7 @@ class MystMdConverter(markdownify.MarkdownConverter):
             # if asset_meta.digital_fp and asset_meta.digital_fp.suffix in SUFFIXES_IMAGES:
             #     img_el = self._soup.new_tag('img', src=asset_meta.digital_fp.suffix)
             #     return self.convert_img(img_el, "", convert_as_inline)
+
             if asset_meta.digital_fp and asset_meta.digital_fp.suffix == ".html":
                 text = (
                     "<html>"
@@ -182,15 +182,20 @@ class MystMdConverter(markdownify.MarkdownConverter):
             return text
         return "%s%s`%s`%s" % (prefix, markup_tag, text, suffix)
 
+    def convert_iframe(
+        self, el: bs4.element.Tag, text: str, convert_as_inline: bool
+    ) -> str:
+        return "\n\n<html>%s</html>\n\n" % str(el)
+
     def convert_script(self, el, text, convert_as_inline):
         if el.get("hidden"):
             return "\n"
         return super().convert_script(el, text, convert_as_inline)
 
-    def convert_table(self, el, text, convert_as_inline):
-        if el.get("hidden") and el.get("class") == CLS_METADATA_TABLE:
-            return "\n% :::{dgt-mon-asset} " + el.get("id") + "\n"
-        return super().convert_table(el, text, convert_as_inline)
+    # def convert_table(self, el, text, convert_as_inline):
+    #     if el.get("hidden") and el.get("class") == CLS_METADATA_TABLE:
+    #         return "\n% :::{dgt-mon-asset} " + el.get("id") + "\n"
+    #     return super().convert_table(el, text, convert_as_inline)
 
 
 def convert_to_md(

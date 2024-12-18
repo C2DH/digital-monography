@@ -85,7 +85,6 @@ class MystMdConverter(markdownify.MarkdownConverter):
         return super().convert_a(el, text, convert_as_inline)
 
     def convert_p(self, el, text, convert_as_inline):
-
         asset_directive_match = re.match(r"\s*%\s*:::{dgt-mon-asset}\s*", text)
         if self._metadata is not None and asset_directive_match is not None:
             uuidv4_len = 36
@@ -182,6 +181,11 @@ class MystMdConverter(markdownify.MarkdownConverter):
         if text.startswith("[^endnote-ref-"):
             return text
         return "%s%s`%s`%s" % (prefix, markup_tag, text, suffix)
+
+    def convert_iframe(
+        self, el: bs4.element.Tag, text: str, convert_as_inline: bool
+    ) -> str:
+        return "\n\n<html>%s</html>\n\n" % str(el)
 
     def convert_script(self, el, text, convert_as_inline):
         if el.get("hidden"):
