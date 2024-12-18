@@ -60,7 +60,7 @@ class MystMdConverter(markdownify.MarkdownConverter):
             return ""
         if self.options["escape_misc"]:
             # text = re.sub(r'([\\&<`[>~#=+|-])', r'\\\1', text)
-            text = re.sub(r"([\\&<`[>~#=+|])", r"\\\1", text)
+            text = re.sub(r"([\\&<`[>~#=+])", r"\\\1", text)
             text = re.sub(r"([0-9])([.)])", r"\1\\\2", text)
         if self.options["escape_asterisks"]:
             text = text.replace("*", r"\*")
@@ -85,12 +85,6 @@ class MystMdConverter(markdownify.MarkdownConverter):
         return super().convert_a(el, text, convert_as_inline)
 
     def convert_p(self, el, text, convert_as_inline):
-        # if text.startswith(":::{") and text.endswith(":::"):
-        #     print("\n\n\t\ttext", text)
-        #     text = "\n%s\n\n" % text
-        if text.startswith("% :::{") and text.endswith(":::"):
-            print("\n\n\t\ttext", text)
-            text = "\n%s\n\n" % text
         if text.startswith(
             ":::{iframe} <https://www.youtube.com/embed/"
         ) or text.startswith(":::{iframe} <https://player.vimeo.com/video/"):
