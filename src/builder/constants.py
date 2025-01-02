@@ -33,6 +33,7 @@ DYNAMODB_AUDIT_TBL = "dgtmon-dev-dyndb-audit-tbl"
 DYNAMODB_ASSETS_TBL = "dgtmon-dev-dyndb-assets-tbl"
 DYNAMODB_CITATIONS_TBL = "dgtmon-dev-dyndb-citations-tbl"
 DYNAMODB_HEADINGS_TBL = "dgtmon-dev-dyndb-headings-tbl"
+DYNAMODB_WARNINGS_TBL = "dgtmon-dev-dyndb-warnings-tbl"
 # S3 bucket names
 ARCHIVE_APKG_ALL = "cpy-dgtmon-dev-archive-apkg-all"
 APKG_UPLOAD_BUCKET_NAME = "cpy-dgtmon-dev-apkg-upload"

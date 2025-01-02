@@ -25,6 +25,7 @@ try:
         DYNAMODB_ASSETS_TBL,
         DYNAMODB_CITATIONS_TBL,
         DYNAMODB_HEADINGS_TBL,
+        DYNAMODB_WARNINGS_TBL,
         STATICWS_WIP_BUCKET_NAME,
     )
     from metadata import DocumentMetadata, SubstitutionDatapoint
@@ -39,6 +40,7 @@ except (ImportError, ModuleNotFoundError):
         DYNAMODB_ASSETS_TBL,
         DYNAMODB_CITATIONS_TBL,
         DYNAMODB_HEADINGS_TBL,
+        DYNAMODB_WARNINGS_TBL,
         STATICWS_WIP_BUCKET_NAME,
     )
     from .metadata import DocumentMetadata, SubstitutionDatapoint
@@ -109,18 +111,18 @@ def _mkdir_read():
 
 
 def _write_metadata_to_db(key: KeyPath) -> None:
-    if dynamodb is None:
-        return
     try:
         tables = {
             "assets": DYNAMODB_ASSETS_TBL,
             "citation_groups": DYNAMODB_CITATIONS_TBL,
             "headings": DYNAMODB_HEADINGS_TBL,
+            "warnings": DYNAMODB_WARNINGS_TBL,
         }
         records = {
             "assets": [],
             "citation_groups": [],
             "headings": [],
+            "warnings": [],
         }
         # merge json per file to json per domain like headings, citations, etc.
         for fp in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
@@ -145,7 +147,12 @@ def _write_metadata_to_db(key: KeyPath) -> None:
                             f"Unable to write '{fp}' metadata to dynamodb. Error: {repr(e)}"
                         )
                         continue
+        # print("records['citation_groups']")
+        # from pprint import pprint
+        # pprint(records["citation_groups"])
         logger.info(f"{json.dumps(records, default=str)}")
+        if dynamodb is None:
+            return
         # write to db
         for domain, tbl in tables.items():
             table = dynamodb.Table(tbl)
