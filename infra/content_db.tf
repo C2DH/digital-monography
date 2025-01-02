@@ -16,8 +16,9 @@ resource "aws_dynamodb_table" "assets_tbl" {
 
 resource "aws_dynamodb_table" "headings_tbl" {
   name         = var.dgtmon_dev_dyndb_headings_tbl
-  hash_key     = "slug"
   billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "slug"
+  range_key    = "fn"
 
   attribute {
     name = "slug"
@@ -32,8 +33,9 @@ resource "aws_dynamodb_table" "headings_tbl" {
 
 resource "aws_dynamodb_table" "citations_tbl" {
   name         = var.dgtmon_dev_dyndb_citations_tbl
-  hash_key     = "slug"
   billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "slug"
+  range_key    = "fn"
 
   attribute {
     name = "slug"
@@ -48,8 +50,9 @@ resource "aws_dynamodb_table" "citations_tbl" {
 
 resource "aws_dynamodb_table" "warnings_tbl" {
   name         = var.dgtmon_dev_dyndb_warnings_tbl
-  hash_key     = "slug"
   billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "slug"
+  range_key    = "fn"
 
   attribute {
     name = "slug"
