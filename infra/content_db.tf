@@ -1,7 +1,8 @@
 resource "aws_dynamodb_table" "assets_tbl" {
   name         = var.dgtmon_dev_dyndb_assets_tbl
-  hash_key     = "slug"
   billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "slug"
+  range_key    = "fn"
 
   attribute {
     name = "slug"
