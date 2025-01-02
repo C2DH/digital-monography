@@ -14,6 +14,10 @@ try:
     from constants import (
         ModuleEnum,
         ARCHIVE_APKG_ALL,
+        DYNAMODB_ASSETS_TBL,
+        DYNAMODB_CITATIONS_TBL,
+        DYNAMODB_HEADINGS_TBL,
+        DYNAMODB_WARNINGS_TBL,
         IR_APKG_HTML_BUCKET_NAME,
         IR_APKG_MD_BUCKET_NAME,
         IS_DEBUG,
@@ -46,6 +50,10 @@ except (ImportError, ModuleNotFoundError):
     from .constants import (
         ModuleEnum,
         ARCHIVE_APKG_ALL,
+        DYNAMODB_ASSETS_TBL,
+        DYNAMODB_CITATIONS_TBL,
+        DYNAMODB_HEADINGS_TBL,
+        DYNAMODB_WARNINGS_TBL,
         IR_APKG_HTML_BUCKET_NAME,
         IR_APKG_MD_BUCKET_NAME,
         IS_DEBUG,
@@ -169,6 +177,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_soup = insert_digital_objects(html_soup, metadata, tables)
         html_soup = remove_metadata_tables(html_soup, metadata, tables)
         _write_config_to_efs(metadata, key)
+        _write_metadata_to_db(metadata, key)
         _write_metadata_to_efs(metadata, key)
         _write_processed_html_to_efs(html_soup_str, key)
         _put_html_to_s3(html_soup_str, key)
@@ -366,6 +375,52 @@ def _write_processed_md_to_efs(md: str, key: KeyPath) -> None:
         f.write(md)
 
 
+def _write_metadata_to_db(metadata: DocumentMetadata, key: KeyPath) -> None:
+    try:
+        tables = {
+            "assets": DYNAMODB_ASSETS_TBL,
+            "citation_groups": DYNAMODB_CITATIONS_TBL,
+            "headings": DYNAMODB_HEADINGS_TBL,
+            # "warnings": DYNAMODB_WARNINGS_TBL,
+        }
+        for domain, tbl in tables.items():
+            table = dynamodb.Table(tbl)
+            resp = table.put_item(
+                Item={
+                    "slug": key.slug,
+                    "fn": key.name,
+                    "records": [rec.to_json() for rec in getattr(metadata, domain)],
+                }
+            )
+            logger.info(
+                f"Response from dynamodb.Table({tbl}).put_item: {json.dumps(resp, default=str)}"
+            )
+
+        # assets = [rec.to_json() for rec in metadata.assets]
+        # citation_groups = [rec.to_json() for rec in metadata.citation_groups]
+        # headings = [rec.to_json() for rec in metadata.headings]
+
+        # self.assets: list[AssetDatapoint] = []
+        # self.headings: list[HeadingDatapoint] = []
+        # self.refs: list[RefDatapoint] = []
+        # self.targets: list[TargetDatapoint] = []
+        # self.substitutions: list[SubstitutionDatapoint] = []
+        # self.citation_groups: list[CitationGroupDatapoint] = []
+        # self.citation_items: list[CitationItemDatapoint] = []
+
+        return
+    except Exception as e:
+        logger.exception(
+            f"Writing metadata in json to database failed. Error: {repr(e)}"
+        )
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            "Error upon writing metadata to database.",
+        )
+        raise
+
+
 def _write_metadata_to_efs(metadata: DocumentMetadata, key: KeyPath) -> None:
     try:
         json_data = metadata.to_json()
@@ -381,11 +436,11 @@ def _write_metadata_to_efs(metadata: DocumentMetadata, key: KeyPath) -> None:
         logger.exception(
             f"Writing metadata in json to /efs directory failed. Error: {repr(e)}"
         )
-        _log_audit_event(
-            key,
-            AuditStatus.FAILED.value,
-            "Error upon writing metadata.",
-        )
+        # _log_audit_event(
+        #     key,
+        #     AuditStatus.FAILED.value,
+        #     "Error upon writing metadata.",
+        # )
         raise
 
 

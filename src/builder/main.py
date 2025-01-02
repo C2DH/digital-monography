@@ -76,7 +76,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     key = _get_key(event)
     _log_audit_event(key, AuditStatus.PENDING.value, "Building book in progress...")
     _mkdir_read()
-    _write_metadata_to_db(key)
+    # _write_metadata_to_db(key)
     _copy_assets(key)
     _prepare_config(key)
     _build_book(key)
