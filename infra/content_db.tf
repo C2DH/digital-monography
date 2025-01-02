@@ -45,3 +45,20 @@ resource "aws_dynamodb_table" "citations_tbl" {
   }
 
 }
+
+resource "aws_dynamodb_table" "warnings_tbl" {
+  name         = var.dgtmon_dev_dyndb_warnings_tbl
+  hash_key     = "slug"
+  billing_mode = "PAY_PER_REQUEST"
+
+  attribute {
+    name = "slug"
+    type = "S"
+  }
+  attribute {
+    name = "fn"
+    type = "S"
+  }
+
+}
+

@@ -151,3 +151,8 @@ variable "dgtmon_dev_dyndb_citations_tbl" {
   type        = string
   description = "Name of the table for editors to list publication's citations"
 }
+
+variable "dgtmon_dev_dyndb_warnings_tbl" {
+  type        = string
+  description = "Name of the table for editors to list publication's warnings"
+}
