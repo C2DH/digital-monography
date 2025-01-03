@@ -199,23 +199,23 @@ data "aws_iam_policy_document" "builder" {
       "sqs:GetQueueUrl"
     ]
   }
-  statement {
-    sid    = "AllowReadAndWriteToDynamoDB"
-    effect = "Allow"
-    resources = [
-      aws_dynamodb_table.assets_tbl.arn,
-      aws_dynamodb_table.headings_tbl.arn,
-      aws_dynamodb_table.citations_tbl.arn
-    ]
-    actions = [
-      "dynamodb:PutItem",
-      # "dynamodb:GetItem",
-      # "dynamodb:UpdateItem",
-      # "dynamodb:DeleteItem",
-      # "dynamodb:Scan",
-      # "dynamodb:Query"
-    ]
-  }
+  # statement {
+  #   sid    = "AllowReadAndWriteToDynamoDB"
+  #   effect = "Allow"
+  #   resources = [
+  #     aws_dynamodb_table.assets_tbl.arn,
+  #     aws_dynamodb_table.headings_tbl.arn,
+  #     aws_dynamodb_table.citations_tbl.arn
+  #   ]
+  #   actions = [
+  #     "dynamodb:PutItem",
+  #     # "dynamodb:GetItem",
+  #     # "dynamodb:UpdateItem",
+  #     # "dynamodb:DeleteItem",
+  #     # "dynamodb:Scan",
+  #     # "dynamodb:Query"
+  #   ]
+  # }
   statement {
     sid       = "AllowLambdaVPCNetworking"
     effect    = "Allow"
