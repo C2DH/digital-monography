@@ -11,7 +11,7 @@ import itertools
 import pathlib
 import typing as t
 
-import bs4
+# import bs4
 
 try:
     from keys import KeyPath
@@ -58,7 +58,7 @@ class AssetRecord(t.TypedDict):
 class HeadingRecord(t.TypedDict):
     pk: int
     file: str
-    elem: str
+    # elem: str
     level: str
     text: str
     target: str
@@ -113,7 +113,8 @@ class AssetDatapoint:
         for k, v in self.kwargs.items():
             if isinstance(v, pathlib.Path):
                 v = str(v)
-            res.update({k: v})
+            if k != "elem":
+                res.update({k: v})
         res.update({"pk": self.pk})
         return res
 
@@ -121,6 +122,7 @@ class AssetDatapoint:
     def from_json(jsml: dict[str, str]) -> "AssetDatapoint":
         pk = jsml["pk"]
         del jsml["pk"]
+        jsml["elem"] = ""
         return AssetDatapoint(pk=pk, kwargs=jsml)
 
     def __getitem__(self, name: str) -> t.Union[AcceptedValues]:
@@ -137,11 +139,17 @@ class HeadingDatapoint:
     target: str
 
     def to_json(self) -> dict[str, t.Union[str, int]]:
-        return {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}
+        omit = ("elem",)
+        return {
+            f.name: getattr(self, f.name)
+            for f in dataclasses.fields(self)
+            if f.name not in omit
+        }
 
     @staticmethod
     def from_json(jsml: dict[str, t.Union[str, int]]) -> "HeadingDatapoint":
         del jsml["pk"]
+        jsml["elem"] = ""
         return HeadingDatapoint(**jsml)
 
     def __getitem__(self, name: str) -> t.Union[int, str]:
@@ -159,11 +167,17 @@ class RefDatapoint:
     elem: str
 
     def to_json(self) -> dict[str, t.Union[str, int]]:
-        return {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}
+        omit = ("elem",)
+        return {
+            f.name: getattr(self, f.name)
+            for f in dataclasses.fields(self)
+            if f.name not in omit
+        }
 
     @staticmethod
     def from_json(jsml: dict[str, t.Union[str, int]]) -> "RefDatapoint":
         del jsml["pk"]
+        jsml["elem"] = ""
         return RefDatapoint(**jsml)
 
     def __getitem__(self, name: str) -> t.Union[int, str]:
@@ -178,10 +192,16 @@ class TargetDatapoint:
     elem: str
 
     def to_json(self) -> dict[str, t.Union[str, int]]:
-        return {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}
+        omit = ("elem",)
+        return {
+            f.name: getattr(self, f.name)
+            for f in dataclasses.fields(self)
+            if f.name not in omit
+        }
 
     @staticmethod
     def from_json(jsml: dict[str, t.Union[str, int]]) -> "TargetDatapoint":
+        jsml["elem"] = ""
         return TargetDatapoint(**jsml)
 
     def __getitem__(self, name: str) -> t.Union[int, str]:
