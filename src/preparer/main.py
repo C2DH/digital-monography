@@ -376,6 +376,8 @@ def _write_processed_md_to_efs(md: str, key: KeyPath) -> None:
 
 
 def _write_metadata_to_db(metadata: DocumentMetadata, key: KeyPath) -> None:
+    if dynamodb is None:
+        return
     try:
         tables = {
             "assets": DYNAMODB_ASSETS_TBL,
