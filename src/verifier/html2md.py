@@ -51,6 +51,7 @@ class MystMdConverter(markdownify.MarkdownConverter):
 
     class Options(markdownify.MarkdownConverter.DefaultOptions):
         heading_style = markdownify.ATX
+        autolinks = True
         escape_underscores = False
         escape_misc = False
         sub_symbol = "{sub}"
@@ -83,6 +84,24 @@ class MystMdConverter(markdownify.MarkdownConverter):
         # if href.startswith("#_Ref"):
         #     return '<html><a href="%s">%s</a></html>' % (href, text)
         return super().convert_a(el, text, convert_as_inline)
+
+    # def convert_a(self, el, text, convert_as_inline):
+    #     prefix, suffix, text = chomp(text)
+    #     if not text:
+    #         return ''
+    #     href = el.get('href')
+    #     title = el.get('title')
+    #     # For the replacement see #29: text nodes underscores are escaped
+    #     if (self.options['autolinks']
+    #             and text.replace(r'\_', '_') == href
+    #             and not title
+    #             and not self.options['default_title']):
+    #         # Shortcut syntax
+    #         return '<%s>' % href
+    #     if self.options['default_title'] and not title:
+    #         title = href
+    #     title_part = ' "%s"' % title.replace('"', r'\"') if title else ''
+    #     return '%s[%s](%s%s)%s' % (prefix, text, href, title_part, suffix) if href else text
 
     def convert_p(self, el, text, convert_as_inline):
         if text.startswith(
@@ -164,6 +183,24 @@ class MystMdConverter(markdownify.MarkdownConverter):
     def convert_iframe(
         self, el: bs4.element.Tag, text: str, convert_as_inline: bool
     ) -> str:
+        print("\n\n\n")
+
+        src = el.get("src")
+        if src and src.startswith("https:/") and not src.startswith("https://"):
+            el["src"] = src.replace("https:/", "https://")
+        if src and src.startswith("http:/") and not src.startswith("http://"):
+            el["src"] = src.replace("http:/", "http://")
+
+        print('el.get("src")', el.get("src"))
+        print("text", text)
+        print("el", el)
+        print(
+            r'"\n\n<html>%s</html>\n\n" % repr(el)',
+            "\n\n<html>%s</html>\n\n" % repr(el),
+        )
+        print(
+            r'"\n\n<html>%s</html>\n\n" % str(el)', "\n\n<html>%s</html>\n\n" % str(el)
+        )
         return "\n\n<html>%s</html>\n\n" % str(el)
 
     def convert_script(self, el, text, convert_as_inline):
