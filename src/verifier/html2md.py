@@ -52,6 +52,7 @@ class MystMdConverter(markdownify.MarkdownConverter):
     class Options(markdownify.MarkdownConverter.DefaultOptions):
         heading_style = markdownify.ATX
         escape_underscores = False
+        escape_misc = False
         sub_symbol = "{sub}"
         sup_symbol = "{sup}"
 
@@ -59,8 +60,7 @@ class MystMdConverter(markdownify.MarkdownConverter):
         if not text:
             return ""
         if self.options["escape_misc"]:
-            # text = re.sub(r'([\\&<`[>~#=+|-])', r'\\\1', text)
-            text = re.sub(r"([\\&<`[>~#=+])", r"\\\1", text)
+            text = re.sub(r"([\\&<`[>~#=+|-])", r"\\\1", text)
             text = re.sub(r"([0-9])([.)])", r"\1\\\2", text)
         if self.options["escape_asterisks"]:
             text = text.replace("*", r"\*")
