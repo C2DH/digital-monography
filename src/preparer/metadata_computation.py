@@ -12,7 +12,9 @@ def compute_additional_metadata_fields(metadata: DocumentMetadata) -> None:
         asset: AssetDatapoint
 
         if asset.kwargs.get(FIELD_DIGITAL_SOURCE) is not None:
-            digitalsource = metadata.filepath.parent / asset.kwargs.get("digitalsource")
+            digitalsource = metadata.filepath.parent / asset.kwargs.get(
+                FIELD_DIGITAL_SOURCE
+            )
             if digitalsource.exists():
                 digital_stats = digitalsource.stat()
                 digital_name = digitalsource.name
@@ -38,7 +40,9 @@ def compute_additional_metadata_fields(metadata: DocumentMetadata) -> None:
                 )
 
         if asset.kwargs.get(FIELD_PAPER_SOURCE) is not None:
-            papersource = metadata.filepath.parent / asset.kwargs.get("papersource")
+            papersource = metadata.filepath.parent / asset.kwargs.get(
+                FIELD_PAPER_SOURCE
+            )
             if papersource.exists():
                 paper_stats = papersource.stat()
                 paper_name = papersource.name
