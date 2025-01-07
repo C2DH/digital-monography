@@ -29,7 +29,7 @@ class TestHtml2MdFootnotes:
         assert self.md.startswith(expected_md_start)
 
     def test_footnotes_properly_converted_to_myst_syntax(self):
-        expected_md_includes = r"[^footnote-ref-1]:  Joe Schmoe, „Just no“, Opinions, 1, Nr. 1 (2035\): 1–2\."
+        expected_md_includes = r"[^footnote-ref-1]:  Joe Schmoe, „Just no“, Opinions, 1, Nr. 1 (2035): 1–2."
         assert expected_md_includes in self.md
 
     def test_footnote_with_link_to_myst(self):
@@ -65,7 +65,7 @@ def test_heading_targets_markdownification():
     html_soup = bs4.BeautifulSoup(html, "html.parser")
     metadata = DocumentMetadata()
     md = convert_to_md(html_soup, metadata)
-    assert md == "\n(heading-target)=\n# Title\n\n"
+    assert md == "\n\n(heading-target)=\n# Title\n\n"
 
 
 class TestHtml2MdGreedy:
