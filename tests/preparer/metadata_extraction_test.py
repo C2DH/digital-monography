@@ -6,9 +6,10 @@ from src.preparer.metadata_extraction import prepare_metadata_tables
 from src.preparer.html2md import convert_to_md
 from src.preparer.metadata import DocumentMetadata
 from src.preparer.constants import (
+    FIELD_DELETE_PREVIOUS,
     FIELD_DIGITAL_SOURCE,
     FIELD_PAPER_SOURCE,
-    FIELD_DELETE_PREVIOUS,
+    FIELD_LICENSE_NAME,
 )
 
 
@@ -32,7 +33,7 @@ class TestHtml2MdMetadataExtraction:
         cls.expected_kwargs = [
             {
                 FIELD_PAPER_SOURCE: pathlib.Path("./images/tiny-picture.png"),
-                "licensename": "Unsplash License",
+                FIELD_LICENSE_NAME: "Unsplash License",
                 "licenseurl": "https://unsplash.com/license",
                 "author": "Jean Carlo Emer",
                 "takenfrom": "https://unsplash.com/photos/beige-concrete-house-2d-RL-xa4mk",
@@ -59,12 +60,15 @@ class TestHtml2MdMetadataExtraction:
         assert len(self.asset_2.kwargs) == 4
 
     def test_string_values(self):
+        print("self.asset_0.kwargs", self.asset_0.kwargs)
+        print("self.asset_1.kwargs", self.asset_1.kwargs)
         assert (
             self.asset_0.kwargs[FIELD_PAPER_SOURCE]
             == self.expected_kwargs[0][FIELD_PAPER_SOURCE]
         )
         assert (
-            self.asset_0.kwargs["licensename"] == self.expected_kwargs[0]["licensename"]
+            self.asset_0.kwargs[FIELD_LICENSE_NAME]
+            == self.expected_kwargs[0][FIELD_LICENSE_NAME]
         )
         assert (
             self.asset_0.kwargs["licenseurl"] == self.expected_kwargs[0]["licenseurl"]
@@ -117,7 +121,7 @@ class TestHtml2MdMetadataExtraction:
 
     def test_metadata_tables_removed_from_markdown(self):
         # TODO: think a smarter test
-        assert self.asset_0.kwargs["licensename"] not in self.md
+        assert self.asset_0.kwargs[FIELD_LICENSE_NAME] not in self.md
         assert self.asset_0.kwargs["author"] not in self.md
         assert self.asset_1.kwargs["author"] not in self.md
 
