@@ -183,24 +183,11 @@ class MystMdConverter(markdownify.MarkdownConverter):
     def convert_iframe(
         self, el: bs4.element.Tag, text: str, convert_as_inline: bool
     ) -> str:
-        print("\n\n\n")
-
         src = el.get("src")
         if src and src.startswith("https:/") and not src.startswith("https://"):
             el["src"] = src.replace("https:/", "https://")
         if src and src.startswith("http:/") and not src.startswith("http://"):
             el["src"] = src.replace("http:/", "http://")
-
-        print('el.get("src")', el.get("src"))
-        print("text", text)
-        print("el", el)
-        print(
-            r'"\n\n<html>%s</html>\n\n" % repr(el)',
-            "\n\n<html>%s</html>\n\n" % repr(el),
-        )
-        print(
-            r'"\n\n<html>%s</html>\n\n" % str(el)', "\n\n<html>%s</html>\n\n" % str(el)
-        )
         return "\n\n<html>%s</html>\n\n" % str(el)
 
     def convert_script(self, el, text, convert_as_inline):
