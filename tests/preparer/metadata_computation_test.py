@@ -13,7 +13,7 @@ def is_table(tag: bs4.element.Tag) -> bool:
     return bool(tag.name == "table")
 
 
-class TestHtml2MdMetadataCoptutation:
+class TestHtml2MdMetadataComputation:
     fp = pathlib.Path("tests") / "_fixtures" / "small-example" / "index.docx"
 
     @classmethod
@@ -61,6 +61,12 @@ class TestHtml2MdMetadataCoptutation:
         assert t.year == 2023
         assert t.month == 12
         assert t.day == 20
+
+    def test_paper_exists(self):
+        assert self.red_square_1.kwargs.get("digitalexists") == True
+        assert self.red_square_1.kwargs.get("paperexists") == True
+        assert self.red_square_2.kwargs.get("digitalexists") == True
+        assert self.red_square_2.kwargs.get("paperexists") is None
 
     def test_asset_location(self):
         assert self.red_square_1.kwargs.get("location").name == "index.docx"

@@ -1,8 +1,9 @@
-import bs4
-
+# import bs4
 try:
+    from constants import FIELD_DIGITAL_SOURCE, FIELD_PAPER_SOURCE
     from metadata import AssetDatapoint, DocumentMetadata
 except (ImportError, ModuleNotFoundError):
+    from .constants import FIELD_DIGITAL_SOURCE, FIELD_PAPER_SOURCE
     from .metadata import AssetDatapoint, DocumentMetadata
 
 
@@ -10,7 +11,7 @@ def compute_additional_metadata_fields(metadata: DocumentMetadata) -> None:
     for asset in metadata.assets:
         asset: AssetDatapoint
 
-        if asset.kwargs.get("digitalsource") is not None:
+        if asset.kwargs.get(FIELD_DIGITAL_SOURCE) is not None:
             digitalsource = metadata.filepath.parent / asset.kwargs.get("digitalsource")
             if digitalsource.exists():
                 digital_stats = digitalsource.stat()
@@ -26,10 +27,17 @@ def compute_additional_metadata_fields(metadata: DocumentMetadata) -> None:
                         "digitaltype": digital_type,
                         "digitalsize": digital_size,
                         "digitalmtime": digital_mtime,
+                        "digitalexists": True,
+                    }
+                )
+            else:
+                asset.kwargs.update(
+                    {
+                        "digitalexists": False,
                     }
                 )
 
-        if asset.kwargs.get("papersource") is not None:
+        if asset.kwargs.get(FIELD_PAPER_SOURCE) is not None:
             papersource = metadata.filepath.parent / asset.kwargs.get("papersource")
             if papersource.exists():
                 paper_stats = papersource.stat()
@@ -45,6 +53,13 @@ def compute_additional_metadata_fields(metadata: DocumentMetadata) -> None:
                         "papertype": paper_type,
                         "papersize": paper_size,
                         "papermtime": paper_mtime,
+                        "paperexists": True,
+                    }
+                )
+            else:
+                asset.kwargs.update(
+                    {
+                        "paperexists": False,
                     }
                 )
 
