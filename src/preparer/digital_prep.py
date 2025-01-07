@@ -27,18 +27,21 @@ def insert_digital_objects(
             asset = document_metadata.get_asset(pk)
             default_height = "100%"
             height = asset.kwargs.get("height", default_height)
-            digitalsrc = asset.kwargs.get(FIELD_DIGITAL_SOURCE, "")
-            # TODO: improve conditions and verification, current method is naive at best
-            if digitalsrc.suffix == ".html":
+            digitalsrc = str(asset.kwargs.get(FIELD_DIGITAL_SOURCE, ""))
+            # TODO: improve conditions and verification, current method is too naive
+            if digitalsrc[-5:].lower() == ".html":
                 new_tag = html_soup.new_tag("iframe")
-                new_tag["src"] = str(digitalsrc)
+                new_tag["src"] = digitalsrc
                 new_tag["width"] = "100%"
                 new_tag["height"] = height
                 new_tag["frameborder"] = "0"
                 table.replace_with(new_tag)
-            elif str(digitalsrc).startswith("https:/"):
+            elif (
+                digitalsrc[:7].lower() == "https:/"
+                or digitalsrc[:6].lower() == "http:/"
+            ):
                 new_tag = html_soup.new_tag("iframe")
-                new_tag["src"] = str(digitalsrc)
+                new_tag["src"] = digitalsrc
                 new_tag["width"] = "100%"
                 new_tag["height"] = height
                 new_tag["frameborder"] = "0"
