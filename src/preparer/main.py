@@ -246,6 +246,8 @@ def _convert_to_html(key: KeyPath) -> str:
             style_mappings = """
             p[style-name='Quote'] => blockquote:fresh
             p[style-name='Caption'] => p.dgt-mon-caption:fresh
+            highlight[color='lightGray'] => span.dgt-mon-digital-only
+            highlight[color='cyan'] => span.dgt-mon-paper-only
             """
             result = mammoth.convert_to_html(f, style_map=style_mappings)
             logger.info(f"Converting {key} to html succedded.")
