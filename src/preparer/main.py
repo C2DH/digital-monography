@@ -20,6 +20,7 @@ try:
         DYNAMODB_WARNINGS_TBL,
         IR_APKG_HTML_BUCKET_NAME,
         IR_APKG_MD_BUCKET_NAME,
+        MAMMOTH_STYLE_MAP,
         IS_DEBUG,
     )
     from citations import add_bibliography, is_citation, prepare_citations
@@ -56,6 +57,7 @@ except (ImportError, ModuleNotFoundError):
         DYNAMODB_WARNINGS_TBL,
         IR_APKG_HTML_BUCKET_NAME,
         IR_APKG_MD_BUCKET_NAME,
+        MAMMOTH_STYLE_MAP,
         IS_DEBUG,
     )
     from .citations import add_bibliography, is_citation, prepare_citations
@@ -243,13 +245,7 @@ def _download_fileobj(src: str, key: KeyPath) -> None:
 def _convert_to_html(key: KeyPath) -> str:
     try:
         with open(key, "rb") as f:
-            style_mappings = """
-            p[style-name='Quote'] => blockquote:fresh
-            p[style-name='Caption'] => p.dgt-mon-caption:fresh
-            highlight[color='lightGray'] => span.dgt-mon-digital-only
-            highlight[color='cyan'] => span.dgt-mon-paper-only
-            """
-            result = mammoth.convert_to_html(f, style_map=style_mappings)
+            result = mammoth.convert_to_html(f, style_map=MAMMOTH_STYLE_MAP)
             logger.info(f"Converting {key} to html succedded.")
             return result.value
     except Exception as e:

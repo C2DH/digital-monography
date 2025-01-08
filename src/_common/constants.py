@@ -42,6 +42,13 @@ IR_APKG_MD_BUCKET_NAME = "cpy-dgtmon-dev-ir-apkg-md"
 STATICWS_WIP_BUCKET_NAME = "cpy-dgtmon-dev-staticws-wip"
 STATICWS_DASHBOARD_BUCKET_NAME = "cpy-dgtmon-dev-staticws-dashboard"
 VERIFIER_MSGS = "cpy-dgtmon-dev-verifier-msgs"
+# python-mammoth options
+MAMMOTH_STYLE_MAP = """
+p[style-name='Quote'] => blockquote:fresh
+p[style-name='Caption'] => p.dgt-mon-caption:fresh
+highlight[color='lightGray'] => span.dgt-mon-digital-only
+highlight[color='cyan'] => span.dgt-mon-paper-only
+"""
 # html classes
 CLS_METADATA_TABLE = "dgt-mon-metadata-table"
 CLS_METADATA_TABLE_JSONDATA = "dgt-mon-hidden-metadata"
