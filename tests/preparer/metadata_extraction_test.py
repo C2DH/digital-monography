@@ -5,6 +5,7 @@ import pathlib
 from src.preparer.metadata_extraction import prepare_metadata_tables
 from src.preparer.html2md import convert_to_md
 from src.preparer.metadata import DocumentMetadata
+from src.preparer.digital_prep import remove_metadata_tables
 from src.preparer.constants import (
     FIELD_DELETE_PREVIOUS,
     FIELD_DIGITAL_SOURCE,
@@ -24,6 +25,7 @@ class TestHtml2MdMetadataExtraction:
         cls.metadata = DocumentMetadata()
         tables = cls.html_soup.find_all("table")
         cls.html_soup = prepare_metadata_tables(cls.html_soup, cls.metadata, tables)
+        cls.html_soup = remove_metadata_tables(cls.html_soup, cls.metadata, tables)
         cls.md = convert_to_md(cls.html_soup, cls.metadata)
         cls.assets_meta = cls.metadata.to_dict()
         assets_ids = [dp.pk for dp in cls.metadata.assets]
