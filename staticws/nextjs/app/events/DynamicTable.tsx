@@ -79,7 +79,7 @@ export default function DynamicTable() {
                     module: Number(rec.module.N),
                     timestamp: timestamp,
                 }
-            }).sort((a: IAuditEvent, b: IAuditEvent) => (a.timestamp > b.timestamp ? 1 : -1));
+            }).sort((a: IAuditEvent, b: IAuditEvent) => (a.timestamp < b.timestamp ? 1 : -1));
             setTableData(records);
         } catch (err) {
             console.log("Error", err);
