@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { DynamoDBClient, GetItemCommand } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
 const ddbClient = new DynamoDBClient({
@@ -79,35 +79,43 @@ export default function DynamicTable() {
 
     const fetchRecords = async (pk: string) => {
         try {
-            const cmd = new GetItemCommand({
-                TableName: dbTable, Key: {
-                    "slug": {
-                        "S": pk
-                    }
-                }
-            })
+            const cmd = new QueryCommand({
+                TableName: dbTable,
+                KeyConditionExpression: "slug = :slug",
+                ExpressionAttributeValues: {
+                    ":slug": { "S": pk }
+                },
+            });
+            const formatedData: IAssetRecord[] = [];
             const resp = await ddbDocClient.send(cmd);
-            console.log("resp.Item", resp.Item);
-            const item = resp.Item || {};
-            let recordsLength = 0;
-            const records: IAssetRecord[] = [];
-            if (item.records && item.records.L) {
-                recordsLength = item.records.L.length;
-            }
-            for (let i = 0; i < recordsLength; i++) {
-                let rec = item.records.L![i];
-                const digitalsource = getNestedStr(rec, "digitalsource");
-                const papersource = getNestedStr(rec, "papersource");
-                const alttext = getNestedStr(rec, "alttext");
-                const caption = getNestedStr(rec, "caption");
-                const location = getNestedStr(rec, "location");
-                const licensename = getNestedStr(rec, "licensename");
-                const isColor = getNestedBool(rec, "iscolor");
-                const isReady = getNestedBool(rec, "isready") || false;
-                const isOnPaper = papersource != "" ? true : false;
-                if (digitalsource != papersource && papersource != "") {
-                    records.push({
-                        name: papersource,
+            const items = resp.Items || [];
+            for (let i = 0; i < items.length; i++) {
+                let records = items[i].records?.L || [];
+                for (let j = 0; j < records.length; j++) {
+                    console.log('records[j]', records[j]);
+                    const digitalinput = getNestedStr(records[j], "digitalinput");
+                    const paperinput = getNestedStr(records[j], "paperinput");
+                    const alttext = getNestedStr(records[j], "alttext");
+                    const caption = getNestedStr(records[j], "caption");
+                    const location = getNestedStr(records[j], "location");
+                    const licensename = getNestedStr(records[j], "licensename");
+                    const isColor = getNestedBool(records[j], "iscolor");
+                    const isReady = getNestedBool(records[j], "isready") || false;
+                    const isOnPaper = paperinput != "" ? true : false;
+                    if (digitalinput != paperinput && paperinput != "") {
+                        formatedData.push({
+                            name: paperinput,
+                            alttext: alttext,
+                            caption: caption,
+                            location: location,
+                            licensename: licensename,
+                            isColor: isColor,
+                            isOnPaper: isOnPaper,
+                            isReady: isReady,
+                        });
+                    }
+                    formatedData.push({
+                        name: digitalinput,
                         alttext: alttext,
                         caption: caption,
                         location: location,
@@ -117,18 +125,8 @@ export default function DynamicTable() {
                         isReady: isReady,
                     });
                 }
-                records.push({
-                    name: digitalsource,
-                    alttext: alttext,
-                    caption: caption,
-                    location: location,
-                    licensename: licensename,
-                    isColor: isColor,
-                    isOnPaper: isOnPaper,
-                    isReady: isReady,
-                });
             }
-            setTableData(records);
+            setTableData(formatedData);
         } catch (err) {
             console.log("Error", err);
         }
@@ -160,9 +158,9 @@ export default function DynamicTable() {
                         tableData && tableData.map((val: IAssetRecord, idx: number) => (
                             <tr key={idx}>
                                 <td>{val.name}</td>
+                                <td>{val.location}</td>
                                 <td>{val.alttext}</td>
                                 <td>{val.caption}</td>
-                                <td>{val.location}</td>
                                 <td>{val.licensename}</td>
                                 <td>{getEmoticonForBool(val.isColor)}</td>
                                 <td>{getEmoticonForBool(val.isOnPaper)}</td>
