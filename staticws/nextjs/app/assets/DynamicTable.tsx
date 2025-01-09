@@ -71,6 +71,21 @@ function getEmoticonForBool(val: boolean | undefined): string {
     }
 }
 
+function getLastPart(s: string): string {
+    let split = s.split("/");
+    return split[split.length - 1];
+}
+
+// function getAsHtml(s: string): string {
+//     if (s.toLowerCase().endsWith(".docx")) {
+//         return s.substring(0, s.length - 5) + ".html";
+//     } else if (s.toLowerCase().endsWith(".ipynb")) {
+//         return s.substring(0, s.length - 6) + ".html";
+//     } else {
+//         return s;
+//     };
+// }
+
 export default function DynamicTable() {
     const [tableData, setTableData] = useState<IAssetRecord[]>([]);
     const searchParams = useSearchParams();
@@ -92,12 +107,11 @@ export default function DynamicTable() {
             for (let i = 0; i < items.length; i++) {
                 let records = items[i].records?.L || [];
                 for (let j = 0; j < records.length; j++) {
-                    console.log('records[j]', records[j]);
-                    const digitalinput = getNestedStr(records[j], "digitalinput");
-                    const paperinput = getNestedStr(records[j], "paperinput");
+                    const digitalinput = getLastPart(getNestedStr(records[j], "digitalinput"));
+                    const paperinput = getLastPart(getNestedStr(records[j], "paperinput"));
                     const alttext = getNestedStr(records[j], "alttext");
                     const caption = getNestedStr(records[j], "caption");
-                    const location = getNestedStr(records[j], "location");
+                    const location = getLastPart(getNestedStr(records[j], "location"));
                     const licensename = getNestedStr(records[j], "licensename");
                     const isColor = getNestedBool(records[j], "iscolor");
                     const isReady = getNestedBool(records[j], "isready") || false;
