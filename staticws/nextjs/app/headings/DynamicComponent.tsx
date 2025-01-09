@@ -3,7 +3,7 @@
 import "./../_styles/treeView.css";
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { DynamoDBClient, GetItemCommand } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
 const ddbClient = new DynamoDBClient({
@@ -55,35 +55,32 @@ export default function DynamicListGroup(): JSX.Element {
 
     const fetchRecords = async (pk: string) => {
         try {
-            const cmd = new GetItemCommand({
-                TableName: dbTable, Key: {
-                    "slug": {
-                        "S": pk
-                    }
-                }
-            })
-            const resp = await ddbDocClient.send(cmd);
-            const item = resp.Item || {};
-            let recordsLength = 0;
+            const cmd = new QueryCommand({
+                TableName: dbTable,
+                KeyConditionExpression: "slug = :slug",
+                ExpressionAttributeValues: {
+                    ":slug": { "S": pk }
+                },
+            });
             const headings = {};
-            if (item.records && item.records.L) {
-                recordsLength = item.records.L.length;
-            }
-            console.log("recordsLength", recordsLength);
-            for (let i = 0; i < recordsLength; i++) {
-                let rec = item.records.L![i];
-                const fileName = getNestedStr(rec, "file_name");
-                const text = getNestedStr(rec, "text");
-                let level = getNestedStr(rec, "level");
-                level = level.replace(/\D+/g, ''); // TODO: backend should produce "1" instead of "h1"
-                if (!Object.hasOwn(headings, fileName)) {
-                    headings[fileName] = [];
+            const resp = await ddbDocClient.send(cmd);
+            const items = resp.Items || [];
+            for (let i = 0; i < items.length; i++) {
+                let records = items[i].records?.L || [];
+                for (let j = 0; j < records.length; j++) {
+                    const fileName = getNestedStr(records[j], "file_name");
+                    const text = getNestedStr(records[j], "text");
+                    let level = getNestedStr(records[j], "level");
+                    level = level.replace(/\D+/g, ''); // TODO: backend should produce "1" instead of "h1"
+                    if (!Object.hasOwn(headings, fileName)) {
+                        headings[fileName] = [];
+                    }
+                    headings[fileName].push({
+                        fileName: fileName,
+                        text: text,
+                        level: level,
+                    });
                 }
-                headings[fileName].push({
-                    fileName: fileName,
-                    text: text,
-                    level: level,
-                });
             }
             setData(headings);
         } catch (err) {
@@ -104,9 +101,9 @@ export default function DynamicListGroup(): JSX.Element {
                     return (
                         <ul className="list-group" key={idx}>
                             <li className="list-group-item list-group-item-primary" key={file}><b>{file}</b></li>
-                            {headings && headings.map((h: IHeading) => (
+                            {headings && headings.map((h: IHeading, i: number) => (
                                 <li className="list-group-item"
-                                    key={`${file}#${h.text}`}>
+                                    key={i}>
                                     <span className={`indent${h.level}`}></span>
                                     {h.text}
                                 </li>
