@@ -31,7 +31,7 @@ const ddbDocClient = DynamoDBDocumentClient.from(ddbClient, {
 
 type IHeading = {
     text: string,
-    level: number,
+    level: string,
     fileName: string,
 }
 
@@ -62,7 +62,7 @@ export default function DynamicListGroup(): JSX.Element {
                     ":slug": { "S": pk }
                 },
             });
-            const headings = {};
+            const headings: IHeadings = {};
             const resp = await ddbDocClient.send(cmd);
             const items = resp.Items || [];
             for (let i = 0; i < items.length; i++) {
@@ -97,7 +97,7 @@ export default function DynamicListGroup(): JSX.Element {
     return (
         <>
             {data && Object.entries(data)
-                .map(([file, headings], idx: number) => {
+                .map(([file, headings]: [string, IHeading[]], idx: number) => {
                     return (
                         <ul className="list-group" key={idx}>
                             <li className="list-group-item list-group-item-primary" key={file}><b>{file}</b></li>
