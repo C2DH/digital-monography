@@ -52,7 +52,6 @@ function getNestedStr(rec: any, attr: string): string {
 function getNestedBool(rec: any, attr: string): boolean | undefined {
     const dataType = "BOOL";
     if (rec && rec.M && Object.hasOwn(rec.M, attr) && Object.hasOwn(rec.M[attr], dataType)) {
-        console.log("to boolean", rec.M[attr][dataType]);
         return (rec.M[attr][dataType]);
     } else {
         return undefined;
@@ -199,7 +198,7 @@ export default function DynamicTable() {
         <>
             <div>
                 <SearchBar searchTable={(searchTable)} />
-                <table className="users-table">
+                <table className="table table-striped">
                     <Header columns={columns} sorting={sorting} sortTable={sortTable} />
                     <tbody>
                         {tableData.map((record, idx) => (
