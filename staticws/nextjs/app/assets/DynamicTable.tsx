@@ -30,6 +30,7 @@ const ddbDocClient = DynamoDBDocumentClient.from(ddbClient, {
 });
 
 type IAssetRecord = {
+    link: string,
     name: string,
     alttext: string,
     caption: string,
@@ -75,6 +76,15 @@ function getStringForHtml(key: string, val: string | boolean | undefined): strin
     }
 }
 
+function getHyperlink(slug: string | null, inputFieldVal: string): string {
+    if (slug == null || !inputFieldVal) {
+        return "#";
+    } else if (inputFieldVal.startsWith("https:") || inputFieldVal.startsWith("http:")) {
+        return inputFieldVal
+    }
+    return `asset?pk=${btoa(slug + "/" + inputFieldVal)}`;
+}
+
 function getLastPart(s: string): string {
     let split = s.split("/");
     return split[split.length - 1];
@@ -99,7 +109,7 @@ export default function DynamicTable() {
     const [tableData, setTableData] = useState<IAssetRecord[]>([]);
     const [sorting, setSorting] = useState({ column: "location", order: "asc" });
     const [searchValue, setSearchValue] = useState("");
-    const columns = ["name", "location", "alttext", "caption", "licensename", "isColor", "isOnPaper", "isReady"];
+    const columns = ["link", "name", "location", "alttext", "caption", "licensename", "isColor", "isOnPaper", "isReady"];
     const sortTable = (newSorting) => {
         setSorting(newSorting);
     };
@@ -133,6 +143,7 @@ export default function DynamicTable() {
                     const isOnPaper = paperinput != "" ? true : false;
                     if (digitalinput != paperinput && paperinput != "") {
                         formatedData.push({
+                            link: getHyperlink(slug, getNestedStr(records[j], "paperinput")),
                             name: paperinput,
                             alttext: alttext,
                             caption: caption,
@@ -144,6 +155,7 @@ export default function DynamicTable() {
                         });
                     }
                     formatedData.push({
+                        link: getHyperlink(slug, getNestedStr(records[j], "digitalinput")),
                         name: digitalinput,
                         alttext: alttext,
                         caption: caption,
@@ -203,11 +215,16 @@ export default function DynamicTable() {
                     <tbody>
                         {tableData.map((record, idx) => (
                             <tr key={idx}>
-                                {columns.map((column) => (
-                                    <td key={column} className="dgt-mon-table-cell">
+                                {columns.map((column) => (column === "link" ?
+                                    <td key={column}>
+                                        <a className="btn btn-outline-secondary"
+                                            href={record[column]}
+                                            role="button">▶</a>
+                                    </td> : <td key={column} className="dgt-mon-table-cell">
                                         {getStringForHtml(column, record[column])}
                                     </td>
-                                ))}
+                                )
+                                )}
                             </tr>
                         ))}
                     </tbody>
