@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+import { Header, SearchBar } from "./../_components/TnbTable";
 
 const ddbClient = new DynamoDBClient({
     region: "eu-west-1",
@@ -58,16 +59,20 @@ function getNestedBool(rec: any, attr: string): boolean | undefined {
     }
 }
 
-function getEmoticonForBool(val: boolean | undefined): string {
-    switch (val) {
-        case true:
-            return "✅";
-        case false:
-            return "❌";
-        case undefined:
-            return "❓";
-        default:
-            return "❓";
+function getStringForHtml(key: string, val: string | boolean | undefined): string | boolean | undefined {
+    if (["isColor", "isOnPaper", "isReady"].includes(key)) {
+        switch (val) {
+            case true:
+                return "✅";
+            case false:
+                return "❌";
+            case undefined:
+                return "❓";
+            default:
+                return "❓";
+        }
+    } else {
+        return val;
     }
 }
 
@@ -86,11 +91,22 @@ function getLastPart(s: string): string {
 //     };
 // }
 
+// see https://monsterlessons-academy.com/posts/custom-react-table-with-filter-and-sorting
 export default function DynamicTable() {
-    const [tableData, setTableData] = useState<IAssetRecord[]>([]);
     const searchParams = useSearchParams();
     const slug = searchParams?.get("slug");
     const dbTable = "dgtmon-dev-dyndb-assets-tbl";
+
+    const [tableData, setTableData] = useState<IAssetRecord[]>([]);
+    const [sorting, setSorting] = useState({ column: "location", order: "asc" });
+    const [searchValue, setSearchValue] = useState("");
+    const columns = ["name", "location", "alttext", "caption", "licensename", "isColor", "isOnPaper", "isReady"];
+    const sortTable = (newSorting) => {
+        setSorting(newSorting);
+    };
+    const searchTable = (newSearchValue: string) => {
+        setSearchValue(newSearchValue);
+    };
 
     const fetchRecords = async (pk: string) => {
         try {
@@ -141,6 +157,8 @@ export default function DynamicTable() {
                 }
             }
             setTableData(formatedData);
+            console.log("formatedData");
+            console.log(formatedData);
         } catch (err) {
             console.log("Error", err);
         }
@@ -152,38 +170,50 @@ export default function DynamicTable() {
         }
     }, [slug]);
 
+    useEffect(() => {
+        if (sorting.column == "caption") {
+            tableData.sort((a: IAssetRecord, b: IAssetRecord) => {
+                const re = /\d+/g
+                let numA = re.test(a["caption"]) ? Number(a["caption"].match(re)![0]) : Infinity;
+                let numB = re.test(b["caption"]) ? Number(b["caption"].match(re)![0]) : Infinity;
+                if (sorting.order == "asc") {
+                    return (numA > numB ? 1 : -1)
+                } else {
+                    return (numA < numB ? 1 : -1)
+                }
+            });
+        } else {
+            if (sorting.order == "asc") {
+                tableData.sort((a: IAssetRecord, b: IAssetRecord) => (a[sorting.column] > b[sorting.column] ? 1 : -1));
+            } else {
+                tableData.sort((a: IAssetRecord, b: IAssetRecord) => (a[sorting.column] < b[sorting.column] ? 1 : -1));
+            }
+        }
+    }, [sorting])
+
+    useEffect(() => {
+        console.log("searchValue", searchValue)
+    }, [searchValue])
+
     return (
         <>
-            <table className="table">
-                <thead>
-                    <tr>
-                        <th scope="col">Name</th>
-                        <th scope="col">Location</th>
-                        <th scope="col">Alt text</th>
-                        <th scope="col">Caption</th>
-                        <th scope="col">License</th>
-                        <th scope="col">Is color?</th>
-                        <th scope="col">Is on paper?</th>
-                        <th scope="col">Is ready?</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {
-                        tableData && tableData.map((val: IAssetRecord, idx: number) => (
+            <div>
+                <SearchBar searchTable={(searchTable)} />
+                <table className="users-table">
+                    <Header columns={columns} sorting={sorting} sortTable={sortTable} />
+                    <tbody>
+                        {tableData.map((record, idx) => (
                             <tr key={idx}>
-                                <td>{val.name}</td>
-                                <td>{val.location}</td>
-                                <td>{val.alttext}</td>
-                                <td>{val.caption}</td>
-                                <td>{val.licensename}</td>
-                                <td>{getEmoticonForBool(val.isColor)}</td>
-                                <td>{getEmoticonForBool(val.isOnPaper)}</td>
-                                <td>{getEmoticonForBool(val.isReady)}</td>
+                                {columns.map((column) => (
+                                    <td key={column} className="dgt-mon-table-cell">
+                                        {getStringForHtml(column, record[column])}
+                                    </td>
+                                ))}
                             </tr>
-                        ))
-                    }
-                </tbody>
-            </table>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </>
     )
 }
