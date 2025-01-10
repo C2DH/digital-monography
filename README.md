@@ -42,6 +42,7 @@ The platform consists of the following modules (Lambda functions):
 | **verifier**      | true  | Checks the author package against the verification rules. |
 | **github**        | false | Pushes the processed documents to GitHub remote repository. |
 | **builder**       | true  | Runs Jupyter Book to build a book out of processed documents. |
+| **gpu**           | false | Generates pre-signed url from private S3 bucket. |
 
 Deployment of each module should be done in order:
 

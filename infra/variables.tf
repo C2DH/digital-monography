@@ -108,6 +108,11 @@ variable "verifier_repo_name" {
   description = "Name of the ECR repository for the verifier image"
 }
 
+variable "gpu_repo_name" {
+  type        = string
+  description = "Name of the ECR repository for the gpu (generate pre-signed url) image"
+}
+
 variable "sqs_builder_trigger" {
   type        = string
   description = "Name of the SQS unique-id queue with messages to build a particular book"
