@@ -166,8 +166,17 @@ verifier/push:
 
 verifier/make: verifier/build verifier/tag verifier/push
 
-all/build: preparer/build builder/build github/build verifier/build
+gpu/build:
+	cp src/_common/constants.py src/gpu/constants.py
+	docker build -t dgtmon-dev-gpu src/gpu
 
-all/tag: preparer/tag builder/tag github/tag verifier/tag
+gpu/tag:
+	docker tag dgtmon-dev-gpu ${DOCKER_ECR}/dgtmon-dev-gpu:${VERIFIER_STABLE_V}
+	docker tag dgtmon-dev-gpu ${DOCKER_HUB}/dgtmon-dev-gpu:${VERIFIER_STABLE_V}
 
-all/push: preparer/push builder/push github/push verifier/push
+gpu/push:
+	docker push ${DOCKER_ECR}/dgtmon-dev-gpu:${VERIFIER_STABLE_V}
+	docker push ${DOCKER_HUB}/dgtmon-dev-gpu:${VERIFIER_STABLE_V}
+
+gpu/make: gpu/build gpu/tag gpu/push
+
