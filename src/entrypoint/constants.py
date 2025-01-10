@@ -17,6 +17,7 @@ class ModuleEnum(enum.Enum):
     VERIFIER = 40
     GITHUB = 60
     BUILDER = 70
+    GPU = 80
 
 
 IS_DEBUG = bool(int(os.environ.get("DGTMON_DEBUG", 0)))
