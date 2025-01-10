@@ -171,12 +171,12 @@ gpu/build:
 	docker build -t dgtmon-dev-gpu src/gpu
 
 gpu/tag:
-	docker tag dgtmon-dev-gpu ${DOCKER_ECR}/dgtmon-dev-gpu:${VERIFIER_STABLE_V}
-	docker tag dgtmon-dev-gpu ${DOCKER_HUB}/dgtmon-dev-gpu:${VERIFIER_STABLE_V}
+	docker tag dgtmon-dev-gpu ${DOCKER_ECR}/dgtmon-dev-gpu:${GPU_STABLE_V}
+	docker tag dgtmon-dev-gpu ${DOCKER_HUB}/dgtmon-dev-gpu:${GPU_STABLE_V}
 
 gpu/push:
-	docker push ${DOCKER_ECR}/dgtmon-dev-gpu:${VERIFIER_STABLE_V}
-	docker push ${DOCKER_HUB}/dgtmon-dev-gpu:${VERIFIER_STABLE_V}
+	docker push ${DOCKER_ECR}/dgtmon-dev-gpu:${GPU_STABLE_V}
+	docker push ${DOCKER_HUB}/dgtmon-dev-gpu:${GPU_STABLE_V}
 
 gpu/make: gpu/build gpu/tag gpu/push
 
