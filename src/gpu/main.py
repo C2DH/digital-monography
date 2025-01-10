@@ -15,9 +15,10 @@ s3 = boto3.client("s3")
 
 
 def lambda_handler(event, context):
-    key = event["queryStringParameters"]["key"]
-    logger.info("key" + key)
     logger.info(f"Event: {json.dumps(event, default=str)}")
+    key = "guidelines-for-drafting-manuscripts/assets/03_docx_advanced_elements/orange_low_resolution.png"
+    # key = event["queryStringParameters"]["key"]
+    # logger.info("key" + key)
     one_day_in_seconds = 86_400
     presigned_url = s3.generate_presigned_url(
         "get_object",
