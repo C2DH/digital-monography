@@ -63,8 +63,7 @@ export default function DynamicTable() {
     const [exists, setExists] = useState<boolean | undefined>(undefined);
     const [input, setInput] = useState<string>("");
     const [location, setLocation] = useState<string>("");
-    const [paperexists, setPaperexists] = useState<boolean | undefined>(undefined);
-    const [paperinput, setPaperinput] = useState<string>("");
+    const [locationName, setLocationName] = useState<string>("");
     const [source, setSource] = useState<string>("");
 
     console.log("s3Key", s3Key);
@@ -100,22 +99,24 @@ export default function DynamicTable() {
                 for (let j = 0; j < records.length; j++) {
                     const digitalinput = getNestedStr(records[j], "digitalinput");
                     const paperinput = getNestedStr(records[j], "paperinput");
+                    const location = getNestedStr(records[j], "location");
+                    setLocationName(location.split("/")[location.split("/").length - 1]);
                     if (filePath == digitalinput) {
                         setAlttext(getNestedStr(records[j], "alttext"));
                         setAuthor(getNestedStr(records[j], "author"));
                         setCaption(getNestedStr(records[j], "caption"));
                         setExists(getNestedBool(records[j], "digitalexists"));
                         setInput(getNestedStr(records[j], "digitalinput"));
-                        setLocation(getNestedStr(records[j], "location"));
+                        setLocation(location);
                         setSource(getNestedStr(records[j], "source"));
                         return;
                     } else if (paperinput != digitalinput && filePath == paperinput) {
                         setAlttext(getNestedStr(records[j], "alttext"));
                         setAuthor(getNestedStr(records[j], "author"));
                         setCaption(getNestedStr(records[j], "caption"));
-                        setLocation(getNestedStr(records[j], "location"));
                         setExists(getNestedBool(records[j], "paperexists"));
                         setInput(getNestedStr(records[j], "paperinput"));
+                        setLocation(location);
                         setSource(getNestedStr(records[j], "source"));
                         return;
                     }
@@ -150,7 +151,11 @@ export default function DynamicTable() {
                                     {source && <tr><th>Credit line/Copyright information</th><td>{source}</td></tr>}
                                 </tbody>
                             </table>
-
+                            {locationName && <a
+                                href={`https://www.dropbox.com/home/Aplikacje/drpb-upload-alert-test/${slug}?preview=${locationName}`}
+                                target="_blank"
+                                className="btn btn-secondary btn-sm"
+                            >Location in a shared folder</a>}
                         </div>
                     </div>
                 </div>
