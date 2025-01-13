@@ -86,6 +86,16 @@ data "aws_iam_policy_document" "verifier" {
     ]
   }
   statement {
+    sid    = "AllowReadAndWriteToDynamoDB"
+    effect = "Allow"
+    resources = [
+      aws_dynamodb_table.warnings_tbl.arn,
+    ]
+    actions = [
+      "dynamodb:PutItem",
+    ]
+  }
+  statement {
     sid       = "AllowSendingSQSMessages"
     effect    = "Allow"
     resources = [aws_sqs_queue.pre_builder_queue.arn]
