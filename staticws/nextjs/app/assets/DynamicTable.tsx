@@ -82,7 +82,7 @@ function getHyperlink(slug: string | null, inputFieldVal: string): string {
     } else if (inputFieldVal.startsWith("https:") || inputFieldVal.startsWith("http:")) {
         return inputFieldVal
     }
-    return `asset?pk=${btoa(slug + "/" + inputFieldVal)}`;
+    return `asset?slug=${slug}&pk=${btoa(slug + "/" + inputFieldVal)}`;
 }
 
 function getLastPart(s: string): string {
@@ -202,9 +202,9 @@ export default function DynamicTable() {
         }
     }, [sorting])
 
-    useEffect(() => {
-        console.log("searchValue", searchValue)
-    }, [searchValue])
+    // useEffect(() => {
+    //     console.log("searchValue", searchValue)
+    // }, [searchValue])
 
     return (
         <>

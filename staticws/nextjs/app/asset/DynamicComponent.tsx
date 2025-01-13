@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { DynamoDBClient, GetItemCommand } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
 
@@ -29,40 +29,132 @@ const ddbDocClient = DynamoDBDocumentClient.from(ddbClient, {
     unmarshallOptions,
 });
 
+function getNestedStr(rec: any, attr: string): string {
+    const dataType = "S";
+    if (rec && rec.M && Object.hasOwn(rec.M, attr) && Object.hasOwn(rec.M[attr], dataType)) {
+        return rec.M[attr][dataType];
+    } else {
+        return "";
+    }
+}
+
+function getNestedBool(rec: any, attr: string): boolean | undefined {
+    const dataType = "BOOL";
+    if (rec && rec.M && Object.hasOwn(rec.M, attr) && Object.hasOwn(rec.M[attr], dataType)) {
+        return (rec.M[attr][dataType]);
+    } else {
+        return undefined;
+    }
+}
+
 export default function DynamicTable() {
     const searchParams = useSearchParams();
+    const slug = searchParams?.get("slug");
     const pk = searchParams?.get("pk");
+    const dbTable = "dgtmon-dev-dyndb-assets-tbl";
     const bucket = "https://cpy-dgtmon-dev-staticws-wip.s3.eu-west-1.amazonaws.com";
-    const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com"
+    const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
+    const [tableData, setTableData] = useState<any[]>([]);
+    const s3Key = atob(pk || "");
 
+    const [alttext, setAlttext] = useState<string>("");
+    const [author, setAuthor] = useState<string>("");
+    const [caption, setCaption] = useState<string>("");
+    const [exists, setExists] = useState<boolean | undefined>(undefined);
+    const [input, setInput] = useState<string>("");
+    const [location, setLocation] = useState<string>("");
+    const [paperexists, setPaperexists] = useState<boolean | undefined>(undefined);
+    const [paperinput, setPaperinput] = useState<string>("");
+    const [source, setSource] = useState<string>("");
+
+    console.log("s3Key", s3Key);
     useEffect(() => {
-        async function fetchData() {
-            console.error("fetchData");
+        async function fetchObjectFromS3(key: string) {
             try {
-                const response = await fetch(`${endpoint}/test/gpu?pk=${pk}`);
+                const response = await fetch(`${endpoint}/test/gpu?pk=${key}`);
                 const json = await response.json();
-                console.log("JSON", JSON.stringify(json));
+                // console.log("JSON", JSON.stringify(json));
             } catch (e) {
                 console.error(e);
             }
         };
-        fetchData();
+        // fetchObjectFromS3(pk); // TODO: fetch s3 obj from the "endpoint", not the "bucket"
     }, [pk]);
-
+    useEffect(() => {
+        if (!slug || !s3Key) {
+            return;
+        }
+        const fetchRecords = async (aSlug: string) => {
+            const cmd = new QueryCommand({
+                TableName: dbTable,
+                KeyConditionExpression: "slug = :slug",
+                ExpressionAttributeValues: {
+                    ":slug": { "S": aSlug }
+                },
+            });
+            const resp = await ddbDocClient.send(cmd);
+            const items = resp.Items || [];
+            const filePath = s3Key.split("/").slice(1).join("/");
+            for (let i = 0; i < items.length; i++) {
+                let records = items[i].records?.L || [];
+                for (let j = 0; j < records.length; j++) {
+                    const digitalinput = getNestedStr(records[j], "digitalinput");
+                    const paperinput = getNestedStr(records[j], "paperinput");
+                    if (filePath == digitalinput) {
+                        setAlttext(getNestedStr(records[j], "alttext"));
+                        setAuthor(getNestedStr(records[j], "author"));
+                        setCaption(getNestedStr(records[j], "caption"));
+                        setExists(getNestedBool(records[j], "digitalexists"));
+                        setInput(getNestedStr(records[j], "digitalinput"));
+                        setLocation(getNestedStr(records[j], "location"));
+                        setSource(getNestedStr(records[j], "source"));
+                        return;
+                    } else if (paperinput != digitalinput && filePath == paperinput) {
+                        setAlttext(getNestedStr(records[j], "alttext"));
+                        setAuthor(getNestedStr(records[j], "author"));
+                        setCaption(getNestedStr(records[j], "caption"));
+                        setLocation(getNestedStr(records[j], "location"));
+                        setExists(getNestedBool(records[j], "paperexists"));
+                        setInput(getNestedStr(records[j], "paperinput"));
+                        setSource(getNestedStr(records[j], "source"));
+                        return;
+                    }
+                }
+            }
+            return null;
+        };
+        fetchRecords(slug);
+    }, [slug, pk]);
+    const imgSrc = `${bucket}/read/${s3Key}`
     return (
         <>
-            <p>hello</p>
-            <p>{pk}</p>
-            {/* <p>{bucket}/{atob(pk)}</p>
-            <p>https://cpy-dgtmon-dev-apkg-upload.s3.eu-west-1.amazonaws.com/guidelines-for-drafting-manuscripts/assets/03_docx_advanced_elements/orange_low_resolution.png</p>
-            <img src="https://cpy-dgtmon-dev-apkg-upload.s3.eu-west-1.amazonaws.com/guidelines-for-drafting-manuscripts/assets/03_docx_advanced_elements/orange_low_resolution.png"></img>
-            <p>{bucket}/read/{atob(pk)}</p>
-            <p>https://cpy-dgtmon-dev-staticws-wip.s3.eu-west-1.amazonaws.com/read/guidelines-for-drafting-manuscripts/assets/03_docx_advanced_elements/orange_low_resolution.png</p>
-            // */}
-            <img src={`${bucket}/read/${atob(pk || "")}`}></img>
-            <p>{`${bucket}/read/${atob(pk || "")}`}</p>
-            {/* <p>https://cpy-dgtmon-dev-staticws-wip.s3.eu-west-1.amazonaws.com/read/guidelines-for-drafting-manuscripts/assets/03_docx_advanced_elements/orange_low_resolution.png</p>
-            <img src="https://cpy-dgtmon-dev-staticws-wip.s3.eu-west-1.amazonaws.com/read/guidelines-for-drafting-manuscripts/assets/03_docx_advanced_elements/orange_low_resolution.png"></img> */}
+            <div className="container">
+                <h3>{caption}</h3>
+                {/* 
+                <a className="btn btn-outline-secondary">◀ Previous </a>
+                <a className="btn btn-outline-secondary">▶ Next</a>
+                */}
+                <div className="row align-items-start">
+                    <div className="row">
+                        <div className="col">
+                            <img src={imgSrc} className="img-fluid float-left"></img>
+                        </div>
+                        <div className="col">
+                            <table>
+                                <tbody>
+                                    {input && <tr><th>File</th><td>{input}</td></tr>}
+                                    {location && <tr><th>Location</th><td>{location}</td></tr>}
+                                    {alttext && <tr><th>Alt text</th><td>{alttext}</td></tr>}
+                                    {author && <tr><th>Author</th><td>{author}</td></tr>}
+                                    {exists && <tr><th>Does the file exist?</th><td>{exists}</td></tr>}
+                                    {source && <tr><th>Credit line/Copyright information</th><td>{source}</td></tr>}
+                                </tbody>
+                            </table>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
         </>
     )
 }
