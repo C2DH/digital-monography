@@ -11,14 +11,14 @@ import urllib.parse
 
 try:
     from audit import AuditEvent, AuditStatus
-    from constants import ModuleEnum, IS_DEBUG, VERIFIER_MSGS
+    from constants import ModuleEnum, IS_DEBUG, VERIFIER_MSGS, DYNAMODB_WARNINGS_TBL
     from fakers import Faker
     from html_verifier import HtmlVerifier
     from make_warnings_report import make_warnings_report
     from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
     from .audit import AuditEvent, AuditStatus
-    from .constants import ModuleEnum, IS_DEBUG, VERIFIER_MSGS
+    from .constants import ModuleEnum, IS_DEBUG, VERIFIER_MSGS, DYNAMODB_WARNINGS_TBL
     from .fakers import Faker
     from .html_verifier import HtmlVerifier
     from .make_warnings_report import make_warnings_report
@@ -67,6 +67,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         warnings_json = verifer.to_json(md=True)
         logger.info(json.dumps(warnings_json, default=str))
         _write_json_to_efs(warnings_json, key)
+        _write_warnings_to_db(warnings_json, key)
         # _make_warnings_report(verifer.soup, warnings_json, timestamp, key)
         _put_json_to_s3(json.dumps(warnings_json, default=str), key)
         _send_msg_to_sqs(key)
@@ -118,6 +119,32 @@ def _write_json_to_efs(json_data: t.Any, key: KeyPath) -> None:
         logger.exception(f"Writing json to /efs directory failed. Error: {repr(e)}")
         _log_audit_event(
             key, AuditStatus.FAILED.value, "Writing verification warnings failed."
+        )
+        raise
+
+
+def _write_warnings_to_db(warnings_json, key: KeyPath) -> None:
+    if dynamodb is None:
+        return
+    try:
+        table = dynamodb.Table(DYNAMODB_WARNINGS_TBL)
+        resp = table.put_item(
+            Item={
+                "slug": key.slug,
+                "fn": key.name,
+                "records": warnings_json,
+            }
+        )
+        logger.info(
+            f"Response from dynamodb.Table({DYNAMODB_WARNINGS_TBL}).put_item: {json.dumps(resp, default=str)}"
+        )
+        return
+    except Exception as e:
+        logger.exception(f"Writing warnings to the database failed. Error: {repr(e)}")
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            "Saving verification warnings to the database failed.",
         )
         raise
 
