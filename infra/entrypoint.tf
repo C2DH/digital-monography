@@ -109,8 +109,8 @@ data "aws_iam_policy_document" "entrypoint" {
     sid    = "AllowGettingObjectsFromS3"
     effect = "Allow"
     resources = [
-      "${aws_s3_bucket.warnings_tbl.arn}",
-      "${aws_s3_bucket.warnings_tbl.arn}/*"
+      "${aws_s3_bucket.verification_msg.arn}",
+      "${aws_s3_bucket.verification_msg.arn}/*"
     ]
     actions = [
       "s3:GetObject",
