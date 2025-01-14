@@ -77,22 +77,19 @@ export default function DynamicTable() {
     const [locationName, setLocationName] = useState<string>("");
     const [source, setSource] = useState<string>("");
 
-    console.log("s3Key", s3Key);
     useEffect(() => {
         async function fetchObjectFromS3(key: string) {
             try {
                 const response = await fetch(`${endpoint}/test/gpu?pk=${key}`);
                 const json = await response.json();
-                console.log('json["presigned_url"]', json["presigned_url"]);
                 setAssetSrc(json["presigned_url"]);
-                // console.log("JSON", JSON.stringify(json));
             } catch (e) {
                 console.error(e);
             }
         };
-        if (pk) {
-            fetchObjectFromS3(pk);
-        }
+        // if (pk) {
+        //     fetchObjectFromS3(pk);
+        // }
         // TODO: fetch s3 obj from the "endpoint", not the "bucket"
     }, [pk]);
     useEffect(() => {
@@ -140,7 +137,7 @@ export default function DynamicTable() {
             }
             return null;
         };
-        // fetchRecords(slug);
+        fetchRecords(slug);
     }, [slug, pk]);
     const imgSrc = `${bucket}/read/${s3Key}`
     return (
@@ -154,7 +151,8 @@ export default function DynamicTable() {
                 <div className="row align-items-start">
                     <div className="row">
                         <div className="col">
-                            {assetSrc && <img src={assetSrc} className="img-fluid float-left"></img>}
+                            {imgSrc && <img src={imgSrc} className="img-fluid float-left"></img>}
+                            {/* {assetSrc && <img src={assetSrc} className="img-fluid float-left"></img>} */}
                         </div>
                         <div className="col">
                             <table>
