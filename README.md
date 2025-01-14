@@ -54,7 +54,7 @@ Deployment of each module should be done in order:
 | 4     | **tag**       | `make <module>/tag`   | Tags the image with a tag specified in `.versions.json` |
 | 5     | **push**      | `make <module>/push`  | Pushes the image to docker registry (remember to login to the registry with `make login`) |
 
-Note that there is a race condition - docker container has to be built, tagged and pushed before the apply stage pulls the image from registry. If CI/CD pipeline job fails with error `Source image <registry>/<image>:<tag> does not exist. Provide a valid source image.` re-run that job. Make sure that you had built, tagged and pushed the image in question.
+`make <module>/push` is a useful alias for builing, tagging and pushing a particular module. Note that there is a **race condition** - docker container has to be built, tagged and pushed before the apply stage pulls the image from registry. If CI/CD pipeline job fails with error `Source image <registry>/<image>:<tag> does not exist. Provide a valid source image.` re-run that job. Make sure that you had built, tagged and pushed the image in question.
 
 ## Local development
 
