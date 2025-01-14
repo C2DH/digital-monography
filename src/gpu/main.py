@@ -27,5 +27,10 @@ def lambda_handler(event, context):
     return {
         "statusCode": 200,
         "body": json.dumps({"presigned_url": presigned_url}),
-        "headers": {"Content-Type": "application/json"},
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Headers": "Content-Type",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "OPTIONS,GET",
+        },
     }
