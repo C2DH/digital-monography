@@ -39,12 +39,16 @@ data "aws_iam_policy_document" "gpu" {
     ]
   }
   statement {
-    sid       = "AllowGettingObjectsFromS3"
-    effect    = "Allow"
-    resources = ["${aws_s3_bucket.upload_apkg.arn}/*"]
+    sid    = "AllowGettingObjectsFromS3"
+    effect = "Allow"
+    resources = [
+      "${aws_s3_bucket.upload_apkg.arn}",
+      "${aws_s3_bucket.upload_apkg.arn}/*"
+    ]
     actions = [
       "s3:GetObject",
       "s3:GetObjectAcl",
+      "s3:ListBucket",
     ]
   }
 }
