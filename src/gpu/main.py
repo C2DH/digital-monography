@@ -17,7 +17,7 @@ s3 = boto3.client("s3")
 
 def lambda_handler(event, context):
     pk = event["queryStringParameters"]["pk"]
-    key = base64.b64decode(pk).encode("utf-8")
+    key = base64.b64decode(pk).decode("utf-8")
     one_day_in_seconds = 86_400
     presigned_url = s3.generate_presigned_url(
         "get_object",
