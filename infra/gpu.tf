@@ -43,7 +43,9 @@ data "aws_iam_policy_document" "gpu" {
     effect = "Allow"
     resources = [
       "${aws_s3_bucket.upload_apkg.arn}",
-      "${aws_s3_bucket.upload_apkg.arn}/*"
+      "${aws_s3_bucket.upload_apkg.arn}/*",
+      "${aws_s3_bucket.warnings_tbl.arn}",
+      "${aws_s3_bucket.warnings_tbl.arn}/*"
     ]
     actions = [
       "s3:GetObject",

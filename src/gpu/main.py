@@ -4,9 +4,9 @@ import json
 import logging
 
 try:
-    from constants import APKG_UPLOAD_BUCKET_NAME
+    from constants import APKG_UPLOAD_BUCKET_NAME, VERIFIER_MSGS
 except (ImportError, ModuleNotFoundError):
-    from .constants import APKG_UPLOAD_BUCKET_NAME
+    from .constants import APKG_UPLOAD_BUCKET_NAME, VERIFIER_MSGS
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -16,17 +16,23 @@ s3 = boto3.client("s3")
 
 
 def lambda_handler(event, context):
-    pk = event["queryStringParameters"]["pk"]
-    key = base64.b64decode(pk).decode("utf-8")
+    typ = event["queryStringParameters"]["type"]
+    encoded_key = event["queryStringParameters"]["key"]
     one_day_in_seconds = 86_400
+    if typ == "asset":
+        bucket = APKG_UPLOAD_BUCKET_NAME
+    elif typ == "warnings":
+        bucket = VERIFIER_MSGS
+    key = base64.b64decode(encoded_key).decode("utf-8")
     presigned_url = s3.generate_presigned_url(
         "get_object",
-        Params={"Bucket": APKG_UPLOAD_BUCKET_NAME, "Key": key},
+        Params={"Bucket": bucket, "Key": key},
         ExpiresIn=one_day_in_seconds,
     )
+    body = json.dumps({"presigned_url": presigned_url})
     return {
         "statusCode": 200,
-        "body": json.dumps({"presigned_url": presigned_url}),
+        "body": body,
         "headers": {
             "Content-Type": "application/json",
             "Access-Control-Allow-Headers": "Content-Type",
