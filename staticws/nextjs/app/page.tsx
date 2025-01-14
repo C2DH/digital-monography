@@ -28,7 +28,7 @@ export default function Home() {
                       <a href="/events?slug=guidelines-for-drafting-manuscripts" className="btn btn-outline-primary">Events</a>
                       <a href="/assets?slug=guidelines-for-drafting-manuscripts" className="btn btn-outline-primary">Assets</a>
                       <a href="/citations?slug=guidelines-for-drafting-manuscripts" className="btn btn-outline-primary">Citations</a>
-                      <a href="#" className="btn btn-outline-primary disabled">Warnings</a>
+                      <a href="/warnings-groups?slug=guidelines-for-drafting-manuscripts" className="btn btn-outline-primary">Warnings</a>
                     </div>
                   </div>
                 </div>
