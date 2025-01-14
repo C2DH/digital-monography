@@ -145,10 +145,11 @@ def index() -> str:
 def list_warnings() -> flask.Response:
     """List objects in a warnings bucket."""
     logger.info("List warnings REST api endpoint was called with GET.")
-    logger.info(f"flask.request.args {json.dumps(flask.request.args, default=str)}")
     slug = flask.request.args.get("slug")
-    objects = s3.list_objects_v2(Bucket=VERIFIER_MSGS, Prefix=f"{slug}/")
-    logger.info(f"List objects v2 method returned: {json.dumps(objects, default=str)}.")
+    if slug:
+        objects = s3.list_objects_v2(Bucket=VERIFIER_MSGS, Prefix=f"{slug}/")
+    else:
+        objects = s3.list_objects_v2(Bucket=VERIFIER_MSGS)
     return app.response_class(
         response=flask.json.dumps(objects["Contents"]),
         status=200,
