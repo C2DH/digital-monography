@@ -9,7 +9,7 @@ resource "aws_s3_bucket_cors_configuration" "verification_msg_config" {
   bucket = aws_s3_bucket.verification_msg.id
 
   cors_rule {
-    allowed_methods = ["OPTIONS", "GET"]
+    allowed_methods = ["HEAD", "GET"]
     allowed_origins = ["*"]
     max_age_seconds = 43200
   }
