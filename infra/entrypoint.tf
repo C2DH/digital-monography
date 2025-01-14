@@ -106,6 +106,19 @@ data "aws_iam_policy_document" "entrypoint" {
     ]
   }
   statement {
+    sid    = "AllowGettingObjectsFromS3"
+    effect = "Allow"
+    resources = [
+      "${aws_s3_bucket.warnings_tbl.arn}",
+      "${aws_s3_bucket.warnings_tbl.arn}/*"
+    ]
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectAcl",
+      "s3:ListBucket",
+    ]
+  }
+  statement {
     sid       = "AllowSendingSQSMessages"
     effect    = "Allow"
     resources = [aws_sqs_queue.entrypoint_to_dropbox.arn]

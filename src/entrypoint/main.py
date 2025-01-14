@@ -19,12 +19,14 @@ try:
         IS_DEBUG,
         DROPBOX_SECRET_ID,
         DYNAMODB_TOKENS_TBL,
+        VERIFIER_MSGS,
     )
 except (ImportError, ModuleNotFoundError):
     from .constants import (
         IS_DEBUG,
         DROPBOX_SECRET_ID,
         DYNAMODB_TOKENS_TBL,
+        VERIFIER_MSGS,
     )
 
 
@@ -45,6 +47,7 @@ logger.setLevel(logging.INFO)
 dynamodb = boto3.resource("dynamodb")
 secretsmanager = boto3.client("secretsmanager")
 sqs = boto3.client("sqs")
+s3 = boto3.client("s3")
 
 
 APP_KEY = "9d9sdu2khx0lboj"
@@ -136,6 +139,19 @@ def oauth_callback(*args, **kwargs):
 def index() -> str:
     logger.info("Index REST api endpoint was called.")
     return flask.render_template("index.html")
+
+
+@app.route("/list-warnings", methods=["GET"])
+def list_warnings() -> flask.Response:
+    """List objects in a warnings bucket."""
+    logger.info("List warnings REST api endpoint was called with GET.")
+    objects = s3.list_objects_v2(Bucket=VERIFIER_MSGS)
+    logger.info(f"List objects v2 method returned: {json.dumps(objects, default=str)}.")
+    return app.response_class(
+        response=flask.json.dumps(objects["Contents"]),
+        status=200,
+        mimetype="application/json",
+    )
 
 
 @app.route("/login")
