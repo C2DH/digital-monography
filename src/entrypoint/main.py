@@ -150,11 +150,15 @@ def list_warnings() -> flask.Response:
         objects = s3.list_objects_v2(Bucket=VERIFIER_MSGS, Prefix=f"{slug}/")
     else:
         objects = s3.list_objects_v2(Bucket=VERIFIER_MSGS)
-    return app.response_class(
+    resp = flask.Response(
         response=flask.json.dumps(objects["Contents"]),
         status=200,
         mimetype="application/json",
     )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
 
 
 @app.route("/login")
