@@ -80,7 +80,7 @@ export default function DynamicTable() {
     useEffect(() => {
         async function fetchObjectFromS3(key: string) {
             try {
-                const response = await fetch(`${endpoint}/test/gpu?pk=${key}`);
+                const response = await fetch(`${endpoint}/test/gpu?type=asset&key=${key}`);
                 const json = await response.json();
                 setAssetSrc(json["presigned_url"]);
             } catch (e) {
