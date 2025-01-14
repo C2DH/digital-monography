@@ -47,6 +47,16 @@ function getNestedBool(rec: any, attr: string): boolean | undefined {
     }
 }
 
+function getAsHtml(s: string): string {
+    if (s.toLowerCase().endsWith(".docx")) {
+        return s.substring(0, s.length - 5) + ".html";
+    } else if (s.toLowerCase().endsWith(".ipynb")) {
+        return s.substring(0, s.length - 6) + ".html";
+    } else {
+        return s;
+    };
+}
+
 export default function DynamicTable() {
     const searchParams = useSearchParams();
     const slug = searchParams?.get("slug");
@@ -54,6 +64,7 @@ export default function DynamicTable() {
     const dbTable = "dgtmon-dev-dyndb-assets-tbl";
     const bucket = "https://cpy-dgtmon-dev-staticws-wip.s3.eu-west-1.amazonaws.com";
     const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
+    const [assetSrc, setAssetSrc] = useState<string>("");
     const [tableData, setTableData] = useState<any[]>([]);
     const s3Key = atob(pk || "");
 
@@ -72,12 +83,17 @@ export default function DynamicTable() {
             try {
                 const response = await fetch(`${endpoint}/test/gpu?pk=${key}`);
                 const json = await response.json();
+                console.log('json["presigned_url"]', json["presigned_url"]);
+                setAssetSrc(json["presigned_url"]);
                 // console.log("JSON", JSON.stringify(json));
             } catch (e) {
                 console.error(e);
             }
         };
-        // fetchObjectFromS3(pk); // TODO: fetch s3 obj from the "endpoint", not the "bucket"
+        if (pk) {
+            fetchObjectFromS3(pk);
+        }
+        // TODO: fetch s3 obj from the "endpoint", not the "bucket"
     }, [pk]);
     useEffect(() => {
         if (!slug || !s3Key) {
@@ -124,7 +140,7 @@ export default function DynamicTable() {
             }
             return null;
         };
-        fetchRecords(slug);
+        // fetchRecords(slug);
     }, [slug, pk]);
     const imgSrc = `${bucket}/read/${s3Key}`
     return (
@@ -138,7 +154,7 @@ export default function DynamicTable() {
                 <div className="row align-items-start">
                     <div className="row">
                         <div className="col">
-                            <img src={imgSrc} className="img-fluid float-left"></img>
+                            {assetSrc && <img src={assetSrc} className="img-fluid float-left"></img>}
                         </div>
                         <div className="col">
                             <table>
@@ -151,11 +167,17 @@ export default function DynamicTable() {
                                     {source && <tr><th>Credit line/Copyright information</th><td>{source}</td></tr>}
                                 </tbody>
                             </table>
-                            {locationName && <a
-                                href={`https://www.dropbox.com/home/Aplikacje/drpb-upload-alert-test/${slug}?preview=${locationName}`}
-                                target="_blank"
-                                className="btn btn-secondary btn-sm"
-                            >Location in a shared folder</a>}
+                            <div className="btn-group-vertical">
+                                {locationName && <a
+                                    href={`https://www.dropbox.com/home/Aplikacje/drpb-upload-alert-test/${slug}?preview=${locationName}`}
+                                    target="_blank"
+                                    className="btn btn-outline-secondary btn-sm"
+                                >Location in a shared folder</a>}
+                                {locationName && <a href={`${bucket}/read/${slug}/${getAsHtml(locationName)}`}
+                                    target="_blank"
+                                    className="btn btn-outline-secondary btn-sm"
+                                >See in the digital version</a>}
+                            </div>
                         </div>
                     </div>
                 </div>
