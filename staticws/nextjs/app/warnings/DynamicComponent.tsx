@@ -4,8 +4,18 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import TnbMarkdown from "./TnbMarkdown";
 
+type IWarning = {
+    id: string
+    problem: string
+    recommend: string
+    prev_elem: string
+    curr_elem: string
+    next_elem: string
+    [key: string]: any
+}
+
 export default function DynamicComponent() {
-    const [warnings, setWarnings] = useState<any[]>([]);
+    const [warnings, setWarnings] = useState<IWarning[]>([]);
     const searchParams = useSearchParams();
     const key = searchParams?.get("key");
     const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
@@ -17,7 +27,6 @@ export default function DynamicComponent() {
                 const preSignedUrl = preSignedUrljson["presigned_url"];
                 const resp = await fetch(preSignedUrl);
                 const json = await resp.json();
-                console.log("JSON.stringify(json)", JSON.stringify(json));
                 setWarnings(json);
             } catch (e) {
                 console.error(e);
@@ -31,7 +40,7 @@ export default function DynamicComponent() {
         <>
             <div className="container">
                 {warnings && <div className="accordion" id="warnings-accordion">
-                    {warnings.map((warning, idx) => (
+                    {warnings.map((warning: IWarning, idx: number) => (
                         <div className="accordion-item" key={idx}>
                             <h2 className="accordion-header" id="warnings-heading">
                                 <button
@@ -79,6 +88,7 @@ export default function DynamicComponent() {
                         </div>
                     ))}
                     {warnings.length == 0 && <div className="d-flex justify-content-center">
+                        <h3>Please wait for the warnings to load...</h3>
                         <div className="spinner-grow text-secondary" role="status">
                             <span className="visually-hidden">Loading...</span>
                         </div>
