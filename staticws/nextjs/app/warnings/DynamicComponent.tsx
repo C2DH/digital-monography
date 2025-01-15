@@ -30,22 +30,28 @@ export default function DynamicComponent() {
     return (
         <>
             <div className="container">
-                {warnings && warnings.map((warning, idx) => (
-                    <div className="card" key={idx}>
-                        <div className="card-header">
-                            <a data-bs-toggle="collapse"
-                                href={`#collapse-${warning.id}`}
-                                role="button"
-                                aria-expanded="false"
-                                aria-controls={`collapse-${warning.id}`}
-                            >
-                                {warning.problem}
-                            </a>
-                        </div>
-                        <div className="collapse" id={`collapse-${warning.id}`}>
-                            <div className="card card-body">
-                                <span>
-                                    <p><b>{warning.problem} </b>{warning.recommend}</p>
+                {warnings && <div className="accordion" id="warnings-accordion">
+                    {warnings.map((warning, idx) => (
+                        <div className="accordion-item" key={idx}>
+                            <h2 className="accordion-header" id="warnings-heading">
+                                <button
+                                    className="accordion-button collapsed"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target={`#collapse-${warning.id}`}
+                                    aria-expanded="true"
+                                    aria-controls={`collapse-${warning.id}`}
+                                >
+                                    {warning.problem}
+                                </button>
+                            </h2>
+                            <div
+                                id={`collapse-${warning.id}`}
+                                className="accordion-collapse collapse"
+                                aria-labelledby="warnings-heading"
+                                data-bs-parent="#warnings-accordion">
+                                <div className="accordion-body">
+                                    <strong>{warning.problem}</strong> {warning.recommend}
                                     <div className="row">
                                         <div className="col-1">
                                         </div>
@@ -57,7 +63,7 @@ export default function DynamicComponent() {
                                         <div className="col-1">
                                             👉
                                         </div>
-                                        <div className="col-9">
+                                        <div className="col-11">
                                             <TnbMarkdown content={warning.curr_elem} />
                                         </div>
                                     </div>
@@ -68,12 +74,16 @@ export default function DynamicComponent() {
                                             <TnbMarkdown content={warning.next_elem} />
                                         </div>
                                     </div>
-                                </span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                ))}
-
+                    ))}
+                    {warnings.length == 0 && <div className="d-flex justify-content-center">
+                        <div className="spinner-grow text-secondary" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                        </div>
+                    </div>}
+                </div>}
             </div>
         </>
     )
