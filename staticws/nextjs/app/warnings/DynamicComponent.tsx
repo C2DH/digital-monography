@@ -72,7 +72,7 @@ export default function DynamicComponent() {
                                         <div className="col-1">
                                             👉
                                         </div>
-                                        <div className="col-11">
+                                        <div className="col-9">
                                             <TnbMarkdown content={warning.curr_elem} />
                                         </div>
                                     </div>
