@@ -25,6 +25,8 @@ if IS_DEBUG:
     DEFAULT_SFS_DIR = "/tmp/efs"  # local execution
 else:
     DEFAULT_SFS_DIR = "/mnt/efs"  # AWS EFS
+AWS_ACCOUNT_ID = "367031255351"
+AWS_ACCOUNT_REGION = "eu-west-1"
 GITHUB_SECRET_ID = "dgtmon-dev-github-api-secrets"
 DROPBOX_SECRET_ID = "dgtmon-dev-github-api-secrets"
 DYNAMODB_TOKENS_TBL = "dgtmon-dev-dyndb-tokens-tbl"
@@ -35,6 +37,11 @@ DYNAMODB_ASSETS_TBL = "dgtmon-dev-dyndb-assets-tbl"
 DYNAMODB_CITATIONS_TBL = "dgtmon-dev-dyndb-citations-tbl"
 DYNAMODB_HEADINGS_TBL = "dgtmon-dev-dyndb-headings-tbl"
 DYNAMODB_WARNINGS_TBL = "dgtmon-dev-dyndb-warnings-tbl"
+# SQS queues
+SQS_GITHUB_TRIGGER_NAME = "cpy-dgtmon-dev-github-trigger"
+SQS_GITHUB_FIFO_TRIGGER_NAME = "cpy-dgtmon-dev-github-trigger.fifo"
+SQS_BUILDER_TRIGGER_NAME = "cpy-dgtmon-dev-builder-trigger"
+SQS_BUILDER_FIFO_TRIGGER_NAME = "cpy-dgtmon-dev-builder-trigger.fifo"
 # S3 bucket names
 ARCHIVE_APKG_ALL = "cpy-dgtmon-dev-archive-apkg-all"
 APKG_UPLOAD_BUCKET_NAME = "cpy-dgtmon-dev-apkg-upload"

@@ -11,14 +11,30 @@ import urllib.parse
 
 try:
     from audit import AuditEvent, AuditStatus
-    from constants import ModuleEnum, IS_DEBUG, VERIFIER_MSGS, DYNAMODB_WARNINGS_TBL
+    from constants import (
+        ModuleEnum,
+        AWS_ACCOUNT_ID,
+        AWS_ACCOUNT_REGION,
+        DYNAMODB_WARNINGS_TBL,
+        IS_DEBUG,
+        SQS_BUILDER_FIFO_TRIGGER_NAME,
+        VERIFIER_MSGS,
+    )
     from fakers import Faker
     from html_verifier import HtmlVerifier
     from make_warnings_report import make_warnings_report
     from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
     from .audit import AuditEvent, AuditStatus
-    from .constants import ModuleEnum, IS_DEBUG, VERIFIER_MSGS, DYNAMODB_WARNINGS_TBL
+    from .constants import (
+        ModuleEnum,
+        AWS_ACCOUNT_ID,
+        AWS_ACCOUNT_REGION,
+        DYNAMODB_WARNINGS_TBL,
+        IS_DEBUG,
+        SQS_BUILDER_FIFO_TRIGGER_NAME,
+        VERIFIER_MSGS,
+    )
     from .fakers import Faker
     from .html_verifier import HtmlVerifier
     from .make_warnings_report import make_warnings_report
@@ -187,17 +203,10 @@ def _put_json_to_s3(body: str, key: KeyPath) -> None:
         raise
 
 
-def _get_queue_url():
-    region = "eu-west-1"
-    account_id = "367031255351"
-    queue_name = "cpy-dgtmon-dev-builder-trigger.fifo"
-    return f"https://sqs.{region}.amazonaws.com/{account_id}/{queue_name}"
-
-
 def _send_msg_to_sqs(key: KeyPath) -> None:
     logger.info(f"Preparing to send a message to the sqs queue.")
     try:
-        QueueUrl = "https://sqs.eu-west-1.amazonaws.com/367031255351/cpy-dgtmon-dev-builder-trigger.fifo"
+        QueueUrl = f"https://sqs.{AWS_ACCOUNT_REGION}.amazonaws.com/{AWS_ACCOUNT_ID}/{SQS_BUILDER_FIFO_TRIGGER_NAME}"
         MessageBody = key.slug
         MessageDeduplicationId = key.slug
         MessageGroupId = "0"
