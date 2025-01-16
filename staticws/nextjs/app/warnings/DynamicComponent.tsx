@@ -60,7 +60,8 @@ export default function DynamicComponent() {
                                 aria-labelledby="warnings-heading"
                                 data-bs-parent="#warnings-accordion">
                                 <div className="accordion-body">
-                                    <strong>{warning.problem}</strong> {warning.recommend}
+                                    <TnbMarkdown content={`**${warning.problem}** ${warning.recommend}`} />
+                                    <hr />
                                     <div className="row">
                                         <div className="col-1">
                                         </div>
