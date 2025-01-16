@@ -39,7 +39,7 @@ export default function DynamicComponent() {
     return (
         <>
             <div className="container">
-                {warnings && <div className="accordion" id="warnings-accordion">
+                <div className="accordion" id="warnings-accordion">
                     {warnings.map((warning: IWarning, idx: number) => (
                         <div className="accordion-item" key={idx}>
                             <h2 className="accordion-header" id="warnings-heading">
@@ -93,7 +93,7 @@ export default function DynamicComponent() {
                             <span className="visually-hidden">Loading...</span>
                         </div>
                     </div>}
-                </div>}
+                </div>
             </div>
         </>
     )

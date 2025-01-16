@@ -1,8 +1,10 @@
 import './github-markdown-css.css';
-import micromarkdown from "micromarkdown";
+import markdownit from 'markdown-it'
+
 
 export default function TnbMarkdown({ content }: { content: string }) {
-    const html = micromarkdown.parse(content);
+    const md = markdownit();
+    const html = md.render(content);
     return (
         <div
             className="markdown-body"
