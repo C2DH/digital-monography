@@ -1,5 +1,5 @@
 import './github-markdown-css.css';
-import markdownit from 'markdown-it'
+import markdownit from 'markdown-it';
 
 
 export default function TnbMarkdown({ content }: { content: string }) {

@@ -46,7 +46,7 @@ export default function DynamicComponent() {
     return (
         <>
             <div className="container">
-                <table className="table">
+                {tableData && <table className="table">
                     <thead>
                         <tr>
                             <th scope="col">Link</th>
@@ -57,7 +57,7 @@ export default function DynamicComponent() {
                     </thead>
                     <tbody>
                         {
-                            tableData && tableData.map((val: IS3Object, idx: number) => (
+                            tableData.map((val: IS3Object, idx: number) => (
                                 <tr key={idx}>
                                     <td>
                                         <a href={`warnings?key=${val.keyEncoded}`} className="btn btn-outline-secondary btn-sm" role="button">▶</a>
@@ -69,7 +69,13 @@ export default function DynamicComponent() {
                             ))
                         }
                     </tbody>
-                </table >
+                </table >}
+                {tableData.length == 0 && <div className="d-flex justify-content-center">
+                    <h4>Please wait for the warnings to load...</h4>
+                    <div className="spinner-grow text-secondary" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                    </div>
+                </div>}
             </div>
         </>
     )

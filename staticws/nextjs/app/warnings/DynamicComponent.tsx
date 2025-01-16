@@ -89,7 +89,7 @@ export default function DynamicComponent() {
                         </div>
                     ))}
                     {warnings.length == 0 && <div className="d-flex justify-content-center">
-                        <h3>Please wait for the warnings to load...</h3>
+                        <h4>Please wait for the warnings to load...</h4>
                         <div className="spinner-grow text-secondary" role="status">
                             <span className="visually-hidden">Loading...</span>
                         </div>
