@@ -78,6 +78,16 @@ data "aws_iam_policy_document" "preparer" {
     actions   = ["lambda:InvokeFunction"]
   }
   statement {
+    sid       = "AllowSendingSQSMessages"
+    effect    = "Allow"
+    resources = [aws_sqs_queue.pre_github_queue.arn]
+    actions = [
+      "sqs:SendMessage",
+      "sqs:GetQueueAttributes",
+      "sqs:GetQueueUrl"
+    ]
+  }
+  statement {
     sid       = "AllowCreatingLogGroups"
     effect    = "Allow"
     resources = ["arn:aws:logs:${var.region}:*:*"]
@@ -115,16 +125,6 @@ data "aws_iam_policy_document" "preparer" {
       # "dynamodb:DeleteItem",
       # "dynamodb:Scan",
       # "dynamodb:Query"
-    ]
-  }
-  statement {
-    sid       = "AllowSendingSQSMessages"
-    effect    = "Allow"
-    resources = [aws_sqs_queue.pre_builder_queue.arn]
-    actions = [
-      "sqs:SendMessage",
-      "sqs:GetQueueAttributes",
-      "sqs:GetQueueUrl"
     ]
   }
   statement {
