@@ -14,13 +14,15 @@ try:
     from constants import (
         ModuleEnum,
         ARCHIVE_APKG_ALL,
+        AWS_ACCOUNT_REGION,
+        AWS_ACCOUNT_ID,
         DYNAMODB_ASSETS_TBL,
         DYNAMODB_CITATIONS_TBL,
         DYNAMODB_HEADINGS_TBL,
-        DYNAMODB_WARNINGS_TBL,
         IR_APKG_HTML_BUCKET_NAME,
         IR_APKG_MD_BUCKET_NAME,
         MAMMOTH_STYLE_MAP,
+        SQS_GITHUB_FIFO_TRIGGER_NAME,
         IS_DEBUG,
     )
     from citations import add_bibliography, is_citation, prepare_citations
@@ -51,13 +53,15 @@ except (ImportError, ModuleNotFoundError):
     from .constants import (
         ModuleEnum,
         ARCHIVE_APKG_ALL,
+        AWS_ACCOUNT_REGION,
+        AWS_ACCOUNT_ID,
         DYNAMODB_ASSETS_TBL,
         DYNAMODB_CITATIONS_TBL,
         DYNAMODB_HEADINGS_TBL,
-        DYNAMODB_WARNINGS_TBL,
         IR_APKG_HTML_BUCKET_NAME,
         IR_APKG_MD_BUCKET_NAME,
         MAMMOTH_STYLE_MAP,
+        SQS_GITHUB_FIFO_TRIGGER_NAME,
         IS_DEBUG,
     )
     from .citations import add_bibliography, is_citation, prepare_citations
@@ -136,6 +140,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         ipynb: nbformat.NotebookNode = _unmarshall_json(key.efs_filepath)
         tags_to_myst_crossref_targets(ipynb)
         _write_processed_ipynb_to_efs(ipynb, key)
+        _enqueue_to_trigger_github(key)
         ARCHIVE = "_put_to_archive_s3(key)"
         return {"statusCode": 200, "body": ""}
     if key.suffix.lower() == ".docx":
@@ -186,8 +191,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         md = _convert_to_md(key, html_soup, metadata)
         _write_processed_md_to_efs(md, key)
         _put_md_to_s3(md, key)
-        # _make_metadata_report(metadata, key)
         ARCHIVE = '_put_to_archive_s3(key.s3_key.with_suffix(".md"), md)'
+        _enqueue_to_trigger_github(key)
         _log_audit_event(
             key,
             AuditStatus.SUCCESS.value,
@@ -195,6 +200,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         )
         return {"statusCode": 200, "body": ""}
     else:
+        _enqueue_to_trigger_github(key)
         return {"statusCode": 200, "body": ""}
 
 
@@ -328,8 +334,36 @@ def _put_md_to_s3(contents: str, key: KeyPath) -> None:
         raise
 
 
+def _enqueue_to_trigger_github(key: KeyPath) -> None:
+    try:
+        logger.info(f"_queue_to_trigger_github(key={str(key)})")
+        QueueUrl = f"https://sqs.{AWS_ACCOUNT_REGION}.amazonaws.com/{AWS_ACCOUNT_ID}/{SQS_GITHUB_FIFO_TRIGGER_NAME}"
+        MessageBody = key.slug
+        MessageDeduplicationId = key.slug
+        MessageGroupId = "0"
+        resp = sqs.send_message(
+            QueueUrl=QueueUrl,
+            MessageBody=MessageBody,
+            MessageDeduplicationId=MessageDeduplicationId,
+            MessageGroupId=MessageGroupId,
+        )
+        logger.info(
+            f"Response from sqs.send_message(QueueUrl={QueueUrl}, MessageBody={MessageBody}, MessageDeduplicationId={MessageDeduplicationId}, MessageGroupId={MessageGroupId}): "
+            + json.dumps(resp, default=str)
+        )
+    except Exception as e:
+        logger.exception(f"Putting file to archive s3 bucket failed. Error: {repr(e)}")
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            "Error upon archiving.",
+        )
+        raise
+
+
 def _put_to_archive_s3(key: KeyPath, contents: t.Optional[str] = None) -> None:
     try:
+        logger.info(f"_put_to_archive_s3(key={key}, contents={contents})")
         if contents is None:
             try:
                 with open(key.efs_filepath, "r") as f:
@@ -337,7 +371,6 @@ def _put_to_archive_s3(key: KeyPath, contents: t.Optional[str] = None) -> None:
             except UnicodeDecodeError as e:
                 with open(key.efs_filepath, "rb") as f:
                     contents = f.read().decode("utf-8", "ignore")
-
         _put_object(
             contents.encode("utf-8"),
             ARCHIVE_APKG_ALL,
