@@ -20,6 +20,7 @@ resource "aws_s3_bucket_object_lock_configuration" "archive_apkg_all" {
   object_lock_enabled = "Enabled"
 }
 
+# TODO: archive upload bucket, remove this one
 resource "aws_s3_bucket_lifecycle_configuration" "archive_apkg_all" {
   bucket     = aws_s3_bucket.archive_apkg_all.id
   depends_on = [aws_s3_bucket_versioning.archive_apkg_all]
@@ -58,6 +59,24 @@ resource "aws_s3_bucket_policy" "archive_apkg_all_policy" {
   policy = data.aws_iam_policy_document.archive_apkg_all_policy.json
 }
 
+## SQS (Lambda trigger)
+
+resource "aws_sqs_queue" "pre_github_queue" {
+  name                        = "${var.sqs_github_trigger}.fifo"
+  fifo_queue                  = true
+  receive_wait_time_seconds   = 15
+  delay_seconds               = 5
+  content_based_deduplication = true
+  max_message_size            = 1024 # 1 KiB
+  message_retention_seconds   = 3600 # 1 hour
+  visibility_timeout_seconds  = 900
+}
+
+resource "aws_lambda_event_source_mapping" "pre_github" {
+  event_source_arn = aws_sqs_queue.pre_github_queue.arn
+  function_name    = aws_lambda_function.github_func.arn
+}
+
 ## Lambda (github)
 
 data "aws_iam_policy_document" "assume_github_role" {
@@ -88,11 +107,23 @@ data "aws_iam_policy_document" "github" {
       "s3:GetObjectAcl",
     ]
   }
+  # is this necessary?
+  # statement {
+  #   sid       = "AllowInvokingLambdas"
+  #   effect    = "Allow"
+  #   resources = ["arn:aws:lambda:${var.region}:*:function:*"]
+  #   actions   = ["lambda:InvokeFunction"]
+  # }
   statement {
-    sid       = "AllowInvokingLambdas"
+    sid       = "AllowReceivingSQSMessages"
     effect    = "Allow"
-    resources = ["arn:aws:lambda:${var.region}:*:function:*"]
-    actions   = ["lambda:InvokeFunction"]
+    resources = [aws_sqs_queue.pre_builder_queue.arn]
+    actions = [
+      "sqs:DeleteMessage",
+      "sqs:ReceiveMessage",
+      "sqs:GetQueueAttributes",
+      "sqs:GetQueueUrl"
+    ]
   }
   statement {
     sid       = "AllowCreatingLogGroups"
@@ -147,6 +178,7 @@ resource "aws_lambda_permission" "allow_archive_apkg_all_to_invoke_lambda" {
   source_arn    = aws_s3_bucket.archive_apkg_all.arn
 }
 
+
 resource "aws_lambda_function" "github_func" {
   function_name = "github"
   package_type  = "Image"
@@ -164,14 +196,14 @@ resource "aws_lambda_function" "github_func" {
   }
 }
 
-resource "aws_s3_bucket_notification" "archive_apkg_all_notification" {
-  bucket = aws_s3_bucket.archive_apkg_all.id
-  lambda_function {
-    lambda_function_arn = aws_lambda_function.github_func.arn
-    events              = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
-  }
-  depends_on = [aws_lambda_permission.allow_archive_apkg_all_to_invoke_lambda]
-}
+# resource "aws_s3_bucket_notification" "archive_apkg_all_notification" {
+#   bucket = aws_s3_bucket.archive_apkg_all.id
+#   lambda_function {
+#     lambda_function_arn = aws_lambda_function.github_func.arn
+#     events              = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
+#   }
+#   depends_on = [aws_lambda_permission.allow_archive_apkg_all_to_invoke_lambda]
+# }
 
 resource "aws_ecr_repository" "github_repo" {
   name                 = var.github_repo_name

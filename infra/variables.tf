@@ -113,6 +113,11 @@ variable "gpu_repo_name" {
   description = "Name of the ECR repository for the gpu (generate pre-signed url) image"
 }
 
+variable "sqs_github_trigger" {
+  type        = string
+  description = "Name of the SQS unique-id queue with messages to trigger push to github"
+}
+
 variable "sqs_builder_trigger" {
   type        = string
   description = "Name of the SQS unique-id queue with messages to build a particular book"
