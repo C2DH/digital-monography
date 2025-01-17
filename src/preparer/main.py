@@ -338,7 +338,7 @@ def _enqueue_to_trigger_github(key: KeyPath) -> None:
     try:
         logger.info(f"_queue_to_trigger_github(key={str(key)})")
         QueueUrl = f"https://sqs.{AWS_ACCOUNT_REGION}.amazonaws.com/{AWS_ACCOUNT_ID}/{SQS_GITHUB_FIFO_TRIGGER_NAME}"
-        MessageBody = key
+        MessageBody = str(key)
         MessageDeduplicationId = key.slug
         MessageGroupId = "0"
         resp = sqs.send_message(
