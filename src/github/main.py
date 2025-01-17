@@ -127,6 +127,26 @@ def _create_github_repo(key: KeyPath, secret: GitHubSecret) -> requests.Response
             headers=headers,
         )
         logger.info(json.dumps(res.json(), default=str))
+        if res.ok:
+            first_readme = b'# Welcome to the publication\nTo start or join a conversation, go to the "Issues" section.'
+            b64content = base64.b64encode(first_readme).decode()
+            github_token = secret["github_api_token"]
+            github_org = secret["github_api_org"]
+            headers = {
+                "Accept": "application/vnd.github+json",
+                "Authorization": f"Bearer {github_token}",
+                "X-GitHub-Api-Version": "2022-11-28",
+            }
+            data = {
+                "message": f"Add README.md",
+                "content": b64content,
+            }
+            readme_response = requests.put(
+                f"https://api.github.com/repos/{github_org}/{key.slug}/contents/README.md",
+                json=data,
+                headers=headers,
+            )
+            logger.info(json.dumps(readme_response.json(), default=str))
         return res
     except Exception as e:
         logging.exception(
