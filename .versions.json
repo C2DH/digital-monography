@@ -2,8 +2,8 @@
     "ENTRYPOINT_STABLE_V": "0.0.45",
     "DROPBOX_STABLE_V": "0.0.29",
     "BUILDER_STABLE_V": "0.1.17",
-    "GITHUB_STABLE_V": "0.0.20",
-    "PREPARER_STABLE_V": "0.1.15",
+    "GITHUB_STABLE_V": "0.0.21",
+    "PREPARER_STABLE_V": "0.1.16",
     "VERIFIER_STABLE_V": "0.1.10",
     "GPU_STABLE_V": "0.0.6",
     "LOCAL_STABLE_V": "0.1.2"

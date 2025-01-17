@@ -46,8 +46,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info(json.dumps(context, default=str))
 
     key = _get_key(event)
-    if key.suffix not in [".md", ".MD", ".ipynb", ".IPYNB"]:
-        return {"statusCode": 200, "body": ""}
+    # if key.suffix not in [".md", ".MD", ".ipynb", ".IPYNB"]:
+    #     return {"statusCode": 200, "body": ""}
 
     secret = _get_api_key(key, GITHUB_SECRET_ID)
 
@@ -68,7 +68,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
 def _get_key(event) -> KeyPath:
     try:
         key_str = urllib.parse.unquote_plus(
-            event["Records"][0]["s3"]["object"]["key"], encoding="utf-8"
+            event["Records"][0]["body"], encoding="utf-8"
         )
         return KeyPath(key_str)
     except Exception as e:
