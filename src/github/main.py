@@ -222,15 +222,20 @@ def _put_to_github_repo(
     https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28#create-or-update-file-contents
     """
     try:
-        b64content = base64.b64encode(contents).decode()
-        github_token = secret["github_api_token"]
-        github_org = secret["github_api_org"]
         eventSource = event["Records"][0]["eventSource"]
         eventName = event["Records"][0]["eventName"]
         eventTime = event["Records"][0]["eventTime"]
         requestId = event["Records"][0]["responseElements"]["x-amz-request-id"]
+        commit_message = f"{eventTime} [{requestId}] Perform action {eventSource}:{eventName} on '{key.s3_key}'"
+    except (KeyError, IndexError):
+        t = datetime.datetime.now().strftime("%d %b %Y at %H:%M")
+        commit_message = "Update on " + t
+    try:
+        b64content = base64.b64encode(contents).decode()
+        github_token = secret["github_api_token"]
+        github_org = secret["github_api_org"]
     except Exception as e:
-        logger.error(f"Unable to retrieve the event data. Error: {repr(e)}")
+        logger.error(f"Unable to prepare contents of the file. Error: {repr(e)}")
         raise
     headers = {
         "Accept": "application/vnd.github+json",
@@ -238,7 +243,7 @@ def _put_to_github_repo(
         "X-GitHub-Api-Version": "2022-11-28",
     }
     data = {
-        "message": f"{eventTime} [{requestId}] Perform action {eventSource}:{eventName} on '{key.s3_key}'",
+        "message": commit_message,
         "content": b64content,
         # "committer": { # TODO: figure out how to extract data of the commiter & author
         #     "name": "",
