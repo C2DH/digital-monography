@@ -117,7 +117,7 @@ data "aws_iam_policy_document" "github" {
   statement {
     sid       = "AllowReceivingSQSMessages"
     effect    = "Allow"
-    resources = [aws_sqs_queue.pre_builder_queue.arn]
+    resources = [aws_sqs_queue.pre_github_queue.arn]
     actions = [
       "sqs:DeleteMessage",
       "sqs:ReceiveMessage",
