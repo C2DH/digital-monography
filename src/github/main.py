@@ -11,7 +11,7 @@ try:
     from audit import AuditEvent, AuditStatus
     from constants import (
         ModuleEnum,
-        ARCHIVE_APKG_ALL,
+        APKG_UPLOAD_BUCKET_NAME,
         GITHUB_SECRET_ID,
     )
     from keys import KeyPath
@@ -19,7 +19,7 @@ except (ImportError, ModuleNotFoundError):
     from .audit import AuditEvent, AuditStatus
     from .constants import (
         ModuleEnum,
-        ARCHIVE_APKG_ALL,
+        APKG_UPLOAD_BUCKET_NAME,
         GITHUB_SECRET_ID,
     )
     from .keys import KeyPath
@@ -140,14 +140,15 @@ def _create_github_repo(key: KeyPath, secret: GitHubSecret) -> requests.Response
         raise
 
 
+# Maybe better to get obj from efs? But then Lambda should be in VPC
 def _get_obj_from_archive_s3(key: KeyPath) -> bytes:
     try:
         resp = s3.get_object(
-            Bucket=ARCHIVE_APKG_ALL,
+            Bucket=APKG_UPLOAD_BUCKET_NAME,
             Key=str(key.s3_key),
         )
         logger.info(
-            f"Response from s3.get_object(Bucket={ARCHIVE_APKG_ALL}, Key={key.s3_key}): "
+            f"Response from s3.get_object(Bucket={APKG_UPLOAD_BUCKET_NAME}, Key={key.s3_key}): "
             + json.dumps(resp, default=str)
         )
         contents = resp["Body"].read()
