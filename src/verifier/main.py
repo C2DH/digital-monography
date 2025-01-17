@@ -1,3 +1,4 @@
+import bs4
 import boto3
 import datetime
 import json
@@ -19,7 +20,6 @@ try:
     )
     from fakers import Faker
     from html_verifier import HtmlVerifier
-    from make_warnings_report import make_warnings_report
     from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
     from .audit import AuditEvent, AuditStatus
@@ -33,7 +33,6 @@ except (ImportError, ModuleNotFoundError):
     )
     from .fakers import Faker
     from .html_verifier import HtmlVerifier
-    from .make_warnings_report import make_warnings_report
     from .keys import KeyPath
 
 if IS_DEBUG:
@@ -77,7 +76,6 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         )
         verifer.sort()
         warnings_json = verifer.to_json(md=True)
-        logger.info(json.dumps(warnings_json, default=str))
         _write_json_to_efs(warnings_json, key)
         # _make_warnings_report(verifer.soup, warnings_json, timestamp, key)
         _put_json_to_s3(json.dumps(warnings_json, default=str), key)
@@ -134,28 +132,6 @@ def _write_json_to_efs(json_data: t.Any, key: KeyPath) -> None:
         raise
 
 
-# def _make_warnings_report(
-#     soup: bs4.BeautifulSoup,
-#     json_data: t.Any,
-#     timestamp: datetime.datetime,
-#     key: KeyPath,
-# ) -> None:
-#     try:
-#         fp = key.add_to_efs_slug_dir("_warnings").parent / key.github_path.with_suffix(
-#             ".md"
-#         )
-#         file_name = str(key.with_suffix(".docx").name)
-#         with open(fp, "w") as f:
-#             f.write(make_warnings_report(soup, json_data, timestamp, file_name))
-#         logger.info(f"Warnings markdown report was saved to {str(fp)}")
-#     except Exception as e:
-#         logger.exception(f"Writing json to /efs directory failed. Error: {repr(e)}")
-#         _log_audit_event(
-#             key, AuditStatus.FAILED.value, "Generating verification warnings failed."
-#         )
-#         raise
-
-
 def _put_json_to_s3(body: str, key: KeyPath) -> None:
     try:
         s3_key = key.s3_key.with_suffix(".json")
@@ -207,3 +183,16 @@ def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:
     )
     event.send(dynamodb)
     logger.info(f"Audit event logged: {event}")
+
+
+def _get_character_and_word_count(soup: bs4.BeautifulSoup) -> tuple[int, int]:
+    soup_contents_list = []
+    for elem in soup.find_all(text=True):
+        soup_contents_list.append(elem.text.strip())
+    soup_contents = "".join(soup_contents_list).replace(" ", "")  # minimize spaces
+    words = []
+    for line in soup_contents_list:
+        for word in line.split(" "):
+            if word and not word.isspace():
+                words.append(word)
+    return len(soup_contents), len(words)
