@@ -1,5 +1,3 @@
-import os
-import bs4
 import boto3
 import datetime
 import json
@@ -15,7 +13,6 @@ try:
         ModuleEnum,
         AWS_ACCOUNT_ID,
         AWS_ACCOUNT_REGION,
-        DYNAMODB_WARNINGS_TBL,
         IS_DEBUG,
         SQS_BUILDER_FIFO_TRIGGER_NAME,
         VERIFIER_MSGS,
@@ -30,7 +27,6 @@ except (ImportError, ModuleNotFoundError):
         ModuleEnum,
         AWS_ACCOUNT_ID,
         AWS_ACCOUNT_REGION,
-        DYNAMODB_WARNINGS_TBL,
         IS_DEBUG,
         SQS_BUILDER_FIFO_TRIGGER_NAME,
         VERIFIER_MSGS,
@@ -83,7 +79,6 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         warnings_json = verifer.to_json(md=True)
         logger.info(json.dumps(warnings_json, default=str))
         _write_json_to_efs(warnings_json, key)
-        _write_warnings_to_db(warnings_json, key)
         # _make_warnings_report(verifer.soup, warnings_json, timestamp, key)
         _put_json_to_s3(json.dumps(warnings_json, default=str), key)
         _send_msg_to_sqs(key)
@@ -135,32 +130,6 @@ def _write_json_to_efs(json_data: t.Any, key: KeyPath) -> None:
         logger.exception(f"Writing json to /efs directory failed. Error: {repr(e)}")
         _log_audit_event(
             key, AuditStatus.FAILED.value, "Writing verification warnings failed."
-        )
-        raise
-
-
-def _write_warnings_to_db(warnings_json, key: KeyPath) -> None:
-    if dynamodb is None:
-        return
-    try:
-        table = dynamodb.Table(DYNAMODB_WARNINGS_TBL)
-        resp = table.put_item(
-            Item={
-                "slug": key.slug,
-                "fn": key.name,
-                "records": warnings_json,
-            }
-        )
-        logger.info(
-            f"Response from dynamodb.Table({DYNAMODB_WARNINGS_TBL}).put_item: {json.dumps(resp, default=str)}"
-        )
-        return
-    except Exception as e:
-        logger.exception(f"Writing warnings to the database failed. Error: {repr(e)}")
-        _log_audit_event(
-            key,
-            AuditStatus.FAILED.value,
-            "Saving verification warnings to the database failed.",
         )
         raise
 
