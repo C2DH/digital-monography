@@ -152,7 +152,7 @@ def _get_obj_from_archive_s3(key: KeyPath) -> bytes:
             + json.dumps(resp, default=str)
         )
         contents = resp["Body"].read()
-        logger.info(f"Retrieved object as str: " + contents.decode("utf-8"))
+        # logger.info(f"Retrieved object as str: " + contents.decode("utf-8"))
         return contents
     except Exception as e:
         logging.exception(f"Error while getting object from s3: {repr(e)}")
