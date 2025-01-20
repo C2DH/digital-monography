@@ -12,6 +12,7 @@ try:
     from constants import (
         ModuleEnum,
         APKG_UPLOAD_BUCKET_NAME,
+        IR_APKG_MD_BUCKET_NAME,
         GITHUB_SECRET_ID,
     )
     from keys import KeyPath
@@ -20,6 +21,7 @@ except (ImportError, ModuleNotFoundError):
     from .constants import (
         ModuleEnum,
         APKG_UPLOAD_BUCKET_NAME,
+        IR_APKG_MD_BUCKET_NAME,
         GITHUB_SECRET_ID,
     )
     from .keys import KeyPath
@@ -53,7 +55,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
 
     # naively try to create repo without checking if it exists
     _create_github_repo(key, secret)
-    new_bytes = _get_obj_from_archive_s3(key)
+    new_bytes = _get_obj_from_s3(key)
     prev_obj = _get_from_github_repo(key, secret)
     prev_v_sha = prev_obj.json().get("sha", None)
     _put_to_github_repo(key, secret, new_bytes, prev_v_sha, event)
@@ -161,14 +163,18 @@ def _create_github_repo(key: KeyPath, secret: GitHubSecret) -> requests.Response
 
 
 # Maybe better to get obj from efs? But then Lambda should be in VPC
-def _get_obj_from_archive_s3(key: KeyPath) -> bytes:
+def _get_obj_from_s3(key: KeyPath) -> bytes:
     try:
+        if len(key.parts) == 2 and key.suffix.lower() == ".md":
+            bucket_name = IR_APKG_MD_BUCKET_NAME
+        else:
+            bucket_name = APKG_UPLOAD_BUCKET_NAME
         resp = s3.get_object(
-            Bucket=APKG_UPLOAD_BUCKET_NAME,
+            Bucket=bucket_name,
             Key=str(key.s3_key),
         )
         logger.info(
-            f"Response from s3.get_object(Bucket={APKG_UPLOAD_BUCKET_NAME}, Key={key.s3_key}): "
+            f"Response from s3.get_object(Bucket={bucket_name}, Key={key.s3_key}): "
             + json.dumps(resp, default=str)
         )
         contents = resp["Body"].read()

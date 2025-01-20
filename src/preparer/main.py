@@ -190,9 +190,10 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _put_html_to_s3(html_soup_str, key)
         md = _convert_to_md(key, html_soup, metadata)
         _write_processed_md_to_efs(md, key)
-        _put_md_to_s3(md, key)
-        ARCHIVE = '_put_to_archive_s3(key.s3_key.with_suffix(".md"), md)'
+        _put_md_to_s3(md, key.s3_key.with_suffix(".md"))
         _enqueue_to_github(key)
+        _enqueue_to_github(key.s3_key.with_suffix(".md"))
+        ARCHIVE = '_put_to_archive_s3(key.s3_key.with_suffix(".md"), md)'
         _log_audit_event(
             key,
             AuditStatus.SUCCESS.value,
@@ -318,11 +319,10 @@ def _put_html_to_s3(contents: str, key: KeyPath) -> None:
 
 def _put_md_to_s3(contents: str, key: KeyPath) -> None:
     try:
-        s3_key = key.s3_key.with_suffix(".md")
         _put_object(
             contents.encode("utf-8"),
             IR_APKG_MD_BUCKET_NAME,
-            s3_key,
+            key,
         )
     except Exception as e:
         logger.exception(f"Putting md to s3 bucket failed. Error: {repr(e)}")
