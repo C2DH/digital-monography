@@ -75,6 +75,7 @@ resource "aws_sqs_queue" "pre_github_queue" {
 resource "aws_lambda_event_source_mapping" "pre_github" {
   event_source_arn = aws_sqs_queue.pre_github_queue.arn
   function_name    = aws_lambda_function.github_func.arn
+  batch_size       = 1
 }
 
 ## Lambda (github)
