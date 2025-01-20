@@ -140,7 +140,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         ipynb: nbformat.NotebookNode = _unmarshall_json(key.efs_filepath)
         tags_to_myst_crossref_targets(ipynb)
         _write_processed_ipynb_to_efs(ipynb, key)
-        _enqueue_to_trigger_github(key)
+        _enqueue_to_github(key)
         ARCHIVE = "_put_to_archive_s3(key)"
         return {"statusCode": 200, "body": ""}
     if key.suffix.lower() == ".docx":
@@ -192,7 +192,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _write_processed_md_to_efs(md, key)
         _put_md_to_s3(md, key)
         ARCHIVE = '_put_to_archive_s3(key.s3_key.with_suffix(".md"), md)'
-        _enqueue_to_trigger_github(key)
+        _enqueue_to_github(key)
         _log_audit_event(
             key,
             AuditStatus.SUCCESS.value,
@@ -200,7 +200,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         )
         return {"statusCode": 200, "body": ""}
     else:
-        _enqueue_to_trigger_github(key)
+        _enqueue_to_github(key)
         return {"statusCode": 200, "body": ""}
 
 
@@ -334,7 +334,7 @@ def _put_md_to_s3(contents: str, key: KeyPath) -> None:
         raise
 
 
-def _enqueue_to_trigger_github(key: KeyPath) -> None:
+def _enqueue_to_github(key: KeyPath) -> None:
     try:
         logger.info(f"_queue_to_trigger_github(key={str(key)})")
         QueueUrl = f"https://sqs.{AWS_ACCOUNT_REGION}.amazonaws.com/{AWS_ACCOUNT_ID}/{SQS_GITHUB_FIFO_TRIGGER_NAME}"
