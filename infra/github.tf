@@ -65,7 +65,7 @@ resource "aws_sqs_queue" "pre_github_queue" {
   name                        = "${var.sqs_github_trigger}.fifo"
   fifo_queue                  = true
   receive_wait_time_seconds   = 15
-  delay_seconds               = 0
+  delay_seconds               = 5
   content_based_deduplication = true
   max_message_size            = 1024  # 1 KiB
   message_retention_seconds   = 86400 # 24 hours
