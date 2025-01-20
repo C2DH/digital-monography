@@ -171,14 +171,13 @@ resource "aws_iam_role_policy_attachment" "github" {
   policy_arn = aws_iam_policy.github.arn
 }
 
-resource "aws_lambda_permission" "allow_archive_apkg_all_to_invoke_lambda" {
-  statement_id  = "AllowExecutionFromS3Bucket"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.github_func.arn
-  principal     = "s3.amazonaws.com"
-  source_arn    = aws_s3_bucket.archive_apkg_all.arn
-}
-
+# resource "aws_lambda_permission" "allow_archive_apkg_all_to_invoke_lambda" {
+#   statement_id  = "AllowExecutionFromS3Bucket"
+#   action        = "lambda:InvokeFunction"
+#   function_name = aws_lambda_function.github_func.arn
+#   principal     = "s3.amazonaws.com"
+#   source_arn    = aws_s3_bucket.archive_apkg_all.arn
+# }
 
 resource "aws_lambda_function" "github_func" {
   function_name = "github"
