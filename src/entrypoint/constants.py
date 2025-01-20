@@ -43,7 +43,7 @@ SQS_GITHUB_FIFO_TRIGGER_NAME = "cpy-dgtmon-dev-github-trigger.fifo"
 SQS_BUILDER_TRIGGER_NAME = "cpy-dgtmon-dev-builder-trigger"
 SQS_BUILDER_FIFO_TRIGGER_NAME = "cpy-dgtmon-dev-builder-trigger.fifo"
 # S3 bucket names
-ARCHIVE_APKG_ALL = "cpy-dgtmon-dev-archive-apkg-all"
+# ARCHIVE_APKG_ALL = "cpy-dgtmon-dev-archive-apkg-all"
 APKG_UPLOAD_BUCKET_NAME = "cpy-dgtmon-dev-apkg-upload"
 IR_APKG_HTML_BUCKET_NAME = "cpy-dgtmon-dev-ir-apkg-html"
 IR_APKG_MD_BUCKET_NAME = "cpy-dgtmon-dev-ir-apkg-md"

@@ -13,7 +13,7 @@ try:
     from audit import AuditEvent, AuditStatus
     from constants import (
         ModuleEnum,
-        ARCHIVE_APKG_ALL,
+        # ARCHIVE_APKG_ALL,
         AWS_ACCOUNT_REGION,
         AWS_ACCOUNT_ID,
         DYNAMODB_ASSETS_TBL,
@@ -52,7 +52,7 @@ except (ImportError, ModuleNotFoundError):
     from .audit import AuditEvent, AuditStatus
     from .constants import (
         ModuleEnum,
-        ARCHIVE_APKG_ALL,
+        # ARCHIVE_APKG_ALL,
         AWS_ACCOUNT_REGION,
         AWS_ACCOUNT_ID,
         DYNAMODB_ASSETS_TBL,
@@ -142,7 +142,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         tags_to_myst_crossref_targets(ipynb)
         _write_processed_ipynb_to_efs(ipynb, key)
         _enqueue_to_github(key)
-        ARCHIVE = "_put_to_archive_s3(key)"
+        # _put_to_archive_s3(key)
         return {"statusCode": 200, "body": ""}
     if key.suffix.lower() == ".docx":
         html_str = _convert_to_html(key.efs_filepath)
@@ -194,7 +194,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _put_md_to_s3(md, key.s3_key.with_suffix(".md"))
         _enqueue_to_github(key)
         _enqueue_to_github(key.s3_key.with_suffix(".md"))
-        ARCHIVE = '_put_to_archive_s3(key.s3_key.with_suffix(".md"), md)'
+        # _put_to_archive_s3(key.s3_key.with_suffix(".md"), md)
         _log_audit_event(
             key,
             AuditStatus.SUCCESS.value,
@@ -363,29 +363,29 @@ def _enqueue_to_github(key: KeyPath) -> None:
         raise
 
 
-def _put_to_archive_s3(key: KeyPath, contents: t.Optional[str] = None) -> None:
-    try:
-        logger.info(f"_put_to_archive_s3(key={key}, contents={contents})")
-        if contents is None:
-            try:
-                with open(key.efs_filepath, "r") as f:
-                    contents = f.read()
-            except UnicodeDecodeError as e:
-                with open(key.efs_filepath, "rb") as f:
-                    contents = f.read().decode("utf-8", "ignore")
-        _put_object(
-            contents.encode("utf-8"),
-            ARCHIVE_APKG_ALL,
-            key.s3_key,
-        )
-    except Exception as e:
-        logger.exception(f"Putting file to archive s3 bucket failed. Error: {repr(e)}")
-        _log_audit_event(
-            key,
-            AuditStatus.FAILED.value,
-            "Error upon archiving.",
-        )
-        raise
+# def _put_to_archive_s3(key: KeyPath, contents: t.Optional[str] = None) -> None:
+#     try:
+#         logger.info(f"_put_to_archive_s3(key={key}, contents={contents})")
+#         if contents is None:
+#             try:
+#                 with open(key.efs_filepath, "r") as f:
+#                     contents = f.read()
+#             except UnicodeDecodeError as e:
+#                 with open(key.efs_filepath, "rb") as f:
+#                     contents = f.read().decode("utf-8", "ignore")
+#         _put_object(
+#             contents.encode("utf-8"),
+#             ARCHIVE_APKG_ALL,
+#             key.s3_key,
+#         )
+#     except Exception as e:
+#         logger.exception(f"Putting file to archive s3 bucket failed. Error: {repr(e)}")
+#         _log_audit_event(
+#             key,
+#             AuditStatus.FAILED.value,
+#             "Error upon archiving.",
+#         )
+#         raise
 
 
 def _write_config_to_efs(metadata: DocumentMetadata, key: KeyPath) -> None:

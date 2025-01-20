@@ -1,63 +1,63 @@
 ## Archive S3 (TODO: after replacing with SQS, remove S3)
 
-resource "aws_s3_bucket" "archive_apkg_all" {
-  bucket = var.archive_apkg_all_bucket_name
-  lifecycle {
-    prevent_destroy = false
-  }
-}
+# resource "aws_s3_bucket" "archive_apkg_all" {
+#   bucket = var.archive_apkg_all_bucket_name
+#   lifecycle {
+#     prevent_destroy = false
+#   }
+# }
 
-resource "aws_s3_bucket_versioning" "archive_apkg_all" {
-  bucket = aws_s3_bucket.archive_apkg_all.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
+# resource "aws_s3_bucket_versioning" "archive_apkg_all" {
+#   bucket = aws_s3_bucket.archive_apkg_all.id
+#   versioning_configuration {
+#     status = "Enabled"
+#   }
+# }
 
-resource "aws_s3_bucket_object_lock_configuration" "archive_apkg_all" {
-  bucket              = aws_s3_bucket.archive_apkg_all.id
-  depends_on          = [aws_s3_bucket_versioning.archive_apkg_all]
-  object_lock_enabled = "Enabled"
-}
+# resource "aws_s3_bucket_object_lock_configuration" "archive_apkg_all" {
+#   bucket              = aws_s3_bucket.archive_apkg_all.id
+#   depends_on          = [aws_s3_bucket_versioning.archive_apkg_all]
+#   object_lock_enabled = "Enabled"
+# }
 
-# TODO: archive upload bucket, remove this one
-resource "aws_s3_bucket_lifecycle_configuration" "archive_apkg_all" {
-  bucket     = aws_s3_bucket.archive_apkg_all.id
-  depends_on = [aws_s3_bucket_versioning.archive_apkg_all]
-  rule {
-    id     = "archive_apkg_all_old_versions_to_archive"
-    status = "Enabled"
-    noncurrent_version_transition {
-      noncurrent_days = 30
-      storage_class   = "STANDARD_IA"
-    }
-    noncurrent_version_transition {
-      noncurrent_days = 60
-      storage_class   = "GLACIER"
-    }
-  }
-}
+# # TODO: archive upload bucket, remove this one
+# resource "aws_s3_bucket_lifecycle_configuration" "archive_apkg_all" {
+#   bucket     = aws_s3_bucket.archive_apkg_all.id
+#   depends_on = [aws_s3_bucket_versioning.archive_apkg_all]
+#   rule {
+#     id     = "archive_apkg_all_old_versions_to_archive"
+#     status = "Enabled"
+#     noncurrent_version_transition {
+#       noncurrent_days = 30
+#       storage_class   = "STANDARD_IA"
+#     }
+#     noncurrent_version_transition {
+#       noncurrent_days = 60
+#       storage_class   = "GLACIER"
+#     }
+#   }
+# }
 
-data "aws_iam_policy_document" "archive_apkg_all_policy" {
-  statement {
-    actions = [
-      "s3:*" # TODO: limit
-    ]
-    resources = [
-      "arn:aws:s3:::${aws_s3_bucket.archive_apkg_all.bucket}",
-      "arn:aws:s3:::${aws_s3_bucket.archive_apkg_all.bucket}/*"
-    ]
-    principals {
-      type        = "AWS"
-      identifiers = [aws_iam_user.apkg_uploader.arn]
-    }
-  }
-}
+# data "aws_iam_policy_document" "archive_apkg_all_policy" {
+#   statement {
+#     actions = [
+#       "s3:*" # TODO: limit
+#     ]
+#     resources = [
+#       "arn:aws:s3:::${aws_s3_bucket.archive_apkg_all.bucket}",
+#       "arn:aws:s3:::${aws_s3_bucket.archive_apkg_all.bucket}/*"
+#     ]
+#     principals {
+#       type        = "AWS"
+#       identifiers = [aws_iam_user.apkg_uploader.arn]
+#     }
+#   }
+# }
 
-resource "aws_s3_bucket_policy" "archive_apkg_all_policy" {
-  bucket = aws_s3_bucket.archive_apkg_all.id
-  policy = data.aws_iam_policy_document.archive_apkg_all_policy.json
-}
+# resource "aws_s3_bucket_policy" "archive_apkg_all_policy" {
+#   bucket = aws_s3_bucket.archive_apkg_all.id
+#   policy = data.aws_iam_policy_document.archive_apkg_all_policy.json
+# }
 
 ## SQS (Lambda trigger)
 

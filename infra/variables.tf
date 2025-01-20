@@ -37,10 +37,10 @@ variable "ir_apkg_md_bucket_name" {
   description = "Name of the bucket for intermediate format when transforming .html into .md"
 }
 
-variable "archive_apkg_all_bucket_name" {
-  type        = string
-  description = "Name of the bucket for S3 archiving an author's package protected with versioning, object locks and archive policy."
-}
+# variable "archive_apkg_all_bucket_name" {
+#   type        = string
+#   description = "Name of the bucket for S3 archiving an author's package protected with versioning, object locks and archive policy."
+# }
 
 variable "upload_apkg_bucket_name" {
   type        = string
