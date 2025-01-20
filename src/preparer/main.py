@@ -126,6 +126,7 @@ def is_table(tag: bs4.element.Tag) -> bool:
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
+    logger.info(f"lambda_handler. Event: {json.dumps(event, default=str)}")
     images_with_alttxt = []
     tables = []
     headers = []
@@ -336,11 +337,12 @@ def _put_md_to_s3(contents: str, key: KeyPath) -> None:
 
 def _enqueue_to_github(key: KeyPath) -> None:
     try:
-        logger.info(f"_queue_to_trigger_github(key={str(key)})")
+        key_str = str(key)
+        logger.info(f"_queue_to_trigger_github(key={key_str})")
         QueueUrl = f"https://sqs.{AWS_ACCOUNT_REGION}.amazonaws.com/{AWS_ACCOUNT_ID}/{SQS_GITHUB_FIFO_TRIGGER_NAME}"
-        MessageBody = str(key)
-        MessageDeduplicationId = key.slug
-        MessageGroupId = "0"
+        MessageBody = key_str
+        MessageDeduplicationId = key_str
+        MessageGroupId = key.slug
         resp = sqs.send_message(
             QueueUrl=QueueUrl,
             MessageBody=MessageBody,
