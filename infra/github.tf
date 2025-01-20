@@ -3,7 +3,7 @@
 resource "aws_s3_bucket" "archive_apkg_all" {
   bucket = var.archive_apkg_all_bucket_name
   lifecycle {
-    prevent_destroy = true
+    prevent_destroy = false
   }
 }
 
