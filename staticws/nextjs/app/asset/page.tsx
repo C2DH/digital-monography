@@ -6,11 +6,13 @@ import DynamicComponent from "./DynamicComponent";
 export default function Page() {
     return (
         <>
-            <div>
-                <h1>Asset Details</h1>
-                <Suspense>
-                    <DynamicComponent></DynamicComponent>
-                </Suspense>
+            <div className="container">
+                <h1 className="mt-5">Asset Details</h1>
+                <div className="d-flex flex-column p-4 justify-content-center">
+                    <Suspense>
+                        <DynamicComponent></DynamicComponent>
+                    </Suspense>
+                </div>
             </div>
         </>
     );
