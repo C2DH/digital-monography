@@ -32,8 +32,6 @@ build:
   before_script:
     - cd staticws/nextjs/
     - npm install
-    # - npm i -g pnpm
-    # - pnpm i
   script:
     - npm run build
   cache:
