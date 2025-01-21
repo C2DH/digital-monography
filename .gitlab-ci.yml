@@ -1,5 +1,6 @@
 stages:
   - init
+  - build
   - deploy
   - destroy
 
@@ -35,20 +36,21 @@ build:
     #   - "staticws/dashboard/*"
   image: node:20
   before_script:
-    - cd staticws/dashboard/
-    - npm i -g pnpm
-    - pnpm i
+    - cd staticws/nextjs/
+    - npm install
+    # - npm i -g pnpm
+    # - pnpm i
   script:
     - npm run build
   cache:
     key: ${CI_COMMIT_REF_SLUG}
     paths:
-      - staticws/dashboard/node_modules/
-      - staticws/dashboard/.next/cache/
+      - staticws/nextjs/node_modules/
+      - staticws/nextjs/.next/cache/
   artifacts:
     paths:
-      - staticws/dashboard/.next
-      - staticws/dashboard/out
+      - staticws/nextjs/.next
+      - staticws/nextjs/out
 
 deploy:
   stage: deploy
