@@ -18,7 +18,7 @@ export default function Page() {
                     If an element violates a rule, the platform flags it as a warning.
                     Click on the drop-down to see the fragment of the manuscript where the issue was raised
                     as well as a description of the problem.
-                    The "👉" character will point where the element that has violated
+                    The &ldquo;👉&rdquo; character will point where the element that has violated
                     a rule starts and ends.
                 </p>
                 <div className="d-flex flex-column flex-md-row p-4 gap-4 py-md-5 align-items-center justify-content-center">
