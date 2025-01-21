@@ -6,7 +6,7 @@ export default function Home() {
   // useEffect(() => {
   //   require("bootstrap/dist/js/bootstrap.bundle.min.js");
   // }, []);
-
+  const slug = "guidelines-for-drafting-manuscripts";
   return (
     <main>
       <div className="container">
@@ -21,13 +21,15 @@ export default function Home() {
                   <h6 className="mb-0">Guidelines for Drafting Manuscripts</h6>
                   <p className="mb-0 opacity-75">Pawel Kaminski</p>
                   <div className="btn-group" role="group" aria-label="Basic outlined example">
-                    <a href="https://www.dropbox.com/home/Aplikacje/drpb-upload-alert-test/guidelines-for-drafting-manuscripts" className="btn btn-outline-primary">Folder</a>
-                    <a href="https://cpy-dgtmon-dev-staticws-wip.s3.eu-west-1.amazonaws.com/read/guidelines-for-drafting-manuscripts/index.html" className="btn btn-outline-primary">Output</a>
-                    <a href="/headings?slug=guidelines-for-drafting-manuscripts" className="btn btn-outline-primary">Headings</a>
-                    <a href="/events?slug=guidelines-for-drafting-manuscripts" className="btn btn-outline-primary">Events</a>
-                    <a href="/assets?slug=guidelines-for-drafting-manuscripts" className="btn btn-outline-primary">Assets</a>
-                    <a href="/citations?slug=guidelines-for-drafting-manuscripts" className="btn btn-outline-primary">Citations</a>
-                    <a href="/warnings-groups?slug=guidelines-for-drafting-manuscripts" className="btn btn-outline-primary">Warnings</a>
+                    <a href={`https://www.dropbox.com/home/Aplikacje/drpb-upload-alert-test/${slug}`} className="btn btn-outline-primary">Folder</a>
+                    <a href={`https://cpy-dgtmon-dev-staticws-wip.s3.eu-west-1.amazonaws.com/read/${slug}/index.html`} className="btn btn-outline-primary">Output</a>
+                    <a href={`https://github.com/digital-monographs/${slug}`} className="btn btn-outline-primary">GitHub</a>
+                    <a href={`https://github.com/digital-monographs/${slug}/issues`} className="btn btn-outline-primary">Issues</a>
+                    <a href={`/headings?slug=${slug}`} className="btn btn-outline-primary">Headings</a>
+                    <a href={`/events?slug=${slug}`} className="btn btn-outline-primary">Events</a>
+                    <a href={`/assets?slug=${slug}`} className="btn btn-outline-primary">Assets</a>
+                    <a href={`/citations?slug=${slug}`} className="btn btn-outline-primary">Citations</a>
+                    <a href={`/warnings-groups?slug=${slug}`} className="btn btn-outline-primary">Warnings</a>
                   </div>
                 </div>
               </div>
