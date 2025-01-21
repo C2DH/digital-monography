@@ -1,6 +1,5 @@
 stages:
   - init
-  - build
   - deploy
   - destroy
 
@@ -29,11 +28,10 @@ build:
     - main
     - develop
     # # Files get removed from s3 if build is not run
-    # refs:
-    #   - main
-    #   - develop
-    # changes:
-    #   - "staticws/dashboard/*"
+  rules:
+    - if: ${CI_COMMIT_BRANCH} == "main" || ${CI_COMMIT_BRANCH} == "develop"
+      changes:
+        - staticws/nextjs/**/*
   image: node:20
   before_script:
     - cd staticws/nextjs/
