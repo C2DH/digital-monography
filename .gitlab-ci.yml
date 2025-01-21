@@ -23,8 +23,7 @@ init:
       - secrets/dev.tfvars.json
 
 build:
-  stage: init
-  # Files get removed from s3 if build is not run
+  stage: deploy
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"
       changes:
