@@ -90,6 +90,19 @@ function getLastPart(s: string): string {
     return split[split.length - 1];
 }
 
+function getColumnSummary(col: string, isColorSum: number,
+    isOnPaperSum: number, isReadySum: number, tableLength: number): JSX.Element {
+    if (col == "isColor") {
+        return <th key={`${col}-sum`}>{isColorSum}/<small>{tableLength}</small></th>;
+    } else if (col == "isOnPaper") {
+        return <th key={`${col}-sum`}>{isOnPaperSum}/<small>{tableLength}</small></th>;
+    } else if (col == "isReady") {
+        return <th key={`${col}-sum`}>{isReadySum}/<small>{tableLength}</small></th>;
+    } else {
+        return <th key={`${col}-sum`}>{" "}</th>;
+    }
+}
+
 // function getAsHtml(s: string): string {
 //     if (s.toLowerCase().endsWith(".docx")) {
 //         return s.substring(0, s.length - 5) + ".html";
@@ -107,6 +120,9 @@ export default function DynamicTable() {
     const dbTable = "dgtmon-dev-dyndb-assets-tbl";
 
     const [tableData, setTableData] = useState<IAssetRecord[]>([]);
+    const [isColorSum, setIsColorSum] = useState<number>(0);
+    const [isOnPaperSum, setIsOnPaperSum] = useState<number>(0);
+    const [isReadySum, setIsReadySum] = useState<number>(0);
     const [sorting, setSorting] = useState({ column: "location", order: "asc" });
     const [searchValue, setSearchValue] = useState("");
     const columns = ["link", "name", "location", "alttext", "caption", "licensename", "isColor", "isOnPaper", "isReady"];
@@ -142,6 +158,15 @@ export default function DynamicTable() {
                     const isReady = getNestedBool(records[j], "isready") || false;
                     const isOnPaper = paperinput != "" ? true : false;
                     if (digitalinput != paperinput && paperinput != "") {
+                        if (isColor) {
+                            setIsColorSum(n => n + 1);
+                        }
+                        if (isOnPaper) {
+                            setIsOnPaperSum(n => n + 1);
+                        }
+                        if (isReady) {
+                            setIsReadySum(n => n + 1);
+                        }
                         formatedData.push({
                             link: getHyperlink(slug, getNestedStr(records[j], "paperinput")),
                             name: paperinput,
@@ -153,6 +178,15 @@ export default function DynamicTable() {
                             isOnPaper: isOnPaper,
                             isReady: isReady,
                         });
+                    }
+                    if (isColor) {
+                        setIsColorSum(n => n + 1);
+                    }
+                    if (isOnPaper) {
+                        setIsOnPaperSum(n => n + 1);
+                    }
+                    if (isReady) {
+                        setIsReadySum(n => n + 1);
                     }
                     formatedData.push({
                         link: getHyperlink(slug, getNestedStr(records[j], "digitalinput")),
@@ -209,15 +243,16 @@ export default function DynamicTable() {
     return (
         <>
             <div>
-                <SearchBar searchTable={(searchTable)} />
+                {/* <SearchBar searchTable={(searchTable)} /> */}
                 <table className="table table-striped">
                     <Header columns={columns} sorting={sorting} sortTable={sortTable} />
                     <tbody>
+                        {tableData && <tr>{columns.map((col) => (getColumnSummary(col, isColorSum, isOnPaperSum, isReadySum, tableData.length)))}</tr>}
                         {tableData.map((record, idx) => (
                             <tr key={idx}>
                                 {columns.map((column) => (column === "link" ?
                                     <td key={column}>
-                                        <a className="btn btn-outline-secondary"
+                                        <a className="btn btn-outline-secondary btn-sm"
                                             href={record[column]}
                                             role="button">▶</a>
                                     </td> : <td key={column} className="dgt-mon-table-cell">
