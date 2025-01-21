@@ -1,10 +1,12 @@
+import Link from 'next/link'; // otherwise error https://nextjs.org/docs/messages/no-html-link-for-pages
+
 export default function TnbHeader() {
     return (
         <header>
             <nav className="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
                 <div className="container-fluid">
                     <img src="favicon.ico"></img>
-                    <a className="navbar-brand" href="/">Dashboard for Living Books</a>
+                    <Link className="navbar-brand" href="/">Dashboard for Living Books</Link>
                     <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
                         <span className="navbar-toggler-icon"></span>
                     </button>
