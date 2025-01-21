@@ -24,12 +24,9 @@ init:
 
 build:
   stage: init
-  only:
-    - main
-    - develop
-    # # Files get removed from s3 if build is not run
+  # Files get removed from s3 if build is not run
   rules:
-    - if: ${CI_COMMIT_BRANCH} == "main" || ${CI_COMMIT_BRANCH} == "develop"
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"
       changes:
         - staticws/nextjs/**/*
   image: node:20
