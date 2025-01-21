@@ -106,7 +106,6 @@ def get_flow():
         redirect_uri=get_url("oauth_callback"),
         session=flask.session,
         csrf_token_session_key="dropbox-auth-csrf-token",
-        token_access_type="legacy",
     )
 
 
