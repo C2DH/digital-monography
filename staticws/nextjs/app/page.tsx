@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link';
 // import "./_styles/treeView.css";
 
 export default function Home() {
@@ -22,11 +23,36 @@ export default function Home() {
                   <a href={`https://www.dropbox.com/home/Aplikacje/drpb-upload-alert-test/${slug}`} className="btn btn-outline-primary">Folder</a>
                   <a href={`https://github.com/digital-monographs/${slug}`} className="btn btn-outline-primary">GitHub</a>
                   <a href={`https://github.com/digital-monographs/${slug}/issues`} className="btn btn-outline-primary">Issues</a>
-                  <a href={`/headings?slug=${slug}`} className="btn btn-outline-primary">Headings</a>
-                  <a href={`/events?slug=${slug}`} className="btn btn-outline-primary">Events</a>
-                  <a href={`/assets?slug=${slug}`} className="btn btn-outline-primary">Assets</a>
-                  <a href={`/citations?slug=${slug}`} className="btn btn-outline-primary">Citations</a>
-                  <a href={`/warnings-groups?slug=${slug}`} className="btn btn-outline-primary">Warnings</a>
+                  <Link href={{
+                    pathname: '/headings',
+                    query: { slug: slug },
+                  }} className="btn btn-outline-primary">
+                    Headings
+                  </Link>
+                  <Link href={{
+                    pathname: '/events',
+                    query: { slug: slug },
+                  }} className="btn btn-outline-primary">
+                    Events
+                  </Link>
+                  <Link href={{
+                    pathname: '/assets',
+                    query: { slug: slug },
+                  }} className="btn btn-outline-primary">
+                    Assets
+                  </Link>
+                  <Link href={{
+                    pathname: '/citations',
+                    query: { slug: slug },
+                  }} className="btn btn-outline-primary">
+                    Citations
+                  </Link>
+                  <Link href={{
+                    pathname: '/warnings-groups',
+                    query: { slug: slug },
+                  }} className="btn btn-outline-primary">
+                    Warnings
+                  </Link>
                   <a href={`https://cpy-dgtmon-dev-staticws-wip.s3.eu-west-1.amazonaws.com/read/${slug}/index.html`} className="btn btn-outline-primary">Digital</a>
                   <a href="" className="btn btn-outline-primary disabled">Paper</a>
                 </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 
 function getLastPart(s: string): string {
     let split = s.split("/");
@@ -60,7 +61,12 @@ export default function DynamicComponent() {
                             tableData.map((val: IS3Object, idx: number) => (
                                 <tr key={idx}>
                                     <td>
-                                        <a href={`warnings?key=${val.keyEncoded}`} className="btn btn-outline-secondary btn-sm" role="button">▶</a>
+                                        <Link href={{
+                                            pathname: '/warnings',
+                                            query: { key: val.keyEncoded },
+                                        }} className="btn btn-outline-secondary btn-sm" role="button">
+                                            ▶
+                                        </Link>
                                     </td>
                                     <td>{val.key}</td>
                                     <td>{val.lastModified}</td>
