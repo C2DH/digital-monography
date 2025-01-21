@@ -105,7 +105,6 @@ def process_user(account):
             if len(result.entries) == 0:
                 logger.info(f"result {result}")
             for entry in result.entries:
-                logger.info("dir(entry)" + json.dumps(dir(entry), default=str))
                 logger.info(f"type(entry) {type(entry)}")
                 logger.info(f"entry.name {entry.name}")
                 logger.info(f"entry.path_lower {entry.path_lower}")
