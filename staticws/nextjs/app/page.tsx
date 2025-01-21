@@ -22,7 +22,7 @@ export default function Home() {
                 <div className="btn-toolbar mb-3" role="toolbar">
                   <div className="btn-group mr-2" role="group">
                     <button className="btn btn-primary disabled">
-                      <svg width="15px" height="15px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <svg width="20px" height="20px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <g>
                           <path d="M20,16v4a2,2,0,0,1-2,2H4a2,2,0,0,1-2-2V6A2,2,0,0,1,4,4H8" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
                           <polygon fill="none" points="12.5 15.8 22 6.2 17.8 2 8.3 11.5 8 16 12.5 15.8" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
@@ -66,15 +66,10 @@ export default function Home() {
                   <div className="btn-toolbar mb-3" role="toolbar">
                     <div className="btn-group mr-2" role="group">
                       <button className="btn btn-primary disabled">
-                        <svg width="17px" height="17px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M8 6H10V8H8V6Z" fill="#FFFFFF" />
-                          <path d="M10 10H8V12H10V10Z" fill="#FFFFFF" />
-                          <path d="M8 14H10V16H8V14Z" fill="#FFFFFF" />
-                          <path d="M11.5 8H18V6.5H11.5V8Z" fill="#FFFFFF" />
-                          <path d="M18 12H11.5V10.5H18V12Z" fill="#FFFFFF" />
-                          <path d="M11.5 16H18V14.5H11.5V16Z" fill="#FFFFFF" />
-                          <path fillRule="evenodd" clipRule="evenodd" d="M5 3H21V19H5V3ZM6.5 4.5H19.5V17.5H6.5V4.5Z" fill="#FFFFFF" />
-                          <path d="M2 6V22H18V20.5H3.5V6H2Z" fill="#FFFFFF" />
+                        <svg width="20px" height="20px" fill="#FFFFFF" viewBox="0 0 1920 1920" xmlns="http://www.w3.org/2000/svg" transform="matrix(-1, 0, 0, 1, 0, 0)" stroke="#FFFFFF" strokeWidth="50.0">
+                          <g>
+                            <path d="m0 1016.081 409.186 409.073 79.85-79.736-272.867-272.979h1136.415V959.611H216.169l272.866-272.866-79.85-79.85L0 1016.082ZM1465.592 305.32l315.445 315.445h-315.445V305.32Zm402.184 242.372-329.224-329.11C1507.042 187.07 1463.334 169 1418.835 169h-743.83v677.647h112.94V281.941h564.706v451.765h451.765v903.53H787.946V1185.47H675.003v564.705h1242.353V667.522c0-44.498-18.07-88.207-49.581-119.83Z"></path>
+                          </g>
                         </svg>
                       </button>
                       <a href={`https://github.com/digital-monographs/${slug}`} className="btn btn-outline-primary">Public source</a>
