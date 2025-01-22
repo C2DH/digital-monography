@@ -77,7 +77,7 @@ resource "aws_s3_bucket_policy" "public_staticws_dashboard" {
 
 module "dashboard_files" {
   source   = "hashicorp/dir/template"
-  base_dir = "./staticws/nextjs/out/"
+  base_dir = "./staticws/dashboard/out/"
 }
 
 resource "aws_s3_object" "dashboard_dir" {

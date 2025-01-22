@@ -27,22 +27,22 @@ build-dashboard:
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"
       changes:
-        - staticws/nextjs/**/*
+        - staticws/dashboard/**/*
   image: node:20
   before_script:
-    - cd staticws/nextjs/
+    - cd staticws/dashboard/
     - npm install
   script:
     - npm run build
   cache:
     key: ${CI_COMMIT_REF_SLUG}
     paths:
-      - staticws/nextjs/node_modules/
-      - staticws/nextjs/.next/cache/
+      - staticws/dashboard/node_modules/
+      - staticws/dashboard/.next/cache/
   artifacts:
     paths:
-      - staticws/nextjs/.next
-      - staticws/nextjs/out
+      - staticws/dashboard/.next
+      - staticws/dashboard/out
 
 deploy:
   stage: deploy
