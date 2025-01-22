@@ -67,6 +67,27 @@ data "aws_iam_policy_document" "public_staticws_dashboard" {
       identifiers = ["*"]
     }
   }
+  statement {
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:Query",
+      "dynamodb:Scan",
+      # "dynamodb:PutItem",
+      # "dynamodb:UpdateItem",
+      # "dynamodb:DeleteItem"
+    ]
+    resources = [
+      aws_dynamodb_table.assets_tbl.arn,
+      aws_dynamodb_table.headings_tbl.arn,
+      aws_dynamodb_table.citations_tbl.arn,
+      aws_dynamodb_table.warnings_tbl.arn,
+    ]
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+      # change to s3 iam role
+    }
+  }
   depends_on = [aws_s3_bucket_public_access_block.staticws_dashboard]
 }
 

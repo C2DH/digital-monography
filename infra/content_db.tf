@@ -12,7 +12,6 @@ resource "aws_dynamodb_table" "assets_tbl" {
     name = "fn"
     type = "S"
   }
-
 }
 
 resource "aws_dynamodb_table" "headings_tbl" {
@@ -29,7 +28,6 @@ resource "aws_dynamodb_table" "headings_tbl" {
     name = "fn"
     type = "S"
   }
-
 }
 
 resource "aws_dynamodb_table" "citations_tbl" {
@@ -46,7 +44,6 @@ resource "aws_dynamodb_table" "citations_tbl" {
     name = "fn"
     type = "S"
   }
-
 }
 
 resource "aws_dynamodb_table" "warnings_tbl" {
@@ -65,4 +62,3 @@ resource "aws_dynamodb_table" "warnings_tbl" {
   }
 
 }
-
