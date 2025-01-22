@@ -22,8 +22,8 @@ init:
     paths:
       - secrets/dev.tfvars.json
 
-build:
-  stage: deploy
+build-dashboard:
+  stage: init
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"
       changes:
