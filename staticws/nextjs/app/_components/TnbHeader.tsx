@@ -5,7 +5,7 @@ export default function TnbHeader() {
         <header>
             <nav className="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
                 <div className="container-fluid">
-                    <img src="favicon.ico"></img>
+                    <img src="favicon.ico" alt="icon-with-notebook-and-pen"></img>
                     <Link className="navbar-brand" href="/">Dashboard for Living Books</Link>
                     <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
                         <span className="navbar-toggler-icon"></span>

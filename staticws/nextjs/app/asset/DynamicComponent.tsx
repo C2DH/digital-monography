@@ -138,7 +138,7 @@ export default function DynamicTable() {
             return null;
         };
         fetchRecords(slug);
-    }, [slug, pk]);
+    }, [s3Key, slug, pk]);
     const imgSrc = `${bucket}/read/${s3Key}`
     return (
         <>
@@ -151,7 +151,7 @@ export default function DynamicTable() {
                 <div className="row align-items-start">
                     <div className="row">
                         <div className="col">
-                            {imgSrc && <img src={imgSrc} className="img-fluid float-left"></img>}
+                            {imgSrc && <img src={imgSrc} alt="" className="img-fluid float-left"></img>}
                             {/* {assetSrc && <img src={assetSrc} className="img-fluid float-left"></img>} */}
                         </div>
                         <div className="col">
