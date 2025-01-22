@@ -48,7 +48,7 @@ deploy:
   stage: deploy
   dependencies:
     - init
-    - build
+    - build-dashboard
   only:
     - main
     - develop

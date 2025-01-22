@@ -3,7 +3,6 @@
 import { Suspense } from 'react';
 import DynamicTable from "./DynamicTable";
 
-
 export default function Page() {
     return (
         <>
