@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
@@ -133,8 +133,11 @@ export default function DynamicTable() {
         setSearchValue(newSearchValue);
     };
 
-    const fetchRecords = async (pk: string) => {
+    const fetchRecords = useCallback(async (pk: string) => {
         try {
+            setIsColorSum(0);
+            setIsOnPaperSum(0);
+            setIsReadySum(0);
             const cmd = new QueryCommand({
                 TableName: dbTable,
                 KeyConditionExpression: "slug = :slug",
@@ -207,13 +210,13 @@ export default function DynamicTable() {
         } catch (err) {
             console.log("Error", err);
         }
-    };
+    }, [slug]);
 
     useEffect(() => {
         if (slug) {
             fetchRecords(slug);
         }
-    }, [slug]);
+    }, [fetchRecords, slug]);
 
     useEffect(() => {
         if (sorting.column == "caption") {
@@ -234,7 +237,7 @@ export default function DynamicTable() {
                 tableData.sort((a: IAssetRecord, b: IAssetRecord) => (a[sorting.column] < b[sorting.column] ? 1 : -1));
             }
         }
-    }, [sorting])
+    }, [sorting, tableData])
 
     // useEffect(() => {
     //     console.log("searchValue", searchValue)
