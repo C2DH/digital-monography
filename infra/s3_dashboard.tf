@@ -102,7 +102,7 @@ data "aws_iam_policy_document" "dashboard_policy_doc" {
     ]
     resources = [
       aws_dynamodb_table.assets_tbl.arn,
-      aws_dynamodb_table.citations.arn,
+      aws_dynamodb_table.citations_tbl.arn,
       aws_dynamodb_table.headings_tbl.arn,
     ]
   }
@@ -110,7 +110,7 @@ data "aws_iam_policy_document" "dashboard_policy_doc" {
 
 resource "aws_iam_policy" "dashboard" {
   name   = "dashboard_policy"
-  policy = data.aws_iam_policy_document.dashboard_policy.json
+  policy = data.aws_iam_policy_document.dashboard_policy_doc.json
 }
 
 resource "aws_iam_role_policy_attachment" "s3_to_dynamodb_attachment" {
