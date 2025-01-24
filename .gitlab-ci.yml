@@ -89,7 +89,7 @@ upload-dashboard:
     name: amazon/aws-cli
     entrypoint: [""]
   before_script:
-    - apt-get update && apt-get install -y jq
+    - yum update -y && yum install -y jq
   script:
     - echo tf_output.json
     - export STATICWS_DASHBOARD_S3=$(jq -r '.staticws_dashboard_bucket_name' tf_output.json)
