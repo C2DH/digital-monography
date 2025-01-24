@@ -81,18 +81,14 @@ upload-dashboard:
   only:
     - main
     - develop
-  # NOTE: if amazon/aws-cli won't work...
-  # image: python:3.12
-  # before_script:
-  #   - pip install awscli
   image:
     name: amazon/aws-cli
     entrypoint: [""]
   before_script:
     - yum update -y && yum install -y jq
   script:
-    - echo tf_output.json
-    - export STATICWS_DASHBOARD_S3=$(jq -r '.staticws_dashboard_bucket_name' tf_output.json)
+    - cat tf_output.json
+    - export STATICWS_DASHBOARD_S3=$(jq -r '.staticws_dashboard_bucket_name.value' tf_output.json)
     - echo STATICWS_DASHBOARD_S3
     - echo s3://$STATICWS_DASHBOARD_S3
     - aws --version
