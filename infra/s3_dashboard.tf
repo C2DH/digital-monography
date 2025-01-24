@@ -4,9 +4,8 @@ resource "aws_s3_bucket" "staticws_dashboard" {
 }
 
 output "staticws_dashboard_bucket_name" {
-  value = aws_s3_bucket.staticws_dashboard.name
+  value = aws_s3_bucket.staticws_dashboard.id
 }
-# s3://
 
 resource "aws_s3_bucket_website_configuration" "staticws_dashboard" {
   bucket = aws_s3_bucket.staticws_dashboard.id
