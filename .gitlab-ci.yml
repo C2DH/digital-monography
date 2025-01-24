@@ -86,12 +86,11 @@ upload-dashboard:
     entrypoint: [""]
   before_script:
     - yum update -y && yum install -y jq
+    - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
+    - mkdir ~/.aws
+    - echo -e "[profile oidc]\nrole_arn=${POST_DEPL_ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
   script:
-    - cat tf_output.json
     - export STATICWS_DASHBOARD_S3=$(jq -r '.staticws_dashboard_bucket_name.value' tf_output.json)
-    - echo STATICWS_DASHBOARD_S3
-    - echo s3://$STATICWS_DASHBOARD_S3
-    - aws --version
     - aws s3 sync staticws/dashboard/out s3://$STATICWS_DASHBOARD_S3 --delete
   when: on_success
 
