@@ -41,6 +41,7 @@ build-dashboard:
       - staticws/dashboard/node_modules/
       - staticws/dashboard/.next/cache/
   artifacts:
+    untracked: true
     paths:
       - staticws/dashboard/.next
       - staticws/dashboard/out
