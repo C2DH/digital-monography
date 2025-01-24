@@ -3,6 +3,11 @@ resource "aws_s3_bucket" "staticws_dashboard" {
   force_destroy = true # TODO: maybe don't destroy when in production, I don't know
 }
 
+output "staticws_dashboard_bucket_name" {
+  value = aws_s3_bucket.staticws_dashboard.name
+}
+# s3://
+
 resource "aws_s3_bucket_website_configuration" "staticws_dashboard" {
   bucket = aws_s3_bucket.staticws_dashboard.id
   index_document {
@@ -143,17 +148,17 @@ module "dashboard_files" {
   base_dir = "./staticws/dashboard/out/"
 }
 
-resource "aws_s3_object" "dashboard_dir" {
-  for_each     = module.dashboard_files.files
-  bucket       = aws_s3_bucket.staticws_dashboard.id
-  key          = each.key
-  content_type = each.value.content_type
-  # The template_files module guarantees that only one of these two attributes
-  # will be set for each file, depending on whether it is an in-memory template
-  # rendering result or a static file on disk.
-  source  = each.value.source_path
-  content = each.value.content
-  # Unless the bucket has encryption enabled, the ETag of each object is an
-  # MD5 hash of that object.
-  etag = each.value.digests.md5
-}
+# resource "aws_s3_object" "dashboard_dir" {
+#   for_each     = module.dashboard_files.files
+#   bucket       = aws_s3_bucket.staticws_dashboard.id
+#   key          = each.key
+#   content_type = each.value.content_type
+#   # The template_files module guarantees that only one of these two attributes
+#   # will be set for each file, depending on whether it is an in-memory template
+#   # rendering result or a static file on disk.
+#   source  = each.value.source_path
+#   content = each.value.content
+#   # Unless the bucket has encryption enabled, the ETag of each object is an
+#   # MD5 hash of that object.
+#   etag = each.value.digests.md5
+# }

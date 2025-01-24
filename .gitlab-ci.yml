@@ -66,6 +66,26 @@ deploy:
   script:
     - terraform init -var-file=secrets/dev.tfvars.json
     - terraform apply -auto-approve -var-file=secrets/dev.tfvars.json
+    - terraform output -json | jq . > tf_output.json
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - tf_output.json
+
+upload-dashboard:
+  stage: deploy
+  dependencies:
+    - init
+    - build-dashboard
+    - deploy
+  only:
+    - main
+    - develop
+  image: amazon/aws-cli
+  script:
+    - export STATICWS_DASHBOARD_S3=$(jq -r '.staticws_dashboard_bucket_name' tf_output.json)
+    - aws s3 sync staticws/dashboard/out s3://$STATICWS_DASHBOARD_S3/
+  when: on_success
 
 destroy:
   stage: destroy
