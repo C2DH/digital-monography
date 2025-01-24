@@ -81,9 +81,10 @@ upload-dashboard:
   dependencies:
     - build-dashboard
     - deploy
-  only:
-    - main
-    - develop
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"
+      changes:
+        - staticws/dashboard/**/*
   image:
     name: amazon/aws-cli
     entrypoint: [""]
