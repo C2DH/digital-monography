@@ -67,27 +67,6 @@ data "aws_iam_policy_document" "public_staticws_dashboard" {
       identifiers = ["*"]
     }
   }
-  statement {
-    actions = [
-      "dynamodb:GetItem",
-      "dynamodb:Query",
-      "dynamodb:Scan",
-      # "dynamodb:PutItem",
-      # "dynamodb:UpdateItem",
-      # "dynamodb:DeleteItem"
-    ]
-    resources = [
-      aws_dynamodb_table.assets_tbl.arn,
-      aws_dynamodb_table.headings_tbl.arn,
-      aws_dynamodb_table.citations_tbl.arn,
-      aws_dynamodb_table.warnings_tbl.arn,
-    ]
-    principals {
-      type        = "*"
-      identifiers = ["*"]
-      # change to s3 iam role
-    }
-  }
   depends_on = [aws_s3_bucket_public_access_block.staticws_dashboard]
 }
 
@@ -95,6 +74,69 @@ resource "aws_s3_bucket_policy" "public_staticws_dashboard" {
   bucket = aws_s3_bucket.staticws_dashboard.id
   policy = data.aws_iam_policy_document.public_staticws_dashboard.json
 }
+
+data "aws_iam_policy_document" "dashboard_assume_role" {
+  statement {
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["s3.amazonaws.com"]
+    }
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+resource "aws_iam_role" "dashboard_role" {
+  name               = "dashboard_role"
+  assume_role_policy = data.aws_iam_policy_document.dashboard_assume_role.json
+}
+
+data "aws_iam_policy_document" "dashboard_policy_doc" {
+  statement {
+    sid    = "AllowS3Permissions"
+    effect = "Allow"
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:Query",
+      "dynamodb:Scan"
+    ]
+    resources = [
+      aws_dynamodb_table.assets_tbl.arn,
+      aws_dynamodb_table.citations.arn,
+      aws_dynamodb_table.headings_tbl.arn,
+    ]
+  }
+}
+
+resource "aws_iam_policy" "dashboard" {
+  name   = "dashboard_policy"
+  policy = data.aws_iam_policy_document.dashboard_policy.json
+}
+
+resource "aws_iam_role_policy_attachment" "s3_to_dynamodb_attachment" {
+  role       = aws_iam_role.dashboard_role.name
+  policy_arn = aws_iam_policy.dashboard.arn
+}
+
+
+# NOTE: Maybe we don't need this
+# resource "aws_s3_bucket_policy" "s3_bucket_policy" {
+#   bucket = aws_s3_bucket.staticws_dashboard.name
+
+#   policy = jsonencode({
+#     Version = "2012-10-17",
+#     Statement = [
+#       {
+#         Effect = "Allow",
+#         Principal = {
+#           AWS = "arn:aws:iam::ACCOUNT_ID:role/${aws_iam_role.dashboard_role.name}"
+#         },
+#         Action   = "s3:GetObject",
+#         Resource = "arn:aws:s3:::${aws_s3_bucket.staticws_dashboard.name}/*"
+#       }
+#     ]
+#   })
+# }
 
 module "dashboard_files" {
   source   = "hashicorp/dir/template"
