@@ -35,6 +35,8 @@ build-dashboard:
     - npm install
   script:
     - npm run build
+  after_script:
+    - ls -la staticws/dashboard/out
   cache:
     key: ${CI_COMMIT_REF_SLUG}
     paths:
