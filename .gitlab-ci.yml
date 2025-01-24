@@ -1,6 +1,7 @@
 stages:
   - init
   - deploy
+  - post-deploy
   - destroy
 
 init:
@@ -73,9 +74,8 @@ deploy:
       - tf_output.json
 
 upload-dashboard:
-  stage: deploy
+  stage: post-deploy
   dependencies:
-    - init
     - build-dashboard
     - deploy
   only:
