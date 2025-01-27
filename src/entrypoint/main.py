@@ -153,8 +153,12 @@ def list_warnings() -> flask.Response:
         objects = s3.list_objects_v2(Bucket=bucket, Prefix=f"{slug}/")
     else:
         objects = s3.list_objects_v2(Bucket=bucket)
+    if "Contents" in objects:
+        contents = objects["Contents"]
+    else:
+        contents = []
     resp = flask.Response(
-        response=flask.json.dumps(objects["Contents"]),
+        response=flask.json.dumps(contents),
         status=200,
         mimetype="application/json",
     )
@@ -174,8 +178,12 @@ def list_assets() -> flask.Response:
         objects = s3.list_objects_v2(Bucket=bucket, Prefix=f"{slug}/")
     else:
         objects = s3.list_objects_v2(Bucket=bucket)
+    if "Contents" in objects:
+        contents = objects["Contents"]
+    else:
+        contents = []
     resp = flask.Response(
-        response=flask.json.dumps(objects["Contents"]),
+        response=flask.json.dumps(contents),
         status=200,
         mimetype="application/json",
     )
