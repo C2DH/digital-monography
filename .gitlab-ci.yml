@@ -98,7 +98,10 @@ upload-dashboard:
   script:
     - cat ~/.aws/config
     - export STATICWS_DASHBOARD_S3=$(jq -r '.staticws_dashboard_bucket_name.value' tf_output.json)
-    - aws s3 sync staticws/dashboard/out s3://$STATICWS_DASHBOARD_S3 --delete
+    - cat $AWS_CONFIG_FILE=/root/.aws/config
+    - cat AWS_CONFIG_FILE=/root/.aws/config
+    - export AWS_CONFIG_FILE=/root/.aws/config
+    - aws s3 sync staticws/dashboard/out s3://$STATICWS_DASHBOARD_S3 --delete --profile oidc
   when: on_success
 
 destroy:
