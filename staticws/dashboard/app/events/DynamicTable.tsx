@@ -5,13 +5,17 @@ import { useSearchParams } from 'next/navigation';
 import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
-const ddbClient = new DynamoDBClient({
-    region: "eu-west-1",
-    credentials: {
-        accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
-    },
-});
+if (process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!) {
+    const ddbClient = new DynamoDBClient({
+        region: "eu-west-1",
+        credentials: {
+            accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
+            secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
+        },
+    });
+} else {
+    const ddbClient = new DynamoDBClient();
+};
 
 const marshallOptions = {
     convertEmptyValues: false,
