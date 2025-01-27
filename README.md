@@ -252,6 +252,7 @@ git config --add --local core.sshCommand 'ssh -i ~/.ssh/filename'
 ### Minor development todos
 
 * limit permissions linked to the AWS Role connected to the CI/CD pipeline
+* API gateway is outside of IaC config
 * more unit tests
 * add integration testing
 * add e2e cloud testing on actual Lambdas

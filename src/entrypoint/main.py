@@ -19,6 +19,7 @@ try:
         IS_DEBUG,
         DROPBOX_SECRET_ID,
         DYNAMODB_TOKENS_TBL,
+        METADATA_ASSETS_BUCKET_NAME,
         VERIFIER_MSGS,
     )
 except (ImportError, ModuleNotFoundError):
@@ -26,6 +27,7 @@ except (ImportError, ModuleNotFoundError):
         IS_DEBUG,
         DROPBOX_SECRET_ID,
         DYNAMODB_TOKENS_TBL,
+        METADATA_ASSETS_BUCKET_NAME,
         VERIFIER_MSGS,
     )
 
@@ -145,11 +147,33 @@ def index() -> str:
 def list_warnings() -> flask.Response:
     """List objects in a warnings bucket."""
     logger.info("List warnings REST api endpoint was called with GET.")
+    bucket = METADATA_ASSETS_BUCKET_NAME
     slug = flask.request.args.get("slug")
     if slug:
-        objects = s3.list_objects_v2(Bucket=VERIFIER_MSGS, Prefix=f"{slug}/")
+        objects = s3.list_objects_v2(Bucket=bucket, Prefix=f"{slug}/")
     else:
-        objects = s3.list_objects_v2(Bucket=VERIFIER_MSGS)
+        objects = s3.list_objects_v2(Bucket=bucket)
+    resp = flask.Response(
+        response=flask.json.dumps(objects["Contents"]),
+        status=200,
+        mimetype="application/json",
+    )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
+
+
+@app.route("/list-assets", methods=["GET"])
+def list_assets() -> flask.Response:
+    """List objects in the metadata assets bucket."""
+    logger.info("List metadata assets REST api endpoint was called with GET.")
+    bucket = METADATA_ASSETS_BUCKET_NAME
+    slug = flask.request.args.get("slug")
+    if slug:
+        objects = s3.list_objects_v2(Bucket=bucket, Prefix=f"{slug}/")
+    else:
+        objects = s3.list_objects_v2(Bucket=bucket)
     resp = flask.Response(
         response=flask.json.dumps(objects["Contents"]),
         status=200,
