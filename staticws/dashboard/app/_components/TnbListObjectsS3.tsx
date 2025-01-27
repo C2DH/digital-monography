@@ -16,7 +16,7 @@ type IS3Object = {
     size: number | undefined,
 }
 
-export default function DynamicComponent({ backendPath, targetPath }: {string, string}) {
+export default function DynamicComponent({ backendPath, targetPath }: { backendPath: string, targetPath: string}) {
     const searchParams = useSearchParams();
     const slug = searchParams?.get("slug");
     const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
