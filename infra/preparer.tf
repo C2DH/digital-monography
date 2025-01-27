@@ -72,6 +72,18 @@ data "aws_iam_policy_document" "preparer" {
     ]
   }
   statement {
+    sid       = "AllowMetadataUpload"
+    effect    = "Allow"
+    resources = [aws_s3_bucket.metadata_assets_s3.arn, "${aws_s3_bucket.metadata_assets_s3.arn}/*"]
+    actions = [
+      "s3:PutObject",
+      "s3:PutObjectAcl",
+      "s3:GetObject",
+      "s3:GetObjectAcl",
+      "s3:ListBucket"
+    ]
+  }
+  statement {
     sid       = "AllowInvokingLambdas"
     effect    = "Allow"
     resources = ["arn:aws:lambda:${var.region}:*:function:*"]

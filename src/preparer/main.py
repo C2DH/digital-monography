@@ -22,6 +22,7 @@ try:
         IR_APKG_HTML_BUCKET_NAME,
         IR_APKG_MD_BUCKET_NAME,
         MAMMOTH_STYLE_MAP,
+        METADATA_ASSETS_BUCKET_NAME,
         SQS_GITHUB_FIFO_TRIGGER_NAME,
         IS_DEBUG,
     )
@@ -61,6 +62,7 @@ except (ImportError, ModuleNotFoundError):
         IR_APKG_HTML_BUCKET_NAME,
         IR_APKG_MD_BUCKET_NAME,
         MAMMOTH_STYLE_MAP,
+        METADATA_ASSETS_BUCKET_NAME,
         SQS_GITHUB_FIFO_TRIGGER_NAME,
         IS_DEBUG,
     )
@@ -185,6 +187,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_soup = insert_digital_objects(html_soup, metadata, tables)
         html_soup = remove_metadata_tables(html_soup, metadata, tables)
         _write_config_to_efs(metadata, key)
+        _write_metadata_to_s3(metadata, key)
         _write_metadata_to_db(metadata, key)
         _write_metadata_to_efs(metadata, key)
         _write_processed_html_to_efs(html_soup_str, key)
@@ -406,6 +409,31 @@ def _write_processed_md_to_efs(md: str, key: KeyPath) -> None:
     new_efs_filepath = key.efs_filepath.with_suffix(".md")
     with open(new_efs_filepath, "w") as f:
         f.write(md)
+
+
+def _write_metadata_to_s3(metadata: DocumentMetadata, key: KeyPath) -> None:
+    try:
+        logger.info(f"_write_metadata_to_s3(key={key}, contents={contents})")
+        s3_key = key.s3_key.with_suffix(".json")
+        meta = metadata.to_json()
+        buckets = {
+            "assets": METADATA_ASSETS_BUCKET_NAME,
+        }
+        for domain, bucket in buckets.items():
+            body = json.dumps(meta[domain], default=str)
+            resp = s3.put_object(Body=body, Bucket=bucket, Key=str(s3_key))
+            logger.info(
+                f"Response from s3.put_object(Bucket={bucket}, Key={str(s3_key)}): "
+                + json.dumps(resp, default=str)
+            )
+    except Exception as e:
+        logger.exception(f"Putting metadata to s3 bucket failed. Error: {repr(e)}")
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            "Error upon writing metadata.",
+        )
+        raise
 
 
 def _write_metadata_to_db(metadata: DocumentMetadata, key: KeyPath) -> None:

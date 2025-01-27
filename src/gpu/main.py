@@ -4,9 +4,17 @@ import json
 import logging
 
 try:
-    from constants import APKG_UPLOAD_BUCKET_NAME, VERIFIER_MSGS
+    from constants import (
+        APKG_UPLOAD_BUCKET_NAME,
+        METADATA_ASSETS_BUCKET_NAME,
+        VERIFIER_MSGS,
+    )
 except (ImportError, ModuleNotFoundError):
-    from .constants import APKG_UPLOAD_BUCKET_NAME, VERIFIER_MSGS
+    from .constants import (
+        APKG_UPLOAD_BUCKET_NAME,
+        METADATA_ASSETS_BUCKET_NAME,
+        VERIFIER_MSGS,
+    )
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -21,6 +29,8 @@ def lambda_handler(event, context):
     one_day_in_seconds = 86_400
     if typ == "asset":
         bucket = APKG_UPLOAD_BUCKET_NAME
+    elif typ == "assets":
+        bucket = METADATA_ASSETS_BUCKET_NAME
     elif typ == "warnings":
         bucket = VERIFIER_MSGS
     key = base64.b64decode(encoded_key).decode("utf-8")
