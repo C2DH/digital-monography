@@ -5,7 +5,17 @@ import { useSearchParams } from 'next/navigation';
 import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
-let configuration = {region: "eu-west-1",};
+interface ICredential {
+    accessKeyId: string;
+    secretAccessKey: string;
+}
+
+interface IConfiguration {
+    region: string;
+    credentials?: ICredential;
+}
+
+let configuration: IConfiguration = {region: "eu-west-1"};
 if (process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!) {
     configuration = {
     region: "eu-west-1",
