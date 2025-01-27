@@ -45,7 +45,7 @@ data "aws_iam_policy_document" "gpu" {
       "${aws_s3_bucket.upload_apkg.arn}",
       "${aws_s3_bucket.upload_apkg.arn}/*",
       "${aws_s3_bucket.verification_msg.arn}",
-      "${aws_s3_bucket.verification_msg.arn}/*"
+      "${aws_s3_bucket.verification_msg.arn}/*",
       "${aws_s3_bucket.metadata_assets_s3.arn}",
       "${aws_s3_bucket.metadata_assets_s3.arn}/*"
     ]
