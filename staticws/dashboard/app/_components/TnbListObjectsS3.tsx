@@ -43,7 +43,7 @@ export default function DynamicComponent({ backendPath, targetPath }: { backendP
         if (slug) {
             fetchData(slug);
         }
-    }, [slug]);
+    }, [slug, backendPath]);
     return (
         <>
             <div className="container">
