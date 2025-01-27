@@ -143,22 +143,25 @@ def index() -> str:
     return flask.render_template("index.html")
 
 
-@app.route("/list-warnings", methods=["GET"])
-def list_warnings() -> flask.Response:
-    """List objects in a warnings bucket."""
-    logger.info("List warnings REST api endpoint was called with GET.")
-    bucket = METADATA_ASSETS_BUCKET_NAME
-    slug = flask.request.args.get("slug")
+def _s3_list_objects(bucket: str, slug: t.Optional[str]):
     if slug:
         objects = s3.list_objects_v2(Bucket=bucket, Prefix=f"{slug}/")
     else:
         objects = s3.list_objects_v2(Bucket=bucket)
     if "Contents" in objects:
-        contents = objects["Contents"]
+        return objects["Contents"]
     else:
-        contents = []
+        return []
+
+
+@app.route("/list-warnings", methods=["GET"])
+def list_warnings() -> flask.Response:
+    """List objects in a warnings bucket."""
+    logger.info("List warnings REST api endpoint was called with GET.")
+    slug = flask.request.args.get("slug")
+    s3_contents = _s3_list_objects(VERIFIER_MSGS, slug)
     resp = flask.Response(
-        response=flask.json.dumps(contents),
+        response=flask.json.dumps(s3_contents),
         status=200,
         mimetype="application/json",
     )
@@ -172,16 +175,8 @@ def list_warnings() -> flask.Response:
 def list_assets() -> flask.Response:
     """List objects in the metadata assets bucket."""
     logger.info("List metadata assets REST api endpoint was called with GET.")
-    bucket = METADATA_ASSETS_BUCKET_NAME
     slug = flask.request.args.get("slug")
-    if slug:
-        objects = s3.list_objects_v2(Bucket=bucket, Prefix=f"{slug}/")
-    else:
-        objects = s3.list_objects_v2(Bucket=bucket)
-    if "Contents" in objects:
-        contents = objects["Contents"]
-    else:
-        contents = []
+    s3_contents = _s3_list_objects(METADATA_ASSETS_BUCKET_NAME, slug)
     resp = flask.Response(
         response=flask.json.dumps(contents),
         status=200,
