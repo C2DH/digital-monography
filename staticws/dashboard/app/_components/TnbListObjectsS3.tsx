@@ -21,8 +21,10 @@ export default function DynamicComponent({ backendPath, targetPath }: { backendP
     const slug = searchParams?.get("slug");
     const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
     const [tableData, setTableData] = useState<IS3Object[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
     useEffect(() => {
         async function fetchData(inputSlug: string) {
+            setLoading(true);
             try {
                 const response = await fetch(`${endpoint}/test/${backendPath}?slug=${inputSlug}`);
                 const json = await response.json();
@@ -36,8 +38,10 @@ export default function DynamicComponent({ backendPath, targetPath }: { backendP
                     });
                 }
                 setTableData(tempTableData);
+                setLoading(false);
             } catch (e) {
                 console.error(e);
+                setLoading(false);
             }
         };
         if (slug) {
@@ -77,6 +81,11 @@ export default function DynamicComponent({ backendPath, targetPath }: { backendP
                     </tbody>
                 </table >}
                 {tableData.length == 0 && <div className="d-flex justify-content-center">
+                    <h4>No files found. Please remember that files are 
+                        generated <strong>after</strong> you change a file in 
+                        your working directory.</h4>
+                </div>}
+                {loading && <div className="d-flex justify-content-center">
                     <h4>Please wait for the items to load...</h4>
                     <div className="spinner-grow text-secondary" role="status">
                         <span className="visually-hidden">Loading...</span>
