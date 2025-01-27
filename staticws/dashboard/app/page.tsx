@@ -42,7 +42,7 @@ export default function Home() {
                       Events
                     </Link>
                     <Link href={{
-                      pathname: '/assets',
+                      pathname: '/assets-groups',
                       query: { slug: slug },
                     }} className="btn btn-outline-primary">
                       Assets
