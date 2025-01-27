@@ -90,13 +90,19 @@ upload-dashboard:
   image:
     name: amazon/aws-cli
     entrypoint: [""]
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://gitlab.com
   before_script:
     - yum update -y && yum install -y jq
     - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
     - mkdir ~/.aws
-    - echo -e "[profile oidc]\nrole_arn=${POST_DEPL_ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
+    # - echo -e "[profile oidc]\nrole_arn=${POST_DEPL_ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
+    - echo -e "[profile oidc]\nrole_arn=${ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
   script:
     - cat ~/.aws/config
+    - ls -la /tmp/web_identity_token
+    - cat /tmp/web_identity_token
     - export STATICWS_DASHBOARD_S3=$(jq -r '.staticws_dashboard_bucket_name.value' tf_output.json)
     - echo $AWS_CONFIG_FILE
     - export AWS_CONFIG_FILE=~/.aws/config
