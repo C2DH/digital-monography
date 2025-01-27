@@ -263,6 +263,5 @@ git config --add --local core.sshCommand 'ssh -i ~/.ssh/filename'
 ### Tech stack for the frontend
 
 - React - as ui framework
-- Tailwind - for ui components
-- Astro? - for static site generation
-- ~~AWS Amplify? - tiny backend for authentication and AWS integration (this is a similar to Firebase or Supabase), see https://github.com/aws-samples/amplify-authentication-for-astro~~
+- Bootstrap - for ui components
+- Next.js - as a build tool, DO NOT use it for anything else than build or routing
