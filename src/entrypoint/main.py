@@ -240,10 +240,10 @@ def query_citations() -> flask.Response:
     return resp
 
 
-@app.route("/headers", methods=["GET"])
-def query_headers() -> flask.Response:
-    """Retrieve headers from the database and return them to the client."""
-    logger.info("Retrieve headers from the database and return them to the client.")
+@app.route("/headings", methods=["GET"])
+def query_headings() -> flask.Response:
+    """Retrieve headings from the database and return them to the client."""
+    logger.info("Retrieve headings from the database and return them to the client.")
     slug = flask.request.args.get("slug")
     contents = dynamodb.query(
         TableName=DYNAMODB_HEADINGS_TBL,
