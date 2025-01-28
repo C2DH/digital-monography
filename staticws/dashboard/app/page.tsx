@@ -17,8 +17,8 @@ export default function Home() {
             <div className="d-flex gap-2 w-100 justify-content-between">
               <div>
                 <h6 className="mb-0">Guidelines for Drafting Manuscripts</h6>
-                <p className="mb-0 opacity-75">Pawel Kaminski</p>
-                <div className="btn-toolbar mb-3" role="toolbar">
+                <p className="mb-02 opacity-75">Pawel Kaminski</p>
+                <div className="btn-toolbar mb-1" role="toolbar">
                   <div className="btn-group mr-2" role="group">
                     <button className="btn btn-primary disabled">
                       <svg width="20px" height="20px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
