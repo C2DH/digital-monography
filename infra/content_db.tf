@@ -62,7 +62,6 @@ resource "aws_dynamodb_table" "warnings_tbl" {
     name = "fn"
     type = "S"
   }
-
 }
 
 resource "aws_s3_bucket" "metadata_assets_s3" {

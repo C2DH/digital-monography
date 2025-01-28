@@ -19,6 +19,8 @@ try:
         IS_DEBUG,
         DROPBOX_SECRET_ID,
         DYNAMODB_AUDIT_TBL,
+        DYNAMODB_CITATIONS_TBL,
+        DYNAMODB_HEADINGS_TBL,
         DYNAMODB_TOKENS_TBL,
         METADATA_ASSETS_BUCKET_NAME,
         VERIFIER_MSGS,
@@ -28,6 +30,8 @@ except (ImportError, ModuleNotFoundError):
         IS_DEBUG,
         DROPBOX_SECRET_ID,
         DYNAMODB_AUDIT_TBL,
+        DYNAMODB_CITATIONS_TBL,
+        DYNAMODB_HEADINGS_TBL,
         DYNAMODB_TOKENS_TBL,
         METADATA_ASSETS_BUCKET_NAME,
         VERIFIER_MSGS,
@@ -197,6 +201,52 @@ def query_events() -> flask.Response:
     slug = flask.request.args.get("slug")
     contents = dynamodb.query(
         TableName=DYNAMODB_AUDIT_TBL,
+        KeyConditionExpression="slug = :slug",
+        ExpressionAttributeValues={
+            ":slug": { "S": slug }
+        },
+    )
+    resp = flask.Response(
+        response=flask.json.dumps(contents),
+        status=200,
+        mimetype="application/json",
+    )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
+
+
+@app.route("/citations", methods=["GET"])
+def query_citations() -> flask.Response:
+    """Retrieve citations from the database and return them to the client."""
+    logger.info("Retrieve citations from the database and return them to the client.")
+    slug = flask.request.args.get("slug")
+    contents = dynamodb.query(
+        TableName=DYNAMODB_CITATIONS_TBL,
+        KeyConditionExpression="slug = :slug",
+        ExpressionAttributeValues={
+            ":slug": { "S": slug }
+        },
+    )
+    resp = flask.Response(
+        response=flask.json.dumps(contents),
+        status=200,
+        mimetype="application/json",
+    )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
+
+
+@app.route("/headers", methods=["GET"])
+def query_headers() -> flask.Response:
+    """Retrieve headers from the database and return them to the client."""
+    logger.info("Retrieve headers from the database and return them to the client.")
+    slug = flask.request.args.get("slug")
+    contents = dynamodb.query(
+        TableName=DYNAMODB_HEADINGS_TBL,
         KeyConditionExpression="slug = :slug",
         ExpressionAttributeValues={
             ":slug": { "S": slug }
