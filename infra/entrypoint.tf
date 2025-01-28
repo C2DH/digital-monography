@@ -95,12 +95,27 @@ data "aws_iam_policy_document" "entrypoint" {
   statement {
     sid       = "AllowReadAndWriteToDynamoDB"
     effect    = "Allow"
-    resources = [aws_dynamodb_table.tokens_tbl.arn, aws_dynamodb_table.cursors_tbl.arn]
+    resources = [
+      aws_dynamodb_table.tokens_tbl.arn,
+      aws_dynamodb_table.cursors_tbl.arn
+    ]
     actions = [
       "dynamodb:GetItem",
       "dynamodb:PutItem",
       "dynamodb:UpdateItem",
       "dynamodb:DeleteItem",
+      "dynamodb:Scan",
+      "dynamodb:Query"
+    ]
+  }
+  statement {
+    sid       = "AllowReadFromDb"
+    effect    = "Allow"
+    resources = [
+      aws_dynamodb_table.audit_tbl.arn,
+    ]
+    actions = [
+      "dynamodb:GetItem",
       "dynamodb:Scan",
       "dynamodb:Query"
     ]

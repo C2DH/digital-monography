@@ -18,6 +18,7 @@ try:
     from constants import (
         IS_DEBUG,
         DROPBOX_SECRET_ID,
+        DYNAMODB_AUDIT_TBL,
         DYNAMODB_TOKENS_TBL,
         METADATA_ASSETS_BUCKET_NAME,
         VERIFIER_MSGS,
@@ -26,6 +27,7 @@ except (ImportError, ModuleNotFoundError):
     from .constants import (
         IS_DEBUG,
         DROPBOX_SECRET_ID,
+        DYNAMODB_AUDIT_TBL,
         DYNAMODB_TOKENS_TBL,
         METADATA_ASSETS_BUCKET_NAME,
         VERIFIER_MSGS,
@@ -159,9 +161,9 @@ def list_warnings() -> flask.Response:
     """List objects in a warnings bucket."""
     logger.info("List warnings REST api endpoint was called with GET.")
     slug = flask.request.args.get("slug")
-    s3_contents = _s3_list_objects(VERIFIER_MSGS, slug)
+    contents = _s3_list_objects(VERIFIER_MSGS, slug)
     resp = flask.Response(
-        response=flask.json.dumps(s3_contents),
+        response=flask.json.dumps(contents),
         status=200,
         mimetype="application/json",
     )
@@ -176,7 +178,30 @@ def list_assets() -> flask.Response:
     """List objects in the metadata assets bucket."""
     logger.info("List metadata assets REST api endpoint was called with GET.")
     slug = flask.request.args.get("slug")
-    s3_contents = _s3_list_objects(METADATA_ASSETS_BUCKET_NAME, slug)
+    contents = _s3_list_objects(METADATA_ASSETS_BUCKET_NAME, slug)
+    resp = flask.Response(
+        response=flask.json.dumps(contents),
+        status=200,
+        mimetype="application/json",
+    )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
+
+
+@app.route("/events", methods=["GET"])
+def query_events() -> flask.Response:
+    """Retrieve events from the database and return them to the client."""
+    logger.info("Retrieve events from the database and return them to the client.")
+    slug = flask.request.args.get("slug")
+    contents = dynamodb.query(
+        TableName=DYNAMODB_AUDIT_TBL,
+        KeyConditionExpression="slug = :slug",
+        ExpressionAttributeValues={
+            ":slug": { "S": slug }
+        },
+    )
     resp = flask.Response(
         response=flask.json.dumps(contents),
         status=200,
