@@ -16,7 +16,7 @@ type IS3Object = {
     size: number | undefined,
 }
 
-export default function DynamicComponent({ backendPath, targetPath }: { backendPath: string, targetPath: string}) {
+export default function DynamicComponent({ backendPath, targetPath }: { backendPath: string, targetPath: string }) {
     const searchParams = useSearchParams();
     const slug = searchParams?.get("slug");
     const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
@@ -80,9 +80,9 @@ export default function DynamicComponent({ backendPath, targetPath }: { backendP
                         }
                     </tbody>
                 </table >}
-                {tableData.length == 0 && <div className="d-flex justify-content-center">
-                    <h4>No files found. Please remember that files are 
-                        generated <strong>after</strong> you change a file in 
+                {!loading && tableData.length == 0 && <div className="d-flex justify-content-center">
+                    <h4>No files found. Please remember that files are
+                        generated <strong>after</strong> you change a file in
                         your working directory.</h4>
                 </div>}
                 {loading && <div className="d-flex justify-content-center">
