@@ -113,8 +113,8 @@ data "aws_iam_policy_document" "entrypoint" {
     effect    = "Allow"
     resources = [
       aws_dynamodb_table.audit_tbl.arn,
-      aws_dynamodb_table.citations_tbl,
-      aws_dynamodb_table.headings_tbl,
+      aws_dynamodb_table.citations_tbl.arn,
+      aws_dynamodb_table.headings_tbl.arn,
     ]
     actions = [
       "dynamodb:GetItem",
