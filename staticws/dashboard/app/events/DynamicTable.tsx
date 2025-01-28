@@ -2,45 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
-
-interface ICredential {
-    accessKeyId: string;
-    secretAccessKey: string;
-}
-
-interface IConfiguration {
-    region: string;
-    credentials?: ICredential;
-}
-
-let configuration: IConfiguration = {region: "eu-west-1"};
-if (process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!) {
-    configuration = {
-    region: "eu-west-1",
-    credentials: {
-        accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
-    },
-}}
-
-const ddbClient = new DynamoDBClient(configuration);
-
-const marshallOptions = {
-    convertEmptyValues: false,
-    removeUndefinedValues: true,
-    convertClassInstanceToMap: false,
-};
-
-const unmarshallOptions = {
-    wrapNumbers: false,
-};
-
-const ddbDocClient = DynamoDBDocumentClient.from(ddbClient, {
-    marshallOptions,
-    unmarshallOptions,
-});
 
 const StageName = {
     // make sure the values are consistent with src/_common/constants.py
@@ -76,15 +38,10 @@ export default function DynamicTable() {
 
     const fetchRecords = async (pk: string) => {
         try {
-            const cmd = new QueryCommand({
-                TableName: dbTable,
-                KeyConditionExpression: "slug = :slug",
-                ExpressionAttributeValues: {
-                    ":slug": { "S": pk }
-                },
-            });
-            const resp = await ddbDocClient.send(cmd);
-            const records = (resp.Items || []).map((rec) => {
+            const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
+            const resp = await fetch(`${endpoint}/test/events?slug=${pk}`);
+            const respJson = await resp.json();
+            const records = (respJson.Items || []).map((rec) => {
                 const timestamp = rec.timestamp.S ? new Date(rec.timestamp.S) : new Date(1970);
                 return {
                     filename: rec.filename.S ? rec.filename.S : "",
