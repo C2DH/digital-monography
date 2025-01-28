@@ -26,7 +26,7 @@ export default function TnbBookNav({ slug, color }: { slug: string, color: strin
                 Events
             </Link>
             <Link href={{
-                pathname: '/assets-groups',
+                pathname: '/assets',
                 query: { slug: slug },
             }} className={`btn btn-outline-${color}`}>
                 Assets

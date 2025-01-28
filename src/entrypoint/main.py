@@ -19,10 +19,10 @@ try:
         IS_DEBUG,
         DROPBOX_SECRET_ID,
         DYNAMODB_AUDIT_TBL,
+        DYNAMODB_ASSETS_TBL,
         DYNAMODB_CITATIONS_TBL,
         DYNAMODB_HEADINGS_TBL,
         DYNAMODB_TOKENS_TBL,
-        METADATA_ASSETS_BUCKET_NAME,
         VERIFIER_MSGS,
     )
 except (ImportError, ModuleNotFoundError):
@@ -30,10 +30,10 @@ except (ImportError, ModuleNotFoundError):
         IS_DEBUG,
         DROPBOX_SECRET_ID,
         DYNAMODB_AUDIT_TBL,
+        DYNAMODB_ASSETS_TBL,
         DYNAMODB_CITATIONS_TBL,
         DYNAMODB_HEADINGS_TBL,
         DYNAMODB_TOKENS_TBL,
-        METADATA_ASSETS_BUCKET_NAME,
         VERIFIER_MSGS,
     )
 
@@ -177,12 +177,18 @@ def list_warnings() -> flask.Response:
     return resp
 
 
-@app.route("/list-assets", methods=["GET"])
+@app.route("/assets", methods=["GET"])
 def list_assets() -> flask.Response:
-    """List objects in the metadata assets bucket."""
-    logger.info("List metadata assets REST api endpoint was called with GET.")
+    """Retrieve assets from the database and return them to the client."""
+    logger.info("Retrieve assets from the database and return them to the client.")
     slug = flask.request.args.get("slug")
-    contents = _s3_list_objects(METADATA_ASSETS_BUCKET_NAME, slug)
+    contents = dynamodb.query(
+        TableName=DYNAMODB_ASSETS_TBL,
+        KeyConditionExpression="slug = :slug",
+        ExpressionAttributeValues={
+            ":slug": { "S": slug }
+        },
+    )
     resp = flask.Response(
         response=flask.json.dumps(contents),
         status=200,

@@ -2,32 +2,8 @@
 
 import { useCallback, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import { Header, SearchBar } from "./../_components/TnbTable";
-
-const ddbClient = new DynamoDBClient({
-    region: "eu-west-1",
-    credentials: {
-        accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
-    },
-});
-
-const marshallOptions = {
-    convertEmptyValues: false,
-    removeUndefinedValues: true,
-    convertClassInstanceToMap: false,
-};
-
-const unmarshallOptions = {
-    wrapNumbers: false,
-};
-
-const ddbDocClient = DynamoDBDocumentClient.from(ddbClient, {
-    marshallOptions,
-    unmarshallOptions,
-});
+import TnbBookNav from "./../_components/TnbBookNav";
 
 type IAssetRecord = {
     link: string,
@@ -138,16 +114,11 @@ export default function DynamicTable() {
             setIsColorSum(0);
             setIsOnPaperSum(0);
             setIsReadySum(0);
-            const cmd = new QueryCommand({
-                TableName: dbTable,
-                KeyConditionExpression: "slug = :slug",
-                ExpressionAttributeValues: {
-                    ":slug": { "S": pk }
-                },
-            });
+            const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
+            const resp = await fetch(`${endpoint}/test/assets?slug=${pk}`);
+            const respJson = await resp.json();
+            const items = respJson.Items || [];
             const formatedData: IAssetRecord[] = [];
-            const resp = await ddbDocClient.send(cmd);
-            const items = resp.Items || [];
             for (let i = 0; i < items.length; i++) {
                 let records = items[i].records?.L || [];
                 for (let j = 0; j < records.length; j++) {
@@ -246,6 +217,7 @@ export default function DynamicTable() {
     return (
         <>
             <div>
+                {slug && <TnbBookNav slug={slug} color="secondary"></TnbBookNav>}
                 {/* <SearchBar searchTable={(searchTable)} /> */}
                 <table className="table table-striped">
                     <Header columns={columns} sorting={sorting} sortTable={sortTable} />
