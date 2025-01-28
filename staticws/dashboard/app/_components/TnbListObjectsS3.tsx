@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import TnbBookNav from "./TnbBookNav";
 
 function getLastPart(s: string): string {
     let split = s.split("/");
@@ -51,6 +52,7 @@ export default function DynamicComponent({ backendPath, targetPath }: { backendP
     return (
         <>
             <div className="container">
+                <TnbBookNav slug={slug} color="secondary"></TnbBookNav>
                 {tableData.length > 0 && <table className="table">
                     <thead>
                         <tr>

@@ -3,8 +3,7 @@
 import "./../_styles/treeView.css";
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+import TnbBookNav from "./../_components/TnbBookNav";
 
 type IHeading = {
     text: string,
@@ -68,6 +67,7 @@ export default function DynamicListGroup(): JSX.Element {
 
     return (
         <>
+            <TnbBookNav slug={slug} color="secondary"></TnbBookNav>
             {data && Object.entries(data)
                 .map(([file, headings]: [string, IHeading[]], idx: number) => {
                     return (

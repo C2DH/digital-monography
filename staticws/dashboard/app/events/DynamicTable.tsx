@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+import TnbBookNav from "./../_components/TnbBookNav";
 
 const StageName = {
     // make sure the values are consistent with src/_common/constants.py
@@ -65,6 +65,7 @@ export default function DynamicTable() {
 
     return (
         <>
+            <TnbBookNav slug={slug} color="secondary"></TnbBookNav>
             <table className="table">
                 <thead>
                     <tr>

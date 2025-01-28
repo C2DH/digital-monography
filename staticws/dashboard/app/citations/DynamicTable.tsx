@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+import Link from 'next/link';
+import TnbBookNav from "./../_components/TnbBookNav";
 
 function getNestedStr(rec: any, attr: string): string {
     const dataType = "S";
@@ -54,6 +54,7 @@ export default function DynamicTable() {
 
     return (
         <>
+            <TnbBookNav slug={slug} color="secondary"></TnbBookNav>
             <table className="table">
                 <thead>
                     <tr>
