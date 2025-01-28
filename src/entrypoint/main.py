@@ -48,7 +48,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-dynamodb = boto3.resource("dynamodb")
+dynamodb = boto3.client("dynamodb")
 secretsmanager = boto3.client("secretsmanager")
 sqs = boto3.client("sqs")
 s3 = boto3.client("s3")
