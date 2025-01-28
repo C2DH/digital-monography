@@ -36,7 +36,7 @@ export default function DynamicListGroup(): JSX.Element {
             const resp = await fetch(`${endpoint}/test/headings?slug=${pk}`);
             const respJson = await resp.json();
             const headings: IHeadings = {};
-            const items = resp.Items || [];
+            const items = respJson.Items || [];
             for (let i = 0; i < items.length; i++) {
                 let records = items[i].records?.L || [];
                 for (let j = 0; j < records.length; j++) {
