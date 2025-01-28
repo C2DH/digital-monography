@@ -5,29 +5,6 @@ import { useSearchParams } from 'next/navigation';
 import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
-const ddbClient = new DynamoDBClient({
-    region: "eu-west-1",
-    credentials: {
-        accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
-    },
-});
-
-const marshallOptions = {
-    convertEmptyValues: false,
-    removeUndefinedValues: true,
-    convertClassInstanceToMap: false,
-};
-
-const unmarshallOptions = {
-    wrapNumbers: false,
-};
-
-const ddbDocClient = DynamoDBDocumentClient.from(ddbClient, {
-    marshallOptions,
-    unmarshallOptions,
-});
-
 function getNestedStr(rec: any, attr: string): string {
     const dataType = "S";
     if (rec && rec.M && Object.hasOwn(rec.M, attr) && Object.hasOwn(rec.M[attr], dataType)) {
@@ -50,17 +27,12 @@ export default function DynamicTable() {
 
     const fetchRecords = async (pk: string) => {
         try {
-            const cmd = new QueryCommand({
-                TableName: dbTable,
-                KeyConditionExpression: "slug = :slug",
-                ExpressionAttributeValues: {
-                    ":slug": { "S": pk }
-                },
-            });
-            const resp = await ddbDocClient.send(cmd);
+            const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
+            const resp = await fetch(`${endpoint}/test/citations?slug=${pk}`);
+            const respJson = await resp.json();
             const tableItems: ICitationGroup[] = [];
-            for (let i = 0; i < (resp.Items || []).length; i++) {
-                let records = resp.Items![i].records.L || [];
+            for (let i = 0; i < (respJson.Items || []).length; i++) {
+                let records = respJson.Items![i].records.L || [];
                 for (let j = 0; j < records.length; j++) {
                     tableItems.push({
                         location: getNestedStr(records[j], "file_name"),

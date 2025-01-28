@@ -6,29 +6,6 @@ import { useSearchParams } from 'next/navigation';
 import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
-const ddbClient = new DynamoDBClient({
-    region: "eu-west-1",
-    credentials: {
-        accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
-    },
-});
-
-const marshallOptions = {
-    convertEmptyValues: false,
-    removeUndefinedValues: true,
-    convertClassInstanceToMap: false,
-};
-
-const unmarshallOptions = {
-    wrapNumbers: false,
-};
-
-const ddbDocClient = DynamoDBDocumentClient.from(ddbClient, {
-    marshallOptions,
-    unmarshallOptions,
-});
-
 type IHeading = {
     text: string,
     level: string,
@@ -55,15 +32,10 @@ export default function DynamicListGroup(): JSX.Element {
 
     const fetchRecords = async (pk: string) => {
         try {
-            const cmd = new QueryCommand({
-                TableName: dbTable,
-                KeyConditionExpression: "slug = :slug",
-                ExpressionAttributeValues: {
-                    ":slug": { "S": pk }
-                },
-            });
+            const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
+            const resp = await fetch(`${endpoint}/test/headings?slug=${pk}`);
+            const respJson = await resp.json();
             const headings: IHeadings = {};
-            const resp = await ddbDocClient.send(cmd);
             const items = resp.Items || [];
             for (let i = 0; i < items.length; i++) {
                 let records = items[i].records?.L || [];
