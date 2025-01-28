@@ -413,7 +413,7 @@ def _write_processed_md_to_efs(md: str, key: KeyPath) -> None:
 
 def _write_metadata_to_s3(metadata: DocumentMetadata, key: KeyPath) -> None:
     try:
-        logger.info(f"_write_metadata_to_s3(key={key}, contents={contents})")
+        logger.info(f"_write_metadata_to_s3(key={key}")
         s3_key = key.s3_key.with_suffix(".json")
         meta = metadata.to_json()
         buckets = {
