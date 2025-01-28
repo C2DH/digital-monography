@@ -54,7 +54,7 @@ export default function DynamicTable() {
 
     return (
         <>
-            <TnbBookNav slug={slug} color="secondary"></TnbBookNav>
+            {slug && <TnbBookNav slug={slug} color="secondary"></TnbBookNav>}
             <table className="table">
                 <thead>
                     <tr>

@@ -67,7 +67,7 @@ export default function DynamicListGroup(): JSX.Element {
 
     return (
         <>
-            <TnbBookNav slug={slug} color="secondary"></TnbBookNav>
+            {slug && <TnbBookNav slug={slug} color="secondary"></TnbBookNav>}
             {data && Object.entries(data)
                 .map(([file, headings]: [string, IHeading[]], idx: number) => {
                     return (

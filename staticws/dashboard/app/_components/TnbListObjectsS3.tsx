@@ -52,7 +52,7 @@ export default function DynamicComponent({ backendPath, targetPath }: { backendP
     return (
         <>
             <div className="container">
-                <TnbBookNav slug={slug} color="secondary"></TnbBookNav>
+                {slug && <TnbBookNav slug={slug} color="secondary"></TnbBookNav>}
                 {tableData.length > 0 && <table className="table">
                     <thead>
                         <tr>
