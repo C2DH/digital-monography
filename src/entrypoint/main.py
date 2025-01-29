@@ -339,18 +339,20 @@ def _send_msg_to_sqs(request_data: FlaskRequestData) -> None:
 
 def dynamodb_set(tbl: str, **kwargs) -> None:
     expire_at = int((datetime.datetime.now() + datetime.timedelta(days=3)).timestamp())
-    table = dynamodb.Table(tbl)
-    resp = table.put_item(Item={"expire_at": expire_at, **kwargs})
+    # table = dynamodb.Table(tbl)
+    # resp = table.put_item(Item={"expire_at": expire_at, **kwargs})
+    resp = dynamodb.put_item(TableName=tbl, Item={"expire_at": expire_at, **kwargs})
     logger.info(
-        f"Response from dynamodb.Table({tbl}).put_item: {json.dumps(resp, default=str)}"
+        f"Response from dynamodb.put_item(TableName={tbl}): {json.dumps(resp, default=str)}"
     )
 
 
 def dynamodb_get(tbl: str, pk: dict[str, str]) -> dict[str, t.Any]:
-    table = dynamodb.Table(tbl)
-    resp = table.get_item(Key=pk)
+    # table = dynamodb.Table(tbl)
+    # resp = table.get_item(Key=pk)
+    resp = dynamodb.get_item(TableName=tbl, Key=pk)
     logger.info(
-        f"Response from dynamodb.Table({tbl}).get_item: {json.dumps(resp, default=str)}"
+        f"Response from dynamodb.get_item(TableName={tbl}): {json.dumps(resp, default=str)}"
     )
     return resp
 
