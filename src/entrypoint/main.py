@@ -279,7 +279,9 @@ def login(*args, **kwargs):
 @app.route("/done")
 def done() -> str:
     logger.info("Done REST api endpoint was called.")
-    return flask.render_template("done.html")
+    url = "https://cpy-dgtmon-dev-staticws-dashboard.s3.eu-west-1.amazonaws.com/index.html"
+    return flask.redirect(url)
+    # return flask.render_template("done.html")
 
 
 @app.route("/webhook", methods=["GET"])
