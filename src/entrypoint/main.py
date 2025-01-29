@@ -138,7 +138,7 @@ def oauth_callback(*args, **kwargs):
     # Extract and store the access token for this user
     access_token = auth_result.access_token
     dynamodb_set(
-        DYNAMODB_TOKENS_TBL, **{"account": {"S": account}, "access_token": {"S": access_token}}
+        DYNAMODB_TOKENS_TBL, **{"account": account, "access_token": access_token}
     )
     return flask.redirect(get_url("done"))
 
@@ -339,12 +339,16 @@ def _send_msg_to_sqs(request_data: FlaskRequestData) -> None:
 
 def dynamodb_set(tbl: str, **kwargs) -> None:
     expire_at = int((datetime.datetime.now() + datetime.timedelta(days=3)).timestamp())
-    # table = dynamodb.Table(tbl)
-    # resp = table.put_item(Item={"expire_at": expire_at, **kwargs})
-    resp = dynamodb.put_item(TableName=tbl, Item={"expire_at": {"N": expire_at}, **kwargs})
+    dyndb = boto3.resource('dynamodb')
+    table = dyndb.Table(tbl)
+    resp = table.put_item(Item={"expire_at": expire_at, **kwargs})
     logger.info(
-        f"Response from dynamodb.put_item(TableName={tbl}): {json.dumps(resp, default=str)}"
+        f"Response from dynamodb.Table({tbl}).put_item: {json.dumps(resp, default=str)}"
     )
+    # resp = dyndb.put_item(TableName=tbl, Item={"expire_at": {"N": expire_at}, **kwargs})
+    # logger.info(
+    #     f"Response from dynamodb.put_item(TableName={tbl}): {json.dumps(resp, default=str)}"
+    # )
 
 
 def dynamodb_get(tbl: str, pk: dict[str, str]) -> dict[str, t.Any]:
