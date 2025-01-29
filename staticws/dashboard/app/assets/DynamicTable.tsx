@@ -1,9 +1,14 @@
 'use client'
 
+import { Fragment } from 'react';
 import { useCallback, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Header, SearchBar } from "./../_components/TnbTable";
 import TnbBookNav from "./../_components/TnbBookNav";
+
+type IOpenedItem = {
+    [s3Key: number]: boolean;
+}
 
 type IAssetRecord = {
     link: string,
@@ -15,6 +20,7 @@ type IAssetRecord = {
     isColor?: boolean,
     isOnPaper: boolean,
     isReady: boolean,
+    s3Key: string,
 }
 
 function getNestedStr(rec: any, attr: string): string {
@@ -61,12 +67,25 @@ function getHyperlink(slug: string | null, inputFieldVal: string): string {
     return `asset?slug=${slug}&pk=${btoa(slug + "/" + inputFieldVal)}`;
 }
 
+function getImgSrc(slug: string | null, inputFieldVal: string): string {
+    const bucket = "https://cpy-dgtmon-dev-staticws-wip.s3.eu-west-1.amazonaws.com";
+    if (slug == null || !inputFieldVal) {
+        return "";
+    } else if (inputFieldVal.startsWith("https:") || inputFieldVal.startsWith("http:")) {
+        return "";
+    } else {
+        return `${bucket}/read/${slug + "/" + inputFieldVal}`;
+    }
+}
+
+
+
 function getLastPart(s: string): string {
     let split = s.split("/");
     return split[split.length - 1];
 }
 
-function getColumnSummary(col: string, isColorSum: number,
+function getColSums(col: string, isColorSum: number,
     isOnPaperSum: number, isReadySum: number, tableLength: number): JSX.Element {
     if (col == "isColor") {
         return <th key={`${col}-sum`}>{isColorSum}/<small>{tableLength}</small></th>;
@@ -95,6 +114,7 @@ export default function DynamicTable() {
     const slug = searchParams?.get("slug");
     const dbTable = "dgtmon-dev-dyndb-assets-tbl";
 
+    const [imgOpenedMap, setImgOpenedMap] = useState<IOpenedItem>({});
     const [tableData, setTableData] = useState<IAssetRecord[]>([]);
     const [isColorSum, setIsColorSum] = useState<number>(0);
     const [isOnPaperSum, setIsOnPaperSum] = useState<number>(0);
@@ -114,6 +134,8 @@ export default function DynamicTable() {
             setIsColorSum(0);
             setIsOnPaperSum(0);
             setIsReadySum(0);
+            let s3Key = "";
+            const imgOpened = {};
             const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
             const resp = await fetch(`${endpoint}/test/assets?slug=${pk}`);
             const respJson = await resp.json();
@@ -141,6 +163,7 @@ export default function DynamicTable() {
                         if (isReady) {
                             setIsReadySum(n => n + 1);
                         }
+                        s3Key = getImgSrc(slug, getNestedStr(records[j], "paperinput"));
                         formatedData.push({
                             link: getHyperlink(slug, getNestedStr(records[j], "paperinput")),
                             name: paperinput,
@@ -151,7 +174,9 @@ export default function DynamicTable() {
                             isColor: isColor,
                             isOnPaper: isOnPaper,
                             isReady: isReady,
+                            s3Key: s3Key,
                         });
+                        imgOpened[s3Key] = false;
                     }
                     if (isColor) {
                         setIsColorSum(n => n + 1);
@@ -162,6 +187,7 @@ export default function DynamicTable() {
                     if (isReady) {
                         setIsReadySum(n => n + 1);
                     }
+                    s3Key = getImgSrc(slug, getNestedStr(records[j], "digitalinput"));
                     formatedData.push({
                         link: getHyperlink(slug, getNestedStr(records[j], "digitalinput")),
                         name: digitalinput,
@@ -172,10 +198,15 @@ export default function DynamicTable() {
                         isColor: isColor,
                         isOnPaper: isOnPaper,
                         isReady: isReady,
+                        s3Key: s3Key,
                     });
+                    imgOpened[s3Key] = false;
                 }
             }
             setTableData(formatedData);
+            // console.log("imgOpened", imgOpened);
+            setImgOpenedMap(imgOpened);
+            // console.log("imgOpenedMap", imgOpenedMap);
             console.log("formatedData");
             console.log(formatedData);
         } catch (err) {
@@ -202,6 +233,7 @@ export default function DynamicTable() {
                 }
             });
         } else {
+            console.log("tableData", tableData);
             if (sorting.order == "asc") {
                 tableData.sort((a: IAssetRecord, b: IAssetRecord) => (a[sorting.column] > b[sorting.column] ? 1 : -1));
             } else {
@@ -213,29 +245,60 @@ export default function DynamicTable() {
     // useEffect(() => {
     //     console.log("searchValue", searchValue)
     // }, [searchValue])
+   
+    useEffect(() => {
+        require("bootstrap/dist/js/bootstrap.bundle.min.js");
+    }, []);
 
     return (
         <>
             <div>
                 {slug && <TnbBookNav slug={slug} color="secondary"></TnbBookNav>}
                 {/* <SearchBar searchTable={(searchTable)} /> */}
-                <table className="table table-striped">
+                <table className="table table-striped accordion">
                     <Header columns={columns} sorting={sorting} sortTable={sortTable} />
                     <tbody>
-                        {tableData && <tr>{columns.map((col) => (getColumnSummary(col, isColorSum, isOnPaperSum, isReadySum, tableData.length)))}</tr>}
+                        {tableData && <tr>{columns.map((col) => (
+                        getColSums(col, isColorSum, isOnPaperSum, isReadySum, tableData.length)
+                        ))}</tr>}
                         {tableData.map((record, idx) => (
-                            <tr key={idx}>
-                                {columns.map((column) => (column === "link" ?
-                                    <td key={column}>
-                                        <a className="btn btn-outline-secondary btn-sm"
-                                            href={record[column]}
-                                            role="button">▶</a>
-                                    </td> : <td key={column} className="dgt-mon-table-cell">
-                                        {getStringForHtml(column, record[column])}
+                            <Fragment key={`fragment-${idx}`}>
+                                <tr key={idx}
+                                    data-bs-toggle="collapse"
+                                    data-bs-target={`#details-${idx}`}
+                                    >
+                                    {columns.map((column) => (column === "link" ?
+                                        <td key={column}>
+                                            <a className="btn btn-outline-secondary btn-sm"
+                                            role="button"
+                                            onClick={() => {
+                                                setImgOpenedMap({
+                                                    ...imgOpenedMap,
+                                                    [record.s3Key]: true,
+                                                });
+                                            }}
+                                            >▶</a>
+                                        </td> : <td
+                                            key={column}
+                                            className="dgt-mon-table-cell">
+                                            {getStringForHtml(column, record[column])}
+                                        </td>
+                                    )
+                                    )}
+                                </tr>
+                                <tr key={`details-${idx}`}
+                                    id={`details-${idx}`}
+                                    className="collapse accordion-collapse">
+                                    <td colSpan={columns.length}>
+                                        {record.s3Key && <h6>{record["caption"]}</h6>}
+                                        {record.s3Key && imgOpenedMap[record.s3Key] && <img
+                                                src={record.s3Key}
+                                                alt=""
+                                                className="img-fluid float-left">
+                                            </img>}
                                     </td>
-                                )
-                                )}
-                            </tr>
+                                </tr>
+                            </Fragment>
                         ))}
                     </tbody>
                 </table>
