@@ -45,6 +45,7 @@ export default function Home() {
                         className="btn btn-outline-primary"
                       >Digital</a>
                     <a href="" className="btn btn-outline-primary disabled">Paper</a>
+                    <a href="" className="btn btn-outline-primary disabled">Zip package</a>
                   </div>
                 </div>
                 </div>
