@@ -25,6 +25,8 @@ try:
         METADATA_ASSETS_BUCKET_NAME,
         SQS_GITHUB_FIFO_TRIGGER_NAME,
         IS_DEBUG,
+        #
+        FIELD_DIGITAL_SOURCE,
     )
     from citations import add_bibliography, is_citation, prepare_citations
     from digital_prep import insert_digital_objects, remove_metadata_tables
@@ -65,6 +67,8 @@ except (ImportError, ModuleNotFoundError):
         METADATA_ASSETS_BUCKET_NAME,
         SQS_GITHUB_FIFO_TRIGGER_NAME,
         IS_DEBUG,
+        #
+        FIELD_DIGITAL_SOURCE,
     )
     from .citations import add_bibliography, is_citation, prepare_citations
     from .digital_prep import insert_digital_objects, remove_metadata_tables
@@ -178,6 +182,13 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_soup = prepare_references(html_soup, metadata, references)
         html_soup = remove_empty_tables(html_soup, metadata, tables)
         html_soup = prepare_alt_texts(html_soup, metadata, images_with_alttxt)
+
+        for asset in metadata.assets:
+            if asset.kwargs.get(FIELD_DIGITAL_SOURCE) is not None:
+                digitalsource = metadata.filepath.parent / asset.kwargs.get(
+                    FIELD_DIGITAL_SOURCE
+                )
+                logger.info(f"Digital source: {digitalsource}")
         metadata = compute_additional_metadata_fields(metadata)
         html_soup = hide_metadata_in_html(html_soup, metadata)  # last step
         html_soup_str = str(html_soup)
