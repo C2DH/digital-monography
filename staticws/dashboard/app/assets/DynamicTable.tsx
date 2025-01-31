@@ -7,7 +7,7 @@ import { Header, SearchBar } from "./../_components/TnbTable";
 import TnbBookNav from "./../_components/TnbBookNav";
 
 type IOpenedItem = {
-    [s3Key: number]: boolean;
+    [s3Key: string]: boolean;
 }
 
 type IAssetRecord = {
