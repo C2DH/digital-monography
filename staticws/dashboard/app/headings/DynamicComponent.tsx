@@ -36,6 +36,7 @@ function getNestedNum(rec: any, attr: string): number {
 }
 
 export default function DynamicListGroup(): JSX.Element {
+    const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
     const [data, setData] = useState<IHeadings>({});
     const [wordCount, setWordCount] = useState<ICountMap>({});
     const [charCount, setCharCount] = useState<ICountMap>({});
@@ -48,7 +49,6 @@ export default function DynamicListGroup(): JSX.Element {
 
     const fetchRecords = async (pk: string) => {
         try {
-            const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
             const resp = await fetch(`${endpoint}/test/headings?slug=${pk}`);
             const respJson = await resp.json();
             const headings: IHeadings = {};
@@ -80,9 +80,26 @@ export default function DynamicListGroup(): JSX.Element {
         }
     };
 
+    const fetchObjectFromS3 = async (aSlug: string) => {
+        try {
+            aSlug
+            const configKey = btoa(`${aSlug}/_config.yml`)
+            const getPreSignedUrlResp = await fetch(`${endpoint}/test/gpu?type=asset&key=${configKey}`);
+            const preSignedUrljson = await getPreSignedUrlResp.json();
+            const preSignedUrl = preSignedUrljson["presigned_url"];
+            const resp = await fetch(preSignedUrl);
+            const blob = await resp.blob();
+            const yml = await blob.text();
+            console.log("config", yml);
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
     useEffect(() => {
         if (slug) {
             fetchRecords(slug);
+            fetchObjectFromS3(slug);
         }
     }, [slug]);
 
@@ -117,3 +134,4 @@ export default function DynamicListGroup(): JSX.Element {
         </>
     )
 }
+// https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com/test/gpu?type=warnings&key=Z3VpZGVsaW5lcy1mb3ItZHJhZnRpbmctbWFudXNjcmlwdHMvMDFfZ2VuZXJhbC5qc29u
