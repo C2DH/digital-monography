@@ -5,6 +5,10 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import TnbBookNav from "./../_components/TnbBookNav";
 
+type ICountMap = {
+    [fileName: string]: number;
+}
+
 type IHeading = {
     text: string,
     level: string,
@@ -23,8 +27,21 @@ function getNestedStr(rec: any, attr: string): string {
     }
 }
 
+function getNestedNum(rec: any, attr: string): number {
+    if (rec && rec.M && Object.hasOwn(rec.M, attr) && Object.hasOwn(rec.M[attr], "N")) {
+        return Number(rec.M[attr].N);
+    } else {
+        return 0;
+    }
+}
+
 export default function DynamicListGroup(): JSX.Element {
     const [data, setData] = useState<IHeadings>({});
+    const [wordCount, setWordCount] = useState<ICountMap>({});
+    const [charCount, setCharCount] = useState<ICountMap>({});
+    const wCount = {};
+    const cCount = {};
+
     const searchParams = useSearchParams();
     const slug = searchParams?.get("slug");
     const dbTable = "dgtmon-dev-dyndb-headings-tbl";
@@ -38,8 +55,10 @@ export default function DynamicListGroup(): JSX.Element {
             const items = respJson.Items || [];
             for (let i = 0; i < items.length; i++) {
                 let records = items[i].records?.L || [];
+                const fileName = getNestedStr(records[0], "file_name");
+                wCount[fileName] = getNestedNum(records[0], "word_count");
+                cCount[fileName] = getNestedNum(records[0], "char_count");
                 for (let j = 0; j < records.length; j++) {
-                    const fileName = getNestedStr(records[j], "file_name");
                     const text = getNestedStr(records[j], "text");
                     let level = getNestedStr(records[j], "level");
                     level = level.replace(/\D+/g, ''); // TODO: backend should produce "1" instead of "h1"
@@ -54,6 +73,8 @@ export default function DynamicListGroup(): JSX.Element {
                 }
             }
             setData(headings);
+            setWordCount(wCount);
+            setCharCount(cCount);
         } catch (err) {
             console.log("Error", err);
         }
@@ -68,11 +89,21 @@ export default function DynamicListGroup(): JSX.Element {
     return (
         <>
             {slug && <TnbBookNav slug={slug} color="secondary"></TnbBookNav>}
+            <div>
+                <b>Word count: </b>
+                <p>{Object.values(wordCount).reduce((a, b) => a + b, 0)}</p>
+                <b>Character count: </b>
+                <p>{Object.values(charCount).reduce((a, b) => a + b, 0)}</p>
+            </div>
             {data && Object.entries(data)
                 .map(([file, headings]: [string, IHeading[]], idx: number) => {
                     return (
                         <ul className="list-group" key={idx}>
-                            <li className="list-group-item list-group-item-primary" key={file}><b>{file}</b></li>
+                            <li className="list-group-item list-group-item-primary" key={file}>
+                                <b>{file}</b>
+                                {wordCount[file] > 0 && <small> {wordCount[file]} words</small>}
+                                {charCount[file] > 0 && <small> {charCount[file]} characters</small>}
+                            </li>
                             {headings && headings.map((h: IHeading, i: number) => (
                                 <li className="list-group-item"
                                     key={i}>
