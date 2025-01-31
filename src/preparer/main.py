@@ -150,6 +150,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_str = _convert_to_html(key.efs_filepath)
         metadata = DocumentMetadata(key)
         html_soup = bs4.BeautifulSoup(html_str, "html.parser")
+        metadata.char_count, metadata.word_count = _get_char_and_word_count(html_soup)
         classifiers = [
             (is_img_with_alt_text, images_with_alttxt),
             (is_citation, citations),
@@ -251,6 +252,19 @@ def _download_fileobj(src: str, key: KeyPath) -> None:
             "Error upon internal download.",
         )
         raise
+
+
+def _get_char_and_word_count(html_soup: bs4.BeautifulSoup) -> tuple[int, int]:
+    soup_contents_list = []
+    for elem in html_soup.find_all(text=True):
+        soup_contents_list.append(elem.text.strip())
+    soup_contents = "".join(soup_contents_list).replace(" ", "")  # minimize spaces
+    words = []
+    for line in soup_contents_list:
+        for word in line.split(" "):
+            if word and not word.isspace():
+                words.append(word)
+    return len(soup_contents), len(words)
 
 
 def _convert_to_html(key: KeyPath) -> str:

@@ -90,6 +90,8 @@ def prepare_ref_targets_in_headers(
             file_name=metadata.filepath.name if metadata.filepath else "",
             text=tag.text,
             target=link.fragment if link else "",
+            word_count=metadata.word_count,
+            char_count=metadata.char_count,
             level=h_lvl,
             elem=str(tag),
         )

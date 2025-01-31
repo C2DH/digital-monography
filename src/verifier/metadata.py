@@ -136,6 +136,8 @@ class HeadingDatapoint:
     elem: str
     level: str
     text: str
+    word_count: int
+    char_count: int
     target: str
 
     def to_json(self) -> dict[str, t.Union[str, int]]:
@@ -281,6 +283,8 @@ class DocumentMetadata:
 
     def __init__(self, fp: t.Optional[KeyPath] = None) -> None:
         self.filepath = fp
+        self.word_count = 0
+        self.char_count = 0
         self.assets: list[AssetDatapoint] = []
         self.headings: list[HeadingDatapoint] = []
         self.refs: list[RefDatapoint] = []
