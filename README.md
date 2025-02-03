@@ -40,11 +40,11 @@ The project consists of the following main software components.
 | [dashboard](staticws/dashboard/) | UI | Dashboard with tools for authors and editors to help their work on the manuscript. |
 | [reader](staticws/reader/) | UI | Copy of degruyter.com website to show how the digital books can be integrated with de Gruyter's platform. |
 
-![architecture_abstract](./architecture_abstract.svg)
+![architecture_abstract](./arch_abstract.svg)
 
-### The pipeline architecture
+### Details of pipeline architecture
 
-![aws_architecture_diagram](./architecture.svg)
+![aws_architecture_diagram](./arch_details.svg)
 
 For the full architecture see [the instructions on generating an infrastrucutre visualisation](#generating-infrastrucutre-visualisation) and open the produced `graphviz.html` file.
 
