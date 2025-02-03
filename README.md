@@ -22,10 +22,27 @@ The development cycle is based on release cycles 4 months each. The direction of
 
 ## Design principles
 
+* Sustainability is the highest priority of this project. Books should be hosted as static web pages without a need for dedicated servers. When possible, websites related to the project should, like the dashboard, should not require any application logic on the server-side after web pages are built.
 * Rely on features of MS Word for `.docx` input, JupyterLab/Notebook for `.ipynb` input and on JupyterBook/Sphinx-doc for output as much as possible.
 * Target MyST specification rather that bespoke solutions.
 
 ## Architecture design
+
+### Architecture overview
+
+The project consists of the following main software components.
+
+| Name | Layer | Description |
+| ---- | ----- | ----------- |
+| pipeline | BL | Microservices that process input manuscript, verify it, and build output for other apps to use. The pipeline includes multiple micro services that are described below. |
+| [mammoth](https://github.com/kaminski-pawel/python-mammoth) | BL | Python library for transforming `.docx` into markdown. |
+| [CI pipeline](./.gitlab-ci.yml) | DevOps | Set of scripts for applying changes to the infrastructure. |
+| [dashboard](staticws/dashboard/) | UI | Dashboard with tools for authors and editors to help their work on the manuscript. |
+| [reader](staticws/reader/) | UI | Copy of degruyter.com website to show how the digital books can be integrated with de Gruyter's platform. |
+
+![architecture_abstract](./architecture_abstract.svg)
+
+### The pipeline architecture
 
 ![aws_architecture_diagram](./architecture.svg)
 
@@ -260,9 +277,3 @@ git config --add --local core.sshCommand 'ssh -i ~/.ssh/filename'
 * flake8 linting
 * refactor link management (refs.py)
 * preserve bs4.element.Tag elem attributes in metadata records, stringify on to_json() method
-
-### Tech stack for the frontend
-
-- React - as ui framework
-- Bootstrap - for ui components
-- Next.js - as a build tool, DO NOT use it for anything else than build or routing
