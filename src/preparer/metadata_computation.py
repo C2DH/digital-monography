@@ -1,4 +1,5 @@
 # import bs4
+import pathlib
 try:
     from constants import DEFAULT_SFS_DIR, FIELD_DIGITAL_SOURCE, FIELD_PAPER_SOURCE
     from metadata import AssetDatapoint, DocumentMetadata
