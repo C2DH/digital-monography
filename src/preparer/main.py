@@ -183,7 +183,11 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_soup = remove_empty_tables(html_soup, metadata, tables)
         html_soup = prepare_alt_texts(html_soup, metadata, images_with_alttxt)
 
+        logger.info("====================================")
+        logger.info(f"Looking for {FIELD_DIGITAL_SOURCE}")
+        logger.info(f"metadata.filepath.parent: ({metadata.filepath.parent})")
         for asset in metadata.assets:
+            logger.info("asset.kwargs.keys()", asset.kwargs.keys())
             if asset.kwargs.get(FIELD_DIGITAL_SOURCE) is not None:
                 digitalsource = metadata.filepath.parent / asset.kwargs.get(
                     FIELD_DIGITAL_SOURCE
