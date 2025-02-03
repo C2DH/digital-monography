@@ -21,6 +21,9 @@ type IAssetRecord = {
     isOnPaper: boolean,
     isReady: boolean,
     s3Key: string,
+    exists: boolean,
+    size?: string,
+    mtime?: number,
 }
 
 function getNestedStr(rec: any, attr: string): string {
@@ -29,6 +32,15 @@ function getNestedStr(rec: any, attr: string): string {
         return rec.M[attr][dataType];
     } else {
         return "";
+    }
+}
+
+function getNestedNum(rec: any, attr: string): number | undefined {
+    const dataType = "N";
+    if (rec && rec.M && Object.hasOwn(rec.M, attr) && Object.hasOwn(rec.M[attr], dataType)) {
+        return (rec.M[attr][dataType]);
+    } else {
+        return undefined;
     }
 }
 
@@ -42,7 +54,7 @@ function getNestedBool(rec: any, attr: string): boolean | undefined {
 }
 
 function getStringForHtml(key: string, val: string | boolean | undefined): string | boolean | undefined {
-    if (["isColor", "isOnPaper", "isReady"].includes(key)) {
+    if (["isColor", "isOnPaper", "isReady", "exists"].includes(key)) {
         switch (val) {
             case true:
                 return "✅";
@@ -78,7 +90,14 @@ function getImgSrc(slug: string | null, inputFieldVal: string): string {
     }
 }
 
-
+function formatBytes(bytes: number | undefined, decimals = 2): string {
+    if (bytes == "undefined" || !+bytes) return '0 Bytes'
+    const k = 1024
+    const dm = decimals < 0 ? 0 : decimals
+    const sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
+}
 
 function getLastPart(s: string): string {
     let split = s.split("/");
@@ -96,6 +115,11 @@ function getColSums(col: string, isColorSum: number,
     } else {
         return <th key={`${col}-sum`}>{" "}</th>;
     }
+}
+
+function getDate(val: string): Date {
+    if (!val) return "";
+    return new Date(Number(val));
 }
 
 // function getAsHtml(s: string): string {
@@ -121,7 +145,7 @@ export default function DynamicTable() {
     const [isReadySum, setIsReadySum] = useState<number>(0);
     const [sorting, setSorting] = useState({ column: "location", order: "asc" });
     const [searchValue, setSearchValue] = useState("");
-    const columns = ["link", "name", "location", "alttext", "caption", "licensename", "isColor", "isOnPaper", "isReady"];
+    const columns = ["link", "name", "location", "alttext", "caption", "licensename", "isColor", "isOnPaper", "exists", "isReady"];
     const sortTable = (newSorting) => {
         setSorting(newSorting);
     };
@@ -175,6 +199,9 @@ export default function DynamicTable() {
                             isOnPaper: isOnPaper,
                             isReady: isReady,
                             s3Key: s3Key,
+                            exists: getNestedBool(records[j], "digitalexists") || false,
+                            size: formatBytes(getNestedNum(records[j], "digitalsize")),
+                            mtime: getDate(getNestedStr(records[j], "digitalmtime")),
                         });
                         imgOpened[s3Key] = false;
                     }
@@ -199,6 +226,9 @@ export default function DynamicTable() {
                         isOnPaper: isOnPaper,
                         isReady: isReady,
                         s3Key: s3Key,
+                        exists: getNestedBool(records[j], "paperexists") || false,
+                        size: formatBytes(getNestedNum(records[j], "papersize")),
+                        mtime: getDate(getNestedStr(records[j], "papermtime")),
                     });
                     imgOpened[s3Key] = false;
                 }
@@ -289,7 +319,7 @@ export default function DynamicTable() {
                                 <tr key={`details-${idx}`}
                                     id={`details-${idx}`}
                                     className="collapse accordion-collapse">
-                                    <td colSpan={columns.length}>
+                                    <td colSpan={columns.length/2}>
                                         {record.s3Key && <h6>{record["caption"]}</h6>}
                                         {/* {record.s3Key && imgOpenedMap[record.s3Key] && <img */}
                                         {record.s3Key && <img
@@ -298,6 +328,10 @@ export default function DynamicTable() {
                                                 className="img-fluid float-left">
                                             </img>}
                                     </td>
+                                    {record.mtime && <td colSpan={columns.length/2}>
+                                        Size: {record.size}
+                                        Last modified: {record.mtime}
+                                    </td>}
                                 </tr>
                             </Fragment>
                         ))}
