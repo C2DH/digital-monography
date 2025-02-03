@@ -22,9 +22,9 @@ def compute_additional_metadata_fields(metadata: DocumentMetadata) -> None:
                 digital_name = digitalsource.name
                 digital_type = digitalsource.suffix
                 digital_size = digital_stats.st_size  # in bytes
-                digital_mtime = int(
-                    digital_stats.st_mtime
-                )  # time of most recent content modification in seconds
+                digital_mtime = str(
+                    digital_stats.st_mtime * 1000
+                )  # time of most recent content modification in miliseconds
                 asset.kwargs.update(
                     {
                         "digitalname": digital_name,
@@ -50,9 +50,9 @@ def compute_additional_metadata_fields(metadata: DocumentMetadata) -> None:
                 paper_name = papersource.name
                 paper_type = papersource.suffix
                 paper_size = paper_stats.st_size  # in bytes
-                paper_mtime = int(
-                    paper_stats.st_mtime
-                )  # time of most recent content modification in seconds
+                paper_mtime = str(
+                    paper_stats.st_mtime * 1000
+                )  # time of most recent content modification in miliseconds
                 asset.kwargs.update(
                     {
                         "papername": paper_name,
