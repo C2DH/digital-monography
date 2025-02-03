@@ -291,7 +291,8 @@ export default function DynamicTable() {
                                     className="collapse accordion-collapse">
                                     <td colSpan={columns.length}>
                                         {record.s3Key && <h6>{record["caption"]}</h6>}
-                                        {record.s3Key && imgOpenedMap[record.s3Key] && <img
+                                        {/* {record.s3Key && imgOpenedMap[record.s3Key] && <img */}
+                                        {record.s3Key && <img
                                                 src={record.s3Key}
                                                 alt=""
                                                 className="img-fluid float-left">
