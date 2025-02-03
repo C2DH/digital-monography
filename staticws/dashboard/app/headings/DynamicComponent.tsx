@@ -82,7 +82,6 @@ export default function DynamicListGroup(): JSX.Element {
 
     const fetchObjectFromS3 = async (aSlug: string) => {
         try {
-            aSlug
             const configKey = btoa(`${aSlug}/_config.yml`)
             const getPreSignedUrlResp = await fetch(`${endpoint}/test/gpu?type=asset&key=${configKey}`);
             const preSignedUrljson = await getPreSignedUrlResp.json();

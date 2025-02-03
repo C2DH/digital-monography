@@ -23,7 +23,7 @@ type IAssetRecord = {
     s3Key: string,
     exists: boolean,
     size?: string,
-    mtime?: number,
+    mtime?: string,
 }
 
 function getNestedStr(rec: any, attr: string): string {
@@ -91,7 +91,7 @@ function getImgSrc(slug: string | null, inputFieldVal: string): string {
 }
 
 function formatBytes(bytes: number | undefined, decimals = 2): string {
-    if (bytes == "undefined" || !+bytes) return '0 Bytes'
+    if (typeof bytes == "undefined" || !+bytes) return '0 Bytes'
     const k = 1024
     const dm = decimals < 0 ? 0 : decimals
     const sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
@@ -117,9 +117,9 @@ function getColSums(col: string, isColorSum: number,
     }
 }
 
-function getDate(val: string): Date {
+function getDate(val: string): string {
     if (!val) return "";
-    return new Date(Number(val));
+    return new Date(Number(val)).toUTCString();
 }
 
 // function getAsHtml(s: string): string {
