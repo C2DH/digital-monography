@@ -1,18 +1,23 @@
 # Dashboard
 
+The dashboard for authors and editors to help their work on manuscripts.
+
 ## Tech stack
 
 Tech stack for the frontend:
 - React - as ui framework
 - Bootstrap - for ui components
 - Next.js - as a build tool, _DO NOT_ use it for anything else than build or routing
+- S3 - for hosting
 
 ## Updating
 
-Note that the dashboard is updated every time you execute `git push` command.
+Note that the dashboard is updated every time you execute `git push` command. When you push to GitLab, the following scripts are triggered.
 
 * build-dashboard - builds the static website
 * upload-dashboard - uploads the static website to the cloud
+
+See [the CI scripts](./../../.gitlab-ci.yml) for implementation details.
 
 ## Development
 
