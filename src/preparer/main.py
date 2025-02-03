@@ -206,6 +206,15 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_soup = insert_digital_objects(html_soup, metadata, tables)
         html_soup = remove_metadata_tables(html_soup, metadata, tables)
         _write_config_to_efs(metadata, key)
+
+
+        # for rec in getattr(metadata, "assets"):
+        #     for k, v in rec.to_json().items():
+        #         print(">", k, v, type(v))
+        # logger.info(
+        #     f"==Metadata: "
+        #     + json.dumps([rec.to_json() for rec in getattr(metadata, "assets")], default=str)
+        # )
         _write_metadata_to_s3(metadata, key)
         _write_metadata_to_db(metadata, key)
         _write_metadata_to_efs(metadata, key)
