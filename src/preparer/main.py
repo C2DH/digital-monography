@@ -27,6 +27,7 @@ try:
         IS_DEBUG,
         #
         FIELD_DIGITAL_SOURCE,
+        DEFAULT_SFS_DIR,
     )
     from citations import add_bibliography, is_citation, prepare_citations
     from digital_prep import insert_digital_objects, remove_metadata_tables
@@ -69,6 +70,7 @@ except (ImportError, ModuleNotFoundError):
         IS_DEBUG,
         #
         FIELD_DIGITAL_SOURCE,
+        DEFAULT_SFS_DIR,
     )
     from .citations import add_bibliography, is_citation, prepare_citations
     from .digital_prep import insert_digital_objects, remove_metadata_tables
@@ -186,10 +188,11 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         logger.info("====================================")
         logger.info(f"Looking for {FIELD_DIGITAL_SOURCE}")
         logger.info(f"metadata.filepath.parent: ({metadata.filepath.parent})")
+        root = pathlib.Path(DEFAULT_SFS_DIR) / metadata.filepath.parent
         for asset in metadata.assets:
-            logger.info("asset.kwargs.keys()", asset.kwargs.keys())
+            logger.info(f"asset.kwargs.keys(), {asset.kwargs.keys()}")
             if asset.kwargs.get(FIELD_DIGITAL_SOURCE) is not None:
-                digitalsource = metadata.filepath.parent / asset.kwargs.get(
+                digitalsource = root / asset.kwargs.get(
                     FIELD_DIGITAL_SOURCE
                 )
                 logger.info(f"Digital source: {digitalsource}")

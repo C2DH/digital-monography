@@ -1,18 +1,19 @@
 # import bs4
 try:
-    from constants import FIELD_DIGITAL_SOURCE, FIELD_PAPER_SOURCE
+    from constants import DEFAULT_SFS_DIR, FIELD_DIGITAL_SOURCE, FIELD_PAPER_SOURCE
     from metadata import AssetDatapoint, DocumentMetadata
 except (ImportError, ModuleNotFoundError):
-    from .constants import FIELD_DIGITAL_SOURCE, FIELD_PAPER_SOURCE
+    from .constants import DEFAULT_SFS_DIR, FIELD_DIGITAL_SOURCE, FIELD_PAPER_SOURCE
     from .metadata import AssetDatapoint, DocumentMetadata
 
 
 def compute_additional_metadata_fields(metadata: DocumentMetadata) -> None:
+    root = pathlib.Path(DEFAULT_SFS_DIR) / metadata.filepath.parent
     for asset in metadata.assets:
         asset: AssetDatapoint
 
         if asset.kwargs.get(FIELD_DIGITAL_SOURCE) is not None:
-            digitalsource = metadata.filepath.parent / asset.kwargs.get(
+            digitalsource = root / asset.kwargs.get(
                 FIELD_DIGITAL_SOURCE
             )
             if digitalsource.exists():
