@@ -1,0 +1,21 @@
+// Scripts that cannot be run deferred (note - modules are loaded deferred automatically)
+window._ll = window._ll || [];
+
+// Record Google Analytics
+// Note that having the script in this separate file rather than inline means GA will claim a slightly slower load time, but it's incorrect,
+// and this means that we don't have to enable unsafe access in the Content-Security-Policy
+window.dataLayer = window.dataLayer || [];
+const data = {
+    "gtm.start": new Date().getTime(),
+    event: "gtm.js"
+};
+window.dataLayer.push(data);
+console.debug(`Pushing to dataLayer: ${JSON.stringify(data)}`);
+window.gtag = function(){window.dataLayer.push(arguments)};
+
+// Set up MathJax config before it loads as described here:
+// https://docs.mathjax.org/en/v2.7-latest/configuration.html#using-plain-javascript
+window.MathJax = {
+    CommonHTML: { linebreaks: { automatic: true } },
+    "HTML-CSS": { linebreaks: { automatic: true } }
+};

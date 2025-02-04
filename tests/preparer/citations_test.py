@@ -1,14 +1,9 @@
 import bs4
-import citeproc
 import mammoth
 import pathlib
 
-from src.preparer.citations import (
-    add_citations,
-    create_citations_to_register,
-    extract_citations,
-    prepare_citations_for_citeproc,
-)
+from src.preparer.citations import add_bibliography, prepare_citations, is_citation
+from src.preparer.metadata import DocumentMetadata
 
 
 class TestCitationsFromFields:
@@ -19,41 +14,51 @@ class TestCitationsFromFields:
         with open(cls.fp, "rb") as f:
             result = mammoth.convert_to_html(f)
         cls.html_soup = bs4.BeautifulSoup(result.value, "html.parser")
-        cls.citations = extract_citations(cls.html_soup)
-        json_data = prepare_citations_for_citeproc(cls.citations)
-        bib_source = citeproc.source.json.CiteProcJSON(json_data)
-        bib_style = citeproc.CitationStylesStyle("harvard1", validate=False)
-        cls.bibliography = citeproc.CitationStylesBibliography(
-            bib_style, bib_source, citeproc.formatter.html
+        citations = []
+        cls.metadata = DocumentMetadata()
+        for node in cls.html_soup.descendants:
+            if is_citation(node):
+                citations.append(node)
+        cls.html_soup, cls.bib = prepare_citations(
+            cls.html_soup, cls.metadata, citations
         )
-        cls.citeproc_citations = create_citations_to_register(cls.citations)
-        for citation in cls.citeproc_citations:
-            cls.bibliography.register(citation)
-        cls.html_soup = add_citations(
-            cls.html_soup, cls.citeproc_citations, cls.citations, cls.bibliography
-        )
+        cls.html_soup = add_bibliography(cls.html_soup, cls.bib)
 
     def test_extract_citations_finds_all_citations(self):
-        assert len(self.citations) == 1
+        assert len(self.metadata.citation_groups) == 1
+        assert len(self.metadata.citation_items) == 1
 
-    def test_extract_citations_properly_decodes_json_data(self):
-        assert self.citations[0]["citationItems"][0]["label"] == "figure"
-        assert self.citations[0]["citationItems"][0]["locator"] == "13"
-        assert self.citations[0]["citationItems"][0]["prefix"] == "see"
-        assert self.citations[0]["citationItems"][0]["suffix"] == "for examples"
-        assert (
-            self.citations[0]["citationItems"][0]["itemData"]["title"] == "I disagree"
-        )
-        assert (
-            self.citations[0]["properties"]["plainCitation"]
-            == "(see Ce 2010, Abb. 13 for examples)"
-        )
+    def test_citation_groups_extracted(self):
+        group = self.metadata.get_citation_group("u4qVPMeE")
+        assert group.plainCitation == "(see Ce 2010, Abb. 13 for examples)"
 
-    def test_render_proper_html(self):
+    def test_citation_items_extracted(self):
+        item = self.metadata.get_citation_item(43)
+        assert item.itemData["title"] == "I disagree"
+        assert item.itemData["container-title"] == "We all agree"
+        assert item.itemData["publisher"] == "Like Minded Publ"
+        assert item.itemData["author"][0]["given"] == "Abe"
+        assert item.itemData["author"][0]["family"] == "Ce"
+        assert item.itemData["issued"]["date-parts"][0] == ["2010", 12, 31]
+
+    def test_citation_was_added(self):
         expected_html = (
             "<p>A claim <cite>(see Ce 2010, Abb. 13 for examples)</cite>.</p>"
         )
-        assert str(self.html_soup) == expected_html
+        assert str(self.html_soup).startswith(expected_html)
+
+    def test_bibliography_was_added(self):
+        expected_html = (
+            "<div>"
+            "<h2>Bibliography</h2>"
+            "<ol>"
+            "<li><small>Ce, A., 2010. I disagree. In "
+            "<i>We all agree</i>"
+            ".  Like Minded Publ. Available at: https://example.com/.</small></li>"
+            "</ol>"
+            "</div>"
+        )
+        assert str(self.html_soup).endswith(expected_html)
 
 
 class TestCitationsFromFootnotes:
@@ -64,62 +69,51 @@ class TestCitationsFromFootnotes:
         with open(cls.fp, "rb") as f:
             result = mammoth.convert_to_html(f)
         cls.html_soup = bs4.BeautifulSoup(result.value, "html.parser")
-        cls.citations = extract_citations(cls.html_soup)
-        json_data = prepare_citations_for_citeproc(cls.citations)
-        bib_source = citeproc.source.json.CiteProcJSON(json_data)
-        bib_style = citeproc.CitationStylesStyle("harvard1", validate=False)
-        cls.bibliography = citeproc.CitationStylesBibliography(
-            bib_style, bib_source, citeproc.formatter.html
+        citations = []
+        cls.metadata = DocumentMetadata()
+        for node in cls.html_soup.descendants:
+            if is_citation(node):
+                citations.append(node)
+        cls.html_soup, cls.bib = prepare_citations(
+            cls.html_soup, cls.metadata, citations
         )
-        cls.citeproc_citations = create_citations_to_register(cls.citations)
-        for citation in cls.citeproc_citations:
-            cls.bibliography.register(citation)
-        cls.html_soup = add_citations(
-            cls.html_soup, cls.citeproc_citations, cls.citations, cls.bibliography
-        )
+        cls.html_soup = add_bibliography(cls.html_soup, cls.bib)
 
     def test_extract_citations_finds_all_2_citations(self):
-        assert len(self.citations) == 2
+        assert len(self.metadata.citation_groups) == 2
+        assert len(self.metadata.citation_items) == 3
+        items = self.metadata.filter("citation_items", "citationId", "a22p6p0ob48")
+        assert len(items) == 2
 
-    def test_extract_citations_properly_decodes_json_data(self):
-        assert (
-            self.citations[0]["citationItems"][0]["itemData"]["type"]
-            == "article-journal"
+    def test_citation_groups_extracted(self):
+        group = self.metadata.get_citation_group("a1uqssb04e4")
+        assert group.plainCitation.startswith(
+            "Joe Schmoe, „Just no“, Opinions, 1, Nr. 1 (2035): 1–2."
         )
-        assert self.citations[0]["citationItems"][0]["itemData"]["title"] == "Just no"
-        assert (
-            self.citations[0]["citationItems"][0]["itemData"]["author"][0]["family"]
-            == "Schmoe"
-        )
-
-        assert self.citations[1]["citationItems"][0]["itemData"]["type"] == "chapter"
-        assert (
-            self.citations[1]["citationItems"][0]["itemData"]["title"] == "I disagree"
-        )
-        assert (
-            self.citations[1]["citationItems"][0]["itemData"]["author"][0]["family"]
-            == "Ce"
+        group = self.metadata.get_citation_group("a22p6p0ob48")
+        assert group.plainCitation.startswith(
+            "see Abe Ce, „I disagree“, in We all agree (Like Minded Publ, 2010), 12;"
         )
 
-        assert self.citations[1]["citationItems"][1]["itemData"]["type"] == "book"
-        assert (
-            self.citations[1]["citationItems"][1]["itemData"]["title"]
-            == "Zażółć gęślą jaźń"
-        )
-        assert (
-            self.citations[1]["citationItems"][1]["itemData"]["author"][0]["family"]
-            == "Ce"
-        )
-        assert (
-            self.citations[1]["citationItems"][1]["itemData"]["event-place"]
-            == "안돌이지돌이다래미한숨바우"
-        )
-        assert (
-            self.citations[0]["properties"]["plainCitation"]
-            == "Joe Schmoe, „Just no“, Opinions, 1, Nr. 1 (2035): 1–2."
-        )
+    def test_citation_items_extracted(self):
+        joe_schmoe = self.metadata.get_citation_item(42)
+        abe_ce = self.metadata.get_citation_item(43)
+        with_nonascii = self.metadata.get_citation_item(41)
 
-    def test_render_proper_html(self):
+        assert joe_schmoe.itemData["type"] == "article-journal"
+        assert joe_schmoe.itemData["title"] == "Just no"
+        assert joe_schmoe.itemData["author"][0]["family"] == "Schmoe"
+
+        assert abe_ce.itemData["type"] == "chapter"
+        assert abe_ce.itemData["title"] == "I disagree"
+        assert abe_ce.itemData["author"][0]["family"] == "Ce"
+
+        assert with_nonascii.itemData["type"] == "book"
+        assert with_nonascii.itemData["title"] == "Zażółć gęślą jaźń"
+        assert with_nonascii.itemData["author"][0]["family"] == "Ce"
+        assert with_nonascii.itemData["event-place"] == "안돌이지돌이다래미한숨바우"
+
+    def test_citation_was_added(self):
         expected_html_start = (
             "<p>Claim A<sup>"
             '<a href="#footnote-1" id="footnote-ref-1">[1]</a>'
@@ -130,14 +124,17 @@ class TestCitationsFromFootnotes:
             "<cite>Joe Schmoe, „Just no“, Opinions, 1, Nr. 1 (2035): 1–2.</cite> "
             '<a href="#footnote-ref-1">↑</a>'
         )
-        # expected_html_start = (
-        #     "<p>Claim A"
-        #     '<a href="#footnote-1" id="footnote-ref-1">[1]</a>'
-        #     ". Claim B"
-        #     '<a href="#footnote-2" id="footnote-ref-2">[2]</a>'
-        #     ".</p>"
-        #     '<ol><li id="footnote-1"><p> '
-        #     "<cite>Joe Schmoe, „Just no“, Opinions, 1, Nr. 1 (2035): 1–2.</cite> "
-        #     '<a href="#footnote-ref-1">↑</a>'
-        # )
         assert str(self.html_soup).startswith(expected_html_start)
+
+    def test_bibliography_was_added(self):
+        expected_html = (
+            "<div>"
+            "<h2>Bibliography</h2>"
+            "<ol>"
+            "<li><small>Schmoe, J., 2035. Just no. , 1(1), pp.1–2.</small></li>"
+            "<li><small>Ce, A., 2010. I disagree. In <i>We all agree</i>.  Like Minded Publ.</small></li>"
+            "<li><small>Ce, A., 2023. <i>Zażółć gęślą jaźń</i>, 안돌이지돌이다래미한숨바우.</small></li>"
+            "</ol>"
+            "</div>"
+        )
+        assert str(self.html_soup).endswith(expected_html)

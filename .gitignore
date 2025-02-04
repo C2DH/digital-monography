@@ -8,3 +8,14 @@
 __pycache__
 .pytest_cache
 
+**/*:Zone.Identifier
+scripts/rclone.conf
+data/input/*
+data/output/*
+data/warnings/*
+
+# JS/TS
+
+node_modules
+.next
+out/

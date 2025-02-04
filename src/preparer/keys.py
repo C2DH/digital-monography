@@ -1,121 +1,71 @@
+# ===== IMPORTANT =====
+# Remember, the only source of truth for keys.py is the one defined in
+# `src/_common/keys.py`. KeyPaths defined in other directories in
+# the src/ folder should be replaced with `src/_common/keys.py` before
+# building the image. We advise that you always build the containers
+# using Makefile commands, as the copy command is already included.
+# ======================
+
 import pathlib
-import typing as t
+from functools import cached_property
 
 try:
-    from .constants import DEFAULT_SFS_DIR
-except Exception as e:
     from constants import DEFAULT_SFS_DIR
+except (ImportError, ModuleNotFoundError):
+    from .constants import DEFAULT_SFS_DIR
 
 
 class InvalidKey(Exception):
     pass
 
 
-class Key:
-    def __init__(self, key: str, is_upload: bool):
-        self._input_str = key
-        self._is_upload = is_upload
-        self._parts = self._input_str.replace("\\", "/").split("/")
-        self._validate_input_str()
-        if self._is_upload:
-            self.root = ""
-            self.phase = ""
-            self.slug = self._shift_parts()
-            self.path = "/".join(self._parts)
-            self.filename = self._parts[-1]
-        else:
-            self.root = self._shift_parts()
-            self.phase = self._shift_parts()
-            self.slug = self._shift_parts()
-            self.path = "/".join(self._parts)
-            self.filename = self._parts[-1]
-        self.filepath = pathlib.Path(str(self))
+class KeyPath(type(pathlib.Path())):
+    _abs_root = DEFAULT_SFS_DIR
 
-    def _validate_input_str(self) -> None:
-        if self._is_upload and len(self._parts) < 2:
-            raise InvalidKey(
-                f"Missing parts of the key {self._input_str}. "
-                + "Key is too short: it can be either "
-                + "'my-slug/path/to/file.xx' or 'my-slug/file.xx'"
-            )
-        elif self._is_upload == False and len(self._parts) < 4:
-            raise InvalidKey(
-                f"Missing parts of the key {self._input_str}. "
-                + "Key is too short: it can be either "
-                + "'my-root/my-phase/my-slug/file.xx' or "
-                + "'my-root/my-phase/my-slug/path/to/file.xx'"
-            )
+    def __new__(cls, *pathsegments):
+        return super().__new__(cls, *pathsegments)
 
-    def _shift_parts(self) -> str:
-        val = self._parts[0]
-        del self._parts[0]
-        return val
+    @property
+    def efs_filepath(self) -> "KeyPath":
+        """Returns /mnt/efs/my-slug/path/to/file.txt"""
+        return KeyPath(self._abs_root) / self
 
-    def with_suffix(self, suffix: str) -> "Key":
-        if not suffix.startswith("."):
-            raise ValueError("Key suffix should start with a '.' dot, e.g. '.html'.")
-        if "." not in self.filename and self._is_upload:
-            return Key("/".join([self.slug, self.path + suffix]), self._is_upload)
-        elif "." not in self.filename:
-            return Key(
-                "/".join([self.root, self.phase, self.slug, self.path + suffix]),
-                self._is_upload,
-            )
-        fn = self.filename
-        for i in range(len(fn)):
-            backward_idx = len(fn) - i - 1
-            if fn[backward_idx] == ".":
-                fn = self.filename[0:backward_idx] + suffix
-                break
-        new_path = self.path.replace(self.filename, fn)
-        if self._is_upload:
-            key = "/".join([self.slug, new_path])
-        else:
-            key = "/".join([self.root, self.phase, self.slug, new_path])
-        return Key(key, is_upload=self._is_upload)
+    @cached_property
+    def efs_slug_dir(self) -> "KeyPath":
+        """Returns /mnt/efs/my-slug"""
+        return KeyPath(pathlib.Path(self._abs_root) / self.slug)
 
-    def as_input_dir(self, suffix: t.Optional[str] = None) -> "Key":
-        root = self.root if self.root else DEFAULT_SFS_DIR
-        key = "/".join([root, "input", self.slug, self.path])
-        if suffix:
-            return Key(key, is_upload=False).with_suffix(suffix)
-        return Key(key, is_upload=False)
+    @cached_property
+    def s3_key(self) -> "KeyPath":
+        """Returns my-slug/path/to/file.txt"""
+        try:
+            return KeyPath(self.relative_to(self._abs_root))
+        except ValueError:
+            return KeyPath(self)
 
-    def as_html_dir(self, suffix: t.Optional[str] = None) -> "Key":
-        root = self.root if self.root else DEFAULT_SFS_DIR
-        key = "/".join([root, "html", self.slug, self.path])
-        if suffix:
-            return Key(key, is_upload=False).with_suffix(suffix)
-        return Key(key, is_upload=False)
+    @cached_property
+    def github_path(self) -> "KeyPath":
+        """Returns path/to/file.txt (without my-slug)"""
+        try:
+            for i, part in enumerate(self.parts):
+                if part == self.slug:
+                    return KeyPath(*self.parts[i + 1 :])
+            return KeyPath(self)
+        except ValueError:
+            return KeyPath(self)
 
-    def as_md_dir(self, suffix: t.Optional[str] = None) -> "Key":
-        root = self.root if self.root else DEFAULT_SFS_DIR
-        key = "/".join([root, "md", self.slug, self.path])
-        if suffix:
-            return Key(key, is_upload=False).with_suffix(suffix)
-        return Key(key, is_upload=False)
+    @cached_property
+    def slug(self) -> str:
+        """Returns my-slug"""
+        return self.s3_key.parts[0]
 
-    def as_jb_dir(self, suffix: t.Optional[str] = None) -> "Key":
-        root = self.root if self.root else DEFAULT_SFS_DIR
-        key = "/".join([root, "jb", self.slug, self.path])
-        if suffix:
-            return Key(key, is_upload=False).with_suffix(suffix)
-        return Key(key, is_upload=False)
+    @cached_property
+    def efs_slug_html_path(self) -> "KeyPath":
+        """Adds '_html' in slug, /mnt/efs/my-slug/_html/path/to/file.txt"""
+        return self.add_to_efs_slug_dir("_html")
 
-    def mkdir(self) -> None:
-        """
-        Using simple Path.mkdir() function with `parents=True` agrugment
-        creates
-        """
-        # self.filepath.parent.mkdir(mode=0o770, parents=True, exist_ok=True)
-        for dir in reversed(self.filepath.parents):
-            dir.mkdir(mode=0o777, exist_ok=True)
-            # dir.mkdir(mode=0o755, exist_ok=True) # works on AWS, but not locally
-            # dir.mkdir(mode=0o777, exist_ok=True) # works great, but causes error in
-            # AWS Lambda /tmp due to strict permission limitations
-
-    def __str__(self):
-        if self._is_upload:
-            return "/".join([self.slug, self.path])
-        else:
-            return "/".join([self.root, self.phase, self.slug, self.path])
+    def add_to_efs_slug_dir(self, fldr: str) -> "KeyPath":
+        """Adds <fldr> folder to slug dir, /mnt/efs/my-slug/<fldr>/path/to/file.txt"""
+        if not (self.efs_slug_dir / fldr).exists():
+            (self.efs_slug_dir / fldr).mkdir()
+        return self.efs_slug_dir / fldr / self.github_path

@@ -9,7 +9,7 @@ resource "aws_s3_bucket_website_configuration" "staticws_wip" {
     suffix = "index.html"
   }
   error_document {
-    key = "index.html"
+    key = "error.html"
   }
 }
 
@@ -20,11 +20,22 @@ resource "aws_s3_bucket_website_configuration" "staticws_wip" {
 #   }
 # }
 
+resource "aws_s3_bucket_cors_configuration" "prod_media" {
+  bucket = aws_s3_bucket.staticws_wip.id
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["GET", "HEAD"]
+    allowed_origins = ["*"]
+    max_age_seconds = 3000
+  }
+}
+
 resource "aws_s3_bucket_ownership_controls" "staticws_wip" {
   bucket = aws_s3_bucket.staticws_wip.id
   rule {
     object_ownership = "ObjectWriter"
   }
+  depends_on = [aws_s3_bucket_public_access_block.staticws_wip]
 }
 
 resource "aws_s3_bucket_public_access_block" "staticws_wip" {
@@ -39,7 +50,8 @@ resource "aws_s3_bucket_acl" "staticws_wip" {
   bucket = aws_s3_bucket.staticws_wip.id
   acl    = "public-read"
   depends_on = [
-    aws_s3_bucket_public_access_block.staticws_wip,
+    # aws_s3_bucket_public_access_block.staticws_wip,
+    aws_s3_bucket_ownership_controls.staticws_wip
   ]
 }
 
@@ -62,6 +74,7 @@ data "aws_iam_policy_document" "public_staticws_wip" {
       identifiers = ["*"]
     }
   }
+  depends_on = [aws_s3_bucket_public_access_block.staticws_wip]
 }
 
 resource "aws_s3_bucket_policy" "public_staticws_wip" {
@@ -69,9 +82,9 @@ resource "aws_s3_bucket_policy" "public_staticws_wip" {
   policy = data.aws_iam_policy_document.public_staticws_wip.json
 }
 
-resource "aws_s3_object" "index_html" {
+resource "aws_s3_object" "wip_index" {
   bucket       = aws_s3_bucket.staticws_wip.id
   key          = "index.html"
-  source       = "./../staticws/index.html"
+  source       = "./staticws/reader/index.html"
   content_type = "text/html"
 }

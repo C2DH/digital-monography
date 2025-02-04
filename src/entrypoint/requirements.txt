@@ -1,0 +1,5 @@
+aws-lambda-wsgi==0.0.*
+dropbox==9.4.*
+Flask==3.0.*
+Jinja2==3.1.*
+setuptools

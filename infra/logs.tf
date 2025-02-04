@@ -1,10 +1,32 @@
-# resource "aws_cloudwatch_log_group" "general_purpose_logs" {
-#   name              = "/aws/dgt-mon/general/${var.environment}"
-#   retention_in_days = 365
-#   skip_destroy      = true
-# }
+resource "aws_cloudwatch_log_group" "general_purpose_logs" {
+  name              = "/aws/dgt-mon/general/${var.environment}"
+  retention_in_days = 365
+  skip_destroy      = true
+}
 
 data "aws_cloudwatch_log_group" "general_purpose_logs" {
-  name = "/aws/dgt-mon/general/${var.environment}"
-  # depends_on = [aws_cloudwatch_log_group.general_purpose_logs]
+  name       = "/aws/dgt-mon/general/${var.environment}"
+  depends_on = [aws_cloudwatch_log_group.general_purpose_logs]
+}
+
+resource "aws_dynamodb_table" "audit_tbl" {
+  name         = var.dgtmon_dev_dyndb_audit_tbl
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "slug"
+  range_key    = "timestamp"
+
+  attribute {
+    name = "slug"
+    type = "S"
+  }
+
+  attribute {
+    name = "timestamp"
+    type = "S"
+  }
+
+  ttl {
+    attribute_name = "expires_at"
+    enabled        = true
+  }
 }

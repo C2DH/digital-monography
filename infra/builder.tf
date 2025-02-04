@@ -1,44 +1,131 @@
-# Intermediate MD S3
+## Upload author's package S3
 
-resource "aws_s3_bucket" "ir_apkg_md" {
-  bucket        = var.ir_apkg_md_bucket_name
-  force_destroy = true
+resource "aws_s3_bucket" "upload_apkg" {
+  bucket = var.upload_apkg_bucket_name
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
-data "aws_iam_policy_document" "ir_apkg_policy" {
+resource "aws_s3_bucket_versioning" "upload_apkg" {
+  bucket = aws_s3_bucket.upload_apkg.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_object_lock_configuration" "upload_apkg" {
+  bucket              = aws_s3_bucket.upload_apkg.id
+  depends_on          = [aws_s3_bucket_versioning.upload_apkg]
+  object_lock_enabled = "Enabled"
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "upload_apkg" {
+  bucket     = aws_s3_bucket.upload_apkg.id
+  depends_on = [aws_s3_bucket_versioning.upload_apkg]
+  rule {
+    id     = "upload_apkg_old_versions_to_archive"
+    status = "Enabled"
+    noncurrent_version_transition {
+      noncurrent_days = 30
+      storage_class   = "STANDARD_IA"
+    }
+    noncurrent_version_transition {
+      noncurrent_days = 60
+      storage_class   = "GLACIER"
+    }
+  }
+}
+
+data "aws_iam_policy_document" "public_upload_apkg" {
   statement {
     actions = [
       "s3:*" # TODO: limit
     ]
     resources = [
-      "arn:aws:s3:::${aws_s3_bucket.ir_apkg_md.bucket}",
-      "arn:aws:s3:::${aws_s3_bucket.ir_apkg_md.bucket}/*"
+      "arn:aws:s3:::${aws_s3_bucket.upload_apkg.bucket}",
+      "arn:aws:s3:::${aws_s3_bucket.upload_apkg.bucket}/*"
     ]
     principals {
       type        = "AWS"
-      identifiers = [aws_iam_user.ir_apkg_md_uploader.arn]
+      identifiers = [aws_iam_user.apkg_uploader.arn]
     }
   }
 }
 
-resource "aws_s3_bucket_policy" "ir_apkg_policy" {
-  bucket = aws_s3_bucket.ir_apkg_md.id
-  policy = data.aws_iam_policy_document.ir_apkg_policy.json
+## Intermediate HTML S3
+
+resource "aws_s3_bucket" "ir_apkg_html" {
+  bucket        = var.ir_apkg_html_bucket_name
+  force_destroy = true
 }
 
-# Uploader
-
-resource "aws_iam_user" "ir_apkg_md_uploader" {
-  name = "ir-apkg-md-uploader"
+data "aws_iam_policy_document" "ir_apkg_html_policy" {
+  statement {
+    actions = [
+      "s3:*" # TODO: limit
+    ]
+    resources = [
+      "arn:aws:s3:::${aws_s3_bucket.ir_apkg_html.bucket}",
+      "arn:aws:s3:::${aws_s3_bucket.ir_apkg_html.bucket}/*"
+    ]
+    principals {
+      type        = "AWS"
+      identifiers = [aws_iam_user.apkg_uploader.arn]
+    }
+  }
 }
 
-resource "aws_iam_access_key" "ir_apkg_md_uploader" {
-  user = aws_iam_user.ir_apkg_md_uploader.name
+resource "aws_s3_bucket_policy" "ir_apkg_html_policy" {
+  bucket = aws_s3_bucket.ir_apkg_html.id
+  policy = data.aws_iam_policy_document.ir_apkg_html_policy.json
 }
 
-output "ir_apkg_md_uploader_id" {
-  value = aws_iam_access_key.ir_apkg_md_uploader.id
+## Uploader
+
+resource "aws_s3_bucket_policy" "public_upload_apkg" {
+  bucket = aws_s3_bucket.upload_apkg.id
+  policy = data.aws_iam_policy_document.public_upload_apkg.json
 }
+
+resource "aws_iam_user" "apkg_uploader" {
+  name = "apkg-uploader"
+}
+
+resource "aws_iam_access_key" "apkg_uploader" {
+  user = aws_iam_user.apkg_uploader.name
+}
+
+output "apkg_uploader_id" {
+  value = aws_iam_access_key.apkg_uploader.id
+}
+
+## SQS (Lambda trigger)
+
+resource "aws_sqs_queue" "pre_builder_queue" {
+  name                        = "${var.sqs_builder_trigger}.fifo"
+  fifo_queue                  = true
+  receive_wait_time_seconds   = 15 # TODO: once on DGT infra, reduce wait time
+  delay_seconds               = 5
+  content_based_deduplication = true
+  max_message_size            = 1024 # 1 KiB
+  message_retention_seconds   = 3600 # 1 hour
+  visibility_timeout_seconds  = 900
+}
+
+resource "aws_lambda_event_source_mapping" "pre_builder" {
+  event_source_arn = aws_sqs_queue.pre_builder_queue.arn
+  function_name    = aws_lambda_function.builder_func.arn
+}
+
+# resource "aws_s3_bucket_notification" "ir_apkg_md_notification" {
+#   bucket = aws_s3_bucket.ir_apkg_md.id
+#   lambda_function {
+#     lambda_function_arn = aws_lambda_function.builder_func.arn
+#     events              = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
+#   }
+#   depends_on = [aws_lambda_permission.allow_ir_apkg_md_to_invoke_lambda]
+# }
 
 ## Lambda (builder)
 
@@ -85,10 +172,58 @@ data "aws_iam_policy_document" "builder" {
   statement {
     sid       = "AllowWritingLogs"
     effect    = "Allow"
-    resources = ["arn:aws:logs:${var.region}:*:log-group:/aws/lambda/*:*"]
+    resources = ["arn:aws:logs:${var.region}:*:log-group:/aws/*:*"]
     actions = [
       "logs:CreateLogStream",
       "logs:PutLogEvents",
+    ]
+  }
+  statement {
+    sid       = "AllowWritingAuditEvents"
+    effect    = "Allow"
+    resources = [aws_dynamodb_table.audit_tbl.arn]
+    actions = [
+      "dynamodb:PutItem",
+    ]
+  }
+  statement {
+    sid       = "AllowReceivingSQSMessages"
+    effect    = "Allow"
+    resources = [aws_sqs_queue.pre_builder_queue.arn]
+    actions = [
+      "sqs:DeleteMessage",
+      "sqs:ReceiveMessage",
+      "sqs:GetQueueAttributes",
+      "sqs:GetQueueUrl"
+    ]
+  }
+  # statement {
+  #   sid    = "AllowReadAndWriteToDynamoDB"
+  #   effect = "Allow"
+  #   resources = [
+  #     aws_dynamodb_table.assets_tbl.arn,
+  #     aws_dynamodb_table.headings_tbl.arn,
+  #     aws_dynamodb_table.citations_tbl.arn
+  #   ]
+  #   actions = [
+  #     "dynamodb:PutItem",
+  #     # "dynamodb:GetItem",
+  #     # "dynamodb:UpdateItem",
+  #     # "dynamodb:DeleteItem",
+  #     # "dynamodb:Scan",
+  #     # "dynamodb:Query"
+  #   ]
+  # }
+  statement {
+    sid       = "AllowLambdaVPCNetworking"
+    effect    = "Allow"
+    resources = ["*"]
+    actions = [
+      "ec2:DescribeNetworkInterfaces",
+      "ec2:CreateNetworkInterface",
+      "ec2:DeleteNetworkInterface",
+      "ec2:DescribeInstances",
+      "ec2:AttachNetworkInterface"
     ]
   }
 }
@@ -111,22 +246,62 @@ resource "aws_lambda_permission" "allow_ir_apkg_md_to_invoke_lambda" {
   source_arn    = aws_s3_bucket.ir_apkg_md.arn
 }
 
-resource "aws_lambda_function" "builder_func" {
-  filename      = "./../src/builder/builder.zip"
-  function_name = "builder"
-  role          = aws_iam_role.builder_iam.arn
-  depends_on    = [data.aws_cloudwatch_log_group.general_purpose_logs]
-  handler       = "main.lambda_handler"
-  runtime       = "python3.12"
-  timeout       = 900
-  memory_size   = 512
+resource "aws_lambda_permission" "allow_builder_access_s3_via_vpc_endpoint" {
+  statement_id  = "AllowS3AccessViaVPCEndpoint"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.builder_func.arn
+  principal     = "s3.amazonaws.com"
+  source_arn    = aws_vpc_endpoint.s3_endpoint.arn
 }
 
-resource "aws_s3_bucket_notification" "ir_apkg_md_notification" {
-  bucket = aws_s3_bucket.ir_apkg_md.id
-  lambda_function {
-    lambda_function_arn = aws_lambda_function.builder_func.arn
-    events              = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
+# resource "aws_lambda_permission" "allow_builder_access_dynamodb_via_vpc_endpoint" {
+#   statement_id  = "AllowDynamoDbAccessViaVPCEndpoint"
+#   action        = "lambda:InvokeFunction"
+#   function_name = aws_lambda_function.builder_func.arn
+#   principal     = "dynamodb.amazonaws.com"
+#   source_arn    = aws_vpc_endpoint.dynamodb_endpoint.arn
+# }
+
+resource "aws_lambda_function" "builder_func" {
+  function_name = "builder"
+  package_type  = "Image"
+  image_uri     = "${aws_ecr_repository.builder_repo.repository_url}:${local.builder_stable_v}"
+  role          = aws_iam_role.builder_iam.arn
+  depends_on = [
+    data.aws_cloudwatch_log_group.general_purpose_logs,
+    aws_efs_mount_target.efs_mount
+  ]
+  architectures = ["x86_64"]
+  timeout       = 900
+  memory_size   = 1024
+  logging_config {
+    log_group  = data.aws_cloudwatch_log_group.general_purpose_logs.name
+    log_format = "JSON"
   }
-  depends_on = [aws_lambda_permission.allow_ir_apkg_md_to_invoke_lambda]
+  file_system_config {
+    arn              = aws_efs_access_point.efs_access_point.arn
+    local_mount_path = "/mnt/efs"
+  }
+  vpc_config {
+    subnet_ids         = [aws_subnet.efs_public.id]
+    security_group_ids = [aws_security_group.efs_access_sg.id]
+  }
+}
+
+# resource "aws_s3_bucket_notification" "ir_apkg_md_notification" {
+#   bucket = aws_s3_bucket.ir_apkg_md.id
+#   lambda_function {
+#     lambda_function_arn = aws_lambda_function.builder_func.arn
+#     events              = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
+#   }
+#   depends_on = [aws_lambda_permission.allow_ir_apkg_md_to_invoke_lambda]
+# }
+
+resource "aws_ecr_repository" "builder_repo" {
+  name                 = var.builder_repo_name
+  image_tag_mutability = "IMMUTABLE"
+}
+
+locals {
+  builder_stable_v = local.versions_data.BUILDER_STABLE_V
 }

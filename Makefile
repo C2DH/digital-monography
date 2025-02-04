@@ -1,36 +1,182 @@
-setup:
-	. .venv/bin/activate && python -m pip install --upgrade pip && python -m pip install -r .local-requirements.txt 
+ENTRYPOINT_STABLE_V := $(shell jq -r '.ENTRYPOINT_STABLE_V' < .versions.json) 
+DROPBOX_STABLE_V := $(shell jq -r '.DROPBOX_STABLE_V' < .versions.json) 
+BUILDER_STABLE_V := $(shell jq -r '.BUILDER_STABLE_V' < .versions.json) 
+PREPARER_STABLE_V := $(shell jq -r '.PREPARER_STABLE_V' < .versions.json) 
+GITHUB_STABLE_V  := $(shell jq -r '.GITHUB_STABLE_V' < .versions.json) 
+VERIFIER_STABLE_V  := $(shell jq -r '.VERIFIER_STABLE_V' < .versions.json) 
+GPU_STABLE_V  := $(shell jq -r '.GPU_STABLE_V' < .versions.json) 
+LOCAL_STABLE_V := $(shell jq -r '.LOCAL_STABLE_V' < .versions.json)
+AWS_KMS_ARN = 'arn:aws:kms:eu-west-1:367031255351:key/34644061-6a4d-4414-b0e4-90a9df0e2cff'
+DOCKER_ECR = 367031255351.dkr.ecr.eu-west-1.amazonaws.com
+DOCKER_HUB = c2dhunilu
 
-lint:
-	flake8 src --exclude .venv; mypy src --exclude .venv
-
-plan:
-	cd infra/ && terraform plan --var-file=../secrets/local.tfvars
-
-apply:
-	./src/builder/prep_deps.sh && \
-	./src/preparer/prep_deps.sh && \
-	cd infra/ && terraform apply --var-file=../secrets/local.tfvars
-
-zip:
-	./src/builder/prep_deps.sh
-	./src/preparer/prep_deps.sh
 
 test:
-	# export UPLOAD_APKG_BUCKET_NAME=$(terraform output upload_apkg_bucket_name)
-	python -m pytest -vv tests/
+	DGTMON_DEBUG=1 python -m pytest tests/preparer/ tests/verifier/ tests/builder/
 
-list-logs:
-	aws logs describe-log-streams --endpoint-url=http://localhost:4566 --log-group-name /aws/dgt-mon/general/local
+login:
+	aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin ${DOCKER_ECR}
+	docker login --username c2dhadmin
 
-list-objects:
-	aws s3api list-objects-v2 --bucket=dgtmon-dev-apkg-upload --endpoint-url=http://localhost:4566
-	aws s3api list-objects-v2 --bucket=dgtmon-dev-ir-apkg-html --endpoint-url=http://localhost:4566
-	aws s3api list-objects-v2 --bucket=dgtmon-dev-ir-apkg-md --endpoint-url=http://localhost:4566
-	aws s3api list-objects-v2 --bucket=dgtmon-dev-staticws-wip --endpoint-url=http://localhost:4566
+dev/build:
+	docker compose build --no-cache
 
-get-log:
-	aws logs get-log-events --endpoint-url=http://localhost:4566 --log-group-name /aws/lambda/builder --log-stream-name ${stream} 
+dev/tag:
+	docker tag dgtmon-dev-local ${DOCKER_HUB}/dgtmon-dev-local:${LOCAL_STABLE_V}
+	docker tag dgtmon-dev-local ${DOCKER_HUB}/dgtmon-dev-local:latest
 
-destroy:
-	cd infra/ && terraform destroy --var-file=../secrets/local.tfvars
+dev/push:
+	docker push ${DOCKER_HUB}/dgtmon-dev-local:${LOCAL_STABLE_V}
+	docker push ${DOCKER_HUB}/dgtmon-dev-local:latest
+
+dev/start:
+	docker compose up --detach
+
+dev/test:
+	docker compose run main make test
+
+dev/draft:
+	docker compose run main python scripts/prepare_and_build.py book_path=data/input/$(SLUG)
+
+
+copy/audit:
+	cp src/_common/audit.py src/dropbox/audit.py
+	cp src/_common/audit.py src/preparer/audit.py
+	cp src/_common/audit.py src/builder/audit.py
+	cp src/_common/audit.py src/github/audit.py
+	cp src/_common/audit.py src/verifier/audit.py
+
+
+copy/constants:
+	cp src/_common/constants.py src/entrypoint/constants.py
+	cp src/_common/constants.py src/dropbox/constants.py
+	cp src/_common/constants.py src/preparer/constants.py
+	cp src/_common/constants.py src/builder/constants.py
+	cp src/_common/constants.py src/github/constants.py
+	cp src/_common/constants.py src/verifier/constants.py
+	cp src/_common/constants.py src/gpu/constants.py
+
+copy/keys:
+	cp src/_common/keys.py src/dropbox/keys.py
+	cp src/_common/keys.py src/preparer/keys.py
+	cp src/_common/keys.py src/builder/keys.py
+	cp src/_common/keys.py src/github/keys.py
+	cp src/_common/keys.py src/verifier/keys.py
+
+copy/metadata:
+	cp src/_common/metadata.py src/preparer/metadata.py
+	cp src/_common/metadata.py src/builder/metadata.py
+	cp src/_common/metadata.py src/verifier/metadata.py
+
+copy/html2md:
+	cp src/_common/html2md.py src/preparer/html2md.py
+	cp src/_common/html2md.py src/verifier/html2md.py
+
+entrypoint/build:
+	cp src/_common/constants.py src/entrypoint/constants.py
+	docker build -t dgtmon-dev-entrypoint src/entrypoint
+
+entrypoint/tag:
+	docker tag dgtmon-dev-entrypoint ${DOCKER_ECR}/dgtmon-dev-entrypoint:${ENTRYPOINT_STABLE_V}
+	docker tag dgtmon-dev-entrypoint ${DOCKER_HUB}/dgtmon-dev-entrypoint:${ENTRYPOINT_STABLE_V}
+
+entrypoint/push:
+	docker push ${DOCKER_ECR}/dgtmon-dev-entrypoint:${ENTRYPOINT_STABLE_V}
+	docker push ${DOCKER_HUB}/dgtmon-dev-entrypoint:${ENTRYPOINT_STABLE_V}
+
+entrypoint/make: entrypoint/build entrypoint/tag entrypoint/push
+
+dropbox/build:
+	cp src/_common/constants.py src/dropbox/constants.py
+	cp src/_common/keys.py src/dropbox/keys.py
+	docker build -t dgtmon-dev-dropbox src/dropbox
+
+dropbox/tag:
+	docker tag dgtmon-dev-dropbox ${DOCKER_ECR}/dgtmon-dev-dropbox:${DROPBOX_STABLE_V}
+	docker tag dgtmon-dev-dropbox ${DOCKER_HUB}/dgtmon-dev-dropbox:${DROPBOX_STABLE_V}
+
+dropbox/push:
+	docker push ${DOCKER_ECR}/dgtmon-dev-dropbox:${DROPBOX_STABLE_V}
+	docker push ${DOCKER_HUB}/dgtmon-dev-dropbox:${DROPBOX_STABLE_V}
+
+dropbox/make: dropbox/build dropbox/tag dropbox/push
+
+preparer/build:
+	cp src/_common/constants.py src/preparer/constants.py
+	cp src/_common/keys.py src/preparer/keys.py
+	cp src/_common/metadata.py src/preparer/metadata.py
+	cp src/_common/html2md.py src/preparer/html2md.py
+	docker build -t dgtmon-dev-preparer src/preparer
+
+preparer/tag:
+	docker tag dgtmon-dev-preparer ${DOCKER_ECR}/dgtmon-dev-preparer:${PREPARER_STABLE_V}
+	docker tag dgtmon-dev-preparer ${DOCKER_HUB}/dgtmon-dev-preparer:${PREPARER_STABLE_V}
+
+preparer/push:
+	docker push ${DOCKER_ECR}/dgtmon-dev-preparer:${PREPARER_STABLE_V}
+	docker push ${DOCKER_HUB}/dgtmon-dev-preparer:${PREPARER_STABLE_V}
+
+preparer/make: preparer/build preparer/tag preparer/push
+
+builder/build:
+	cp src/_common/constants.py src/builder/constants.py
+	cp src/_common/keys.py src/builder/keys.py
+	cp src/_common/metadata.py src/builder/metadata.py
+	docker build -t dgtmon-dev-builder src/builder
+
+builder/tag:
+	docker tag dgtmon-dev-builder ${DOCKER_ECR}/dgtmon-dev-builder:${BUILDER_STABLE_V}
+	docker tag dgtmon-dev-builder ${DOCKER_HUB}/dgtmon-dev-builder:${BUILDER_STABLE_V}
+
+builder/push:
+	docker push ${DOCKER_ECR}/dgtmon-dev-builder:${BUILDER_STABLE_V}
+	docker push ${DOCKER_HUB}/dgtmon-dev-builder:${BUILDER_STABLE_V}
+
+builder/make: builder/build builder/tag builder/push
+
+github/build:
+	cp src/_common/constants.py src/github/constants.py
+	cp src/_common/keys.py src/github/keys.py
+	docker build -t dgtmon-dev-github src/github
+
+github/tag:
+	docker tag dgtmon-dev-github ${DOCKER_ECR}/dgtmon-dev-github:${GITHUB_STABLE_V}
+	docker tag dgtmon-dev-github ${DOCKER_HUB}/dgtmon-dev-github:${GITHUB_STABLE_V}
+
+github/push:
+	docker push ${DOCKER_ECR}/dgtmon-dev-github:${GITHUB_STABLE_V}
+	docker push ${DOCKER_HUB}/dgtmon-dev-github:${GITHUB_STABLE_V}
+
+github/make: github/build github/tag github/push
+
+verifier/build:
+	cp src/_common/constants.py src/verifier/constants.py
+	cp src/_common/keys.py src/verifier/keys.py
+	cp src/_common/metadata.py src/verifier/metadata.py
+	cp src/_common/html2md.py src/verifier/html2md.py
+	docker build -t dgtmon-dev-verifier src/verifier
+
+verifier/tag:
+	docker tag dgtmon-dev-verifier ${DOCKER_ECR}/dgtmon-dev-verifier:${VERIFIER_STABLE_V}
+	docker tag dgtmon-dev-verifier ${DOCKER_HUB}/dgtmon-dev-verifier:${VERIFIER_STABLE_V}
+
+verifier/push:
+	docker push ${DOCKER_ECR}/dgtmon-dev-verifier:${VERIFIER_STABLE_V}
+	docker push ${DOCKER_HUB}/dgtmon-dev-verifier:${VERIFIER_STABLE_V}
+
+verifier/make: verifier/build verifier/tag verifier/push
+
+gpu/build:
+	cp src/_common/constants.py src/gpu/constants.py
+	docker build -t dgtmon-dev-gpu src/gpu
+
+gpu/tag:
+	docker tag dgtmon-dev-gpu ${DOCKER_ECR}/dgtmon-dev-gpu:${GPU_STABLE_V}
+	docker tag dgtmon-dev-gpu ${DOCKER_HUB}/dgtmon-dev-gpu:${GPU_STABLE_V}
+
+gpu/push:
+	docker push ${DOCKER_ECR}/dgtmon-dev-gpu:${GPU_STABLE_V}
+	docker push ${DOCKER_HUB}/dgtmon-dev-gpu:${GPU_STABLE_V}
+
+gpu/make: gpu/build gpu/tag gpu/push
+

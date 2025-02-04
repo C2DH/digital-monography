@@ -1,11 +1,21 @@
+# ===== IMPORTANT =====
+# Remember, the only source of truth for html2md.py is the one defined in
+# `src/_common/html2md.py`. Objects defined in other directories in
+# the src/ folder should be replaced with `src/_common/html2md.py` before
+# building the image. We advise that you always build the containers
+# using Makefile commands, as the copy command is already included.
+# ======================
 import bs4
 import markdownify
 import re
+import typing as t
 
 try:
-    from md_extraction import BookMetadata, AssetDatapoint, AssetMetadata
-except ModuleNotFoundError:
-    from src.preparer.md_extraction import BookMetadata, AssetDatapoint, AssetMetadata
+    from constants import CLS_METADATA_TABLE
+    from metadata import DocumentMetadata
+except (ImportError, ModuleNotFoundError):
+    from .constants import CLS_METADATA_TABLE
+    from .metadata import DocumentMetadata
 
 
 line_beginning_re = re.compile(r"^", re.MULTILINE)
@@ -34,16 +44,30 @@ def sub_inline_conversion(markup_fn):
 
 class MystMdConverter(markdownify.MarkdownConverter):
 
-    def __init__(self, metadata: BookMetadata, **options):
-        self._metadata = metadata
+    def __init__(self, metadata: t.Optional[DocumentMetadata], **options):
+        self._metadata: DocumentMetadata = metadata
         self._soup = bs4.BeautifulSoup("", "html.parser")
         super().__init__(**options)
 
     class Options(markdownify.MarkdownConverter.DefaultOptions):
         heading_style = markdownify.ATX
+        autolinks = True
         escape_underscores = False
+        escape_misc = False
         sub_symbol = "{sub}"
         sup_symbol = "{sup}"
+
+    def escape(self, text):
+        if not text:
+            return ""
+        if self.options["escape_misc"]:
+            text = re.sub(r"([\\&<`[>~#=+|-])", r"\\\1", text)
+            text = re.sub(r"([0-9])([.)])", r"\1\\\2", text)
+        if self.options["escape_asterisks"]:
+            text = text.replace("*", r"\*")
+        if self.options["escape_underscores"]:
+            text = text.replace("_", r"\_")
+        return text
 
     # TODO: use regex to find _Ref patterns and better handle making data safe
 
@@ -57,71 +81,91 @@ class MystMdConverter(markdownify.MarkdownConverter):
             return "[^%s]" % identif
         if identif.startswith("_Ref"):
             return '<html><a id="%s">%s</a></html>' % (identif, text)
-        if href.startswith("#_Ref"):
-            return '<html><a href="%s">%s</a></html>' % (href, text)
+        # if href.startswith("#_Ref"):
+        #     return '<html><a href="%s">%s</a></html>' % (href, text)
         return super().convert_a(el, text, convert_as_inline)
 
+    # def convert_a(self, el, text, convert_as_inline):
+    #     prefix, suffix, text = chomp(text)
+    #     if not text:
+    #         return ''
+    #     href = el.get('href')
+    #     title = el.get('title')
+    #     # For the replacement see #29: text nodes underscores are escaped
+    #     if (self.options['autolinks']
+    #             and text.replace(r'\_', '_') == href
+    #             and not title
+    #             and not self.options['default_title']):
+    #         # Shortcut syntax
+    #         return '<%s>' % href
+    #     if self.options['default_title'] and not title:
+    #         title = href
+    #     title_part = ' "%s"' % title.replace('"', r'\"') if title else ''
+    #     return '%s[%s](%s%s)%s' % (prefix, text, href, title_part, suffix) if href else text
+
     def convert_p(self, el, text, convert_as_inline):
-        re_match = re.match(r"\s*%\s*:::{dgt-mon-asset}\s*", text)
-        if re_match is not None:
-            uuidv4_len = 36
-            uuid = text[re_match.span()[1] :][:uuidv4_len]
-            asset_meta = self._metadata[uuid]
-            default_height = "100%"
-            height = asset_meta.get("height", default_height)
-            # TODO: this does not work, add appending objects from "digitalsrc"
-            # if asset_meta.digital_fp and asset_meta.digital_fp.suffix in SUFFIXES_IMAGES:
-            #     img_el = self._soup.new_tag('img', src=asset_meta.digital_fp.suffix)
-            #     return self.convert_img(img_el, "", convert_as_inline)
-            if asset_meta.digital_fp and asset_meta.digital_fp.suffix == ".html":
-                text = (
-                    "<html>"
-                    f'<iframe src="{str(asset_meta.digital_fp)}" width="100%" height="{str(height)}" frameborder="0">'
-                    "</iframe>"
-                    "</html>"
-                )
-            elif str(asset_meta.get("digitalsrc", "")).startswith("https://"):
-                src = asset_meta["digitalsrc"]
-                text = (
-                    "<html>"
-                    f'<iframe src="{src}" width="100%" height="{str(height)}" frameborder="0">'
-                    "</iframe>"
-                    "</html>"
-                )
-        elif text.startswith(
+        if text.startswith(
             ":::{iframe} <https://www.youtube.com/embed/"
         ) or text.startswith(":::{iframe} <https://player.vimeo.com/video/"):
             text = text.replace("<", "", 1)
             text = text.replace(">", "", 1)
         return super().convert_p(el, text, convert_as_inline)
 
+    def convert_span(self, el, text, convert_as_inline):
+        if text.startswith("% :::{") and text.endswith(":::"):
+            return "\n%s\n\n" % text
+        return super().convert_p(el, text, convert_as_inline)
+
+    def convert_pre(self, el, text, convert_as_inline):
+        h_target_match = re.match(r"^\([\w\-_]+\)=$", text)
+        if h_target_match is not None:
+            return "\n\n%s\n" % text
+        return super().convert_pre(el, text, convert_as_inline)
+
     def convert_hn(self, n, el, text, convert_as_inline):
         if '<a href="' in text or '<a id="' in text:
             text = text.replace('<a href="', '<html><a href="')
             text = text.replace('<a id="', '<html><a id="')
             text = text.replace("</html>", "</a></html>")
+        text = "\n" + text
         return super().convert_hn(n, el, text, convert_as_inline)
 
     def convert_li(self, el, text, convert_as_inline):
         identif = el.get("id", "")
         if identif.startswith("footnote-") or identif.startswith("endnote-"):
             inner = next(el.children)
-            a = inner.findChild("a")
+            try:
+                a = next(
+                    node
+                    for node in inner.children
+                    if node.name == "a"
+                    and (
+                        node["href"].startswith("#footnote-ref-")
+                        or node["href"].startswith("#endnote-ref-")
+                    )
+                )
+            except StopIteration:
+                return ""
+            if a is None:
+                return ""
+            a.extract()
             text = inner.text.strip()
             if text.endswith(" ↑"):
                 text = text[:-2]
-            if a is None:
-                return ""
             href = a.get("href", "")
             if href.startswith("#"):
                 href = href[1:]
-            return "[^%s]: %s\n" % (href, text)
+            return "[^%s]: %s" % (href, self.convert_soup(el))
         return super().convert_li(el, text, convert_as_inline)
 
     def convert_blockquote(self, el, text, convert_as_inline):
         if convert_as_inline:
             return text
-        return "" + (line_beginning_re.sub("> ", text) + "\n") if text else ""
+        if el.next_sibling and el.next_sibling.name == "blockquote":
+            end = "\n"
+        else:
+            end = "\n\n"
+        return "" + (line_beginning_re.sub("> ", text) + end) if text else ""
 
     convert_sub = sub_inline_conversion(lambda self: self.options["sub_symbol"])
 
@@ -136,65 +180,31 @@ class MystMdConverter(markdownify.MarkdownConverter):
             return text
         return "%s%s`%s`%s" % (prefix, markup_tag, text, suffix)
 
+    def convert_iframe(
+        self, el: bs4.element.Tag, text: str, convert_as_inline: bool
+    ) -> str:
+        src = el.get("src")
+        if src and src.startswith("https:/") and not src.startswith("https://"):
+            el["src"] = src.replace("https:/", "https://")
+        if src and src.startswith("http:/") and not src.startswith("http://"):
+            el["src"] = src.replace("http:/", "http://")
+        return "\n\n<html>%s</html>\n\n" % str(el)
+
+    def convert_script(self, el, text, convert_as_inline):
+        if el.get("hidden"):
+            return "\n"
+        return super().convert_script(el, text, convert_as_inline)
+
     # def convert_table(self, el, text, convert_as_inline):
-    #     if "##" in text:
-    #         asset_meta = AssetMetadata()
-    #         key, val = "", ""
-    #         for tr in el.find_all(["tr"]):
-    #             for descendent in tr.find_all():
-    #                 if re.match(r"^\s*##\s*\w+", descendent.text):
-    #                     key = descendent.text
-    #                 else:
-    #                     val = descendent.text
-    #             if key:
-    #                 asset_meta.add(key, val)
-    #         if asset_meta:
-    #             self._metadata.add_asset_metadata(asset_meta)
-    #             return "\n% :::{dgt-mon-asset} " + asset_meta.uuid + "\n"
-    #         return "\n"
+    #     if el.get("hidden") and el.get("class") == CLS_METADATA_TABLE:
+    #         return "\n% :::{dgt-mon-asset} " + el.get("id") + "\n"
     #     return super().convert_table(el, text, convert_as_inline)
 
 
-# class PostProcessor:
-#     def __init__(self, metadata: BookMetadata, **options):
-#         self._metadata = metadata
-#         self._options = options
-
-#     def enact_directives(self, md: str) -> str:
-#         """
-#         Iterate in reverse order on each markdown line and
-#         act on internal directives.
-#         """
-#         result = ""
-#         newline_count = 0
-#         # remove_next_obj = False
-#         current_block = ""
-#         uuidv4_len = 36
-#         lines = md.split("\n")
-#         # for line in md.split("\n")[::-1]:
-#         for i in range(len(lines) - 1, -1, -1):
-#             prevline = lines[i + 1] if i + 1 < len(lines) else ""
-#             line = lines[i]
-#             nextline = lines[i - 1] if i - 1 >= 0 else ""
-#             current_block = line + "\n" + current_block if current_block else line
-#             # if line.startswith("% :::{dgt-mon-asset} "):
-#             # remove_next_obj = True
-#             re_match = re.match(r"%\s*:::{dgt-mon-asset}\s*", line)
-#             if re_match is not None:
-#                 uuid = line[re_match.span()[1] :][:uuidv4_len]
-#                 asset_meta = self._metadata[uuid]
-#                 if asset_meta.delete_prev:
-#                     current_block = ""
-#                     current_block += line + "\nREMOVE PREVIOUS BLOCK!!!"
-#             elif line == "" and prevline != "":  # and remove_next_obj == False:
-#                 result = current_block + "\n" + result
-#                 current_block = ""
-#             elif line == "":
-#                 result = "\n" + result
-#         result = current_block + "\n" + result
-#         return result
-
-
-def convert_to_md(soup, metadata: BookMetadata, **options) -> str:
+def convert_to_md(
+    soup: bs4.BeautifulSoup,
+    metadata: t.Optional[DocumentMetadata] = None,
+    **options,
+) -> str:
     # TODO: change custom options to be passed to convert_to_md(**options <==)
     return MystMdConverter(metadata, **options).convert_soup(soup)

@@ -1,0 +1,11 @@
+-r src/entrypoint/requirements.txt
+-r src/preparer/requirements.txt
+-r src/verifier/requirements.txt
+-r src/github/requirements.txt
+-r src/builder/requirements.txt
+
+pytest==7.4.*
+
+# TODO: consider adding linting and type checking
+# flake8==7.0.*
+# mypy==1.9.*

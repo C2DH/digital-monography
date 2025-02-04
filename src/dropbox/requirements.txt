@@ -1,0 +1,2 @@
+dropbox==9.4.*
+setuptools
