@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import TnbBookNav from "./../_components/TnbBookNav";
 
 function getNestedStr(rec: any, attr: string): string {
@@ -21,12 +20,14 @@ type ICitationGroup = {
 
 export default function DynamicTable() {
     const [tableData, setTableData] = useState<ICitationGroup[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
     const searchParams = useSearchParams();
     const slug = searchParams?.get("slug");
     const dbTable = "dgtmon-dev-dyndb-citations-tbl";
 
     const fetchRecords = async (pk: string) => {
         try {
+            setLoading(true);
             const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
             const resp = await fetch(`${endpoint}/test/citations?slug=${pk}`);
             const respJson = await resp.json();
@@ -40,9 +41,12 @@ export default function DynamicTable() {
                     })
                 }
             }
+            debugger; // temp
             setTableData(tableItems);
+            setLoading(false);
         } catch (err) {
-            console.log("Error", err);
+            console.error(err);
+            setLoading(false);
         }
     };
 
@@ -55,7 +59,7 @@ export default function DynamicTable() {
     return (
         <>
             {slug && <TnbBookNav slug={slug} color="secondary"></TnbBookNav>}
-            <table className="table">
+            {!loading && tableData && <table className="table">
                 <thead>
                     <tr>
                         <th scope="col">Location</th>
@@ -64,7 +68,7 @@ export default function DynamicTable() {
                 </thead>
                 <tbody>
                     {
-                        tableData && tableData.map((val: ICitationGroup, idx: number) => (
+                        tableData.map((val: ICitationGroup, idx: number) => (
                             <tr key={idx}>
                                 <td>{val.location}</td>
                                 <td>{val.plainCitation}</td>
@@ -73,7 +77,13 @@ export default function DynamicTable() {
                     }
 
                 </tbody>
-            </table >
+            </table >}
+            {loading && <div className="d-flex justify-content-center">
+                <h4>Please wait for the items to load...</h4>
+                <div className="spinner-grow text-secondary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                </div>
+            </div>}
         </>
     )
 }

@@ -140,6 +140,7 @@ export default function DynamicTable() {
 
     const [imgOpenedMap, setImgOpenedMap] = useState<IOpenedItem>({});
     const [tableData, setTableData] = useState<IAssetRecord[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
     const [isColorSum, setIsColorSum] = useState<number>(0);
     const [isOnPaperSum, setIsOnPaperSum] = useState<number>(0);
     const [isReadySum, setIsReadySum] = useState<number>(0);
@@ -155,6 +156,7 @@ export default function DynamicTable() {
 
     const fetchRecords = useCallback(async (pk: string) => {
         try {
+            setLoading(true);
             setIsColorSum(0);
             setIsOnPaperSum(0);
             setIsReadySum(0);
@@ -233,14 +235,17 @@ export default function DynamicTable() {
                     imgOpened[s3Key] = false;
                 }
             }
+            debugger; // temp
             setTableData(formatedData);
             // console.log("imgOpened", imgOpened);
             setImgOpenedMap(imgOpened);
             // console.log("imgOpenedMap", imgOpenedMap);
             console.log("formatedData");
             console.log(formatedData);
+            setLoading(false);
         } catch (err) {
-            console.log("Error", err);
+            console.error(err);
+            setLoading(false);
         }
     }, [slug]);
 
@@ -275,7 +280,7 @@ export default function DynamicTable() {
     // useEffect(() => {
     //     console.log("searchValue", searchValue)
     // }, [searchValue])
-   
+
     useEffect(() => {
         require("bootstrap/dist/js/bootstrap.bundle.min.js");
     }, []);
@@ -285,28 +290,28 @@ export default function DynamicTable() {
             <div>
                 {slug && <TnbBookNav slug={slug} color="secondary"></TnbBookNav>}
                 {/* <SearchBar searchTable={(searchTable)} /> */}
-                <table className="table table-striped accordion">
+                {!loading && tableData && <table className="table table-striped accordion">
                     <Header columns={columns} sorting={sorting} sortTable={sortTable} />
                     <tbody>
-                        {tableData && <tr>{columns.map((col) => (
-                        getColSums(col, isColorSum, isOnPaperSum, isReadySum, tableData.length)
-                        ))}</tr>}
+                        <tr>{columns.map((col) => (
+                            getColSums(col, isColorSum, isOnPaperSum, isReadySum, tableData.length)
+                        ))}</tr>
                         {tableData.map((record, idx) => (
                             <Fragment key={`fragment-${idx}`}>
                                 <tr key={idx}
                                     data-bs-toggle="collapse"
                                     data-bs-target={`#details-${idx}`}
-                                    >
+                                >
                                     {columns.map((column) => (column === "link" ?
                                         <td key={column}>
                                             <a className="btn btn-outline-secondary btn-sm"
-                                            role="button"
-                                            onClick={() => {
-                                                setImgOpenedMap({
-                                                    ...imgOpenedMap,
-                                                    [record.s3Key]: true,
-                                                });
-                                            }}
+                                                role="button"
+                                                onClick={() => {
+                                                    setImgOpenedMap({
+                                                        ...imgOpenedMap,
+                                                        [record.s3Key]: true,
+                                                    });
+                                                }}
                                             >▶</a>
                                         </td> : <td
                                             key={column}
@@ -319,16 +324,16 @@ export default function DynamicTable() {
                                 <tr key={`details-${idx}`}
                                     id={`details-${idx}`}
                                     className="collapse accordion-collapse">
-                                    <td colSpan={columns.length/2}>
+                                    <td colSpan={columns.length / 2}>
                                         {record.s3Key && <h6>{record["caption"]}</h6>}
                                         {/* {record.s3Key && imgOpenedMap[record.s3Key] && <img */}
                                         {record.s3Key && <img
-                                                src={record.s3Key}
-                                                alt=""
-                                                className="img-fluid float-left">
-                                            </img>}
+                                            src={record.s3Key}
+                                            alt=""
+                                            className="img-fluid float-left">
+                                        </img>}
                                     </td>
-                                    {record.mtime && <td colSpan={columns.length/2}>
+                                    {record.mtime && <td colSpan={columns.length / 2}>
                                         Size: {record.size}
                                         Last modified: {record.mtime}
                                     </td>}
@@ -336,7 +341,7 @@ export default function DynamicTable() {
                             </Fragment>
                         ))}
                     </tbody>
-                </table>
+                </table>}
             </div>
         </>
     )

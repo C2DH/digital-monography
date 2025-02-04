@@ -38,6 +38,7 @@ function getNestedNum(rec: any, attr: string): number {
 export default function DynamicListGroup(): JSX.Element {
     const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
     const [data, setData] = useState<IHeadings>({});
+    const [loading, setLoading] = useState<boolean>(true);
     const [wordCount, setWordCount] = useState<ICountMap>({});
     const [charCount, setCharCount] = useState<ICountMap>({});
     const wCount = {};
@@ -49,6 +50,7 @@ export default function DynamicListGroup(): JSX.Element {
 
     const fetchRecords = async (pk: string) => {
         try {
+            setLoading(true);
             const resp = await fetch(`${endpoint}/test/headings?slug=${pk}`);
             const respJson = await resp.json();
             const headings: IHeadings = {};
@@ -72,11 +74,14 @@ export default function DynamicListGroup(): JSX.Element {
                     });
                 }
             }
+            debugger; // temp
             setData(headings);
             setWordCount(wCount);
             setCharCount(cCount);
+            setLoading(false);
         } catch (err) {
-            console.log("Error", err);
+            setLoading(false);
+            console.error(err);
         }
     };
 
@@ -105,13 +110,13 @@ export default function DynamicListGroup(): JSX.Element {
     return (
         <>
             {slug && <TnbBookNav slug={slug} color="secondary"></TnbBookNav>}
-            <div>
+            {!loading && <div>
                 <b>Word count: </b>
                 <p>{Object.values(wordCount).reduce((a, b) => a + b, 0)}</p>
                 <b>Character count: </b>
                 <p>{Object.values(charCount).reduce((a, b) => a + b, 0)}</p>
-            </div>
-            {data && Object.entries(data)
+            </div>}
+            {!loading && data && Object.entries(data)
                 .map(([file, headings]: [string, IHeading[]], idx: number) => {
                     return (
                         <ul className="list-group" key={idx}>
@@ -130,6 +135,12 @@ export default function DynamicListGroup(): JSX.Element {
                         </ul>
                     )
                 })}
+            {loading && <div className="d-flex justify-content-center">
+                <h4>Please wait for the data to load...</h4>
+                <div className="spinner-grow text-secondary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                </div>
+            </div>}
         </>
     )
 }
