@@ -26,10 +26,10 @@ export default function TnbBookNav({ slug, color }: { slug: string, color: strin
                 Events
             </Link>
             <Link href={{
-                pathname: '/assets',
+                pathname: '/warnings-groups',
                 query: { slug: slug },
             }} className={`btn btn-outline-${color}`}>
-                Assets
+                Warnings
             </Link>
             <Link href={{
                 pathname: '/citations',
@@ -38,10 +38,10 @@ export default function TnbBookNav({ slug, color }: { slug: string, color: strin
                 Citations
             </Link>
             <Link href={{
-                pathname: '/warnings-groups',
+                pathname: '/assets',
                 query: { slug: slug },
             }} className={`btn btn-outline-${color}`}>
-                Warnings
+                Assets
             </Link>
             </div>
         </div>
