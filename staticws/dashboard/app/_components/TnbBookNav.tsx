@@ -12,7 +12,10 @@ export default function TnbBookNav({ slug, color }: { slug: string, color: strin
                 </g>
                 </svg>
             </button>
-            <a href={`https://www.dropbox.com/home/Aplikacje/drpb-upload-alert-test/${slug}`} className={`btn btn-${color}`}>Edit</a>
+            <a 
+                href={`https://www.dropbox.com/home/Aplikacje/drpb-upload-alert-test/${slug}`}
+                className={`btn btn-${color}`}
+            >Edit</a>
             <Link href={{
                 pathname: '/headings',
                 query: { slug: slug },
