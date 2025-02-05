@@ -144,4 +144,3 @@ export default function DynamicListGroup(): JSX.Element {
         </>
     )
 }
-// https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com/test/gpu?type=warnings&key=Z3VpZGVsaW5lcy1mb3ItZHJhZnRpbmctbWFudXNjcmlwdHMvMDFfZ2VuZXJhbC5qc29u
