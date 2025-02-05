@@ -26,13 +26,11 @@ export default function Home() {
         <div className="list-group">
           {manuscripts.map((book) => (
             <TnbBookCard
-            authors={book.authors}
-            slug={book.slug}
-            key={book.slug}    
-            title={book.title}
-            >
-                {book.slug}
-            </TnbBookCard>)
+              authors={book.authors}
+              slug={book.slug}
+              key={book.slug}    
+              title={book.title}
+            ></TnbBookCard>)
           )}
         </div>
       </div>
