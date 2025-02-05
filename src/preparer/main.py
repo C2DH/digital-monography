@@ -1,5 +1,6 @@
 import datetime
 import pathlib
+import sys
 import bs4
 import boto3
 import json
@@ -192,9 +193,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         for asset in metadata.assets:
             logger.info(f"asset.kwargs.keys(), {asset.kwargs.keys()}")
             if asset.kwargs.get(FIELD_DIGITAL_SOURCE) is not None:
-                digitalsource = root / asset.kwargs.get(
-                    FIELD_DIGITAL_SOURCE
-                )
+                digitalsource = root / asset.kwargs.get(FIELD_DIGITAL_SOURCE)
                 logger.info(f"Digital source: {digitalsource}")
         metadata = compute_additional_metadata_fields(metadata)
         html_soup = hide_metadata_in_html(html_soup, metadata)  # last step
@@ -206,7 +205,6 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_soup = insert_digital_objects(html_soup, metadata, tables)
         html_soup = remove_metadata_tables(html_soup, metadata, tables)
         _write_config_to_efs(metadata, key)
-
 
         # for rec in getattr(metadata, "assets"):
         #     for k, v in rec.to_json().items():
@@ -233,6 +231,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         )
         return {"statusCode": 200, "body": ""}
     else:
+
+        # _write_to_efs(key) # <=============
         _enqueue_to_github(key)
         return {"statusCode": 200, "body": ""}
 
@@ -263,12 +263,17 @@ def _download_fileobj(src: str, key: KeyPath) -> None:
         key = key.efs_filepath
         key.parent.mkdir(parents=True, exist_ok=True)
         with open(key, "wb") as fileobj:
+            logger.info(f"sys.getsizeof(fileobj): {str(sys.getsizeof(fileobj))}")
             s3_key = str(key.s3_key)
+            logger.info(f"IS_DEBUG={IS_DEBUG}")
+            logger.info(f"type(s3)={type(s3)}")
             resp = s3.download_fileobj(src, s3_key, fileobj)
             logger.info(
                 f"Response from s3.download_fileobj(Bucket={src}, Key={s3_key}): "
                 + json.dumps(resp, default=str)
             )
+            for child in key.parent.iterdir():
+                logger.info(f"File {str(child)} was found in {str(key.parent)}.")
     except Exception as e:
         logger.exception(
             f"Downloading fileobj {str(key)} from {src} failed. Error: {repr(e)}"
