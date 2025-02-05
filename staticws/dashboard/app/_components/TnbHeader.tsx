@@ -18,6 +18,7 @@ export default function TnbHeader() {
                         <ul className="navbar-nav mr-auto">
                             <li className="nav-item active">
                                 <a className="nav-link"
+                                target="_blank" rel="noopener noreferrer" 
                                 href="https://www.dropbox.com/home/Aplikacje/drpb-upload-alert-test"
                                 >Dropbox</a>
                             </li>
