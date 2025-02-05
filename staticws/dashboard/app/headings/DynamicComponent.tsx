@@ -74,7 +74,6 @@ export default function DynamicListGroup(): JSX.Element {
                     });
                 }
             }
-            debugger; // temp
             setData(headings);
             setWordCount(wCount);
             setCharCount(cCount);

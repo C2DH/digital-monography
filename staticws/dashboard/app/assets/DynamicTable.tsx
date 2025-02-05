@@ -235,7 +235,6 @@ export default function DynamicTable() {
                     imgOpened[s3Key] = false;
                 }
             }
-            debugger; // temp
             setTableData(formatedData);
             // console.log("imgOpened", imgOpened);
             setImgOpenedMap(imgOpened);

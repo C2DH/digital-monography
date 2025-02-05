@@ -53,7 +53,6 @@ export default function DynamicTable() {
                     timestamp: timestamp,
                 }
             }).sort((a: IAuditEvent, b: IAuditEvent) => (a.timestamp < b.timestamp ? 1 : -1));
-            debugger; // temp
             setTableData(records);
             setLoading(false);
         } catch (err) {

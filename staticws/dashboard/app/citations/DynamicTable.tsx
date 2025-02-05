@@ -41,7 +41,6 @@ export default function DynamicTable() {
                     })
                 }
             }
-            debugger; // temp
             setTableData(tableItems);
             setLoading(false);
         } catch (err) {
