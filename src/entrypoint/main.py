@@ -20,6 +20,7 @@ try:
         DROPBOX_SECRET_ID,
         DYNAMODB_AUDIT_TBL,
         DYNAMODB_ASSETS_TBL,
+        DYNAMODB_ALERTS_TBL,
         DYNAMODB_CITATIONS_TBL,
         DYNAMODB_HEADINGS_TBL,
         DYNAMODB_TOKENS_TBL,
@@ -30,6 +31,7 @@ except (ImportError, ModuleNotFoundError):
         IS_DEBUG,
         DROPBOX_SECRET_ID,
         DYNAMODB_AUDIT_TBL,
+        DYNAMODB_ALERTS_TBL,
         DYNAMODB_ASSETS_TBL,
         DYNAMODB_CITATIONS_TBL,
         DYNAMODB_HEADINGS_TBL,
@@ -212,6 +214,34 @@ def query_events() -> flask.Response:
             ":slug": { "S": slug }
         },
     )
+    resp = flask.Response(
+        response=flask.json.dumps(contents),
+        status=200,
+        mimetype="application/json",
+    )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
+
+
+@app.route("/alerts", methods=["GET"])
+def query_alerts() -> flask.Response:
+    """Retrieve alerts from the database and return them to the client."""
+    logger.info("Retrieve alerts from the database and return them to the client.")
+    resp = dynamodb.scan(
+        TableName=DYNAMODB_ALERTS_TBL,
+    )
+    contents = resp["Items"]
+    logger.info(f"Resp: {json.dumps(resp, default=str)}")
+    while "LastEvaluatedKey" in resp:
+        resp = dynamodb.scan(
+            TableName=DYNAMODB_ALERTS_TBL,
+            ExclusiveStartKey=resp["LastEvaluatedKey"]
+        )
+        logger.info(f"Resp: {json.dumps(resp, default=str)}")
+        contents.extend(resp["Items"])
+    logger.info(f"Contents: {json.dumps(contents, default=str)}")
     resp = flask.Response(
         response=flask.json.dumps(contents),
         status=200,
