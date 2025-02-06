@@ -152,6 +152,11 @@ variable "dgtmon_dev_dyndb_audit_tbl" {
   description = "Name of the table to log audit trail of checkpoints reached"
 }
 
+variable "dgtmon_dev_dyndb_alerts_tbl" {
+  type        = string
+  description = "Name of the table to log the last known status of the most crucial services"
+}
+
 variable "dgtmon_dev_dyndb_assets_tbl" {
   type        = string
   description = "Name of the table for editors managing the status of assets"
