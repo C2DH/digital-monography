@@ -43,63 +43,61 @@ export default function DynamicListGroup(): JSX.Element {
     const [charCount, setCharCount] = useState<ICountMap>({});
     const wCount = {};
     const cCount = {};
-
+    
     const searchParams = useSearchParams();
     const slug = searchParams?.get("slug");
     const dbTable = "dgtmon-dev-dyndb-headings-tbl";
-
-    const fetchRecords = async (pk: string) => {
-        try {
-            setLoading(true);
-            const resp = await fetch(`${endpoint}/test/headings?slug=${pk}`);
-            const respJson = await resp.json();
-            const headings: IHeadings = {};
-            const items = respJson.Items || [];
-            for (let i = 0; i < items.length; i++) {
-                let records = items[i].records?.L || [];
-                const fileName = getNestedStr(records[0], "file_name");
-                wCount[fileName] = getNestedNum(records[0], "word_count");
-                cCount[fileName] = getNestedNum(records[0], "char_count");
-                for (let j = 0; j < records.length; j++) {
-                    const text = getNestedStr(records[j], "text");
-                    let level = getNestedStr(records[j], "level");
-                    level = level.replace(/\D+/g, ''); // TODO: backend should produce "1" instead of "h1"
-                    if (!Object.hasOwn(headings, fileName)) {
-                        headings[fileName] = [];
-                    }
-                    headings[fileName].push({
-                        fileName: fileName,
-                        text: text,
-                        level: level,
-                    });
-                }
-            }
-            setData(headings);
-            setWordCount(wCount);
-            setCharCount(cCount);
-            setLoading(false);
-        } catch (err) {
-            setLoading(false);
-            console.error(err);
-        }
-    };
-
-    const fetchObjectFromS3 = async (aSlug: string) => {
-        try {
-            const configKey = btoa(`${aSlug}/_config.yml`)
-            const getPreSignedUrlResp = await fetch(`${endpoint}/test/gpu?type=asset&key=${configKey}`);
-            const preSignedUrljson = await getPreSignedUrlResp.json();
-            const preSignedUrl = preSignedUrljson["presigned_url"];
-            const resp = await fetch(preSignedUrl);
-            const blob = await resp.blob();
-            const yml = await blob.text();
-            console.log("config", yml);
-        } catch (e) {
-            console.error(e);
-        }
-    };
-
+    
     useEffect(() => {
+        const fetchRecords = async (pk: string) => {
+            try {
+                setLoading(true);
+                const resp = await fetch(`${endpoint}/test/headings?slug=${pk}`);
+                const respJson = await resp.json();
+                const headings: IHeadings = {};
+                const items = respJson.Items || [];
+                for (let i = 0; i < items.length; i++) {
+                    let records = items[i].records?.L || [];
+                    const fileName = getNestedStr(records[0], "file_name");
+                    wCount[fileName] = getNestedNum(records[0], "word_count");
+                    cCount[fileName] = getNestedNum(records[0], "char_count");
+                    for (let j = 0; j < records.length; j++) {
+                        const text = getNestedStr(records[j], "text");
+                        let level = getNestedStr(records[j], "level");
+                        level = level.replace(/\D+/g, ''); // TODO: backend should produce "1" instead of "h1"
+                        if (!Object.hasOwn(headings, fileName)) {
+                            headings[fileName] = [];
+                        }
+                        headings[fileName].push({
+                            fileName: fileName,
+                            text: text,
+                            level: level,
+                        });
+                    }
+                }
+                setData(headings);
+                setWordCount(wCount);
+                setCharCount(cCount);
+                setLoading(false);
+            } catch (err) {
+                setLoading(false);
+                console.error(err);
+            }
+        };
+        const fetchObjectFromS3 = async (aSlug: string) => {
+            try {
+                const configKey = btoa(`${aSlug}/_config.yml`)
+                const getPreSignedUrlResp = await fetch(`${endpoint}/test/gpu?type=asset&key=${configKey}`);
+                const preSignedUrljson = await getPreSignedUrlResp.json();
+                const preSignedUrl = preSignedUrljson["presigned_url"];
+                const resp = await fetch(preSignedUrl);
+                const blob = await resp.blob();
+                const yml = await blob.text();
+                console.log("config", yml);
+            } catch (e) {
+                console.error(e);
+            }
+        };
         if (slug) {
             fetchRecords(slug);
             fetchObjectFromS3(slug);
