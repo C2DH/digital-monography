@@ -38,9 +38,9 @@ export default function Home() {
     console.log("test");
     async function fetchStatusData() {
       try {
-          const resp = await fetch(`${endpoint}/test/gpu?type=alerts`);
-          const json = await resp.json();
-          console.log("json", json);
+        const resp = await fetch(`${endpoint}/test/alerts`);
+        const json = await resp.json();
+        console.log("json", json);
           // const preSignedUrl = preSignedUrljson["presigned_url"];
           // const resp = await fetch(preSignedUrl);
           // const json = await resp.json();
