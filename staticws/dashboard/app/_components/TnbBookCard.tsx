@@ -1,10 +1,31 @@
 import TnbBookNav from "./TnbBookNav";
 
 export default function TnbBookCard(
-    { authors, slug, title }: { authors: string, slug: string, title: string }
+    { authors, slug, title, alert }: { authors: string, slug: string, title: string, alert: string }
 ) {
+    let alertHeading = "";
+    let alertMessage = "";
+    let alertIcon = "";
+    let alertColor = "";
+    if (alert == "rejected") {
+        alertIcon = "❌";
+        alertColor = "danger";
+        alertHeading = "Access denied. System rejected changes from unauthenticated user.";
+        alertMessage = "The output will not show the latest version of the manuscript. Login in and reupload.";
+    } else if (alert == "warning") {
+        alertIcon = "⚠";
+        alertColor = "warning";
+        alertHeading = "System encountered serious issues with the manuscript.";
+        alertMessage = 'We advise to navigate to the "Warnings" section and to fix them before continuing.';
+    } else if (alert == "danger") {
+        alertIcon = "❌";
+        alertColor = "danger";
+        alertHeading = "Processing the manuscript failed.";
+        alertMessage = "The output might not show the latest version of the manuscript due to the error.";
+    }
     return (
-        <span className="list-group-item list-group-item-action d-flex gap-3 py-3"
+        <>
+        <span className="list-group-item list-group-item-action d-flex gap-3 py-2"
             key={slug}>
             <img src="favicon.ico" alt="twbs" width="32" height="32"
                 className="rounded-circle flex-shrink-0"></img>
@@ -48,5 +69,14 @@ export default function TnbBookCard(
                 </div>
             </div>
         </span>
+        {/* {alert && <span className={`list-group-item list-group-item-action list-group-item-${alertColor} gap-1 py-1`} role="alert">
+            <strong>{alertIcon} {alertHeading}</strong>
+            <p>{alertMessage}</p>
+        </span>} */}
+        {alert && <div className={`alert alert-${alertColor} gap-1 py-1`} role="alert">
+            <strong>{alertIcon} {alertHeading}</strong>
+            <p>{alertMessage}</p>
+        </div>}
+        </>
     )
 }
