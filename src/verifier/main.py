@@ -9,7 +9,7 @@ import urllib.parse
 
 
 try:
-    from audit import AuditEvent, AuditStatus
+    from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
     from constants import (
         ModuleEnum,
         AWS_ACCOUNT_ID,
@@ -22,7 +22,7 @@ try:
     from html_verifier import HtmlVerifier
     from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
-    from .audit import AuditEvent, AuditStatus
+    from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
     from .constants import (
         ModuleEnum,
         AWS_ACCOUNT_ID,
@@ -182,6 +182,12 @@ def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:
         msg=msg,
     )
     event.send(dynamodb)
+    if status == AuditStatus.FAILED.value:
+        alert = AlertLog(
+            slug=key.slug,
+            status=AlertStatus.FAIL.value
+        )
+        alert.send(dynamodb)
     logger.info(f"Audit event logged: {event}")
 
 

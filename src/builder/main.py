@@ -17,7 +17,7 @@ if not IS_DEBUG:
     sys.path.append(current_dir)
 
 try:
-    from audit import AuditEvent, AuditStatus
+    from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
     from constants import (
         ModuleEnum,
         IS_DEBUG,
@@ -32,7 +32,7 @@ try:
     from fakers import Faker
     from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
-    from .audit import AuditEvent, AuditStatus
+    from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
     from .constants import (
         ModuleEnum,
         IS_DEBUG,
@@ -473,4 +473,10 @@ def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:
         msg=msg,
     )
     event.send(dynamodb)
+    if status == AuditStatus.FAILED.value:
+        alert = AlertLog(
+            slug=key.slug,
+            status=AlertStatus.FAIL.value
+        )
+        alert.send(dynamodb)
     logger.info(f"Audit event logged: {event}")

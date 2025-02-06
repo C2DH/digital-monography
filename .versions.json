@@ -1,10 +1,10 @@
 {
     "ENTRYPOINT_STABLE_V": "0.0.60",
-    "DROPBOX_STABLE_V": "0.0.29",
-    "BUILDER_STABLE_V": "0.1.18",
+    "DROPBOX_STABLE_V": "0.0.30",
+    "BUILDER_STABLE_V": "0.1.19",
     "GITHUB_STABLE_V": "0.0.27",
-    "PREPARER_STABLE_V": "0.1.28",
-    "VERIFIER_STABLE_V": "0.1.11",
+    "PREPARER_STABLE_V": "0.1.29",
+    "VERIFIER_STABLE_V": "0.1.12",
     "GPU_STABLE_V": "0.0.7",
     "LOCAL_STABLE_V": "0.1.2"
 }

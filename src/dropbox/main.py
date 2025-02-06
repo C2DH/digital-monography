@@ -11,7 +11,7 @@ import typing as t
 
 
 try:
-    from audit import AuditEvent, AuditStatus
+    from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
     from constants import (
         ModuleEnum,
         APKG_UPLOAD_BUCKET_NAME,
@@ -21,7 +21,7 @@ try:
     )
     from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
-    from .audit import AuditEvent, AuditStatus
+    from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
     from .constants import (
         ModuleEnum,
         APKG_UPLOAD_BUCKET_NAME,
@@ -147,6 +147,11 @@ def process_user(account):
             AuditStatus.FAILED.value,
             "Access denied. Please log in to Dropbox from 'https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com/test/login'",
         )
+        alert = AlertLog(
+            slug=slug,
+            status=AlertStatus.NOAUTH.value
+        )
+        alert.send(dynamodb)
         logger.exception("Access denied. Error: " + repr(e))
         return {"statusCode": 401, "body": "dropbox.exceptions.AuthError"}
 
@@ -154,7 +159,7 @@ def process_user(account):
 def dynamodb_set(tbl: str, **kwargs) -> None:
     expire_at = int((datetime.datetime.now() + datetime.timedelta(days=3)).timestamp())
     table = dynamodb.Table(tbl)
-    logger.info(f"{json.dumps({"expire_at": expire_at, **kwargs}, default=str)}")
+    # logger.info(f"{json.dumps({"expire_at": expire_at, **kwargs}, default=str)}")
     resp = table.put_item(Item={"expire_at": expire_at, **kwargs})
     logger.info(
         f"Response from dynamodb.Table({tbl}).put_item: {json.dumps(resp, default=str)}"
@@ -188,6 +193,11 @@ def _put_file_from_dbx_to_s3(body: bytes, key: KeyPath) -> None:
         _log_audit_event(
             key.slug, AuditStatus.FAILED.value, "Error upon synchronization.", key.name
         )
+        alert = AlertLog(
+            slug=slug,
+            status=AlertStatus.FAIL.value
+        )
+        alert.send(dynamodb)
         raise
 
 
@@ -216,4 +226,10 @@ def _log_audit_event(slug: str, status: int, msg: str, fn: str = "") -> None:
         msg=msg,
     )
     event.send(dynamodb)
+    if status == AuditStatus.SUCCESS.value:
+        alert = AlertLog(
+            slug=slug,
+            status=AlertStatus.START.value
+        )
+        alert.send(dynamodb)
     logger.info(f"Audit event logged: {event}")

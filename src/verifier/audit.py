@@ -62,3 +62,41 @@ class AuditEvent:
             f"msg={self.msg}"
             ")"
         )
+
+
+############################## alerts ##############################
+
+class AlertStatus(enum.Enum):
+    START = "started",
+    FAIL = "pipeline-fail" # pipeline encountered error and a book could not be processed
+    NOAUTH = "auth-rejected", # rejecting a request from an unauthenticated user
+    NOVERIF = "verif-warning", # very important warning that should be fixed asap
+
+
+@dataclasses.dataclass
+class AlertLog:
+    """
+    Alert logs the last known status of the most important services.
+    """
+
+    slug: str
+    status: str
+
+    def send(self, dynamodb: t.Any) -> t.Any:
+        if dynamodb is None:
+            return
+        table = dynamodb.Table()
+        table.put_item(
+            Item={
+                "slug": self.slug,
+                "status": self.status,
+            }
+        )
+
+    def __str__(self):
+        return (
+            "Alert("
+            f"slug={self.slug}, "
+            f"status={self.status}, "
+            ")"
+        )
