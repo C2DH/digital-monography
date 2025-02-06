@@ -7,17 +7,18 @@ export default function TnbBookCard(
     let alertMessage = "";
     let alertIcon = "";
     let alertColor = "";
-    if (alert == "rejected") {
+    // NOTE: important to keep the 
+    if (alert == "auth-rejected") {
         alertIcon = "❌";
         alertColor = "danger";
         alertHeading = "Access denied. System rejected changes from unauthenticated user.";
         alertMessage = "The output will not show the latest version of the manuscript. Login in and reupload.";
-    } else if (alert == "warning") {
+    } else if (alert == "verif-warning") {
         alertIcon = "⚠";
         alertColor = "warning";
         alertHeading = "System encountered serious issues with the manuscript.";
         alertMessage = 'We advise to navigate to the "Warnings" section and to fix them before continuing.';
-    } else if (alert == "danger") {
+    } else if (alert == "pipeline-fail") {
         alertIcon = "❌";
         alertColor = "danger";
         alertHeading = "Processing the manuscript failed.";

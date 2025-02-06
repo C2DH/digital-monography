@@ -25,13 +25,7 @@ export default function Home() {
       slug: "sample-chapter",
       title: "For a new hermeneutics of practice in digital public history (snippet)",
       alert: "rejected",
-    },
-    {
-      authors: "Joe Schmoe",
-      slug: "other-example",
-      title: "Just a testing example",
-      alert: "",
-    },
+    }
   ]);
   useEffect(() => {
     // require("bootstrap/dist/js/bootstrap.bundle.min.js");
