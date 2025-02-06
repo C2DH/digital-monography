@@ -114,6 +114,7 @@ data "aws_iam_policy_document" "entrypoint" {
     resources = [
       aws_dynamodb_table.audit_tbl.arn,
       aws_dynamodb_table.assets_tbl.arn,
+      aws_dynamodb_table.alerts_tbl.arn,
       aws_dynamodb_table.citations_tbl.arn,
       aws_dynamodb_table.headings_tbl.arn,
     ]
