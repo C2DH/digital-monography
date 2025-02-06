@@ -84,7 +84,7 @@ export default function DynamicTable() {
                     {
                         tableData.map((val: IAuditEvent, idx: number) => (
                             <tr key={idx}>
-                                <td>{val.timestamp.toUTCString()}</td>
+                                <td>{val.timestamp.toString()}</td>
                                 <td>{val.filename}</td>
                                 <td>{val.msg}</td>
                                 <td>{StageName[val.module]}</td>
