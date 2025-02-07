@@ -66,11 +66,14 @@ class AuditEvent:
 
 ############################## alerts ##############################
 
+
 class AlertStatus(enum.Enum):
-    START = "started",
-    FAIL = "pipeline-fail" # pipeline encountered error and a book could not be processed
-    NOAUTH = "auth-rejected", # rejecting a request from an unauthenticated user
-    NOVERIF = "verif-warning", # very important warning that should be fixed asap
+    START = ("started",)
+    FAIL = (
+        "pipeline-fail"  # pipeline encountered error and a book could not be processed
+    )
+    NOAUTH = ("auth-rejected",)  # rejecting a request from an unauthenticated user
+    NOVERIF = ("verif-warning",)  # very important warning that should be fixed asap
 
 
 @dataclasses.dataclass
@@ -94,9 +97,4 @@ class AlertLog:
         )
 
     def __str__(self):
-        return (
-            "Alert("
-            f"slug={self.slug}, "
-            f"status={self.status}, "
-            ")"
-        )
+        return "Alert(" f"slug={self.slug}, " f"status={self.status}, " ")"

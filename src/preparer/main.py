@@ -573,10 +573,7 @@ def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:
     )
     event.send(dynamodb)
     if status == AuditStatus.FAILED.value:
-        alert = AlertLog(
-            slug=key.slug,
-            status=AlertStatus.FAIL.value
-        )
+        alert = AlertLog(slug=key.slug, status=AlertStatus.FAIL.value)
         alert.send(dynamodb)
     logger.info(f"Audit event logged: {event}")
 

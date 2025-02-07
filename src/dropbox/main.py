@@ -147,10 +147,7 @@ def process_user(account):
             AuditStatus.FAILED.value,
             "Access denied. Please log in to Dropbox from 'https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com/test/login'",
         )
-        alert = AlertLog(
-            slug=slug,
-            status=AlertStatus.NOAUTH.value
-        )
+        alert = AlertLog(slug=slug, status=AlertStatus.NOAUTH.value)
         alert.send(dynamodb)
         logger.exception("Access denied. Error: " + repr(e))
         return {"statusCode": 401, "body": "dropbox.exceptions.AuthError"}
@@ -193,10 +190,7 @@ def _put_file_from_dbx_to_s3(body: bytes, key: KeyPath) -> None:
         _log_audit_event(
             key.slug, AuditStatus.FAILED.value, "Error upon synchronization.", key.name
         )
-        alert = AlertLog(
-            slug=slug,
-            status=AlertStatus.FAIL.value
-        )
+        alert = AlertLog(slug=slug, status=AlertStatus.FAIL.value)
         alert.send(dynamodb)
         raise
 
@@ -227,9 +221,6 @@ def _log_audit_event(slug: str, status: int, msg: str, fn: str = "") -> None:
     )
     event.send(dynamodb)
     if status == AuditStatus.SUCCESS.value:
-        alert = AlertLog(
-            slug=slug,
-            status=AlertStatus.START.value
-        )
+        alert = AlertLog(slug=slug, status=AlertStatus.START.value)
         alert.send(dynamodb)
     logger.info(f"Audit event logged: {event}")

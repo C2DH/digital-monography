@@ -295,7 +295,9 @@ def _is_roman_numeral(was: str) -> bool:
 def _build_book(key: KeyPath) -> None:
     try:
         logger.info(f"key.efs_slug_dir: {str(key.efs_slug_dir)}")
-        logger.info(f"Files in {str(key.efs_slug_dir)}: {str(os.listdir(key.efs_slug_dir))}")
+        logger.info(
+            f"Files in {str(key.efs_slug_dir)}: {str(os.listdir(key.efs_slug_dir))}"
+        )
         if not (key.efs_slug_dir / "_config.yml").exists():
             logging.info(
                 f"{key.efs_slug_dir / '_config.yml'} was not found. Skipping build."
@@ -474,9 +476,6 @@ def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:
     )
     event.send(dynamodb)
     if status == AuditStatus.FAILED.value:
-        alert = AlertLog(
-            slug=key.slug,
-            status=AlertStatus.FAIL.value
-        )
+        alert = AlertLog(slug=key.slug, status=AlertStatus.FAIL.value)
         alert.send(dynamodb)
     logger.info(f"Audit event logged: {event}")
