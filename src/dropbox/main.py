@@ -92,6 +92,7 @@ def process_user(account):
     filenames = []
 
     try:
+        assert token
         dbx = dropbox.Dropbox(token)
         has_more = True
 
@@ -141,7 +142,7 @@ def process_user(account):
         elif slug:
             _log_audit_event(slug, AuditStatus.SUCCESS.value, msg)
         return {"statusCode": 200, "body": ""}
-    except dropbox.exceptions.AuthError as e:
+    except (dropbox.exceptions.AuthError, AssertionError) as e:
         # TODO: "Dropbox" str and API Gateway endpoint should not be constant
         _log_audit_event(
             slug,
