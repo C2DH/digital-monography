@@ -5,6 +5,7 @@ import dropbox
 import json
 import pathlib
 import dropbox.exceptions
+import dropbox.users
 import requests
 import logging
 import typing as t
@@ -145,6 +146,35 @@ def process_user(account: str, trace_id: str):
             _log_audit_event(slug, AuditStatus.SUCCESS.value, msg, filenames[0])
         elif slug:
             _log_audit_event(slug, AuditStatus.SUCCESS.value, msg)
+        account_details: dropbox.users.FullAccount = dbx.users_get_current_account()
+        # {
+        # "account_id": "dbid:AAC4AZN7bGg-92mRl_JqfdGDY8vV-d0xwpk",
+        # "name": {
+        #     "given_name": "Paweł",
+        #     "surname": "Kamiński",
+        #     "familiar_name": "Paweł",
+        #     "display_name": "Paweł Kamiński",
+        #     "abbreviated_name": "PK"
+        # },
+        # "email": "kaminskipawel@hotmail.com",
+        # "email_verified": true,
+        # "disabled": false,
+        # "country": "LU",
+        # "locale": "en",
+        # "referral_link": "https://www.dropbox.com/referrals/AACflpW9nlhxr-xg7mTS9AZJF9AtI6NNTPA?src=app9-12709328",
+        # "is_paired": false,
+        # "account_type": {
+        #     ".tag": "basic"
+        # },
+        # "root_info": {
+        #     ".tag": "user",
+        #     "root_namespace_id": "1383682889",
+        #     "home_namespace_id": "1383682889"
+        # }
+        # }
+        event = LoginEvent(trace_id=trace_id, status=LoginStatus.AUTHENTICATED.value)
+        event.send(dynamodb)
+        logger.info("Access granted. Account details: " + repr(account_details))
         return {"statusCode": 200, "body": ""}
     except (dropbox.exceptions.AuthError, AssertionError) as e:
         # TODO: "Dropbox" str and API Gateway endpoint should not be constant
