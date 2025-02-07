@@ -87,6 +87,7 @@ def process_user(account):
     # cursor for the user (None the first time)
     cursors_resp = dynamodb_get(DYNAMODB_CURSORS_TBL, {"account": account})
     cursor = cursors_resp.get("Item", {}).get("cursor")
+    logger.info(f"cursor == {cursor}")
     msg, slug = "", ""
     filenames = []
 
@@ -142,14 +143,14 @@ def process_user(account):
         return {"statusCode": 200, "body": ""}
     except dropbox.exceptions.AuthError as e:
         # TODO: "Dropbox" str and API Gateway endpoint should not be constant
-        if slug:
-            _log_audit_event(
-                slug,
-                AuditStatus.FAILED.value,
-                "Access denied. Please log in to Dropbox from 'https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com/test/login'",
-            )
-            alert = AlertLog(slug=slug, status=AlertStatus.NOAUTH.value)
-            alert.send(dynamodb)
+        _log_audit_event(
+            slug,
+            AuditStatus.FAILED.value,
+            "Access denied. Please log in to Dropbox from 'https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com/test/login'",
+        )
+        slugorx = slug if slug else "unknown"
+        alert = AlertLog(slug=slugorx, status=AlertStatus.NOAUTH.value)
+        alert.send(dynamodb)
         logger.exception("Access denied. Error: " + repr(e))
         return {"statusCode": 401, "body": "dropbox.exceptions.AuthError"}
 
