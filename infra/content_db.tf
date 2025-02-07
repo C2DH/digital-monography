@@ -16,17 +16,6 @@ resource "aws_dynamodb_table" "assets_tbl" {
   }
 }
 
-resource "aws_dynamodb_table" "alerts_tbl" {
-  name         = var.dgtmon_dev_dyndb_alerts_tbl
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "slug"
-
-  attribute {
-    name = "slug"
-    type = "S"
-  }
-}
-
 resource "aws_dynamodb_table" "headings_tbl" {
   name         = var.dgtmon_dev_dyndb_headings_tbl
   billing_mode = "PAY_PER_REQUEST"

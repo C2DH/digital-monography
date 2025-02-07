@@ -9,6 +9,17 @@ data "aws_cloudwatch_log_group" "general_purpose_logs" {
   depends_on = [aws_cloudwatch_log_group.general_purpose_logs]
 }
 
+resource "aws_dynamodb_table" "alerts_tbl" {
+  name         = var.dgtmon_dev_dyndb_alerts_tbl
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "slug"
+
+  attribute {
+    name = "slug"
+    type = "S"
+  }
+}
+
 resource "aws_dynamodb_table" "audit_tbl" {
   name         = var.dgtmon_dev_dyndb_audit_tbl
   billing_mode = "PAY_PER_REQUEST"
@@ -19,12 +30,10 @@ resource "aws_dynamodb_table" "audit_tbl" {
     name = "slug"
     type = "S"
   }
-
   attribute {
     name = "timestamp"
     type = "S"
   }
-
   ttl {
     attribute_name = "expires_at"
     enabled        = true
