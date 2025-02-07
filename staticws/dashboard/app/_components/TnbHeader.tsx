@@ -7,7 +7,7 @@ export default function TnbHeader() {
                 <div className="container-fluid">
                     <img src="favicon.ico" alt="icon-with-notebook-and-pen"></img>
                     <Link className="navbar-brand" href="/">Dashboard for Living Books</Link>
-                    <button 
+                    <button
                         className="navbar-toggler" type="button"
                         data-toggle="collapse" data-target="#navbarCollapse"
                         aria-controls="navbarCollapse" aria-expanded="false"
@@ -18,13 +18,13 @@ export default function TnbHeader() {
                         <ul className="navbar-nav mr-auto">
                             <li className="nav-item active">
                                 <a className="nav-link"
-                                target="_blank" rel="noopener noreferrer" 
-                                href="https://www.dropbox.com/home/Aplikacje/drpb-upload-alert-test"
+                                    target="_blank" rel="noopener noreferrer"
+                                    href="https://www.dropbox.com/home/Aplikacje/drpb-upload-alert-test"
                                 >Dropbox</a>
                             </li>
                             <li className="nav-item">
-                                <a className="nav-link" 
-                                href="https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com/test/login"
+                                <a className="nav-link"
+                                    href="https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com/test/login"
                                 >Login</a>
                             </li>
                         </ul>

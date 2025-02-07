@@ -41,11 +41,11 @@ export default function DynamicListGroup(): JSX.Element {
     const [loading, setLoading] = useState<boolean>(true);
     const [wordCount, setWordCount] = useState<ICountMap>({});
     const [charCount, setCharCount] = useState<ICountMap>({});
-    
+
     const searchParams = useSearchParams();
     const slug = searchParams?.get("slug");
     const dbTable = "dgtmon-dev-dyndb-headings-tbl";
-    
+
     useEffect(() => {
         const wCount = {};
         const cCount = {};

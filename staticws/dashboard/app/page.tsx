@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import TnbBookCard from "./_components/TnbBookCard";
 
 type IBook = {
@@ -35,11 +34,11 @@ export default function Home() {
         const resp = await fetch(`${endpoint}/test/alerts`);
         const json = await resp.json();
         console.log("json", json);
-          // const preSignedUrl = preSignedUrljson["presigned_url"];
-          // const resp = await fetch(preSignedUrl);
-          // const json = await resp.json();
+        // const preSignedUrl = preSignedUrljson["presigned_url"];
+        // const resp = await fetch(preSignedUrl);
+        // const json = await resp.json();
       } catch (e) {
-          console.error(e);
+        console.error(e);
       }
     };
     fetchStatusData();
@@ -53,7 +52,7 @@ export default function Home() {
             <TnbBookCard
               authors={book.authors}
               slug={book.slug}
-              key={book.slug}    
+              key={book.slug}
               title={book.title}
               alert={book.alert}
             ></TnbBookCard>)
