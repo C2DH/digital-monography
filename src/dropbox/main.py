@@ -92,7 +92,7 @@ def process_user(account):
     filenames = []
 
     try:
-        assert token
+        assert token is not None
         dbx = dropbox.Dropbox(token)
         has_more = True
 
