@@ -34,6 +34,7 @@ DYNAMODB_CURSORS_TBL = "dgtmon-dev-dyndb-cursors-tbl"
 # dynamodb table for publisher to manage content
 DYNAMODB_AUDIT_TBL = "dgtmon-dev-dyndb-audit-tbl"
 DYNAMODB_ALERTS_TBL = "dgtmon-dev-dyndb-alerts-tbl"
+DYNAMODB_LOGINS_TBL = "dgtmon-dev-dyndb-logins-tbl"
 DYNAMODB_ASSETS_TBL = "dgtmon-dev-dyndb-assets-tbl"
 DYNAMODB_CITATIONS_TBL = "dgtmon-dev-dyndb-citations-tbl"
 DYNAMODB_HEADINGS_TBL = "dgtmon-dev-dyndb-headings-tbl"

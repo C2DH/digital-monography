@@ -61,7 +61,8 @@ data "aws_iam_policy_document" "dropbox" {
     effect = "Allow"
     resources = [
       aws_dynamodb_table.alerts_tbl.arn,
-      aws_dynamodb_table.audit_tbl.arn
+      aws_dynamodb_table.audit_tbl.arn,
+      aws_dynamodb_table.logins_tbl.arn,
     ]
     actions = [
       "dynamodb:PutItem",

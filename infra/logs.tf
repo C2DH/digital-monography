@@ -39,3 +39,18 @@ resource "aws_dynamodb_table" "audit_tbl" {
     enabled        = true
   }
 }
+
+resource "aws_dynamodb_table" "logins_tbl" {
+  name         = var.dgtmon_dev_dyndb_logins_tbl
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "timestamp"
+
+  attribute {
+    name = "timestamp"
+    type = "S"
+  }
+  ttl {
+    attribute_name = "expires_at"
+    enabled        = true
+  }
+}

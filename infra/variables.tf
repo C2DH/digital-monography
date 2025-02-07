@@ -157,6 +157,11 @@ variable "dgtmon_dev_dyndb_alerts_tbl" {
   description = "Name of the table to log the last known status of the most crucial services"
 }
 
+variable "dgtmon_dev_dyndb_logins_tbl" {
+  type        = string
+  description = "Name of the table to monitor the logins of the users"
+}
+
 variable "dgtmon_dev_dyndb_assets_tbl" {
   type        = string
   description = "Name of the table for editors managing the status of assets"
