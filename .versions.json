@@ -1,6 +1,6 @@
 {
     "ENTRYPOINT_STABLE_V": "0.0.61",
-    "DROPBOX_STABLE_V": "0.0.31",
+    "DROPBOX_STABLE_V": "0.0.32",
     "BUILDER_STABLE_V": "0.1.20",
     "GITHUB_STABLE_V": "0.0.27",
     "PREPARER_STABLE_V": "0.1.30",
