@@ -156,7 +156,7 @@ def process_user(account):
 
 
 def dynamodb_set(tbl: str, **kwargs) -> None:
-    expire_at = int((datetime.datetime.now() + datetime.timedelta(days=3)).timestamp())
+    expire_at = int((datetime.datetime.now() + datetime.timedelta(hours=4)).timestamp())
     table = dynamodb.Table(tbl)
     # logger.info(f"{json.dumps({"expire_at": expire_at, **kwargs}, default=str)}")
     resp = table.put_item(Item={"expire_at": expire_at, **kwargs})
