@@ -4,9 +4,9 @@ import enum
 import typing as t
 
 try:
-    from constants import DYNAMODB_AUDIT_TBL
+    from constants import DYNAMODB_AUDIT_TBL, DYNAMODB_ALERTS_TBL
 except (ImportError, ModuleNotFoundError):
-    from .constants import DYNAMODB_AUDIT_TBL
+    from .constants import DYNAMODB_AUDIT_TBL, DYNAMODB_ALERTS_TBL
 
 
 class AuditStatus(enum.Enum):
@@ -88,7 +88,7 @@ class AlertLog:
     def send(self, dynamodb: t.Any) -> t.Any:
         if dynamodb is None:
             return
-        table = dynamodb.Table()
+        table = dynamodb.Table(DYNAMODB_ALERTS_TBL)
         table.put_item(
             Item={
                 "slug": self.slug,
