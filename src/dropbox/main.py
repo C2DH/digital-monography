@@ -20,6 +20,7 @@ try:
         IS_DEBUG,
     )
     from keys import KeyPath
+    from logins import LoginEvent, LoginStatus
 except (ImportError, ModuleNotFoundError):
     from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
     from .constants import (
@@ -30,6 +31,7 @@ except (ImportError, ModuleNotFoundError):
         IS_DEBUG,
     )
     from .keys import KeyPath
+    from .logins import LoginEvent, LoginStatus
 
 
 if IS_DEBUG:
@@ -59,6 +61,7 @@ def lambda_handler(event, context):
     logger.info("Context" + json.dumps(context, default=str))
     request_data = json.loads(base64.b64decode(event["Records"][0]["body"]))
     logger.info(f"Message: {request_data}, type={type(request_data)}")
+    trace_id = event["headers"].get("X-Amzn-Trace-Id", "no-trace-id")
 
     try:
         request_data["list_folder"]["accounts"]
@@ -70,11 +73,11 @@ def lambda_handler(event, context):
         # actual work in a separate thread. For more robustness, it's a
         # good idea to add the work to a reliable queue and process the queue
         # in a worker process.
-        process_user(account)
+        process_user(account, trace_id)
     return {"statusCode": 200, "body": ""}
 
 
-def process_user(account):
+def process_user(account: str, trace_id: str):
     """Call /files/list_folder for the given user ID and process any changes."""
     logger.info("process_user function was invoked with account " + str(account))
     # OAuth token for the user
@@ -149,9 +152,8 @@ def process_user(account):
             AuditStatus.FAILED.value,
             "Access denied. Please log in to Dropbox from 'https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com/test/login'",
         )
-        slugorx = slug if slug else "unknown"
-        alert = AlertLog(slug=slugorx, status=AlertStatus.NOAUTH.value)
-        alert.send(dynamodb)
+        event = LoginEvent(trace_id=trace_id, status=LoginStatus.FAILED.value)
+        event.send(dynamodb)
         logger.exception("Access denied. Error: " + repr(e))
         return {"statusCode": 401, "body": "dropbox.exceptions.AuthError"}
 
