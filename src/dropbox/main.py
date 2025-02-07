@@ -61,8 +61,9 @@ def lambda_handler(event, context):
     logger.info("Context" + json.dumps(context, default=str))
     request_data = json.loads(base64.b64decode(event["Records"][0]["body"]))
     logger.info(f"Message: {request_data}, type={type(request_data)}")
-    trace_id = event["headers"].get("X-Amzn-Trace-Id", "no-trace-id")
-
+    # trace_id = event["headers"].get("X-Amzn-Trace-Id", "no-trace-id")
+    trace_id = event["Records"][0]["attributes"].get("AWSTraceHeader", "no-trace-id")
+    logger.info(f"trace_id: {trace_id}")
     try:
         request_data["list_folder"]["accounts"]
     except Exception as e:
