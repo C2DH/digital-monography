@@ -22,6 +22,29 @@ parser = argparse.ArgumentParser(description="...")
 parser.add_argument("book_path")
 
 
+def _extract_metadata_from_img(
+    img_fn: str, encodded_img: str, alttext: str
+) -> dict[str, str]:
+    img_metadata = {}
+    for field in METADATA_FIELDS:
+        img_metadata["img"] = encodded_img
+        if field["is_required"] and field["key"] == "id":
+            # TODO: try hash of encodded_img
+            img_metadata[field["show"]] = uuid.uuid4().hex
+        elif field["is_required"] and field["key"] == "alttext":
+            img_metadata[field["show"]] = alttext
+        elif field["is_required"] and field["key"] in (
+            FIELD_DIGITAL_SOURCE,
+            FIELD_PAPER_SOURCE,
+        ):
+            img_metadata[digital_input_field["show"]] = img_fn
+            img_metadata[paper_input_field["show"]] = img_fn
+        elif field["is_required"]:
+            img_metadata[field["show"]] = ""
+    img_metadata[iscolor_field["show"]] = ""
+    return img_metadata
+
+
 def _write_editorial_notes_to_docx(fn: t.Union[str, pathlib.PurePath]) -> None:
     doc = docx.Document()
     _write_metadata_tables_to_docx(doc, metadata_tables)
@@ -32,6 +55,9 @@ def _write_metadata_tables_to_docx(
     doc: docx.Document, metadata_tables: dict[str, dict[str, str]]
 ) -> None:
     doc.add_heading("Figures metadata", level=1)
+    metadata_descs = {}
+    for field in METADATA_FIELDS:
+        metadata_descs[field["show"]] = field["desc"]
     for docx_fp, tables_data in metadata_tables.items():
         doc.add_heading(docx_fp, level=2)
         for table_data in tables_data:
@@ -59,7 +85,7 @@ if __name__ == "__main__":
     book_path_arg = args.book_path.split("=")
     assert len(book_path_arg) == 2
     book_path = pathlib.Path(book_path_arg[1])
-    metadata_tables = {}
+    metadata_tables: dict[str, list[dict[str, str]]] = {}
 
     digital_input_field = next(
         f for f in METADATA_FIELDS if f["key"] == FIELD_DIGITAL_SOURCE
@@ -68,9 +94,6 @@ if __name__ == "__main__":
         f for f in METADATA_FIELDS if f["key"] == FIELD_PAPER_SOURCE
     )
     iscolor_field = next(f for f in METADATA_FIELDS if f["key"] == "iscolor")
-    metadata_descs = {}
-    for field in METADATA_FIELDS:
-        metadata_descs[field["show"]] = field["desc"]
 
     assert book_path.exists(), f"{book_path} does not exist"
     (book_path / "assets").mkdir(exist_ok=True)
@@ -91,10 +114,9 @@ if __name__ == "__main__":
 
                 for i, img in enumerate(imgs, start=1):
 
-                    # if i > 5:
-                    #     break
+                    if i > 5:
+                        break
 
-                    img_metadata = {}
                     img: bs4.element.Tag
                     src: str = img["src"]
                     alttext: str = img.get("alt", "")
@@ -108,23 +130,10 @@ if __name__ == "__main__":
                     pil_img.save(target_dir / fn, quality=100, subsampling=0)
                     print(f"saved {(target_dir / fn)}")
 
-                    # 4. make a metadata dump for each image
-                    for field in METADATA_FIELDS:
-                        img_metadata["img"] = encodded_img
-                        if field["is_required"] and field["key"] == "id":
-                            img_metadata[field["show"]] = uuid.uuid4().hex
-                        elif field["is_required"] and field["key"] == "alttext":
-                            img_metadata[field["show"]] = alttext
-                        elif field["is_required"] and field["key"] in (
-                            FIELD_DIGITAL_SOURCE,
-                            FIELD_PAPER_SOURCE,
-                        ):
-                            input_target = "/".join((target_dir / fn).parts[-3:])
-                            img_metadata[digital_input_field["show"]] = input_target
-                            img_metadata[paper_input_field["show"]] = input_target
-                        elif field["is_required"]:
-                            img_metadata[field["show"]] = ""
-                    img_metadata[iscolor_field["show"]] = ""
+                    img_fn: str = "/".join((target_dir / fn).parts[-3:])
+                    img_metadata = _extract_metadata_from_img(
+                        img_fn, encodded_img, alttext
+                    )
                     metadata_tables[fp.name].append(img_metadata)
 
     _write_editorial_notes_to_docx(
