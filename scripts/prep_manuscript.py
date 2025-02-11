@@ -35,6 +35,9 @@ if __name__ == "__main__":
         f for f in METADATA_FIELDS if f["key"] == FIELD_PAPER_SOURCE
     )
     iscolor_field = next(f for f in METADATA_FIELDS if f["key"] == "iscolor")
+    metadata_descs = {}
+    for field in METADATA_FIELDS:
+        metadata_descs[field["show"]] = field["desc"]
 
     assert book_path.exists(), f"{book_path} does not exist"
     (book_path / "assets").mkdir(exist_ok=True)
@@ -55,8 +58,8 @@ if __name__ == "__main__":
 
                 for i, img in enumerate(imgs, start=1):
 
-                    # if i > 5:
-                    #     break
+                    if i > 5:
+                        break
 
                     img_metadata = {}
                     img: bs4.element.Tag
@@ -106,6 +109,13 @@ if __name__ == "__main__":
             for i, (key, value) in enumerate(table_data.items()):
                 tbl.cell(i, 0).text = key
                 tbl.cell(i, 1).text = value
+
+            doc.add_paragraph("")
+            doc.add_paragraph("Meaning of the fields:")
+            for field_name in table_data.keys():
+                doc.add_paragraph(
+                    field_name + " - " + metadata_descs[field_name], style="List Bullet"
+                )
             doc.add_page_break()
 
     doc.save(

@@ -89,7 +89,7 @@ METADATA_FIELDS = [
         "is_required": False,
         "show": "## Authors",
         "aliases": ["authors", "autor", "autors", "institution", "inst"],
-        "desc": "",
+        "desc": "Attribute an author of an object. Institution could also be attributed.",
     },
     {
         "key": FIELD_DIGITAL_SOURCE,
@@ -97,7 +97,7 @@ METADATA_FIELDS = [
         "is_required": True,
         "show": "## Digital input",
         "aliases": ["digitalsource", "digitalsrc", "digital"],
-        "desc": "",
+        "desc": r"Path to a file that will be displayed in a digital version of a book. Path should point to a location where the file is saved in the `assets` folder. Be careful to write a correct relative path to the file, e.g. `./assets/path/to/file.png` is valid while `C:\User\Documents\my-book\assets\path\to\file.png` is an invalid.",
     },
     {
         "key": FIELD_PAPER_SOURCE,
@@ -105,7 +105,7 @@ METADATA_FIELDS = [
         "is_required": False,
         "show": "## Paper input",
         "aliases": ["papersource", "papersrc", "paper"],
-        "desc": "",
+        "desc": r"Path to a file that will be displayed in a paper version of a book. Path should point to a location where the file is saved in the `assets` folder. Be careful to write a correct relative path to the file, e.g. `./assets/path/to/file.png` is valid while `C:\User\Documents\my-book\assets\path\to\file.png` is an invalid. If left empty, no object will not be included in the duplicate.",
     },
     {
         "key": FIELD_LICENSE_NAME,
@@ -113,7 +113,7 @@ METADATA_FIELDS = [
         "is_required": False,
         "show": "## License",
         "aliases": ["licensename"],
-        "desc": "",
+        "desc": "Name of a license under which an object was published. Preferably [SPDX ID](https://spdx.org/licenses/) like “BSD-4-Clause”. A full name, e.g. “Creative Commons Attribution 4.0 International”, is also acceptable, although not recommended.",
     },
     {
         "key": "source",
@@ -121,7 +121,7 @@ METADATA_FIELDS = [
         "is_required": True,
         "show": "## Source",
         "aliases": ["credit"],
-        "desc": "",
+        "desc": "All relevant source and copyright information.",
     },
     {
         "key": "alttext",
@@ -129,7 +129,7 @@ METADATA_FIELDS = [
         "is_required": True,
         "show": "## Alt text",
         "aliases": ["alt"],
-        "desc": "",
+        "desc": "Alt text to describe appearance or function of a multimedia object.",
     },
     {
         "key": "iscolor",
@@ -137,7 +137,7 @@ METADATA_FIELDS = [
         "is_required": False,
         "show": "## Is color",
         "aliases": ["color", "colour", "iscolour"],
-        "desc": "",
+        "desc": "Indicate whether an asset is meant to be printed in color. If a figure should be printed in black-and-white, leave it empty or write “no”.",
     },
     {
         "key": FIELD_DELETE_PREVIOUS,
@@ -149,7 +149,7 @@ METADATA_FIELDS = [
             "removeprev",
             "removeprevious",
         ],
-        "desc": "",
+        "desc": "Use this field if you want to remove previous object, like image, video, etc. Useful when you want to have an image directly in your MS Word file and replace it with an image indicated with “##Digital-source” or “##Paper-source”.",
     },
     {
         "key": "comments",
@@ -157,7 +157,7 @@ METADATA_FIELDS = [
         "is_required": False,
         "show": "## Comments",
         "aliases": ["comment"],
-        "desc": "",
+        "desc": "In case MS Word comments are not enough, you can comment an asset using this field so that this comment is visible in editor’s internal tools.",
     },
     {
         "key": "isready",
@@ -165,7 +165,7 @@ METADATA_FIELDS = [
         "is_required": False,
         "show": "## Is ready",
         "aliases": ["ready", "ok", "isok"],
-        "desc": "",
+        "desc": "Mark this asset as viewed in editor’s internal tools. This field is reserved for editors.",
     },
     {
         "key": "uuid",
