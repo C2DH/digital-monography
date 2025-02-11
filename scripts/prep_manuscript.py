@@ -29,6 +29,14 @@ if __name__ == "__main__":
     book_path = pathlib.Path(book_path_arg[1])
     metadata_tables = {}
 
+    digital_input_field = next(
+        f for f in METADATA_FIELDS if f["key"] == FIELD_DIGITAL_SOURCE
+    )
+    paper_input_field = next(
+        f for f in METADATA_FIELDS if f["key"] == FIELD_PAPER_SOURCE
+    )
+    iscolor_field = next(f for f in METADATA_FIELDS if f["key"] == "iscolor")
+
     assert book_path.exists(), f"{book_path} does not exist"
     (book_path / "assets").mkdir(exist_ok=True)
     for fp in book_path.glob("*"):
@@ -65,19 +73,19 @@ if __name__ == "__main__":
                     for field in METADATA_FIELDS:
                         img_metadata["img"] = encodded_img
                         if field["is_required"] and field["key"] == "id":
-                            img_metadata[field["key"]] = uuid.uuid4().hex
+                            img_metadata[field["show"]] = uuid.uuid4().hex
                         elif field["is_required"] and field["key"] == "alttext":
-                            img_metadata[field["key"]] = alttext
+                            img_metadata[field["show"]] = alttext
                         elif field["is_required"] and field["key"] in (
                             FIELD_DIGITAL_SOURCE,
                             FIELD_PAPER_SOURCE,
                         ):
                             input_target = "/".join((target_dir / fn).parts[-3:])
-                            img_metadata[FIELD_DIGITAL_SOURCE] = input_target
-                            img_metadata[FIELD_PAPER_SOURCE] = input_target
+                            img_metadata[digital_input_field["show"]] = input_target
+                            img_metadata[paper_input_field["show"]] = input_target
                         elif field["is_required"]:
-                            img_metadata[field["key"]] = ""
-                    img_metadata["iscolor"] = ""
+                            img_metadata[field["show"]] = ""
+                    img_metadata[iscolor_field["show"]] = ""
                     metadata_tables[fp.name].append(img_metadata)
 
     # 5. save metadata dump to docx
