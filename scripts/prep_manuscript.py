@@ -21,6 +21,30 @@ from constants import (
 parser = argparse.ArgumentParser(description="...")
 parser.add_argument("book_path")
 
+digital_input_field = next(
+    f for f in METADATA_FIELDS if f["key"] == FIELD_DIGITAL_SOURCE
+)
+paper_input_field = next(f for f in METADATA_FIELDS if f["key"] == FIELD_PAPER_SOURCE)
+iscolor_field = next(f for f in METADATA_FIELDS if f["key"] == "iscolor")
+
+
+def _extract_img_from_docx(
+    target_dir: pathlib.PurePath,
+    img: bs4.element.Tag,
+) -> t.Tuple[str, str, str]:
+    src: str = img["src"]
+    alttext: str = img.get("alt", "")
+    start = src.index("/") + 1
+    end = src.index(";", start)
+    suffix = src[start:end]
+    encodded_img = src.split(",")[-1]
+    fn = "{i:03}.{suffix}".format(i=i, suffix=suffix)
+    img_fn: str = "/".join((target_dir / fn).parts[-3:])
+    pil_img = Image.open(io.BytesIO(base64.b64decode(encodded_img)))
+    pil_img.save(target_dir / fn, quality=100, subsampling=0)
+    print(f"saved {(target_dir / fn)}")
+    return img_fn, encodded_img, alttext
+
 
 def _extract_metadata_from_img(
     img_fn: str, encodded_img: str, alttext: str
@@ -86,15 +110,6 @@ if __name__ == "__main__":
     assert len(book_path_arg) == 2
     book_path = pathlib.Path(book_path_arg[1])
     metadata_tables: dict[str, list[dict[str, str]]] = {}
-
-    digital_input_field = next(
-        f for f in METADATA_FIELDS if f["key"] == FIELD_DIGITAL_SOURCE
-    )
-    paper_input_field = next(
-        f for f in METADATA_FIELDS if f["key"] == FIELD_PAPER_SOURCE
-    )
-    iscolor_field = next(f for f in METADATA_FIELDS if f["key"] == "iscolor")
-
     assert book_path.exists(), f"{book_path} does not exist"
     (book_path / "assets").mkdir(exist_ok=True)
     for fp in book_path.glob("*"):
@@ -107,32 +122,11 @@ if __name__ == "__main__":
             with open(fp, "rb") as f:
                 target_dir = book_path / "assets" / fp.stem
                 target_dir.mkdir(exist_ok=True)
-                result = mammoth.convert_to_html(f, style_map=MAMMOTH_STYLE_MAP)
-                html_str = result.value
+                html_str = mammoth.convert_to_html(f, style_map=MAMMOTH_STYLE_MAP).value
                 html_soup = bs4.BeautifulSoup(html_str, "html.parser")
-                imgs = html_soup.find_all("img")
-
-                for i, img in enumerate(imgs, start=1):
-
-                    if i > 5:
-                        break
-
-                    img: bs4.element.Tag
-                    src: str = img["src"]
-                    alttext: str = img.get("alt", "")
-                    start = src.index("/") + 1
-                    end = src.index(";", start)
-                    suffix = src[start:end]
-                    encodded_img = src.split(",")[-1]
-                    assert target_dir.exists(), f"{target_dir} does not exist"
-                    fn = "{i:03}.{suffix}".format(i=i, suffix=suffix)
-                    pil_img = Image.open(io.BytesIO(base64.b64decode(encodded_img)))
-                    pil_img.save(target_dir / fn, quality=100, subsampling=0)
-                    print(f"saved {(target_dir / fn)}")
-
-                    img_fn: str = "/".join((target_dir / fn).parts[-3:])
+                for i, img in enumerate(html_soup.find_all("img"), start=1):
                     img_metadata = _extract_metadata_from_img(
-                        img_fn, encodded_img, alttext
+                        *_extract_img_from_docx(target_dir, img)
                     )
                     metadata_tables[fp.name].append(img_metadata)
 
