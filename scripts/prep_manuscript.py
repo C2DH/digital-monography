@@ -7,6 +7,7 @@ import io
 import mammoth
 import pathlib
 from PIL import Image
+import typing as t
 import uuid
 
 from constants import (
@@ -19,6 +20,38 @@ from constants import (
 
 parser = argparse.ArgumentParser(description="...")
 parser.add_argument("book_path")
+
+
+def _write_editorial_notes_to_docx(fn: t.Union[str, pathlib.PurePath]) -> None:
+    doc = docx.Document()
+    _write_metadata_tables_to_docx(doc, metadata_tables)
+    doc.save(fn)
+
+
+def _write_metadata_tables_to_docx(
+    doc: docx.Document, metadata_tables: dict[str, dict[str, str]]
+) -> None:
+    doc.add_heading("Figures metadata", level=1)
+    for docx_fp, tables_data in metadata_tables.items():
+        doc.add_heading(docx_fp, level=2)
+        for table_data in tables_data:
+            table_data: dict
+            _img = table_data.pop("img")
+            doc.add_picture(
+                io.BytesIO(base64.b64decode(_img)), width=docx.shared.Inches(2)
+            )
+            tbl = doc.add_table(len(table_data), cols=2, style="Table Grid")
+            for i, (key, value) in enumerate(table_data.items()):
+                tbl.cell(i, 0).text = key
+                tbl.cell(i, 1).text = value
+
+            doc.add_paragraph("")
+            doc.add_paragraph("Meaning of the fields:")
+            for field_name in table_data.keys():
+                doc.add_paragraph(
+                    field_name + " - " + metadata_descs[field_name], style="List Bullet"
+                )
+            doc.add_page_break()
 
 
 if __name__ == "__main__":
@@ -58,8 +91,8 @@ if __name__ == "__main__":
 
                 for i, img in enumerate(imgs, start=1):
 
-                    if i > 5:
-                        break
+                    # if i > 5:
+                    #     break
 
                     img_metadata = {}
                     img: bs4.element.Tag
@@ -94,34 +127,9 @@ if __name__ == "__main__":
                     img_metadata[iscolor_field["show"]] = ""
                     metadata_tables[fp.name].append(img_metadata)
 
-    # 5. save metadata dump to docx
-    doc = docx.Document()
-    doc.add_heading("Figures metadata", level=1)
-    for docx_fp, tables_data in metadata_tables.items():
-        doc.add_heading(docx_fp, level=2)
-        for table_data in tables_data:
-            table_data: dict
-            _img = table_data.pop("img")
-            doc.add_picture(
-                io.BytesIO(base64.b64decode(_img)), width=docx.shared.Inches(2)
-            )
-            tbl = doc.add_table(len(table_data), cols=2, style="Table Grid")
-            for i, (key, value) in enumerate(table_data.items()):
-                tbl.cell(i, 0).text = key
-                tbl.cell(i, 1).text = value
-
-            doc.add_paragraph("")
-            doc.add_paragraph("Meaning of the fields:")
-            for field_name in table_data.keys():
-                doc.add_paragraph(
-                    field_name + " - " + metadata_descs[field_name], style="List Bullet"
-                )
-            doc.add_page_break()
-
-    doc.save(
+    _write_editorial_notes_to_docx(
         book_path
         / "assets"
         / f"{datetime.date.today().isoformat()}_editorial_notes.docx"
     )
-
     print("end")
