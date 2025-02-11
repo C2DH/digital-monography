@@ -4,7 +4,11 @@
 -r src/github/requirements.txt
 -r src/builder/requirements.txt
 
+# testing
 pytest==7.4.*
+
+# scripts/prep_manuscript.py
+python-docx==1.1.*
 
 # TODO: consider adding linting and type checking
 # flake8==7.0.*
