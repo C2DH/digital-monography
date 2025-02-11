@@ -19,7 +19,6 @@ from constants import (
 
 parser = argparse.ArgumentParser(description="...")
 parser.add_argument("book_path")
-# parser.add_argument("--skip-build", action="store_true")
 
 
 if __name__ == "__main__":
@@ -55,6 +54,10 @@ if __name__ == "__main__":
                 imgs = html_soup.find_all("img")
 
                 for i, img in enumerate(imgs, start=1):
+
+                    # if i > 5:
+                    #     break
+
                     img_metadata = {}
                     img: bs4.element.Tag
                     src: str = img["src"]
@@ -99,11 +102,10 @@ if __name__ == "__main__":
             doc.add_picture(
                 io.BytesIO(base64.b64decode(_img)), width=docx.shared.Inches(2)
             )
-            tbl = doc.add_table(len(table_data), cols=2)
+            tbl = doc.add_table(len(table_data), cols=2, style="Table Grid")
             for i, (key, value) in enumerate(table_data.items()):
                 tbl.cell(i, 0).text = key
                 tbl.cell(i, 1).text = value
-
             doc.add_page_break()
 
     doc.save(
