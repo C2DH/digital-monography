@@ -7,8 +7,8 @@ import io
 import mammoth
 import pathlib
 from PIL import Image
+import os
 import typing as t
-import uuid
 
 from constants import (
     MAMMOTH_STYLE_MAP,
@@ -18,8 +18,10 @@ from constants import (
 )
 
 
+os.environ["PYTHONHASHSEED"] = "0"
 parser = argparse.ArgumentParser(description="...")
 parser.add_argument("book_path")
+
 
 digital_input_field = next(
     f for f in METADATA_FIELDS if f["key"] == FIELD_DIGITAL_SOURCE
@@ -91,8 +93,7 @@ def _extract_metadata_from_img(
     for field in METADATA_FIELDS:
         img_metadata["img"] = encodded_img
         if field["is_required"] and field["key"] == "id":
-            # TODO: try hash of encodded_img
-            img_metadata[field["show"]] = uuid.uuid4().hex
+            img_metadata[field["show"]] = str(hash(encodded_img))
         elif field["is_required"] and field["key"] == "alttext":
             img_metadata[field["show"]] = alttext
         elif field["is_required"] and field["key"] in (
