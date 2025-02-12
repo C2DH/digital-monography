@@ -119,13 +119,13 @@ def _write_editorial_notes_to_docx(
 def _write_metadata_tables_to_docx(
     doc: docx.Document, metadata_tables: dict[str, dict[str, str]]
 ) -> None:
-    if not metadata_tables:
-        return
     doc.add_heading("Figures metadata", level=1)
     metadata_descs = {}
     for field in METADATA_FIELDS:
         metadata_descs[field["show"]] = field["desc"]
     for docx_fp, tables_data in metadata_tables.items():
+        if not tables_data:
+            continue
         doc.add_heading(docx_fp, level=2)
         for table_data in tables_data:
             table_data: dict
