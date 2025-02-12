@@ -28,7 +28,43 @@ paper_input_field = next(f for f in METADATA_FIELDS if f["key"] == FIELD_PAPER_S
 iscolor_field = next(f for f in METADATA_FIELDS if f["key"] == "iscolor")
 
 
+def main() -> None:
+    args = parser.parse_args()
+    book_path_arg = args.book_path.split("=")
+    assert len(book_path_arg) == 2
+    book_path = pathlib.Path(book_path_arg[1])
+    metadata_tables: dict[str, list[dict[str, str]]] = {}
+    assert book_path.exists(), f"{book_path} does not exist"
+    (book_path / "assets").mkdir(exist_ok=True)
+    for fp in book_path.glob("*"):
+        if not fp.exists() or fp.is_dir():
+            continue
+        elif fp.name.startswith("~$"):
+            continue
+        elif fp.suffix == ".docx":
+            metadata_tables[fp.name] = []
+            with open(fp, "rb") as f:
+                target_dir = book_path / "assets" / fp.stem
+                target_dir.mkdir(exist_ok=True)
+                html_str = mammoth.convert_to_html(f, style_map=MAMMOTH_STYLE_MAP).value
+                html_soup = bs4.BeautifulSoup(html_str, "html.parser")
+                for i, img in enumerate(html_soup.find_all("img"), start=1):
+                    img_metadata = _extract_metadata_from_img(
+                        *_extract_img_from_docx(i, target_dir, img)
+                    )
+                    metadata_tables[fp.name].append(img_metadata)
+
+    notes_fn = (
+        book_path
+        / "assets"
+        / f"{datetime.date.today().isoformat()}_editorial_notes.docx"
+    )
+    _write_editorial_notes_to_docx(notes_fn, metadata_tables)
+    print("end")
+
+
 def _extract_img_from_docx(
+    i: int,
     target_dir: pathlib.PurePath,
     img: bs4.element.Tag,
 ) -> t.Tuple[str, str, str]:
@@ -69,7 +105,10 @@ def _extract_metadata_from_img(
     return img_metadata
 
 
-def _write_editorial_notes_to_docx(fn: t.Union[str, pathlib.PurePath]) -> None:
+def _write_editorial_notes_to_docx(
+    fn: t.Union[str, pathlib.PurePath],
+    metadata_tables: dict[str, list[dict[str, str]]],
+) -> None:
     doc = docx.Document()
     _write_metadata_tables_to_docx(doc, metadata_tables)
     doc.save(fn)
@@ -105,34 +144,4 @@ def _write_metadata_tables_to_docx(
 
 
 if __name__ == "__main__":
-    args = parser.parse_args()
-    book_path_arg = args.book_path.split("=")
-    assert len(book_path_arg) == 2
-    book_path = pathlib.Path(book_path_arg[1])
-    metadata_tables: dict[str, list[dict[str, str]]] = {}
-    assert book_path.exists(), f"{book_path} does not exist"
-    (book_path / "assets").mkdir(exist_ok=True)
-    for fp in book_path.glob("*"):
-        if not fp.exists() or fp.is_dir():
-            continue
-        elif fp.name.startswith("~$"):
-            continue
-        elif fp.suffix == ".docx":
-            metadata_tables[fp.name] = []
-            with open(fp, "rb") as f:
-                target_dir = book_path / "assets" / fp.stem
-                target_dir.mkdir(exist_ok=True)
-                html_str = mammoth.convert_to_html(f, style_map=MAMMOTH_STYLE_MAP).value
-                html_soup = bs4.BeautifulSoup(html_str, "html.parser")
-                for i, img in enumerate(html_soup.find_all("img"), start=1):
-                    img_metadata = _extract_metadata_from_img(
-                        *_extract_img_from_docx(target_dir, img)
-                    )
-                    metadata_tables[fp.name].append(img_metadata)
-
-    _write_editorial_notes_to_docx(
-        book_path
-        / "assets"
-        / f"{datetime.date.today().isoformat()}_editorial_notes.docx"
-    )
-    print("end")
+    main()
