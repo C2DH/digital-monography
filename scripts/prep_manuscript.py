@@ -4,6 +4,7 @@ import bs4
 import datetime
 import docx
 import io
+import docx.oxml
 import mammoth
 import pathlib
 from PIL import Image
@@ -30,7 +31,12 @@ paper_input_field = next(f for f in METADATA_FIELDS if f["key"] == FIELD_PAPER_S
 iscolor_field = next(f for f in METADATA_FIELDS if f["key"] == "iscolor")
 
 
-def main() -> None:
+def _main() -> None:
+    """
+    This script does the following:
+    1. Extract images from docx files to an assets folder
+    2. Prepares Metadata Tables from docx files and partially filles them
+    """
     args = parser.parse_args()
     book_path_arg = args.book_path.split("=")
     assert len(book_path_arg) == 2
@@ -117,6 +123,37 @@ def _write_editorial_notes_to_docx(
     doc.save(fn)
 
 
+def add_hyperlink(
+    paragraph: docx.text.paragraph.Paragraph, text: str, url: str
+) -> docx.oxml.text.hyperlink.CT_Hyperlink:
+    """
+    Source: https://stackoverflow.com/a/47666747/8007403
+    """
+    # This gets access to the document.xml.rels file and gets a new relation id value
+    part = paragraph.part
+    r_id = part.relate_to(
+        url, docx.opc.constants.RELATIONSHIP_TYPE.HYPERLINK, is_external=True
+    )
+    # Create the w:hyperlink tag and add needed values
+    hyperlink = docx.oxml.shared.OxmlElement("w:hyperlink")
+    hyperlink.set(
+        docx.oxml.shared.qn("r:id"),
+        r_id,
+    )
+    # Create a new run object (a wrapper over a 'w:r' element)
+    new_run = docx.text.run.Run(docx.oxml.shared.OxmlElement("w:r"), paragraph)
+    new_run.text = text
+    # Set the run's style to the builtin hyperlink style, defining it if necessary
+    # new_run.style = get_or_create_hyperlink_style(part.document)
+    # Alternatively, set the run's formatting explicitly
+    new_run.font.color.rgb = docx.shared.RGBColor(0, 0, 255)
+    new_run.font.underline = True
+    # Join all the xml elements together
+    hyperlink.append(new_run._element)
+    paragraph._p.append(hyperlink)
+    return hyperlink
+
+
 def _write_metadata_tables_to_docx(
     doc: docx.Document, metadata_tables: dict[str, dict[str, str]]
 ) -> None:
@@ -145,8 +182,17 @@ def _write_metadata_tables_to_docx(
                 doc.add_paragraph(
                     field_name + " - " + metadata_descs[field_name], style="List Bullet"
                 )
+            doc.add_paragraph("")
+            p = doc.add_paragraph(
+                "Make sure that the figure is associated with a caption. The caption must be structured in a way described by "
+            )
+            add_hyperlink(
+                p,
+                "the guidelines.",
+                "https://cpy-dgtmon-dev-staticws-wip.s3.eu-west-1.amazonaws.com/read/guidelines-for-drafting-manuscripts/02_introduction_to_docx.html#how-to-structure-image-captions",
+            )
             doc.add_page_break()
 
 
 if __name__ == "__main__":
-    main()
+    _main()
