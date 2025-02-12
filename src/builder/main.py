@@ -185,12 +185,12 @@ def _copy_assets(key: KeyPath) -> None:
         src = key.efs_slug_dir / dirname
         dst = key.efs_slug_dir / "_build" / "html" / dirname
         logger.info(f"copy assets from {str(src)} to {str(dst)}")
-        logger.info(f"BEFORE COPY - assets in {str(src)}: {str(os.listdir(src))}")
-        logger.info(f"BEFORE COPY - assets in {str(dst)}: {str(os.listdir(dst))}")
+        if dst.exists():
+            logger.info(f"BEFORE COPY - assets in {str(dst)}: {str(os.listdir(dst))}")
         if src.exists():
+            logger.info(f"BEFORE COPY - assets in {str(src)}: {str(os.listdir(src))}")
             shutil.copytree(src, dst, dirs_exist_ok=True)
-        logger.info(f"AFTER COPY - assets in {str(src)}: {str(os.listdir(src))}")
-        logger.info(f"AFTER COPY - assets in {str(dst)}: {str(os.listdir(dst))}")
+            logger.info(f"AFTER COPY - assets in {str(src)}: {str(os.listdir(src))}")
     except Exception as e:
         logging.exception(f"Unable to copy assets. Error: {repr(e)}")
         _log_audit_event(key, AuditStatus.FAILED.value, "Error while copying assets.")
