@@ -44,11 +44,13 @@ def main() -> None:
         elif fp.suffix == ".docx":
             metadata_tables[fp.name] = []
             with open(fp, "rb") as f:
-                target_dir = book_path / "assets" / fp.stem
-                target_dir.mkdir(exist_ok=True)
                 html_str = mammoth.convert_to_html(f, style_map=MAMMOTH_STYLE_MAP).value
                 html_soup = bs4.BeautifulSoup(html_str, "html.parser")
-                for i, img in enumerate(html_soup.find_all("img"), start=1):
+                imgs = html_soup.find_all("img")
+                if imgs:
+                    target_dir = book_path / "assets" / fp.stem
+                    target_dir.mkdir(exist_ok=True)
+                for i, img in enumerate(imgs, start=1):
                     img_metadata = _extract_metadata_from_img(
                         *_extract_img_from_docx(i, target_dir, img)
                     )
@@ -117,6 +119,8 @@ def _write_editorial_notes_to_docx(
 def _write_metadata_tables_to_docx(
     doc: docx.Document, metadata_tables: dict[str, dict[str, str]]
 ) -> None:
+    if not metadata_tables:
+        return
     doc.add_heading("Figures metadata", level=1)
     metadata_descs = {}
     for field in METADATA_FIELDS:
