@@ -1,8 +1,9 @@
 import collections
+import mammoth
 import pathlib
 
-from src.verifier.html_verifier import HtmlVerifier
-from src.verifier.html_verifier import (
+from src.verifier.rules_v1 import HtmlVerifier
+from src.verifier.rules_v1 import (
     MSG_PROBLEMS,
     ASSETS,
     CAPTIONS,
@@ -13,6 +14,11 @@ from src.verifier.html_verifier import (
 )
 from src.verifier.main import _fromtimestamp
 from src.verifier.path_handler import PathHandler
+from src.verifier.constants import (
+    FIELD_DIGITAL_SOURCE,
+    FIELD_PAPER_SOURCE,
+    MAMMOTH_STYLE_MAP,
+)
 
 
 class TestHeadingsLinksAndCaptionsBreakingVerificationRules:
@@ -347,12 +353,14 @@ class TestHeadingsLinksAndCaptionsBreakingVerificationRules:
 
 
 class TestTablesAndAssetsBreakingVerificationRules:
-    fp = pathlib.Path("tests") / "_fixtures" / "verify_tables_assets.html"
+    fp = pathlib.Path("tests") / "_fixtures" / "_verify_tables_assets.html"
 
     @classmethod
     def setup_class(cls):
         with open(cls.fp, "r") as f:
             cls.html = f.read()
+        # with open(cls.fp, "rb") as f:
+        #     cls.html = mammoth.convert_to_html(f, style_map=MAMMOTH_STYLE_MAP).value
         cls.warnings = collections.defaultdict(list)
         cls.verifer = HtmlVerifier()
         slug = "examples"
@@ -399,8 +407,8 @@ class TestTablesAndAssetsBreakingVerificationRules:
                 is_correct_no_warning = w
         assert is_incorrect_raise_warning
         assert "alttext" in is_incorrect_raise_warning["recommend"]
-        assert "digitalsource" in is_incorrect_raise_warning["recommend"]
-        assert "papersource" not in is_incorrect_raise_warning["recommend"]
+        assert FIELD_DIGITAL_SOURCE in is_incorrect_raise_warning["recommend"]
+        assert FIELD_PAPER_SOURCE not in is_incorrect_raise_warning["recommend"]
         assert is_correct_no_warning is None
         assert (
             len(
@@ -477,6 +485,10 @@ class TestTablesAndAssetsBreakingVerificationRules:
     def test_check_tbl_unrecognized_license(self):
         is_incorrect_raise_warning = None
         is_correct_no_warning = None
+        # for w in self.warnings[TABLES]:
+        #     print("_=", end="")
+        #     if w["problem"] == MSG_PROBLEMS[TABLES]["check_tbl_unrecognized_license"]:
+        #         print(">>>>", w)
         for w in self.warnings[TABLES]:
             if (
                 "This is not a recognized license name" in w["curr_elem"]

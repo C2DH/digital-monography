@@ -19,7 +19,7 @@ try:
         VERIFIER_MSGS,
     )
     from fakers import Faker
-    from html_verifier import HtmlVerifier
+    from rules_v1 import HtmlVerifier
     from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
     from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
@@ -32,7 +32,7 @@ except (ImportError, ModuleNotFoundError):
         VERIFIER_MSGS,
     )
     from .fakers import Faker
-    from .html_verifier import HtmlVerifier
+    from .rules_v1 import HtmlVerifier
     from .keys import KeyPath
 
 if IS_DEBUG:
