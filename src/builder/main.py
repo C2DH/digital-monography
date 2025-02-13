@@ -31,6 +31,8 @@ try:
     from metadata import DocumentMetadata, SubstitutionDatapoint
     from fakers import Faker
     from keys import KeyPath
+    from verif_book import BookVerifier
+    from verif_warnings import MessagesJson
 except (ImportError, ModuleNotFoundError):
     from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
     from .constants import (
@@ -46,6 +48,8 @@ except (ImportError, ModuleNotFoundError):
     from .metadata import DocumentMetadata, SubstitutionDatapoint
     from .fakers import Faker
     from .keys import KeyPath
+    from .verif_book import BookVerifier
+    from .verif_warnings import MessagesJson
 
 
 if IS_DEBUG:
@@ -74,6 +78,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info("Event: " + json.dumps(event, default=str))
     logger.info("Context: " + json.dumps(context, default=str))
     key = _get_key(event)
+    timestamp = _get_timestamp(event)
     _log_audit_event(key, AuditStatus.PENDING.value, "Building book in progress...")
     _mkdir_read()
     # _write_metadata_to_db(key)
@@ -83,6 +88,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     _distribute_book(key)
     _log_audit_event(key, AuditStatus.SUCCESS.value, "Digital version was created.")
     # this should probably go to another Lambda service
+    warnings = _verify_book(key, timestamp)
+    _write_warnings_to_db(warnings)
     # _build_verification_report(key)
     # _distribute_report(key)
     logging.info("Builder Lambda function finished.")
@@ -99,8 +106,18 @@ def _get_key(event) -> KeyPath:
         raise
 
 
-def _fromtimestamp(event_time: str) -> datetime.datetime:
-    return datetime.datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S.%f%z")
+def _get_timestamp(event) -> datetime.datetime:
+    try:
+        event_time = event["Records"][0]["eventTime"]
+        return datetime.datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S.%f%z")
+    except Exception as e:
+        logger.error(
+            f"Unable to retrieve event time. Event: "
+            + json.dumps(event, default=str)
+            + ". Exception: "
+            + repr(e)
+        )
+        return datetime.datetime.now()
 
 
 # TODO: Check if this is necessary. If not, remove.
@@ -464,6 +481,19 @@ def _sync_efs_to_staticws(src: pathlib.Path, dstdir: str, slug: str) -> None:
     logging.info(f"Syncing files from {src} to {dst}.")
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p.wait()
+
+
+def _verify_book(key: KeyPath, timestamp: datetime.datetime) -> MessagesJson:
+    verifer = BookVerifier()
+    verifer.verify(key, timestamp)
+    verifer.sort()
+    # TODO: implement, for now this is just an empty list
+    return verifer.to_json(md=True)
+
+
+def _write_warnings_to_db(warnings: MessagesJson) -> None:
+    # TODO: implement
+    pass
 
 
 def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:
