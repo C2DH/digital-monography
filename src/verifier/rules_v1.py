@@ -145,7 +145,7 @@ class HtmlVerifier:
     def to_json(self, md: bool = False):
         return self._messages.to_json(md)
 
-    def sort(self) -> VerifierMessages:
+    def sort(self) -> None:
         self._messages.sort(key=lambda msg: (msg["line"], msg["pos"]))
 
     def verify(
