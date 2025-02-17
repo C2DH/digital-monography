@@ -161,6 +161,7 @@ class HeadingDatapoint:
 @dataclasses.dataclass
 class RefDatapoint:
     pk: int = dataclasses.field(default_factory=itertools.count().__next__, init=False)
+    fn: str
     target_id: str
     text: str
     href: str

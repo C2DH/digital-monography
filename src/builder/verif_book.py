@@ -51,6 +51,7 @@ class RefsAndTargetsVerifier:
     def __init__(self) -> None:
         self._targets: dict[str, tuple[pathlib.PurePath, TargetDatapoint]] = {}
         self._timestamp = datetime.datetime.now(tz=datetime.timezone.utc)
+        self._metadatas: dict[pathlib.PurePath, DocumentMetadata] = {}
         self._messages: list[dict[str, str]] = []
         # TODO: self._messages: VerifierMessages = VerifierMessages()
 
@@ -58,9 +59,10 @@ class RefsAndTargetsVerifier:
         self, multidocs_meta: dict[pathlib.PurePath, DocumentMetadata]
     ) -> list[dict[str, str]]:
         # mark targets
-        self._fp_stems: set[str] = set()
-        for fn, meta in multidocs_meta.items():
-            self._fp_stems.add(fn.stem)
+        # self._fp_stems: set[str] = set()
+        self._metadatas = multidocs_meta
+        for fn, meta in self._metadatas.items():
+            # self._fp_stems.add(ref_stem)
             for target in meta.targets:
                 target: TargetDatapoint
                 self._targets[target.pk] = (fn, target)
@@ -69,10 +71,15 @@ class RefsAndTargetsVerifier:
         # print("=" * 100)
         # iterate over refs, matching them with targets
         i = 0
-        for fn, md in multidocs_meta.items():
+        for fn, md in self._metadatas.items():
             for ref in md.refs:
                 i += 1
                 ref: RefDatapoint
+                try:
+                    ref_stem = ref.fn.split(".")[0]
+                except IndexError:
+                    ref_stem = ref.fn
+                print("ref", ref, ref_stem)
                 # 1. if href is external, perform verification
                 if ref.href.startswith("http") and ".sharepoint.com/" not in ref.href:
                     # print(i, "External link:", ref.href)
@@ -87,7 +94,7 @@ class RefsAndTargetsVerifier:
                                 "problem": MSG_PROBLEMS[LINKS]["check_a_is_not_https"],
                                 "recommend": recommend,
                                 "elem": ref.elem,
-                                "fn": fn.stem,
+                                "fn": ref.fn,
                                 "timestamp": self._timestamp,
                                 "tags": [LINKS],
                             }
@@ -103,7 +110,7 @@ class RefsAndTargetsVerifier:
                                     "to the archived source."
                                 ),
                                 "elem": ref.elem,
-                                "fn": fn.stem,
+                                "fn": ref.fn,
                                 "timestamp": self._timestamp,
                                 "tags": [LINKS],
                             }
@@ -119,13 +126,13 @@ class RefsAndTargetsVerifier:
                                     "check_a_is_invalid_infile_link"
                                 ],
                                 "recommend": (
-                                    f'No matching target has been found in the "{fn.stem}" file. '
+                                    f'No matching target has been found in the "{ref_stem}" file. '
                                     f'Link "`{ref.prev_string}`" points to "`{ref.prev_href}`", '
                                     "but no such target has been found in the same file. "
                                     "Check the Guidelines on writing correct references."
                                 ),
                                 "elem": ref.elem,
-                                "fn": fn.stem,
+                                "fn": ref.fn,
                                 "timestamp": self._timestamp,
                                 "tags": [LINKS],
                             }
@@ -156,7 +163,7 @@ class RefsAndTargetsVerifier:
                                     '"`C:/Documents/mybook/03_myfile.docx#heading`" is not.'
                                 ),
                                 "elem": ref.elem,
-                                "fn": fn.stem,
+                                "fn": ref.fn,
                                 "timestamp": self._timestamp,
                                 "tags": [LINKS],
                             }
@@ -178,7 +185,7 @@ class RefsAndTargetsVerifier:
                                     "file in this link is up to date."
                                 ),
                                 "elem": ref.elem,
-                                "fn": fn.stem,
+                                "fn": ref.fn,
                                 "timestamp": self._timestamp,
                                 "tags": [LINKS],
                             }
@@ -196,7 +203,7 @@ class RefsAndTargetsVerifier:
                                     "Check the Guidelines on writing correct references."
                                 ),
                                 "elem": ref.elem,
-                                "fn": fn.stem,
+                                "fn": ref.fn,
                                 "timestamp": self._timestamp,
                                 "tags": [LINKS],
                             }
@@ -211,7 +218,7 @@ class RefsAndTargetsVerifier:
                                 "If this is a link to an external website, it should start with "`https://`". " \
                                 "If this is a hyperlink to some other part of the manuscript, read the Guidelines on writing valid references.',
                             "elem": ref.elem,
-                            "fn": fn.stem,
+                            "fn": ref.fn,
                             "timestamp": self._timestamp,
                             "tags": [LINKS],
                         }
@@ -236,7 +243,7 @@ class RefsAndTargetsVerifier:
 
     def _check_a_f2f_filename_is_invalid(self, target_fn: str) -> bool:
         p = pathlib.Path(target_fn)
-        return p.stem not in self._fp_stems
+        return p.stem not in self._metadatas.keys()
 
     def _check_a_f2f_filename_is_absolute(self, target_fn: str) -> bool:
         check_idx = len("./")

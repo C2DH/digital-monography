@@ -27,11 +27,12 @@ try:
         DYNAMODB_HEADINGS_TBL,
         DYNAMODB_WARNINGS_TBL,
         STATICWS_WIP_BUCKET_NAME,
+        VERIFIER_MSGS,
     )
     from metadata import DocumentMetadata, SubstitutionDatapoint
     from fakers import Faker
     from keys import KeyPath
-    from verif_book import BookVerifier
+    from verif_book import RefsAndTargetsVerifier
     from verif_warnings import MessagesJson
 except (ImportError, ModuleNotFoundError):
     from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
@@ -44,11 +45,12 @@ except (ImportError, ModuleNotFoundError):
         DYNAMODB_HEADINGS_TBL,
         DYNAMODB_WARNINGS_TBL,
         STATICWS_WIP_BUCKET_NAME,
+        VERIFIER_MSGS,
     )
     from .metadata import DocumentMetadata, SubstitutionDatapoint
     from .fakers import Faker
     from .keys import KeyPath
-    from .verif_book import BookVerifier
+    from .verif_book import RefsAndTargetsVerifier
     from .verif_warnings import MessagesJson
 
 
@@ -88,8 +90,9 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     _distribute_book(key)
     _log_audit_event(key, AuditStatus.SUCCESS.value, "Digital version was created.")
     # this should probably go to another Lambda service
-    warnings = _verify_book(key, timestamp)
-    _write_warnings_to_db(warnings)
+    warnings = _verify_book(key)
+    _put_json_to_s3(warnings)
+    # _write_warnings_to_db(warnings)
     # _build_verification_report(key)
     # _distribute_report(key)
     logging.info("Builder Lambda function finished.")
@@ -483,17 +486,48 @@ def _sync_efs_to_staticws(src: pathlib.Path, dstdir: str, slug: str) -> None:
     p.wait()
 
 
-def _verify_book(key: KeyPath, timestamp: datetime.datetime) -> MessagesJson:
-    verifer = BookVerifier()
-    verifer.verify(key, timestamp)
-    verifer.sort()
-    # TODO: implement, for now this is just an empty list
-    return verifer.to_json(md=True)
+def _verify_book(key: KeyPath) -> list[dict[str, str]]:
+    metadatas: dict[KeyPath, DocumentMetadata] = {}
+    for meta_file in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
+        meta_file: KeyPath
+        with meta_file.open("r") as f:
+            metadata = DocumentMetadata(meta_file)
+            metadata.from_json(json.load(f))
+            metadatas[meta_file.stem] = metadata
+    # TODO: stop repeating metadata parsing after _prepare_config()
+    # the only difference is just stem str vs pathlib path
+    verifier = RefsAndTargetsVerifier()
+    return verifier.verify(metadatas)
+    # verifer = BookVerifier()
+    # verifer.verify(key, timestamp)
+    # verifer.sort()
+    # return verifer.to_json(md=True)
 
 
 def _write_warnings_to_db(warnings: MessagesJson) -> None:
     # TODO: implement
     pass
+
+
+def _put_json_to_s3(warnings: list[dict[str, str]]) -> None:
+    try:
+        warnings_grouped = {}
+        for w in warnings:
+            if w.get("fn") not in warnings_grouped:
+                warnings_grouped[w.get("fn")] = []
+            warnings_grouped[w.get("fn")].append(w)
+
+        for fn, warnings in warnings_grouped.items():
+            s3_key = fn.split(".")[0] + ".json"
+            body = json.dumps(warnings, default=str)
+            resp = s3.put_object(Body=body, Bucket=VERIFIER_MSGS, Key=str(s3_key))
+            logger.info(
+                f"Response from s3.put_object(Bucket={VERIFIER_MSGS}, Key={str(s3_key)}): "
+                + json.dumps(resp, default=str)
+            )
+    except Exception as e:
+        logger.exception(f"Putting json to s3 bucket failed. Error: {repr(e)}")
+        raise
 
 
 def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:

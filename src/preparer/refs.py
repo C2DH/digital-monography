@@ -289,6 +289,7 @@ def prepare_references(
             metadata.add_ref(
                 RefDatapoint(
                     target_id=target.pk if target else "",
+                    fn=metadata.filepath.name,
                     text=link_text,
                     href=link_dest,
                     prev_string=prev_string,

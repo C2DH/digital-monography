@@ -59,10 +59,12 @@ class TestRefsAndTargetsVerifier:
 
     def test_verification(self):
         # print("self.warnings", self.warnings)
-        for w in self.warnings:
-            print(w["problem"])
-            print(w["recommend"])
-            print("-" * 20)
+        print(self.warnings[0])
+        # for w in self.warnings:
+        #     print(w["problem"])
+        #     print(w["recommend"])
+        #     print(w["fn"])
+        #     print("-" * 20)
 
-        print("len(self.warnings)", len(self.warnings))
+        # print("len(self.warnings)", len(self.warnings))
         assert 1 == 5
