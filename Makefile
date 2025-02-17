@@ -11,7 +11,11 @@ DOCKER_ECR = 367031255351.dkr.ecr.eu-west-1.amazonaws.com
 DOCKER_HUB = c2dhunilu
 
 
-test:
+test/prep:
+	cp '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/links/01_a.docx' tests/_fixtures/refs/01_a.docx
+	cp '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/links/02_b.docx' tests/_fixtures/refs/02_b.docx
+
+test/run:
 	DGTMON_DEBUG=1 python -m pytest tests/preparer/ tests/verifier/ tests/builder/
 
 login:
