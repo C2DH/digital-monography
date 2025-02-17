@@ -38,7 +38,7 @@ class TestRefsAndTargetsVerifier:
     ) -> tuple[bs4.BeautifulSoup, DocumentMetadata]:
         html_str = _convert_to_html(fp)
         html_soup = bs4.BeautifulSoup(html_str, "html.parser")
-        metadata = DocumentMetadata(cls.fp_a)
+        metadata = DocumentMetadata(fp)
         headers, captions, footnotes, references = [], [], [], []
         classifiers = [
             (is_header, headers),
