@@ -1,5 +1,4 @@
 import datetime
-import json
 import pathlib
 import typing as t
 
@@ -65,6 +64,9 @@ class RefsAndTargetsVerifier:
             for target in meta.targets:
                 target: TargetDatapoint
                 self._targets[target.pk] = (fn, target)
+        #         print(f"target.pk={target.pk}, fn={fn}, target={target}")
+        # print("=" * 100)
+        # print("=" * 100)
         # iterate over refs, matching them with targets
         i = 0
         for fn, md in multidocs_meta.items():
@@ -73,13 +75,13 @@ class RefsAndTargetsVerifier:
                 ref: RefDatapoint
                 # 1. if href is external, perform verification
                 if ref.href.startswith("http") and ".sharepoint.com/" not in ref.href:
-                    print(i, "External link:", ref.href)
+                    # print(i, "External link:", ref.href)
                     if self._check_a_is_not_https(ref.href):
                         recommend = f'The problem lies in the "`{ref.prev_string}`" link to "`{ref.prev_href}`".'
                         if "http:" in ref.href:
-                            recommend += f"If possible, change \"`{ref.prev_href}`\" to \"{ref.prev_href.replace('http:', 'https:', 1)}\"."
+                            recommend += f' If possible, change "`{ref.prev_href}`" to "{ref.prev_href.replace('http:', 'https:', 1)}".'
                         else:
-                            recommend += f'When possible, link to websites like "`https://example.com`" instead of "`http://example.com`".'
+                            recommend += f' When possible, link to websites like "`https://example.com`" instead of "`http://example.com`".'
                         self._messages.append(
                             {
                                 "problem": MSG_PROBLEMS[LINKS]["check_a_is_not_https"],
@@ -94,7 +96,12 @@ class RefsAndTargetsVerifier:
                         self._messages.append(
                             {
                                 "problem": MSG_PROBLEMS[LINKS]["check_a_not_archived"],
-                                "recommend": f'Go to the "https://web.archive.org/", archive the website and replace "`{ref.href}`" in your manuscript with a link to the archived source.',
+                                "recommend": (
+                                    f'The link "`{ref.prev_string}`" points to unarchived source. '
+                                    'Go to the "https://web.archive.org/", archive the website '
+                                    f'and replace "`{ref.prev_href}`" in your manuscript with a link '
+                                    "to the archived source."
+                                ),
                                 "elem": ref.elem,
                                 "fn": fn.stem,
                                 "timestamp": self._timestamp,
@@ -104,7 +111,7 @@ class RefsAndTargetsVerifier:
                 # 2. if href points to the same doc, check targets of this file
                 elif ref.href.startswith("#"):
                     target_dp = self._targets.get(ref.href[1:])
-                    print(i, "In-file link:", ref.href, target_dp)
+                    # print(i, "In-file link:", ref.href, target_dp)
                     if self._check_a_is_invalid_infile_link(target_dp):
                         self._messages.append(
                             {
@@ -127,7 +134,12 @@ class RefsAndTargetsVerifier:
                 elif "#" in ref.href:
                     target_fn, fragment = ref.href.split("#")
                     target_dp = self._targets.get(fragment)
-                    print(i, "Cross-file link:", ref.href, target_dp)
+                    target_stem = pathlib.Path(target_fn).stem
+                    # print(i, "Cross-file link:", ref.href, target_dp)
+                    # print("fragment", fragment)
+
+                    # target_dp
+
                     if self._check_a_f2f_filename_is_absolute(target_fn):
                         self._messages.append(
                             {
@@ -161,7 +173,7 @@ class RefsAndTargetsVerifier:
                                     "check_a_f2f_filename_is_invalid"
                                 ],
                                 "recommend": (
-                                    f'Link "`{ref.prev_string}`" points to a target in "{target_fn}", '
+                                    f'Link "`{ref.prev_string}`" points to a target in "{target_stem}", '
                                     "but no such file has been found. Make sure the name of the "
                                     "file in this link is up to date."
                                 ),
@@ -178,9 +190,9 @@ class RefsAndTargetsVerifier:
                                     "check_a_is_invalid_f2f"
                                 ],
                                 "recommend": (
-                                    f'No matching target has been found in the "{target_fn}" file. '
+                                    f'No matching target has been found in the "{target_stem}" file. '
                                     f'Link "`{ref.prev_string}`" points to "`{ref.prev_href}`", '
-                                    f'but no such target has been found in "{target_fn}". '
+                                    f'but no such target has been found in "{target_stem}". '
                                     "Check the Guidelines on writing correct references."
                                 ),
                                 "elem": ref.elem,
@@ -191,7 +203,7 @@ class RefsAndTargetsVerifier:
                         )
 
                 else:
-                    print(i, "Unknown link:", ref.href)
+                    # print(i, "Unknown link:", ref.href)
                     self._messages.append(
                         {
                             "problem": MSG_PROBLEMS[LINKS]["check_a_has_hash_or_http"],
