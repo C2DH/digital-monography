@@ -46,7 +46,7 @@ MSG_PROBLEMS = {
         "check_a_is_invalid_f2f": "Link points to a non-existing target.",
         "check_a_f2f_filename_is_invalid": "Link points a non-existing file.",
         "check_a_f2f_filename_is_absolute": "Links to targets in separate files should use absolute paths.",
-        "check_a_has_hash_or_http": "Found an unspecified problem with a link.",
+        "check_a_without_hash_or_http": "Found an unspecified problem with a link.",
     }
 }
 
@@ -65,6 +65,7 @@ class RefsAndTargetsVerifier:
         # mark targets
         # self._fp_stems: set[str] = set()
         self._metadatas = multidocs_meta
+        self._metadatas_stemmed_filenames = [m.stem for m in self._metadatas]
         for fn, meta in self._metadatas.items():
             # self._fp_stems.add(ref_stem)
             for target in meta.targets:
@@ -90,6 +91,7 @@ class RefsAndTargetsVerifier:
                 if ref.href.startswith("http") and ".sharepoint.com/" not in ref.href:
                     # print(i, "External link:", ref.href)
                     if self._check_a_is_not_https(ref.href):
+                        check = "check_a_is_not_https"
                         md_elem = self._markwownify_html_elem(ref, md_elem)
                         recommend = f'The problem lies in the "`{ref.prev_string}`" link to "`{ref.prev_href}`".'
                         if "http:" in ref.href:
@@ -99,7 +101,8 @@ class RefsAndTargetsVerifier:
                         self._messages.append(
                             {
                                 "id": uuid.uuid4().hex[:8],
-                                "problem": MSG_PROBLEMS[LINKS]["check_a_is_not_https"],
+                                "check": check,
+                                "problem": MSG_PROBLEMS[LINKS][check],
                                 "recommend": recommend,
                                 "curr_elem": ref.elem,
                                 "fn": ref.fn,
@@ -108,11 +111,13 @@ class RefsAndTargetsVerifier:
                             }
                         )
                     if self._check_a_not_archived(ref.href):
+                        check = "check_a_not_archived"
                         md_elem = self._markwownify_html_elem(ref, md_elem)
                         self._messages.append(
                             {
                                 "id": uuid.uuid4().hex[:8],
-                                "problem": MSG_PROBLEMS[LINKS]["check_a_not_archived"],
+                                "check": check,
+                                "problem": MSG_PROBLEMS[LINKS][check],
                                 "recommend": (
                                     f'The link "`{ref.prev_string}`" points to unarchived source. '
                                     'Go to the "https://web.archive.org/", archive the website '
@@ -130,13 +135,13 @@ class RefsAndTargetsVerifier:
                     target_dp = self._targets.get(ref.href[1:])
                     # print(i, "In-file link:", ref.href, target_dp)
                     if self._check_a_is_invalid_infile_link(target_dp):
+                        check = "check_a_is_invalid_infile_link"
                         md_elem = self._markwownify_html_elem(ref, md_elem)
                         self._messages.append(
                             {
                                 "id": uuid.uuid4().hex[:8],
-                                "problem": MSG_PROBLEMS[LINKS][
-                                    "check_a_is_invalid_infile_link"
-                                ],
+                                "check": check,
+                                "problem": MSG_PROBLEMS[LINKS][check],
                                 "recommend": (
                                     f'No matching target has been found in the "{ref_stem}" file. '
                                     f'Link "`{ref.prev_string}`" points to "`{ref.prev_href}`", '
@@ -160,13 +165,13 @@ class RefsAndTargetsVerifier:
                     # target_dp
 
                     if self._check_a_f2f_filename_is_absolute(target_fn):
+                        check = "check_a_f2f_filename_is_absolute"
                         md_elem = self._markwownify_html_elem(ref, md_elem)
                         self._messages.append(
                             {
                                 "id": uuid.uuid4().hex[:8],
-                                "problem": MSG_PROBLEMS[LINKS][
-                                    "check_a_f2f_filename_is_absolute"
-                                ],
+                                "check": check,
+                                "problem": MSG_PROBLEMS[LINKS][check],
                                 "recommend": (
                                     f'Link "`{ref.prev_string}`" points to a target using absolute path '
                                     f'("`{ref.prev_href}`") instead of relative. This is not permitted '
@@ -174,7 +179,7 @@ class RefsAndTargetsVerifier:
                                     "of the links whenever someone changes their location. "
                                     "The correct link should mention the name of the file "
                                     "without the folders in which this file is located. "
-                                    'For example, "`03_myfile.docx#heading`" is correct while'
+                                    'For example, "`03_myfile.docx#heading`" is correct while '
                                     '"`C:/Documents/mybook/03_myfile.docx#heading`" is not.'
                                 ),
                                 "curr_elem": ref.elem,
@@ -184,13 +189,13 @@ class RefsAndTargetsVerifier:
                             }
                         )
                     elif self._check_a_f2f_filename_is_invalid(target_fn):
+                        check = "check_a_f2f_filename_is_invalid"
                         md_elem = self._markwownify_html_elem(ref, md_elem)
                         self._messages.append(
                             {
                                 "id": uuid.uuid4().hex[:8],
-                                "problem": MSG_PROBLEMS[LINKS][
-                                    "check_a_f2f_filename_is_invalid"
-                                ],
+                                "check": check,
+                                "problem": MSG_PROBLEMS[LINKS][check],
                                 "recommend": (
                                     f'Link "`{ref.prev_string}`" points to a target in "{target_stem}", '
                                     "but no such file has been found. Make sure the name of the "
@@ -203,13 +208,13 @@ class RefsAndTargetsVerifier:
                             }
                         )
                     elif self._check_a_is_invalid_f2f(target_dp):
+                        check = "check_a_is_invalid_f2f"
                         md_elem = self._markwownify_html_elem(ref, md_elem)
                         self._messages.append(
                             {
                                 "id": uuid.uuid4().hex[:8],
-                                "problem": MSG_PROBLEMS[LINKS][
-                                    "check_a_is_invalid_f2f"
-                                ],
+                                "check": check,
+                                "problem": MSG_PROBLEMS[LINKS][check],
                                 "recommend": (
                                     f'No matching target has been found in the "{target_stem}" file. '
                                     f'Link "`{ref.prev_string}`" points to "`{ref.prev_href}`", '
@@ -225,11 +230,13 @@ class RefsAndTargetsVerifier:
 
                 else:
                     # print(i, "Unknown link:", ref.href)
+                    check = "check_a_without_hash_or_http"
                     md_elem = self._markwownify_html_elem(ref, md_elem)
                     self._messages.append(
                         {
                             "id": uuid.uuid4().hex[:8],
-                            "problem": MSG_PROBLEMS[LINKS]["check_a_has_hash_or_http"],
+                            "check": check,
+                            "problem": MSG_PROBLEMS[LINKS][check],
                             "recommend": f'Hyperlink "`{ref.prev_string}`" to "`{ref.prev_href}`" is not valid. \
                                 "If this is a link to an external website, it should start with "`https://`". " \
                                 "If this is a hyperlink to some other part of the manuscript, read the Guidelines on writing valid references.',
@@ -239,6 +246,12 @@ class RefsAndTargetsVerifier:
                             "tags": [LINKS],
                         }
                     )
+
+        for w in self._messages:
+            print(w["check"])
+            print(w["problem"])
+            print(w["recommend"])
+            print("-" * 20)
         return self._messages
 
     def _markwownify_html_elem(self, ref: RefDatapoint, md_elem: str) -> str:
@@ -265,7 +278,14 @@ class RefsAndTargetsVerifier:
 
     def _check_a_f2f_filename_is_invalid(self, target_fn: str) -> bool:
         p = pathlib.Path(target_fn)
-        return p.stem not in self._metadatas.keys()
+        print(">>>> self._metadatas.keys()", self._metadatas.keys())
+        print(">>>> p.stem", p.stem)
+        # assert self._metadatas.keys() == 1
+        # if p.stem not in self._metadatas.keys():
+        #     return True
+        #     print("\tp.stem not in self._metadatas.keys()\n\n")
+        # return False
+        return p.stem not in self._metadatas_stemmed_filenames
 
     def _check_a_f2f_filename_is_absolute(self, target_fn: str) -> bool:
         check_idx = len("./")

@@ -1,4 +1,3 @@
-import collections
 import pathlib
 import bs4
 
@@ -46,7 +45,6 @@ class TestRefsAndTargetsVerifier:
             (is_footnote, footnotes),
             (is_reference, references),
         ]
-        # print(html_soup.prettify())
         for node in html_soup.descendants:
             for check_if_meets_criteria, container in classifiers:
                 if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
@@ -57,14 +55,56 @@ class TestRefsAndTargetsVerifier:
         html_soup = prepare_references(html_soup, metadata, references)
         return html_soup, metadata
 
-    def test_verification(self):
-        # print("self.warnings", self.warnings)
-        print(self.warnings[0])
-        # for w in self.warnings:
-        #     print(w["problem"])
-        #     print(w["recommend"])
-        #     print(w["fn"])
-        #     print("-" * 20)
+    def test_check_a_is_not_https(self):
+        warnings = [w for w in self.warnings if w["check"] == "check_a_not_archived"]
+        ref_string = "Link to external website without using https nor archived link"
+        assert ref_string in warnings[0]["recommend"]
+        assert len(warnings) == 1
 
-        # print("len(self.warnings)", len(self.warnings))
-        assert 1 == 5
+    def test_check_a_not_archived(self):
+        warnings = [w for w in self.warnings if w["check"] == "check_a_not_archived"]
+        ref_string = "Link to external website without using https nor archived link"
+        assert ref_string in warnings[0]["recommend"]
+        assert len(warnings) == 1
+
+    def test_check_a_is_invalid_infile_link(self):
+        warnings = [
+            w for w in self.warnings if w["check"] == "check_a_is_invalid_infile_link"
+        ]
+        ref_string = "link to the same file where the fragment doesn't exist"
+        assert ref_string in warnings[0]["recommend"]
+        assert len(warnings) == 1
+
+    def test_check_a_f2f_filename_is_invalid__is_incorrect_raise_warning(self):
+        warnings = [
+            w for w in self.warnings if w["check"] == "check_a_f2f_filename_is_invalid"
+        ]
+        ref_string = "link to a separate file where the file does not exist"
+        target_fn = "99_x"
+        assert ref_string in warnings[0]["recommend"]
+        assert target_fn in warnings[0]["recommend"]
+        assert len(warnings) == 1
+
+    def test_check_a_f2f_filename_is_absolute(self):
+        warnings = [
+            w for w in self.warnings if w["check"] == "check_a_f2f_filename_is_absolute"
+        ]
+        ref_string = "Link to a separate file with absolute path instead relative"
+        assert ref_string in warnings[0]["recommend"]
+        assert len(warnings) == 1
+
+    def test_check_a_is_invalid_f2f(self):
+        warnings = [w for w in self.warnings if w["check"] == "check_a_is_invalid_f2f"]
+        ref_fragment = "#deletedTarget"
+        assert ref_fragment in warnings[0]["recommend"]
+        assert len(warnings) == 1
+
+    def test_check_a_without_hash_or_http(self):
+        warnings = [
+            w for w in self.warnings if w["check"] == "check_a_without_hash_or_http"
+        ]
+        ref_string = "Hyperlink address is some characters – no hash or http protocol"
+        ref_href = "addressTypedFromHand"
+        assert ref_string in warnings[0]["recommend"]
+        assert ref_href in warnings[0]["recommend"]
+        assert len(warnings) == 1
