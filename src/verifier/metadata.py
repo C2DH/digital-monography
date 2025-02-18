@@ -170,7 +170,7 @@ class RefDatapoint:
     elem: str
 
     def to_json(self) -> dict[str, t.Union[str, int]]:
-        omit = ("elem",)
+        omit = []  # ("elem",)
         return {
             f.name: getattr(self, f.name)
             for f in dataclasses.fields(self)
@@ -180,7 +180,7 @@ class RefDatapoint:
     @staticmethod
     def from_json(jsml: dict[str, t.Union[str, int]]) -> "RefDatapoint":
         del jsml["pk"]
-        jsml["elem"] = ""
+        # jsml["elem"] = ""
         return RefDatapoint(**jsml)
 
     def __getitem__(self, name: str) -> t.Union[int, str]:

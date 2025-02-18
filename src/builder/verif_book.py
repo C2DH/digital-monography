@@ -80,7 +80,8 @@ class RefsAndTargetsVerifier:
                     ref_stem = ref.fn.split(".")[0]
                 except IndexError:
                     ref_stem = ref.fn
-                print("ref", ref, ref_stem)
+                # print("ref", ref, ref_stem)
+                # print("ref", ref.elem)
                 # 1. if href is external, perform verification
                 if ref.href.startswith("http") and ".sharepoint.com/" not in ref.href:
                     # print(i, "External link:", ref.href)
@@ -95,7 +96,7 @@ class RefsAndTargetsVerifier:
                                 "id": uuid.uuid4().hex[:8],
                                 "problem": MSG_PROBLEMS[LINKS]["check_a_is_not_https"],
                                 "recommend": recommend,
-                                "elem": str(ref.elem),
+                                "curr_elem": ref.elem,
                                 "fn": ref.fn,
                                 "timestamp": self._timestamp,
                                 "tags": [LINKS],
@@ -112,7 +113,7 @@ class RefsAndTargetsVerifier:
                                     f'and replace "`{ref.prev_href}`" in your manuscript with a link '
                                     "to the archived source."
                                 ),
-                                "elem": str(ref.elem),
+                                "curr_elem": ref.elem,
                                 "fn": ref.fn,
                                 "timestamp": self._timestamp,
                                 "tags": [LINKS],
@@ -135,7 +136,7 @@ class RefsAndTargetsVerifier:
                                     "but no such target has been found in the same file. "
                                     "Check the Guidelines on writing correct references."
                                 ),
-                                "elem": str(ref.elem),
+                                "curr_elem": ref.elem,
                                 "fn": ref.fn,
                                 "timestamp": self._timestamp,
                                 "tags": [LINKS],
@@ -160,14 +161,15 @@ class RefsAndTargetsVerifier:
                                 ],
                                 "recommend": (
                                     f'Link "`{ref.prev_string}`" points to a target using absolute path '
-                                    "instead of relative. This is not permitted as it will lead to breaking "
+                                    f'("`{ref.prev_href}`") instead of relative. This is not permitted '
+                                    "as it will lead to breaking "
                                     "of the links whenever someone changes their location. "
                                     "The correct link should mention the name of the file "
                                     "without the folders in which this file is located. "
                                     'For example, "`03_myfile.docx#heading`" is correct while'
                                     '"`C:/Documents/mybook/03_myfile.docx#heading`" is not.'
                                 ),
-                                "elem": str(ref.elem),
+                                "curr_elem": ref.elem,
                                 "fn": ref.fn,
                                 "timestamp": self._timestamp,
                                 "tags": [LINKS],
@@ -190,7 +192,7 @@ class RefsAndTargetsVerifier:
                                     "but no such file has been found. Make sure the name of the "
                                     "file in this link is up to date."
                                 ),
-                                "elem": str(ref.elem),
+                                "curr_elem": ref.elem,
                                 "fn": ref.fn,
                                 "timestamp": self._timestamp,
                                 "tags": [LINKS],
@@ -209,7 +211,7 @@ class RefsAndTargetsVerifier:
                                     f'but no such target has been found in "{target_stem}". '
                                     "Check the Guidelines on writing correct references."
                                 ),
-                                "elem": str(ref.elem),
+                                "curr_elem": ref.elem,
                                 "fn": ref.fn,
                                 "timestamp": self._timestamp,
                                 "tags": [LINKS],
@@ -225,7 +227,7 @@ class RefsAndTargetsVerifier:
                             "recommend": f'Hyperlink "`{ref.prev_string}`" to "`{ref.prev_href}`" is not valid. \
                                 "If this is a link to an external website, it should start with "`https://`". " \
                                 "If this is a hyperlink to some other part of the manuscript, read the Guidelines on writing valid references.',
-                            "elem": str(ref.elem),
+                            "curr_elem": ref.elem,
                             "fn": ref.fn,
                             "timestamp": self._timestamp,
                             "tags": [LINKS],

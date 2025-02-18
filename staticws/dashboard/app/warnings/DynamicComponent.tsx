@@ -8,9 +8,10 @@ type IWarning = {
     id: string
     problem: string
     recommend: string
-    prev_elem: string
-    curr_elem: string
-    next_elem: string
+    elem: string
+    // prev_elem: string
+    // curr_elem: string
+    // next_elem: string
     [key: string]: any
 }
 
@@ -66,10 +67,10 @@ export default function DynamicComponent() {
                                         <div className="col-1">
                                         </div>
                                         <div className="col-9">
-                                            <TnbMarkdown content={warning.prev_elem} />
+                                            <TnbMarkdown content={warning.elem} />
                                         </div>
                                     </div>
-                                    <div className="row">
+                                    {/* <div className="row">
                                         <div className="col-1">
                                             👉
                                         </div>
@@ -83,7 +84,7 @@ export default function DynamicComponent() {
                                         <div className="col-9">
                                             <TnbMarkdown content={warning.next_elem} />
                                         </div>
-                                    </div>
+                                    </div> */}
                                 </div>
                             </div>
                         </div>
