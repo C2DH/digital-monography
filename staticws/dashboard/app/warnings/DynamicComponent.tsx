@@ -63,13 +63,13 @@ export default function DynamicComponent() {
                                 <div className="accordion-body">
                                     <TnbMarkdown content={`**${warning.problem}** ${warning.recommend}`} />
                                     <hr />
-                                    {/* <div className="row">
+                                    {warning.prev_elem && <div className="row">
                                         <div className="col-1">
                                         </div>
                                         <div className="col-9">
-                                            <TnbMarkdown content={warning.elem} />
+                                            <TnbMarkdown content={warning.prev_elem} />
                                         </div>
-                                    </div> */}
+                                    </div>}
                                     {warning.curr_elem && <div className="row">
                                         <div className="col-1">
                                             👉
@@ -78,13 +78,13 @@ export default function DynamicComponent() {
                                             <TnbMarkdown content={warning.curr_elem} />
                                         </div>
                                     </div>}
-                                    {/* <div className="row">
+                                    {warning.next_elem && <div className="row">
                                         <div className="col-1">
                                         </div>
                                         <div className="col-9">
                                             <TnbMarkdown content={warning.next_elem} />
                                         </div>
-                                    </div> */}
+                                    </div>}
                                 </div>
                             </div>
                         </div>
