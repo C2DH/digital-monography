@@ -324,6 +324,7 @@ class HtmlVerifier:
         <h1>No Footnotes In Headings<sup><a href="#footnote-1" id="footnote-ref-1">[1]</a></sup></h1>
         """
         for sup in tag.find_all("sup"):
+            sup: bs4.element.Tag
             for a in sup.find_all("a"):
                 if "footnote" in str(a):
                     return True
