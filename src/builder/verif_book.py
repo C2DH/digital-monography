@@ -1,6 +1,7 @@
 import datetime
 import pathlib
 import typing as t
+import uuid
 
 try:
     from metadata import DocumentMetadata, RefDatapoint, TargetDatapoint
@@ -91,6 +92,7 @@ class RefsAndTargetsVerifier:
                             recommend += f' When possible, link to websites like "`https://example.com`" instead of "`http://example.com`".'
                         self._messages.append(
                             {
+                                "id": uuid.uuid4().hex[:8],
                                 "problem": MSG_PROBLEMS[LINKS]["check_a_is_not_https"],
                                 "recommend": recommend,
                                 "elem": str(ref.elem),
@@ -102,6 +104,7 @@ class RefsAndTargetsVerifier:
                     if self._check_a_not_archived(ref.href):
                         self._messages.append(
                             {
+                                "id": uuid.uuid4().hex[:8],
                                 "problem": MSG_PROBLEMS[LINKS]["check_a_not_archived"],
                                 "recommend": (
                                     f'The link "`{ref.prev_string}`" points to unarchived source. '
@@ -122,6 +125,7 @@ class RefsAndTargetsVerifier:
                     if self._check_a_is_invalid_infile_link(target_dp):
                         self._messages.append(
                             {
+                                "id": uuid.uuid4().hex[:8],
                                 "problem": MSG_PROBLEMS[LINKS][
                                     "check_a_is_invalid_infile_link"
                                 ],
@@ -150,6 +154,7 @@ class RefsAndTargetsVerifier:
                     if self._check_a_f2f_filename_is_absolute(target_fn):
                         self._messages.append(
                             {
+                                "id": uuid.uuid4().hex[:8],
                                 "problem": MSG_PROBLEMS[LINKS][
                                     "check_a_f2f_filename_is_absolute"
                                 ],
@@ -176,6 +181,7 @@ class RefsAndTargetsVerifier:
                         # print("self._fp_stems", self._fp_stems)
                         self._messages.append(
                             {
+                                "id": uuid.uuid4().hex[:8],
                                 "problem": MSG_PROBLEMS[LINKS][
                                     "check_a_f2f_filename_is_invalid"
                                 ],
@@ -193,6 +199,7 @@ class RefsAndTargetsVerifier:
                     elif self._check_a_is_invalid_f2f(target_dp):
                         self._messages.append(
                             {
+                                "id": uuid.uuid4().hex[:8],
                                 "problem": MSG_PROBLEMS[LINKS][
                                     "check_a_is_invalid_f2f"
                                 ],
@@ -213,6 +220,7 @@ class RefsAndTargetsVerifier:
                     # print(i, "Unknown link:", ref.href)
                     self._messages.append(
                         {
+                            "id": uuid.uuid4().hex[:8],
                             "problem": MSG_PROBLEMS[LINKS]["check_a_has_hash_or_http"],
                             "recommend": f'Hyperlink "`{ref.prev_string}`" to "`{ref.prev_href}`" is not valid. \
                                 "If this is a link to an external website, it should start with "`https://`". " \
