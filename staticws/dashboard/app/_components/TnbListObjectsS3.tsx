@@ -34,7 +34,7 @@ export default function DynamicComponent({ backendPath, targetPath }: { backendP
                     tempTableData.push({
                         keyEncoded: btoa(json[i].Key) || "",
                         key: getLastPart(json[i].Key || ""),
-                        lastModified: json[i].LastModified || "",
+                        lastModified: new Date(json[i].LastModified).toString() || "",
                         size: json[i].Size || undefined,
                     });
                 }
