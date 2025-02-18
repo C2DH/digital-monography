@@ -90,7 +90,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     _log_audit_event(key, AuditStatus.SUCCESS.value, "Digital version was created.")
     # this should probably go to another Lambda service
     warnings = _verify_book(key)
-    _put_json_to_s3(warnings)
+    _put_json_to_s3(key, warnings)
     # _write_warnings_to_db(warnings)
     # _build_verification_report(key)
     # _distribute_report(key)
@@ -494,7 +494,7 @@ def _write_warnings_to_db(warnings: MessagesJson) -> None:
     pass
 
 
-def _put_json_to_s3(warnings: list[dict[str, str]]) -> None:
+def _put_json_to_s3(key: KeyPath, warnings: list[dict[str, str]]) -> None:
     try:
         warnings_grouped = {}
         for w in warnings:
@@ -503,7 +503,7 @@ def _put_json_to_s3(warnings: list[dict[str, str]]) -> None:
             warnings_grouped[w.get("fn")].append(w)
 
         for fn, warnings in warnings_grouped.items():
-            s3_key = fn.split(".")[0] + ".json"
+            s3_key = key.slug + "/" + fn.split(".")[0] + ".json"
             body = json.dumps(warnings, default=str)
             resp = s3.put_object(Body=body, Bucket=VERIFIER_MSGS, Key=str(s3_key))
             logger.info(
