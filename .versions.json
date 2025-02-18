@@ -4,7 +4,7 @@
     "BUILDER_STABLE_V": "0.1.22",
     "GITHUB_STABLE_V": "0.0.27",
     "PREPARER_STABLE_V": "0.1.30",
-    "VERIFIER_STABLE_V": "0.1.14",
+    "VERIFIER_STABLE_V": "0.1.15",
     "GPU_STABLE_V": "0.0.7",
     "LOCAL_STABLE_V": "0.1.2"
 }

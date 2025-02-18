@@ -76,9 +76,11 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         )
         verifer.sort()
         warnings_json = verifer.to_json(md=True)
+        TEMP_DISABLED_FOR_BUILDER_WARNINGS = """
         _write_json_to_efs(warnings_json, key)
         # _make_warnings_report(verifer.soup, warnings_json, timestamp, key)
-        TEMP_DISABLED_FOR_BUILDER_WARNINGS = "_put_json_to_s3(json.dumps(warnings_json, default=str), key)"  # TODO: revert
+        _put_json_to_s3(json.dumps(warnings_json, default=str), key)
+        """  # TODO: revert
         _send_msg_to_sqs(key)
     logger.info("Handler ended successfully.")
     _log_audit_event(
