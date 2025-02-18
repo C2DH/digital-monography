@@ -11,10 +11,8 @@ import re
 import typing as t
 
 try:
-    from constants import CLS_METADATA_TABLE
     from metadata import DocumentMetadata
 except (ImportError, ModuleNotFoundError):
-    from .constants import CLS_METADATA_TABLE
     from .metadata import DocumentMetadata
 
 
