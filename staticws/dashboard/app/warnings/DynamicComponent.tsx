@@ -8,9 +8,8 @@ type IWarning = {
     id: string
     problem: string
     recommend: string
-    elem: string
     // prev_elem: string
-    // curr_elem: string
+    curr_elem: string
     // next_elem: string
     [key: string]: any
 }
@@ -28,6 +27,7 @@ export default function DynamicComponent() {
                 const preSignedUrl = preSignedUrljson["presigned_url"];
                 const resp = await fetch(preSignedUrl);
                 const json = await resp.json();
+                console.log("warnings", json);
                 setWarnings(json);
             } catch (e) {
                 console.error(e);
@@ -63,22 +63,22 @@ export default function DynamicComponent() {
                                 <div className="accordion-body">
                                     <TnbMarkdown content={`**${warning.problem}** ${warning.recommend}`} />
                                     <hr />
-                                    <div className="row">
+                                    {/* <div className="row">
                                         <div className="col-1">
                                         </div>
                                         <div className="col-9">
                                             <TnbMarkdown content={warning.elem} />
                                         </div>
-                                    </div>
-                                    {/* <div className="row">
+                                    </div> */}
+                                    {warning.curr_elem && <div className="row">
                                         <div className="col-1">
                                             👉
                                         </div>
                                         <div className="col-9">
                                             <TnbMarkdown content={warning.curr_elem} />
                                         </div>
-                                    </div>
-                                    <div className="row">
+                                    </div>}
+                                    {/* <div className="row">
                                         <div className="col-1">
                                         </div>
                                         <div className="col-9">
