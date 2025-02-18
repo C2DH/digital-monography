@@ -1,9 +1,8 @@
+import bs4
 import datetime
 import pathlib
 import typing as t
 import uuid
-
-import bs4
 
 try:
     from metadata import DocumentMetadata, RefDatapoint, TargetDatapoint
