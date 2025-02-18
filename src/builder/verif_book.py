@@ -93,7 +93,7 @@ class RefsAndTargetsVerifier:
                             {
                                 "problem": MSG_PROBLEMS[LINKS]["check_a_is_not_https"],
                                 "recommend": recommend,
-                                "elem": ref.elem,
+                                "elem": str(ref.elem),
                                 "fn": ref.fn,
                                 "timestamp": self._timestamp,
                                 "tags": [LINKS],
@@ -109,7 +109,7 @@ class RefsAndTargetsVerifier:
                                     f'and replace "`{ref.prev_href}`" in your manuscript with a link '
                                     "to the archived source."
                                 ),
-                                "elem": ref.elem,
+                                "elem": str(ref.elem),
                                 "fn": ref.fn,
                                 "timestamp": self._timestamp,
                                 "tags": [LINKS],
@@ -131,7 +131,7 @@ class RefsAndTargetsVerifier:
                                     "but no such target has been found in the same file. "
                                     "Check the Guidelines on writing correct references."
                                 ),
-                                "elem": ref.elem,
+                                "elem": str(ref.elem),
                                 "fn": ref.fn,
                                 "timestamp": self._timestamp,
                                 "tags": [LINKS],
@@ -162,7 +162,7 @@ class RefsAndTargetsVerifier:
                                     'For example, "`03_myfile.docx#heading`" is correct while'
                                     '"`C:/Documents/mybook/03_myfile.docx#heading`" is not.'
                                 ),
-                                "elem": ref.elem,
+                                "elem": str(ref.elem),
                                 "fn": ref.fn,
                                 "timestamp": self._timestamp,
                                 "tags": [LINKS],
@@ -184,7 +184,7 @@ class RefsAndTargetsVerifier:
                                     "but no such file has been found. Make sure the name of the "
                                     "file in this link is up to date."
                                 ),
-                                "elem": ref.elem,
+                                "elem": str(ref.elem),
                                 "fn": ref.fn,
                                 "timestamp": self._timestamp,
                                 "tags": [LINKS],
@@ -202,7 +202,7 @@ class RefsAndTargetsVerifier:
                                     f'but no such target has been found in "{target_stem}". '
                                     "Check the Guidelines on writing correct references."
                                 ),
-                                "elem": ref.elem,
+                                "elem": str(ref.elem),
                                 "fn": ref.fn,
                                 "timestamp": self._timestamp,
                                 "tags": [LINKS],
@@ -217,7 +217,7 @@ class RefsAndTargetsVerifier:
                             "recommend": f'Hyperlink "`{ref.prev_string}`" to "`{ref.prev_href}`" is not valid. \
                                 "If this is a link to an external website, it should start with "`https://`". " \
                                 "If this is a hyperlink to some other part of the manuscript, read the Guidelines on writing valid references.',
-                            "elem": ref.elem,
+                            "elem": str(ref.elem),
                             "fn": ref.fn,
                             "timestamp": self._timestamp,
                             "tags": [LINKS],
