@@ -21,9 +21,9 @@ export default function Home() {
     },
     {
       authors: "Anita Lucchesi",
-      slug: "sample-chapter",
-      title: "For a new hermeneutics of practice in digital public history (snippet)",
-      alert: "rejected",
+      slug: "hermeneutics-of-practice",
+      title: "For a new hermeneutics of practice in digital public history",
+      alert: "",
     }
   ]);
   useEffect(() => {
