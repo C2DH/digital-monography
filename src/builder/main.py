@@ -80,7 +80,6 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info("Event: " + json.dumps(event, default=str))
     logger.info("Context: " + json.dumps(context, default=str))
     key = _get_key(event)
-    timestamp = _get_timestamp(event)
     _log_audit_event(key, AuditStatus.PENDING.value, "Building book in progress...")
     _mkdir_read()
     # _write_metadata_to_db(key)
@@ -107,20 +106,6 @@ def _get_key(event) -> KeyPath:
     except Exception as e:
         logging.exception(f"Unable to retrieve object key. Error: {repr(e)}")
         raise
-
-
-def _get_timestamp(event) -> datetime.datetime:
-    try:
-        event_time = event["Records"][0]["eventTime"]
-        return datetime.datetime.strptime(event_time, "%Y-%m-%dT%H:%M:%S.%f%z")
-    except Exception as e:
-        logger.error(
-            f"Unable to retrieve event time. Event: "
-            + json.dumps(event, default=str)
-            + ". Exception: "
-            + repr(e)
-        )
-        return datetime.datetime.now()
 
 
 # TODO: Check if this is necessary. If not, remove.
