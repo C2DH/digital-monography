@@ -76,6 +76,7 @@ copy/metadata:
 copy/html2md:
 	cp src/_common/html2md.py src/preparer/html2md.py
 	cp src/_common/html2md.py src/verifier/html2md.py
+	cp src/_common/html2md.py src/builder/html2md.py
 
 entrypoint/build:
 	cp src/_common/constants.py src/entrypoint/constants.py

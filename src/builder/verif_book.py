@@ -3,14 +3,18 @@ import pathlib
 import typing as t
 import uuid
 
+import bs4
+
 try:
     from metadata import DocumentMetadata, RefDatapoint, TargetDatapoint
     from keys import KeyPath
     from verif_warnings import MessagesJson, VerifierMessages
+    from html2md import convert_to_md
 except (ImportError, ModuleNotFoundError):
     from .metadata import DocumentMetadata, RefDatapoint, TargetDatapoint
     from .keys import KeyPath
     from .verif_warnings import MessagesJson, VerifierMessages
+    from .html2md import convert_to_md
 
 
 class BookVerifier:
@@ -76,6 +80,7 @@ class RefsAndTargetsVerifier:
             for ref in md.refs:
                 i += 1
                 ref: RefDatapoint
+                md_elem = ""
                 try:
                     ref_stem = ref.fn.split(".")[0]
                 except IndexError:
@@ -86,6 +91,7 @@ class RefsAndTargetsVerifier:
                 if ref.href.startswith("http") and ".sharepoint.com/" not in ref.href:
                     # print(i, "External link:", ref.href)
                     if self._check_a_is_not_https(ref.href):
+                        md_elem = self._markwownify_html_elem(ref, md_elem)
                         recommend = f'The problem lies in the "`{ref.prev_string}`" link to "`{ref.prev_href}`".'
                         if "http:" in ref.href:
                             recommend += f' If possible, change "`{ref.prev_href}`" to "{ref.prev_href.replace('http:', 'https:', 1)}".'
@@ -103,6 +109,7 @@ class RefsAndTargetsVerifier:
                             }
                         )
                     if self._check_a_not_archived(ref.href):
+                        md_elem = self._markwownify_html_elem(ref, md_elem)
                         self._messages.append(
                             {
                                 "id": uuid.uuid4().hex[:8],
@@ -124,6 +131,7 @@ class RefsAndTargetsVerifier:
                     target_dp = self._targets.get(ref.href[1:])
                     # print(i, "In-file link:", ref.href, target_dp)
                     if self._check_a_is_invalid_infile_link(target_dp):
+                        md_elem = self._markwownify_html_elem(ref, md_elem)
                         self._messages.append(
                             {
                                 "id": uuid.uuid4().hex[:8],
@@ -153,6 +161,7 @@ class RefsAndTargetsVerifier:
                     # target_dp
 
                     if self._check_a_f2f_filename_is_absolute(target_fn):
+                        md_elem = self._markwownify_html_elem(ref, md_elem)
                         self._messages.append(
                             {
                                 "id": uuid.uuid4().hex[:8],
@@ -176,11 +185,7 @@ class RefsAndTargetsVerifier:
                             }
                         )
                     elif self._check_a_f2f_filename_is_invalid(target_fn):
-                        # print("\t\t\t>>")
-                        # print("\n\t\t >>> target_fn", target_fn)
-                        # print("\n\t\t >>> target_fn", target_fn)
-                        # print(multidocs_meta.keys())
-                        # print("self._fp_stems", self._fp_stems)
+                        md_elem = self._markwownify_html_elem(ref, md_elem)
                         self._messages.append(
                             {
                                 "id": uuid.uuid4().hex[:8],
@@ -199,6 +204,7 @@ class RefsAndTargetsVerifier:
                             }
                         )
                     elif self._check_a_is_invalid_f2f(target_dp):
+                        md_elem = self._markwownify_html_elem(ref, md_elem)
                         self._messages.append(
                             {
                                 "id": uuid.uuid4().hex[:8],
@@ -220,6 +226,7 @@ class RefsAndTargetsVerifier:
 
                 else:
                     # print(i, "Unknown link:", ref.href)
+                    md_elem = self._markwownify_html_elem(ref, md_elem)
                     self._messages.append(
                         {
                             "id": uuid.uuid4().hex[:8],
@@ -234,6 +241,12 @@ class RefsAndTargetsVerifier:
                         }
                     )
         return self._messages
+
+    def _markwownify_html_elem(self, ref: RefDatapoint, md_elem: str) -> str:
+        if md_elem != "":
+            return md_elem
+        soup = bs4.BeautifulSoup(ref.elem, "html.parser")
+        return convert_to_md(soup)
 
     def _check_a_is_not_https(self, href: str) -> bool:
         return not href.startswith("https://")
