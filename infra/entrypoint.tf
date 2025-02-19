@@ -93,8 +93,8 @@ data "aws_iam_policy_document" "entrypoint" {
     ]
   }
   statement {
-    sid       = "AllowReadAndWriteToDynamoDB"
-    effect    = "Allow"
+    sid    = "AllowReadAndWriteToDynamoDB"
+    effect = "Allow"
     resources = [
       aws_dynamodb_table.tokens_tbl.arn,
       aws_dynamodb_table.cursors_tbl.arn
@@ -109,8 +109,8 @@ data "aws_iam_policy_document" "entrypoint" {
     ]
   }
   statement {
-    sid       = "AllowReadFromDb"
-    effect    = "Allow"
+    sid    = "AllowReadFromDb"
+    effect = "Allow"
     resources = [
       aws_dynamodb_table.audit_tbl.arn,
       aws_dynamodb_table.assets_tbl.arn,
@@ -128,6 +128,8 @@ data "aws_iam_policy_document" "entrypoint" {
     sid    = "AllowGettingObjectsFromS3"
     effect = "Allow"
     resources = [
+      "${aws_s3_bucket.aws_s3_bucket.upload_apkg.arn}",
+      "${aws_s3_bucket.aws_s3_bucket.upload_apkg.arn}/*",
       "${aws_s3_bucket.verification_msg.arn}",
       "${aws_s3_bucket.verification_msg.arn}/*",
       "${aws_s3_bucket.metadata_assets_s3.arn}",
