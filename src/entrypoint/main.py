@@ -17,6 +17,7 @@ import urllib
 try:
     from constants import (
         IS_DEBUG,
+        APKG_UPLOAD_BUCKET_NAME,
         DROPBOX_SECRET_ID,
         DYNAMODB_AUDIT_TBL,
         DYNAMODB_ASSETS_TBL,
@@ -29,6 +30,7 @@ try:
 except (ImportError, ModuleNotFoundError):
     from .constants import (
         IS_DEBUG,
+        APKG_UPLOAD_BUCKET_NAME,
         DROPBOX_SECRET_ID,
         DYNAMODB_AUDIT_TBL,
         DYNAMODB_ALERTS_TBL,
@@ -151,9 +153,10 @@ def index() -> str:
     return flask.render_template("index.html")
 
 
-def _s3_list_objects(bucket: str, slug: t.Optional[str]):
-    if slug:
-        objects = s3.list_objects_v2(Bucket=bucket, Prefix=f"{slug}/")
+def _s3_list_objects(bucket: str, prefix: t.Optional[str]):
+    if prefix:
+        # objects = s3.list_objects_v2(Bucket=bucket, Prefix=f"{slug}/")
+        objects = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
     else:
         objects = s3.list_objects_v2(Bucket=bucket)
     if "Contents" in objects:
@@ -167,7 +170,24 @@ def list_warnings() -> flask.Response:
     """List objects in a warnings bucket."""
     logger.info("List warnings REST api endpoint was called with GET.")
     slug = flask.request.args.get("slug")
-    contents = _s3_list_objects(VERIFIER_MSGS, slug)
+    contents = _s3_list_objects(VERIFIER_MSGS, f"{slug}/")
+    resp = flask.Response(
+        response=flask.json.dumps(contents),
+        status=200,
+        mimetype="application/json",
+    )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
+
+
+@app.route("/list-assets", methods=["GET"])
+def list_assets_from_s3() -> flask.Response:
+    """List objects in a upload slug/assets/* bucket."""
+    logger.info("List assets REST api endpoint was called with GET.")
+    slug = flask.request.args.get("slug")
+    contents = _s3_list_objects(APKG_UPLOAD_BUCKET_NAME, prefix=f"{slug}/assets/")
     resp = flask.Response(
         response=flask.json.dumps(contents),
         status=200,
@@ -180,16 +200,14 @@ def list_warnings() -> flask.Response:
 
 
 @app.route("/assets", methods=["GET"])
-def list_assets() -> flask.Response:
+def list_assets_from_dynamodb() -> flask.Response:
     """Retrieve assets from the database and return them to the client."""
     logger.info("Retrieve assets from the database and return them to the client.")
     slug = flask.request.args.get("slug")
     contents = dynamodb.query(
         TableName=DYNAMODB_ASSETS_TBL,
         KeyConditionExpression="slug = :slug",
-        ExpressionAttributeValues={
-            ":slug": { "S": slug }
-        },
+        ExpressionAttributeValues={":slug": {"S": slug}},
     )
     resp = flask.Response(
         response=flask.json.dumps(contents),
@@ -210,9 +228,7 @@ def query_events() -> flask.Response:
     contents = dynamodb.query(
         TableName=DYNAMODB_AUDIT_TBL,
         KeyConditionExpression="slug = :slug",
-        ExpressionAttributeValues={
-            ":slug": { "S": slug }
-        },
+        ExpressionAttributeValues={":slug": {"S": slug}},
     )
     resp = flask.Response(
         response=flask.json.dumps(contents),
@@ -236,8 +252,7 @@ def query_alerts() -> flask.Response:
     logger.info(f"Resp: {json.dumps(resp, default=str)}")
     while "LastEvaluatedKey" in resp:
         resp = dynamodb.scan(
-            TableName=DYNAMODB_ALERTS_TBL,
-            ExclusiveStartKey=resp["LastEvaluatedKey"]
+            TableName=DYNAMODB_ALERTS_TBL, ExclusiveStartKey=resp["LastEvaluatedKey"]
         )
         logger.info(f"Resp: {json.dumps(resp, default=str)}")
         contents.extend(resp["Items"])
@@ -261,9 +276,7 @@ def query_citations() -> flask.Response:
     contents = dynamodb.query(
         TableName=DYNAMODB_CITATIONS_TBL,
         KeyConditionExpression="slug = :slug",
-        ExpressionAttributeValues={
-            ":slug": { "S": slug }
-        },
+        ExpressionAttributeValues={":slug": {"S": slug}},
     )
     resp = flask.Response(
         response=flask.json.dumps(contents),
@@ -284,9 +297,7 @@ def query_headings() -> flask.Response:
     contents = dynamodb.query(
         TableName=DYNAMODB_HEADINGS_TBL,
         KeyConditionExpression="slug = :slug",
-        ExpressionAttributeValues={
-            ":slug": { "S": slug }
-        },
+        ExpressionAttributeValues={":slug": {"S": slug}},
     )
     resp = flask.Response(
         response=flask.json.dumps(contents),
@@ -368,7 +379,7 @@ def _send_msg_to_sqs(request_data: FlaskRequestData) -> None:
 
 def dynamodb_set(tbl: str, **kwargs) -> None:
     expire_at = int((datetime.datetime.now() + datetime.timedelta(days=3)).timestamp())
-    dyndb = boto3.resource('dynamodb')
+    dyndb = boto3.resource("dynamodb")
     table = dyndb.Table(tbl)
     resp = table.put_item(Item={"expire_at": expire_at, **kwargs})
     logger.info(
