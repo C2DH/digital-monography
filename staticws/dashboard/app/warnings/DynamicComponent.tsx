@@ -8,9 +8,9 @@ type IWarning = {
     id: string
     problem: string
     recommend: string
-    // prev_elem: string
-    curr_elem: string
-    // next_elem: string
+    prev_elem?: string
+    curr_elem?: string
+    next_elem?: string
     [key: string]: any
 }
 
