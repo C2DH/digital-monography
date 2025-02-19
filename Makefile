@@ -18,6 +18,9 @@ test/prep:
 test/run:
 	DGTMON_DEBUG=1 python -m pytest tests/preparer/ tests/verifier/ tests/builder/
 
+test:
+	DGTMON_DEBUG=1 python -m pytest tests/preparer/ tests/verifier/ tests/builder/
+
 login:
 	aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin ${DOCKER_ECR}
 	docker login --username c2dhadmin
