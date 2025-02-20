@@ -21,6 +21,7 @@ type IAssetRecord = {
     isOnPaper: boolean,
     isReady: boolean,
     s3Key: string,
+    imgSrc: string,
     exists: boolean,
     size?: string,
     mtime?: string,
@@ -79,14 +80,18 @@ function getHyperlink(slug: string | null, inputFieldVal: string): string {
     return `asset?slug=${slug}&pk=${btoa(slug + "/" + inputFieldVal)}`;
 }
 
-function getImgSrc(slug: string | null, inputFieldVal: string): string {
+function getImgSrc(s3Key: string): string {
     const bucket = "https://cpy-dgtmon-dev-staticws-wip.s3.eu-west-1.amazonaws.com";
+    return `${bucket}/read/${s3Key}`;
+}
+
+function getS3Key(slug: string | null, inputFieldVal: string): string {
     if (slug == null || !inputFieldVal) {
         return "";
     } else if (inputFieldVal.startsWith("https:") || inputFieldVal.startsWith("http:")) {
         return "";
     } else {
-        return `${bucket}/read/${slug + "/" + inputFieldVal}`;
+        return slug + "/" + inputFieldVal;
     }
 }
 
@@ -154,6 +159,7 @@ export default function DynamicTable() {
         setSearchValue(newSearchValue);
     };
 
+    const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
     const fetchRecords = useCallback(async (pk: string) => {
         try {
             setLoading(true);
@@ -161,8 +167,8 @@ export default function DynamicTable() {
             setIsOnPaperSum(0);
             setIsReadySum(0);
             let s3Key = "";
+            let imgSrc = "";
             const imgOpened = {};
-            const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
             const resp = await fetch(`${endpoint}/test/assets?slug=${pk}`);
             const respJson = await resp.json();
             const items = respJson.Items || [];
@@ -189,7 +195,8 @@ export default function DynamicTable() {
                         if (isReady) {
                             setIsReadySum(n => n + 1);
                         }
-                        s3Key = getImgSrc(slug, getNestedStr(records[j], "paperinput"));
+                        s3Key = getS3Key(slug, getNestedStr(records[j], "paperinput"));
+                        imgSrc = getImgSrc(s3Key);
                         formatedData.push({
                             link: getHyperlink(slug, getNestedStr(records[j], "paperinput")),
                             name: paperinput,
@@ -201,6 +208,7 @@ export default function DynamicTable() {
                             isOnPaper: isOnPaper,
                             isReady: isReady,
                             s3Key: s3Key,
+                            imgSrc: imgSrc,
                             exists: getNestedBool(records[j], "digitalexists") || false,
                             size: formatBytes(getNestedNum(records[j], "digitalsize")),
                             mtime: getDate(getNestedStr(records[j], "digitalmtime")),
@@ -216,7 +224,8 @@ export default function DynamicTable() {
                     if (isReady) {
                         setIsReadySum(n => n + 1);
                     }
-                    s3Key = getImgSrc(slug, getNestedStr(records[j], "digitalinput"));
+                    s3Key = getS3Key(slug, getNestedStr(records[j], "digitalinput"));
+                    imgSrc = getImgSrc(s3Key);
                     formatedData.push({
                         link: getHyperlink(slug, getNestedStr(records[j], "digitalinput")),
                         name: digitalinput,
@@ -228,6 +237,7 @@ export default function DynamicTable() {
                         isOnPaper: isOnPaper,
                         isReady: isReady,
                         s3Key: s3Key,
+                        imgSrc: imgSrc,
                         exists: getNestedBool(records[j], "paperexists") || false,
                         size: formatBytes(getNestedNum(records[j], "papersize")),
                         mtime: getDate(getNestedStr(records[j], "papermtime")),
@@ -327,7 +337,7 @@ export default function DynamicTable() {
                                         {record.s3Key && <h6>{record["caption"]}</h6>}
                                         {/* {record.s3Key && imgOpenedMap[record.s3Key] && <img */}
                                         {record.s3Key && <img
-                                            src={record.s3Key}
+                                            src={record.imgSrc}
                                             alt=""
                                             className="img-fluid float-left">
                                         </img>}
