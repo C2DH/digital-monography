@@ -16,16 +16,16 @@ from mypy_boto3_s3.type_defs import (
 
 try:
     from constants import (
-        DYNAMODB_ASSETS_DOC_INFO_TBL,
-        DYNAMODB_ASSETS_UPLOAD_INFO_TBL,
-        DYNAMODB_ASSETS_BOOK_INFO_TBL,
+        # DYNAMODB_ASSETS_DOC_INFO_TBL,
+        # DYNAMODB_ASSETS_UPLOAD_INFO_TBL,
+        # DYNAMODB_ASSETS_BOOK_INFO_TBL,
         METADATA_ASSETS_BUCKET_NAME,
     )
 except (ImportError, ModuleNotFoundError):
     from ..constants import (
-        DYNAMODB_ASSETS_DOC_INFO_TBL,
-        DYNAMODB_ASSETS_UPLOAD_INFO_TBL,
-        DYNAMODB_ASSETS_BOOK_INFO_TBL,
+        # DYNAMODB_ASSETS_DOC_INFO_TBL,
+        # DYNAMODB_ASSETS_UPLOAD_INFO_TBL,
+        # DYNAMODB_ASSETS_BOOK_INFO_TBL,
         METADATA_ASSETS_BUCKET_NAME,
     )
 
@@ -59,9 +59,9 @@ class AssetInfoBase(abc.ABC):
     # def dumps(self) -> None:
     #     return json.dumps(self.__dict__, default=str)
 
-    @property
-    def db_table(self) -> str:
-        raise NotImplementedError
+    # @property
+    # def db_table(self) -> str:
+    #     raise NotImplementedError
 
     @property
     def s3_key(self) -> str:
@@ -102,7 +102,8 @@ class AssetsStats:
 
 
 class AssetsWriter:
-    def __init__(self):
+    def __init__(self, s3_key: t.Optional[str] = None):
+        self._s3_key = s3_key
         self._s3_bucket: str = METADATA_ASSETS_BUCKET_NAME
         self._records: list[AssetInfoBase] = []
         self._stats: AssetsStats = AssetsStats()
@@ -110,22 +111,25 @@ class AssetsWriter:
     def add(self, record: AssetInfoBase) -> None:
         self._records.append(record)
         self._stats.update(record)
+        if self._s3_key is None:
+            self._s3_key = record.s3_key
 
     def write_to_s3(
         self, client: t.Optional[boto3_S3Client]
-    ) -> t.Optional[boto3_PutObjectOutputTypeDef]:
+    ) -> boto3_PutObjectOutputTypeDef:
         if client is None:
             return
-        if not self._records:
-            return
-        record: AssetInfoBase = self._records[0]
+        elif self._s3_key is None:
+            raise Exception(
+                "Cannot write to storage, no S3 key found. Please provide S3 key."
+            )
         return client.put_object(
-            Body=self._to_bytes(),
+            Body=self._records_in_bytes(),
             Bucket=self._s3_bucket,
-            Key=record.s3_key,
+            Key=self._s3_key,
         )
 
-    def _to_bytes(self) -> bytes:
+    def _records_in_bytes(self) -> bytes:
         s = json.dumps(self._records, cls=AssetInfoEncoder)
         return s.encode("utf-8")
 
@@ -154,9 +158,9 @@ class AssetInfoFromDoc(AssetInfoBase):
     is_on_paper: bool  # maybe this can be computed from "medium"
     is_ready: bool
 
-    @property
-    def db_table(self) -> str:
-        return DYNAMODB_ASSETS_DOC_INFO_TBL
+    # @property
+    # def db_table(self) -> str:
+    #     return DYNAMODB_ASSETS_DOC_INFO_TBL
 
     @property
     def s3_key(self) -> str:
@@ -181,13 +185,14 @@ class AssetInfoFromUpload(AssetInfoBase):
     # e_tag: str # incl. in response from s3 ListObjects
     # storage_class: str # incl. in response from s3 ListObjects
 
-    @property
-    def db_table(self) -> str:
-        return DYNAMODB_ASSETS_UPLOAD_INFO_TBL
+    # @property
+    # def db_table(self) -> str:
+    #     return DYNAMODB_ASSETS_UPLOAD_INFO_TBL
 
     @property
     def s3_key(self) -> str:
-        return f"{self.slug}/{self.key}.json"
+        # return f"{self.slug}/{self.key}.json"
+        return f"{self.key}_upload_data.json"
 
 
 @dataclasses.dataclass
@@ -198,13 +203,12 @@ class AssetInfoFromBook(AssetInfoBase):
     * references
     """
     slug: str
-    test: bool = True
     # ?? refs
     # TODO: implement AssetInfoFromBook
 
-    @property
-    def db_table(self) -> str:
-        return DYNAMODB_ASSETS_BOOK_INFO_TBL
+    # @property
+    # def db_table(self) -> str:
+    #     return DYNAMODB_ASSETS_BOOK_INFO_TBL
 
     @property
     def s3_key(self) -> str:
