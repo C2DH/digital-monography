@@ -20,6 +20,12 @@ class ModuleEnum(enum.Enum):
     GPU = 80
 
 
+class MediumEnum(enum.StrEnum):
+    PAPER = "P"
+    DIGITAL = "D"
+    PAPER_AND_DIGITAL = "P+D"
+
+
 IS_DEBUG = bool(int(os.environ.get("DGTMON_DEBUG", 0)))
 if IS_DEBUG:
     DEFAULT_SFS_DIR = "/tmp/efs"  # local execution
