@@ -10,13 +10,13 @@ try:
         CLS_METADATA_TABLE_JSONDATA,
     )
     from verif_warnings import MessagesJson, VerifierMessages
-    from metadata import AssetDatapoint, DocumentMetadata
+    from metadata import DocumentMetadata
 except (ImportError, ModuleNotFoundError):
     from .constants import (
         CLS_METADATA_TABLE_JSONDATA,
     )
     from .verif_warnings import MessagesJson, VerifierMessages
-    from .metadata import AssetDatapoint, DocumentMetadata
+    from .metadata import DocumentMetadata
 
 CAPTION_TYPES = ["Figure", "Table", "Graph"]
 IS_HEADING_TITLE_CASED_REQUIRED = True
