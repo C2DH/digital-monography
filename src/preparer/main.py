@@ -52,7 +52,6 @@ try:
     from ipynb_prep import tags_to_myst_crossref_targets
     from keys import KeyPath
     from fakers import Faker
-    from make_metadata_report import make_metadata_report
 except (ImportError, ModuleNotFoundError):
     from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
     from .constants import (
@@ -95,7 +94,6 @@ except (ImportError, ModuleNotFoundError):
     from .ipynb_prep import tags_to_myst_crossref_targets
     from .keys import KeyPath
     from .fakers import Faker
-    from .make_metadata_report import make_metadata_report
 
 
 if IS_DEBUG:
@@ -576,23 +574,3 @@ def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:
         alert = AlertLog(slug=key.slug, status=AlertStatus.FAIL.value)
         alert.send(dynamodb)
     logger.info(f"Audit event logged: {event}")
-
-
-# def _make_metadata_report(
-#     metadata: DocumentMetadata,
-#     key: KeyPath,
-# ) -> None:
-#     try:
-#         fp = key.add_to_efs_slug_dir("_warnings").parent / key.github_path.with_suffix(
-#             ".md"
-#         )
-#         fp = fp.with_name("refs_" + fp.name)
-#         file_name = str(key.with_suffix(".docx").name)
-#         with open(fp, "w") as f:
-#             f.write(make_metadata_report(metadata, file_name))
-#         logger.info(f"Metadata markdown report was saved to {str(fp)}")
-#     except Exception as e:
-#         logger.exception(
-#             f"Writing DocumentMetadata to /efs directory failed. Error: {repr(e)}"
-#         )
-#         raise
