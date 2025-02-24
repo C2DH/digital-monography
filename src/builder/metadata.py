@@ -6,6 +6,7 @@
 # as the copy command is already included.
 # ======================
 import abc
+import json
 import bs4
 import dataclasses
 import datetime
@@ -33,6 +34,7 @@ type DatapointUnion = t.Union[
     SubstitutionDatapoint,
     CitationGroupDatapoint,
     CitationItemDatapoint,
+    MetadataTableDatapoint,
 ]
 type RecordsUnion = t.Union[
     AssetRecord,
@@ -42,6 +44,7 @@ type RecordsUnion = t.Union[
     SubstitutionRecord,
     CitationGroupRecord,
     CitationItemRecord,
+    MetadataTableDatapoint,
 ]
 
 
@@ -129,6 +132,8 @@ class DatapointBase(abc.ABC):
                 elif val not in [str, int, bool]:
                     # e.g. pathlib.PurePath, bs4.PageElement
                     val = str(val)
+                elif key == "elem":
+                    val = ""  # NOTE: for now, html is not included in the JSON
                 res[key] = val
             return res
 
@@ -140,45 +145,84 @@ class DatapointBase(abc.ABC):
         if not dataclasses.is_dataclass(cls):
             raise ValueError(f"{cls.__name__} must be a dataclass")
         res = {}
+
+        def _get_field_type(field: dataclasses.Field) -> t.Type:
+            "If type is Union, Optional, Literal, etc. return their argument type."
+            if getattr(field.type, "__args__", None) is not None:
+                args = getattr(field.type, "__args__", tuple())
+                return next(type(arg) for arg in args if arg not in (None,))
+            else:
+                return field.type
+
         for field in dataclasses.fields(cls):
             val = json_data[field.name]
-            if field.type == bs4.element.Tag:
+            if val is None:
+                v = None
+            elif field.type == bs4.element.Tag:
                 soup = bs4.BeautifulSoup(val, "html.parser")
                 v = next(soup.children)
             elif field.type == datetime.datetime:
                 v = datetime.datetime.fromisoformat(val)
+            elif field.name == "elem":
+                v = ""  # NOTE: for now, html is not included in the JSON
             else:
-                v = (field.type)(val)  # type casting
+                v = (_get_field_type(field))(val)
             res[field.name] = v
         return cls(**res)
 
 
 @dataclasses.dataclass
+class MetadataTableDatapoint(DatapointBase):
+    """
+    Unprocessed data from a Metadata table that describes an asset.
+    """
+
+    kwargs: dict[str, str]
+
+    def to_json(self) -> dict[str, str | int | bool, None]:
+        "Converts the dataclass obj to a dict with str/int/bool as values."
+        return {"pk": self.pk, "kwargs": json.dumps(self.kwargs, default=str)}
+
+    @classmethod
+    def from_json(cls: t.Type[T], json_data: dict[str, str | int | bool, None]) -> T:
+        return cls(pk=json_data["pk"], kwargs=json.loads(json_data["kwargs"]))
+
+
+@dataclasses.dataclass
 # class AssetInfoFromDoc(DatapointBase):
 class AssetDatapoint(DatapointBase):
-    f"""
+    """
     Information about an asset extracted from a document, especially from
     * Metadata Tables
     * captions
     * target id above caption
-    
+
     When analysing assets, this model should be joined with
     * upload level (s3) information
     * book level information
     """
+
     # pk: str
-    name: str = ""
-    slug: str = ""
-    medium: MediumEnum | None = None
-    author: str = ""
-    source: str = ""
-    location: str = ""
-    alttext: str = ""
-    caption: str = ""
-    comments: str = ""
-    is_color: bool | None = None
-    is_on_paper: bool | None = None  # maybe this can be computed from "medium"
-    is_ready: bool | None = None
+    fp: pathlib.Path
+    metadata_table: str
+    medium: MediumEnum
+    slug: str
+    author: str
+    source: str
+    location: KeyPath | None
+    alttext: str
+    caption: str
+    comments: str
+    is_color: bool | None
+    is_ready: bool
+    is_on_paper: bool = dataclasses.field(default=None)
+
+    def __post_init__(self):
+        if self.medium:
+            self.is_on_paper = self.medium in (
+                MediumEnum.PAPER,
+                MediumEnum.PAPER_AND_DIGITAL,
+            )
 
 
 @dataclasses.dataclass
@@ -336,9 +380,11 @@ class DocumentMetadata:
 
     def __init__(self, fp: t.Optional[KeyPath] = None) -> None:
         self.filepath = fp
+        self.slug = fp.slug if fp else ""
         self.word_count = 0
         self.char_count = 0
         self.assets: list[AssetDatapoint] = []
+        self.metadata_tables: list[MetadataTableDatapoint] = []
         self.headings: list[HeadingDatapoint] = []
         self.refs: list[RefDatapoint] = []
         self.targets: list[TargetDatapoint] = []
@@ -359,7 +405,8 @@ class DocumentMetadata:
     ) -> t.Optional[DatapointUnion]:
         records = getattr(self, records_name)
         try:
-            return next(rec for rec in records if rec[attrib] == val)
+            return next(rec for rec in records if getattr(rec, attrib) == val)
+            # return next(rec for rec in records if rec[attrib] == val)
         except StopIteration:
             return None
 
@@ -369,6 +416,8 @@ class DocumentMetadata:
 
     add_asset = functools.partialmethod(add, "assets")
     get_asset = functools.partialmethod(get, "assets")
+
+    get_metadata_table = functools.partialmethod(get, "metadata_tables")
 
     add_ref = functools.partialmethod(add, "refs")
     get_ref = functools.partialmethod(get, "refs")
@@ -389,8 +438,10 @@ class DocumentMetadata:
     get_citation_item = functools.partialmethod(get, "citation_items")
 
     def to_dict(self) -> dict[str, list[dict[str, AcceptedValues]]]:
+        # NOTE: metadata_tables is not present, as it mostly repeats assets
         return {
             "assets": self.assets,
+            "metadata_tables": self.metadata_tables,
             "headings": self.headings,
             "refs": self.refs,
             "targets": self.targets,
@@ -402,6 +453,7 @@ class DocumentMetadata:
     def to_json(self) -> dict[str, list[dict[str, t.Union[str, t.Union[str, int]]]]]:
         return {
             "assets": [rec.to_json() for rec in self.assets],
+            "metadata_tables": [rec.to_json() for rec in self.metadata_tables],
             "headings": [rec.to_json() for rec in self.headings],
             "refs": [rec.to_json() for rec in self.refs],
             "targets": [rec.to_json() for rec in self.targets],
@@ -412,6 +464,10 @@ class DocumentMetadata:
 
     def from_json(self, jsml: dict[str, RecordsUnion]) -> None:
         self.assets = [AssetDatapoint.from_json(rec) for rec in jsml.get("assets", [])]
+        self.metadata_tables = [
+            MetadataTableDatapoint.from_json(rec)
+            for rec in jsml.get("metadata_tables", [])
+        ]
         self.headings = [
             HeadingDatapoint.from_json(rec) for rec in jsml.get("headings", [])
         ]
@@ -434,10 +490,11 @@ class DocumentMetadata:
 
     def __str__(self) -> str:
         return (
-            "%s(assets=[%s], headings=[%s], refs=[%s], targets=[%s], substitutions=[%s], citation_groups=[%s], citation_items=[%s])"
+            "%s(assets=[%s], metadata_tables=[%s], headings=[%s], refs=[%s], targets=[%s], substitutions=[%s], citation_groups=[%s], citation_items=[%s])"
             % (
                 self.__class__.__name__,
                 ", ".join(str(rec) for rec in self.assets),
+                ", ".join(str(rec) for rec in self.metadata_tables),
                 ", ".join(str(rec) for rec in self.headings),
                 ", ".join(str(rec) for rec in self.refs),
                 ", ".join(str(rec) for rec in self.targets),

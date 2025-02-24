@@ -63,8 +63,10 @@ class RefsAndTargetsVerifier:
         self, multidocs_meta: dict[pathlib.PurePath, DocumentMetadata]
     ) -> list[dict[str, str]]:
         # mark targets
+        print("multidocs_meta", multidocs_meta)
         self._metadatas = multidocs_meta
-        self._metadatas_stemmed_filenames = [m.stem for m in self._metadatas]
+        print("[m for m in self._metadatas]", [m for m in self._metadatas])
+        self._metadatas_stemmed_filenames = [m for m in self._metadatas]
         for fn, meta in self._metadatas.items():
             for target in meta.targets:
                 target: TargetDatapoint

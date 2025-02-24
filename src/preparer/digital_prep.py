@@ -4,6 +4,7 @@ try:
     from constants import ATTRIB_METADATA_UUID, CLS_METADATA_TABLE, FIELD_DIGITAL_SOURCE
     from metadata import (
         DocumentMetadata,
+        MetadataTableDatapoint,
     )
 except (ImportError, ModuleNotFoundError):
     from .constants import (
@@ -13,21 +14,22 @@ except (ImportError, ModuleNotFoundError):
     )
     from .metadata import (
         DocumentMetadata,
+        MetadataTableDatapoint,
     )
 
 
 def insert_digital_objects(
     html_soup: bs4.BeautifulSoup,
-    document_metadata: DocumentMetadata,
+    doc_metadata: DocumentMetadata,
     tables: list[bs4.element.Tag],
 ) -> bs4.BeautifulSoup:
     for table in tables:
         if table.get("class", "") == CLS_METADATA_TABLE:
             pk = table.get(ATTRIB_METADATA_UUID)
-            asset = document_metadata.get_asset(pk)
+            metadata_table: MetadataTableDatapoint = doc_metadata.get_metadata_table(pk)
             default_height = "100%"
-            height = asset.kwargs.get("height", default_height)
-            digitalsrc = str(asset.kwargs.get(FIELD_DIGITAL_SOURCE, ""))
+            height = metadata_table.kwargs.get("height", default_height)
+            digitalsrc = str(metadata_table.kwargs.get(FIELD_DIGITAL_SOURCE, ""))
             # TODO: improve conditions and verification, current method is too naive
             if digitalsrc[-5:].lower() == ".html":
                 new_tag = html_soup.new_tag("iframe")

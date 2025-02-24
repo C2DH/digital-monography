@@ -5,8 +5,9 @@ import typing as t
 import uuid
 
 try:
-    from metadata import AssetDatapoint, DocumentMetadata
+    from metadata import AssetDatapoint, DocumentMetadata, MetadataTableDatapoint
     from constants import (
+        MediumEnum,
         ATTRIB_METADATA_UUID,
         CLS_METADATA_TABLE,
         FIELD_DELETE_PREVIOUS,
@@ -14,9 +15,11 @@ try:
         FIELD_PAPER_SOURCE,
         METADATA_FIELDS,
     )
+    from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
-    from .metadata import AssetDatapoint, DocumentMetadata
+    from .metadata import AssetDatapoint, DocumentMetadata, MetadataTableDatapoint
     from .constants import (
+        MediumEnum,
         ATTRIB_METADATA_UUID,
         CLS_METADATA_TABLE,
         FIELD_DELETE_PREVIOUS,
@@ -24,6 +27,7 @@ except (ImportError, ModuleNotFoundError):
         FIELD_PAPER_SOURCE,
         METADATA_FIELDS,
     )
+    from .keys import KeyPath
 
 type AcceptedValues = t.Union[str, bool, pathlib.Path]
 FALSE_EQUIVALENTS = [
@@ -54,6 +58,8 @@ def prepare_metadata_tables(
     for table in tables:
         if "##" in table.text:
             metadata_tbl = MetadataTable()
+            metadata_tbl.add_slug(document_metadata.slug)
+            metadata_tbl.add_location(document_metadata.filepath)
             key, val = "", ""
             for tr in table.find_all(["tr"]):
                 for descendent in tr.find_all():
@@ -76,19 +82,36 @@ def prepare_metadata_tables(
                 table["class"] = CLS_METADATA_TABLE
                 table["id"] = metadata_tbl.uuid
                 table[ATTRIB_METADATA_UUID] = metadata_tbl.uuid
-                kwargs = metadata_tbl.to_dict()
+                # metadata_tbl_values = metadata_tbl.to_dict()
+                document_metadata.add(
+                    "metadata_tables",
+                    MetadataTableDatapoint(
+                        pk=metadata_tbl.uuid, kwargs=metadata_tbl.kwargs
+                    ),
+                )
+
+                # def add(self, records_name: str, record: DatapointUnion) -> None:
+
                 if described_el:
                     described_el[ATTRIB_METADATA_UUID] = metadata_tbl.uuid
-                    kwargs.update({"elem": described_el})
+                    # metadata_tbl_values.update({"elem": described_el})
+                    metadata_tbl.add_described_el(described_el)
                 if caption_el:
                     caption_el[ATTRIB_METADATA_UUID] = metadata_tbl.uuid
-                    kwargs.update({"caption": caption_el.text})
-            asset = AssetDatapoint(pk=metadata_tbl.uuid, kwargs=kwargs)
-            document_metadata.add_asset(asset)
+                    # metadata_tbl_values.update({"caption": caption_el.text})
+                    metadata_tbl.add_caption(caption_el.text)
+
+            asset_paper = metadata_tbl.assetdatapoint_for_paper()
+            asset_digital = metadata_tbl.assetdatapoint_for_digital()
+            if asset_paper:
+                document_metadata.add_asset(asset_paper)
+            if asset_digital:
+                document_metadata.add_asset(asset_digital)
             placeholder = html_soup.new_tag("span")
             placeholder.string = "% :::{dgt-mon-asset} " + metadata_tbl.uuid + " :::"
             placeholder["hidden"] = "hidden"
             table.insert_before(placeholder)
+
     return html_soup
 
 
@@ -132,6 +155,7 @@ class MetadataTable:
     def __init__(self) -> None:
         self.uuid = str(uuid.uuid4())
         self.rows = []
+        self.kwargs = {}
 
     def __nonzero__(self):
         return bool(self.rows)
@@ -158,6 +182,7 @@ class MetadataTable:
         key = self._normalize_key(key)
         val = self._normalize_val(val, key)
         self.rows.append((key, val))
+        self.kwargs[key] = val
 
     def _normalize_key(self, key: str) -> str:
         while " " in key:
@@ -181,5 +206,72 @@ class MetadataTable:
             return pathlib.Path(val)
         return val
 
-    def to_dict(self) -> dict[str, AcceptedValues]:
-        return {k: v for k, v in self.rows}
+    # def to_dict(self) -> dict[str, AcceptedValues]:
+    #     return {k: v for k, v in self.rows}
+
+    def add_slug(self, slug: str) -> None:
+        self.rows.append(("slug", slug))
+        self.kwargs["slug"] = slug
+
+    def add_location(self, location: t.Optional[KeyPath]) -> None:
+        self.rows.append(("location", location))
+        self.kwargs["location"] = location
+
+    def add_described_el(self, described_el: bs4.element.Tag) -> None:
+        self.rows.append(("elem", described_el))
+        self.kwargs["elem"] = described_el
+
+    def add_caption(self, caption: str) -> None:
+        self.rows.append(("caption", caption))
+        self.kwargs["caption"] = caption
+
+    def assetdatapoint_for_paper(self) -> t.Optional[AssetDatapoint]:
+        if self.kwargs.get(FIELD_PAPER_SOURCE) is None:
+            return None
+        return AssetDatapoint(
+            fp=self.kwargs[FIELD_PAPER_SOURCE],
+            slug=self.kwargs["slug"],
+            medium=self._get_medium(MediumEnum.PAPER),
+            author=self.kwargs.get("author", ""),
+            source=self.kwargs.get("source", ""),
+            location=self.kwargs.get("location"),
+            alttext=self._get_alttext(),
+            caption=self.kwargs.get("caption", ""),
+            comments=self.kwargs.get("comments", ""),
+            metadata_table=self.uuid,
+            is_color=self.kwargs.get("iscolor"),
+            is_ready=self.kwargs.get("isready", False),
+        )
+
+    def assetdatapoint_for_digital(self) -> t.Optional[AssetDatapoint]:
+        if self.kwargs.get(FIELD_DIGITAL_SOURCE) is None:
+            return None
+        return AssetDatapoint(
+            fp=self.kwargs.get(FIELD_DIGITAL_SOURCE),
+            slug=self.kwargs["slug"],
+            medium=self._get_medium(MediumEnum.DIGITAL),
+            author=self.kwargs.get("author", ""),
+            source=self.kwargs.get("source", ""),
+            location=self.kwargs.get("location"),
+            alttext=self._get_alttext(),
+            caption=self.kwargs.get("caption", ""),
+            comments=self.kwargs.get("comments", ""),
+            metadata_table=self.uuid,
+            is_color=self.kwargs.get("iscolor"),
+            is_ready=self.kwargs.get("isready", False),
+        )
+
+    def _get_alttext(self) -> t.Optional[str]:
+        if self.kwargs.get("alttext") is None and self.kwargs.get("elem"):
+            _alttext: bs4.element.Tag | None = self.kwargs.get("elem").find(alt=True)
+            if _alttext is not None:
+                return _alttext.get("alt")
+        return self.kwargs.get("alttext", "")
+
+    def _get_medium(self, medium: MediumEnum) -> MediumEnum:
+        return (
+            MediumEnum.PAPER_AND_DIGITAL
+            if self.kwargs.get(FIELD_DIGITAL_SOURCE)
+            == self.kwargs.get(FIELD_PAPER_SOURCE)
+            else medium
+        )

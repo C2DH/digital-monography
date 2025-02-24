@@ -35,7 +35,9 @@ try:
     from hide_metadata_in_html import hide_metadata_in_html
     from metadata import DocumentMetadata
     from metadata_extraction import prepare_metadata_tables
-    from metadata_computation import compute_additional_metadata_fields
+
+    # from models.assets_base import Assets
+    # from models.assets import AssetInfoFromDoc
     from remove_empty_tables import remove_empty_tables
     from replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
     from refs import (
@@ -77,7 +79,9 @@ except (ImportError, ModuleNotFoundError):
     from .hide_metadata_in_html import hide_metadata_in_html
     from .metadata import DocumentMetadata
     from .metadata_extraction import prepare_metadata_tables
-    from .metadata_computation import compute_additional_metadata_fields
+
+    # from .models.assets_base import Assets
+    # from .models.assets import AssetInfoFromDoc
     from .remove_empty_tables import remove_empty_tables
     from .replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
     from .refs import (
@@ -94,7 +98,6 @@ except (ImportError, ModuleNotFoundError):
     from .ipynb_prep import tags_to_myst_crossref_targets
     from .keys import KeyPath
     from .fakers import Faker
-
 
 if IS_DEBUG:
     today = datetime.date.today().isoformat()
@@ -187,13 +190,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         logger.info("====================================")
         logger.info(f"Looking for {FIELD_DIGITAL_SOURCE}")
         logger.info(f"metadata.filepath.parent: ({metadata.filepath.parent})")
-        root = pathlib.Path(DEFAULT_SFS_DIR) / metadata.filepath.parent
-        for asset in metadata.assets:
-            logger.info(f"asset.kwargs.keys(), {asset.kwargs.keys()}")
-            if asset.kwargs.get(FIELD_DIGITAL_SOURCE) is not None:
-                digitalsource = root / asset.kwargs.get(FIELD_DIGITAL_SOURCE)
-                logger.info(f"Digital source: {digitalsource}")
-        metadata = compute_additional_metadata_fields(metadata)
+        # root = pathlib.Path(DEFAULT_SFS_DIR) / metadata.filepath.parent
+        # metadata = compute_additional_metadata_fields(metadata)
         html_soup = hide_metadata_in_html(html_soup, metadata)  # last step
         html_soup_str = str(html_soup)
         # IMPORTANT NOTE: other services depend on html produced at this stage, make sure that:
@@ -211,7 +209,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         #     f"==Metadata: "
         #     + json.dumps([rec.to_json() for rec in getattr(metadata, "assets")], default=str)
         # )
-        _write_metadata_to_s3(metadata, key)
+        _write_assets_info_to_s3(metadata, key)
         _write_metadata_to_db(metadata, key)
         _write_metadata_to_efs(metadata, key)
         _write_processed_html_to_efs(html_soup_str, key)
@@ -455,27 +453,30 @@ def _write_processed_md_to_efs(md: str, key: KeyPath) -> None:
         f.write(md)
 
 
-def _write_metadata_to_s3(metadata: DocumentMetadata, key: KeyPath) -> None:
+def _write_assets_info_to_s3(metadata: DocumentMetadata, key: KeyPath) -> None:
     try:
         logger.info(f"_write_metadata_to_s3(key={key}")
-        s3_key = key.s3_key.with_suffix(".json")
-        meta = metadata.to_json()
-        buckets = {
-            "assets": METADATA_ASSETS_BUCKET_NAME,
-        }
-        for domain, bucket in buckets.items():
-            body = json.dumps(meta[domain], default=str)
-            resp = s3.put_object(Body=body, Bucket=bucket, Key=str(s3_key))
-            logger.info(
-                f"Response from s3.put_object(Bucket={bucket}, Key={str(s3_key)}): "
-                + json.dumps(resp, default=str)
-            )
+        # metadata.assets.write_to_s3("maybe_s3_key")
+        #############################################
+
+        # s3_key = key.s3_key.with_suffix(".json")
+        # meta = metadata.to_json()
+        # buckets = {
+        #     "assets": METADATA_ASSETS_BUCKET_NAME,
+        # }
+        # for domain, bucket in buckets.items():
+        #     body = json.dumps(meta[domain], default=str)
+        #     resp = s3.put_object(Body=body, Bucket=bucket, Key=str(s3_key))
+        # logger.info(
+        #     f"Response from s3.put_object(Bucket={bucket}, Key={str(s3_key)}): "
+        #     + json.dumps(resp, default=str)
+        # )
     except Exception as e:
-        logger.exception(f"Putting metadata to s3 bucket failed. Error: {repr(e)}")
+        logger.exception(f"Putting assets info to s3 bucket failed. Error: {repr(e)}")
         _log_audit_event(
             key,
             AuditStatus.FAILED.value,
-            "Error upon writing metadata.",
+            "Error upon writing assets info from docs.",
         )
         raise
 
