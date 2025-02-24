@@ -23,11 +23,11 @@ class TestRefsAndTargetsVerifier:
 
     @classmethod
     def setup_class(cls):
-        cls.multidocs_meta: dict[KeyPath, DocumentMetadata] = {}
+        cls.multidocs_meta: dict[str, DocumentMetadata] = {}
         cls.soup_a, cls.meta_a = cls._prepare_docx_for_ref_handing(cls.fp_a)
         cls.soup_b, cls.meta_b = cls._prepare_docx_for_ref_handing(cls.fp_b)
-        cls.multidocs_meta[cls.fp_a] = cls.meta_a
-        cls.multidocs_meta[cls.fp_b] = cls.meta_b
+        cls.multidocs_meta[cls.fp_a.stem] = cls.meta_a
+        cls.multidocs_meta[cls.fp_b.stem] = cls.meta_b
         cls.verifier = RefsAndTargetsVerifier()
         cls.warnings = cls.verifier.verify(cls.multidocs_meta)
 
@@ -75,7 +75,7 @@ class TestRefsAndTargetsVerifier:
         assert ref_string in warnings[0]["recommend"]
         assert len(warnings) == 1
 
-    def test_check_a_f2f_filename_is_invalid__is_incorrect_raise_warning(self):
+    def test_check_a_f2f_filename_is_invalid(self):
         warnings = [
             w for w in self.warnings if w["check"] == "check_a_f2f_filename_is_invalid"
         ]
