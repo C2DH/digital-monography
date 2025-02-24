@@ -11,9 +11,9 @@ import dataclasses
 import datetime
 import enum
 import functools
-import itertools
 import pathlib
 import typing as t
+import uuid
 
 
 try:
@@ -61,7 +61,7 @@ class AssetRecord(t.TypedDict):
 
 
 class HeadingRecord(t.TypedDict):
-    pk: int
+    pk: str
     file: str
     # elem: str
     level: str
@@ -70,7 +70,7 @@ class HeadingRecord(t.TypedDict):
 
 
 class RefRecord(t.TypedDict):
-    pk: int
+    pk: str
     target_id: int
     text: str
     href: str
@@ -79,7 +79,7 @@ class RefRecord(t.TypedDict):
 
 
 class TargetRecord(t.TypedDict):
-    pk: int
+    pk: str
     html: str
     text: str
 
@@ -98,7 +98,7 @@ class CitationGroupRecord(t.TypedDict):
 
 
 class CitationItemRecord(t.TypedDict):
-    pk: t.Union[int, str]
+    pk: str
     citationId: str
     uris: list[str]
     itemData: dict[str, t.Any]
@@ -110,11 +110,13 @@ class CitationItemRecord(t.TypedDict):
 
 @dataclasses.dataclass
 class DatapointBase(abc.ABC):
+    pk: str = dataclasses.field(default_factory=lambda: str(uuid.uuid4()), kw_only=True)
+
     @property
     def s3_key(self) -> str:
         raise NotImplementedError
 
-    def to_json(self) -> dict[str, str | int | bool]:
+    def to_json(self) -> dict[str, str | int | bool, None]:
         "Converts the dataclass obj to a dict with str/int/bool as values."
 
         def _primitive_dict(fields) -> dict[str, str | int | bool]:
@@ -133,7 +135,7 @@ class DatapointBase(abc.ABC):
         return dataclasses.asdict(self, dict_factory=_primitive_dict)
 
     @classmethod
-    def from_json(cls: t.Type[T], json_data: dict) -> T:
+    def from_json(cls: t.Type[T], json_data: dict[str, str | int | bool, None]) -> T:
         "Constructs a dataclass instance from a JSON-like dictionary."
         if not dataclasses.is_dataclass(cls):
             raise ValueError(f"{cls.__name__} must be a dataclass")
@@ -164,23 +166,24 @@ class AssetDatapoint(DatapointBase):
     * upload level (s3) information
     * book level information
     """
-    name: str
-    slug: str
-    medium: MediumEnum
-    author: str
-    source: str
-    location: str
-    alttext: str
-    caption: str
-    comments: str
-    is_color: bool
-    is_on_paper: bool  # maybe this can be computed from "medium"
-    is_ready: bool
+    # pk: str
+    name: str = ""
+    slug: str = ""
+    medium: MediumEnum | None = None
+    author: str = ""
+    source: str = ""
+    location: str = ""
+    alttext: str = ""
+    caption: str = ""
+    comments: str = ""
+    is_color: bool | None = None
+    is_on_paper: bool | None = None  # maybe this can be computed from "medium"
+    is_ready: bool | None = None
 
 
 @dataclasses.dataclass
 class HeadingDatapoint(DatapointBase):
-    pk: int = dataclasses.field(default_factory=itertools.count().__next__, init=False)
+    # pk: int = dataclasses.field(default_factory=itertools.count().__next__, init=False)
     file_name: str
     elem: str
     level: str
@@ -209,7 +212,7 @@ class HeadingDatapoint(DatapointBase):
 
 @dataclasses.dataclass
 class RefDatapoint(DatapointBase):
-    pk: int = dataclasses.field(default_factory=itertools.count().__next__, init=False)
+    # pk: int = dataclasses.field(default_factory=itertools.count().__next__, init=False)
     fn: str
     target_id: str
     text: str
@@ -238,7 +241,7 @@ class RefDatapoint(DatapointBase):
 
 @dataclasses.dataclass
 class TargetDatapoint(DatapointBase):
-    pk: str
+    # pk: str
     html: str
     text: str
     elem: str
@@ -262,7 +265,7 @@ class TargetDatapoint(DatapointBase):
 
 @dataclasses.dataclass
 class SubstitutionDatapoint(DatapointBase):
-    pk: str
+    # pk: str
     was: str
     placeholder: str
     # make sure that literal options are equal to constants.CAPTION_ITEM_TYPE_*
@@ -283,7 +286,7 @@ class SubstitutionDatapoint(DatapointBase):
 
 @dataclasses.dataclass
 class CitationGroupDatapoint(DatapointBase):
-    pk: str
+    # pk: str
     file_name: str
     schema: str
     formattedCitation: str
@@ -303,7 +306,7 @@ class CitationGroupDatapoint(DatapointBase):
 
 @dataclasses.dataclass
 class CitationItemDatapoint(DatapointBase):
-    pk: t.Union[int, str]
+    # pk: t.Union[int, str]
     file_name: str
     citationId: str
     uris: list[str]
@@ -348,7 +351,7 @@ class DocumentMetadata:
         records_name: str,
         record: DatapointUnion,
     ) -> None:
-        records = getattr(self, records_name)
+        records: list[DatapointUnion] = getattr(self, records_name)
         records.append(record)
 
     def get(
