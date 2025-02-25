@@ -260,10 +260,12 @@ class MetadataTable:
         )
 
     def _get_alttext(self) -> t.Optional[str]:
-        if self.kwargs.get("alttext") is None and self.kwargs.get("elem"):
-            _alttext: bs4.element.Tag | None = self.kwargs.get("elem").find(alt=True)
-            if _alttext is not None:
-                return _alttext.get("alt")
+        if not self.kwargs.get("alttext") and self.kwargs.get("elem"):
+            elem = self.kwargs.get("elem")
+            if elem:
+                _alttext: bs4.element.Tag | None = elem.find(alt=True)
+                if _alttext is not None:
+                    return _alttext.get("alt")
         return self.kwargs.get("alttext", "")
 
     def _get_medium(self, medium: MediumEnum) -> MediumEnum:
