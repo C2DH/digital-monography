@@ -1,4 +1,5 @@
 import bs4
+import copy
 import pathlib
 import re
 import typing as t
@@ -58,8 +59,6 @@ def prepare_metadata_tables(
     for table in tables:
         if "##" in table.text:
             metadata_tbl = MetadataTable()
-            metadata_tbl.add_slug(document_metadata.slug)
-            metadata_tbl.add_location(document_metadata.filepath)
             key, val = "", ""
             for tr in table.find_all(["tr"]):
                 for descendent in tr.find_all():
@@ -86,12 +85,9 @@ def prepare_metadata_tables(
                 document_metadata.add(
                     "metadata_tables",
                     MetadataTableDatapoint(
-                        pk=metadata_tbl.uuid, kwargs=metadata_tbl.kwargs
+                        pk=metadata_tbl.uuid, kwargs=copy.copy(metadata_tbl.kwargs)
                     ),
                 )
-
-                # def add(self, records_name: str, record: DatapointUnion) -> None:
-
                 if described_el:
                     described_el[ATTRIB_METADATA_UUID] = metadata_tbl.uuid
                     # metadata_tbl_values.update({"elem": described_el})
@@ -101,11 +97,13 @@ def prepare_metadata_tables(
                     # metadata_tbl_values.update({"caption": caption_el.text})
                     metadata_tbl.add_caption(caption_el.text)
 
+            metadata_tbl.add_slug(document_metadata.slug)
+            metadata_tbl.add_location(document_metadata.filepath)
             asset_paper = metadata_tbl.assetdatapoint_for_paper()
             asset_digital = metadata_tbl.assetdatapoint_for_digital()
             if asset_paper:
                 document_metadata.add_asset(asset_paper)
-            if asset_digital:
+            if asset_digital and asset_digital.fp != asset_paper.fp:
                 document_metadata.add_asset(asset_digital)
             placeholder = html_soup.new_tag("span")
             placeholder.string = "% :::{dgt-mon-asset} " + metadata_tbl.uuid + " :::"
