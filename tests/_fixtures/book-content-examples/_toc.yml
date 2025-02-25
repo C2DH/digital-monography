@@ -1,0 +1,6 @@
+format: jb-book
+root: index
+chapters:
+  - file: verify_h_a_cap
+  - file: verify_tables_assets
+  - file: cross-references
