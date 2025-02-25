@@ -14,6 +14,7 @@ DOCKER_HUB = c2dhunilu
 test/prep:
 	cp '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/links/01_a.docx' tests/_fixtures/refs/01_a.docx
 	cp '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/links/02_b.docx' tests/_fixtures/refs/02_b.docx
+	cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/book-content-examples/' tests/_fixtures/
 
 test/run:
 	DGTMON_DEBUG=1 python -m pytest tests/preparer/ tests/verifier/ tests/builder/
@@ -45,14 +46,12 @@ dev/test:
 dev/draft:
 	docker compose run main python scripts/prepare_and_build.py book_path=data/input/$(SLUG)
 
-
 copy/audit:
 	cp src/_common/audit.py src/dropbox/audit.py
 	cp src/_common/audit.py src/preparer/audit.py
 	cp src/_common/audit.py src/builder/audit.py
 	cp src/_common/audit.py src/github/audit.py
 	cp src/_common/audit.py src/verifier/audit.py
-
 
 copy/constants:
 	cp src/_common/constants.py scripts/constants.py
@@ -80,6 +79,9 @@ copy/html2md:
 	cp src/_common/html2md.py src/preparer/html2md.py
 	cp src/_common/html2md.py src/verifier/html2md.py
 	cp src/_common/html2md.py src/builder/html2md.py
+
+copy/models:
+	cp src/_common/models/assets_base.py src/preparer/models/assets_base.py
 
 entrypoint/build:
 	cp src/_common/constants.py src/entrypoint/constants.py
