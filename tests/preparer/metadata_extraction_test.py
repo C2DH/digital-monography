@@ -5,7 +5,7 @@ import pathlib
 from src.preparer.constants import MediumEnum, MAMMOTH_STYLE_MAP
 from src.preparer.digital_prep import remove_metadata_tables
 from src.preparer.html2md import convert_to_md
-from src.preparer.metadata import DocumentMetadata
+from src.preparer.metadata import DocumentMetadata, AssetDatapoint
 from src.preparer.metadata_extraction import prepare_metadata_tables
 from src.preparer.keys import KeyPath
 
@@ -108,3 +108,21 @@ class TestMetadataTablesExtraction:
         assert self.asset_3.is_color == None
         assert self.asset_3.is_ready == True
         assert self.asset_3.is_on_paper == False
+
+    def test_asset_json_handling(self):
+        jsonified = self.asset_3.to_json()
+        assert jsonified["is_color"] == None
+        asset = AssetDatapoint.from_json(jsonified)
+        assert asset.fp == pathlib.Path("assets/10x10px-img.png")
+        assert asset.metadata_table == self.metadata.metadata_tables[2].pk
+        assert asset.medium == MediumEnum.DIGITAL
+        assert asset.slug == SLUG
+        assert asset.author == ""
+        assert asset.source == ""
+        # assert asset.location == KeyPath(f"{SLUG}/metadata_extraction.docx")
+        assert asset.alttext == ""
+        assert asset.caption == ""
+        assert asset.comments == "Looks good"
+        assert asset.is_color == None
+        assert asset.is_ready == True
+        assert asset.is_on_paper == False

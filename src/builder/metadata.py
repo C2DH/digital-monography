@@ -129,7 +129,7 @@ class DatapointBase(abc.ABC):
                     val = val.isoformat()
                 elif isinstance(val, enum.Enum):
                     val = val.value
-                elif val not in [str, int, bool]:
+                elif val not in [str, int, bool, None]:
                     # e.g. pathlib.PurePath, bs4.PageElement
                     val = str(val)
                 elif key == "elem":
@@ -156,7 +156,7 @@ class DatapointBase(abc.ABC):
 
         for field in dataclasses.fields(cls):
             val = json_data[field.name]
-            if val is None:
+            if val is None or val == "None":
                 v = None
             elif field.type == bs4.element.Tag:
                 soup = bs4.BeautifulSoup(val, "html.parser")
