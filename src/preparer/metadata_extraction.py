@@ -103,7 +103,7 @@ def prepare_metadata_tables(
             asset_digital = metadata_tbl.assetdatapoint_for_digital()
             if asset_paper:
                 document_metadata.add_asset(asset_paper)
-            if asset_digital and asset_digital.fp != asset_paper.fp:
+            if asset_digital and asset_paper and asset_digital.fp != asset_paper.fp:
                 document_metadata.add_asset(asset_digital)
             placeholder = html_soup.new_tag("span")
             placeholder.string = "% :::{dgt-mon-asset} " + metadata_tbl.uuid + " :::"
