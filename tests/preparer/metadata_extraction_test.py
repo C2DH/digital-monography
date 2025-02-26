@@ -109,17 +109,35 @@ class TestMetadataTablesExtraction:
         assert self.asset_3.is_ready == True
         assert self.asset_3.is_on_paper == False
 
-    def test_asset_json_handling(self):
+    def test_asset_to_json_handling(self):
         jsonified = self.asset_3.to_json()
+        assert jsonified["fp"] == "assets/10x10px-img.png"
+        assert jsonified["metadata_table"] == self.metadata.metadata_tables[2].pk
+        assert type(jsonified["metadata_table"]) == str
+        assert jsonified["medium"] == "D"
+        assert type(jsonified["medium"]) == str
+        assert jsonified["slug"] == SLUG
+        assert jsonified["author"] == ""
+        assert jsonified["source"] == ""
+        assert jsonified["location"] == f"{SLUG}/metadata_extraction.docx"
+        assert jsonified["alttext"] == ""
+        assert jsonified["caption"] == ""
+        assert jsonified["comments"] == "Looks good"
         assert jsonified["is_color"] == None
+        assert jsonified["is_ready"] == True
+        assert jsonified["is_on_paper"] == False
+
+    def test_asset_from_json_handling(self):
+        jsonified = self.asset_3.to_json()
         asset = AssetDatapoint.from_json(jsonified)
         assert asset.fp == pathlib.Path("assets/10x10px-img.png")
         assert asset.metadata_table == self.metadata.metadata_tables[2].pk
+        assert type(asset.metadata_table) == str
         assert asset.medium == MediumEnum.DIGITAL
         assert asset.slug == SLUG
         assert asset.author == ""
         assert asset.source == ""
-        # assert asset.location == KeyPath(f"{SLUG}/metadata_extraction.docx")
+        assert asset.location == KeyPath(f"{SLUG}/metadata_extraction.docx")
         assert asset.alttext == ""
         assert asset.caption == ""
         assert asset.comments == "Looks good"

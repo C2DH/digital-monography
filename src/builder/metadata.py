@@ -119,6 +119,7 @@ class DatapointBase(abc.ABC):
     def s3_key(self) -> str:
         raise NotImplementedError
 
+    # TODO: rename, because it's not really json...
     def to_json(self) -> dict[str, str | int | bool, None]:
         "Converts the dataclass obj to a dict with str/int/bool as values."
 
@@ -129,11 +130,13 @@ class DatapointBase(abc.ABC):
                     val = val.isoformat()
                 elif isinstance(val, enum.Enum):
                     val = val.value
-                elif val not in [str, int, bool, None]:
-                    # e.g. pathlib.PurePath, bs4.PageElement
-                    val = str(val)
                 elif key == "elem":
                     val = ""  # NOTE: for now, html is not included in the JSON
+                # elif isinstance(val, bool):
+                #     continue
+                elif val not in [str, int, None] and not isinstance(val, bool):
+                    # e.g. pathlib.PurePath, bs4.PageElement
+                    val = str(val)
                 res[key] = val
             return res
 
@@ -158,13 +161,15 @@ class DatapointBase(abc.ABC):
             val = json_data[field.name]
             if val is None or val == "None":
                 v = None
+            elif field.name == "elem":
+                v = ""  # NOTE: for now, html is not included in the JSON
             elif field.type == bs4.element.Tag:
                 soup = bs4.BeautifulSoup(val, "html.parser")
                 v = next(soup.children)
             elif field.type == datetime.datetime:
                 v = datetime.datetime.fromisoformat(val)
-            elif field.name == "elem":
-                v = ""  # NOTE: for now, html is not included in the JSON
+            elif field.type == t.Optional[KeyPath]:
+                v = KeyPath(val)
             else:
                 v = (_get_field_type(field))(val)
             res[field.name] = v
