@@ -3,7 +3,7 @@
     "DROPBOX_STABLE_V": "0.0.38",
     "BUILDER_STABLE_V": "0.1.28",
     "GITHUB_STABLE_V": "0.0.27",
-    "PREPARER_STABLE_V": "0.1.32",
+    "PREPARER_STABLE_V": "0.1.33",
     "VERIFIER_STABLE_V": "0.1.16",
     "GPU_STABLE_V": "0.0.7",
     "LOCAL_STABLE_V": "0.1.2"
