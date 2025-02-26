@@ -132,10 +132,7 @@ class DatapointBase(abc.ABC):
                     val = val.value
                 elif key == "elem":
                     val = ""  # NOTE: for now, html is not included in the JSON
-                # elif isinstance(val, bool):
-                #     continue
                 elif val not in [str, int, None] and not isinstance(val, bool):
-                    # e.g. pathlib.PurePath, bs4.PageElement
                     val = str(val)
                 res[key] = val
             return res
