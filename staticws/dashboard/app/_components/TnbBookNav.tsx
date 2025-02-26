@@ -14,6 +14,7 @@ export default function TnbBookNav({ slug, color }: { slug: string, color: strin
                 </button>
                 <a
                     href={`https://www.dropbox.com/home/Aplikacje/drpb-upload-alert-test/${slug}`}
+                    target="_blank" rel="noopener noreferrer"
                     className={`btn btn-${color}`}
                 >Edit</a>
                 <Link href={{
