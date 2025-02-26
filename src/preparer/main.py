@@ -10,6 +10,9 @@ import nbformat
 import typing as t
 import urllib.parse
 
+from mypy_boto3_s3.client import S3Client as boto3_S3Client
+from mypy_boto3_dynamodb.client import DynamoDBClient as boto3_DynamoDBClient
+
 try:
     from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
     from constants import (
@@ -33,11 +36,8 @@ try:
     from citations import add_bibliography, is_citation, prepare_citations
     from digital_prep import insert_digital_objects, remove_metadata_tables
     from hide_metadata_in_html import hide_metadata_in_html
-    from metadata import DocumentMetadata
+    from metadata import DocumentMetadata, AssetDatapoint
     from metadata_extraction import prepare_metadata_tables
-
-    # from models.assets_base import Assets
-    # from models.assets import AssetInfoFromDoc
     from remove_empty_tables import remove_empty_tables
     from replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
     from refs import (
@@ -77,11 +77,8 @@ except (ImportError, ModuleNotFoundError):
     from .citations import add_bibliography, is_citation, prepare_citations
     from .digital_prep import insert_digital_objects, remove_metadata_tables
     from .hide_metadata_in_html import hide_metadata_in_html
-    from .metadata import DocumentMetadata
+    from .metadata import DocumentMetadata, AssetDatapoint
     from .metadata_extraction import prepare_metadata_tables
-
-    # from .models.assets_base import Assets
-    # from .models.assets import AssetInfoFromDoc
     from .remove_empty_tables import remove_empty_tables
     from .replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
     from .refs import (
@@ -126,8 +123,8 @@ if IS_DEBUG:
     s3 = Faker("s3")
     sqs = Faker("sqs")
 else:
-    dynamodb = boto3.resource("dynamodb")
-    s3 = boto3.client("s3")
+    dynamodb: boto3_DynamoDBClient = boto3.resource("dynamodb")
+    s3: boto3_S3Client = boto3.client("s3")
     sqs = boto3.client("sqs")
 
 
@@ -455,22 +452,14 @@ def _write_processed_md_to_efs(md: str, key: KeyPath) -> None:
 
 def _write_assets_info_to_s3(metadata: DocumentMetadata, key: KeyPath) -> None:
     try:
-        logger.info(f"_write_metadata_to_s3(key={key}")
-        # metadata.assets.write_to_s3("maybe_s3_key")
-        #############################################
-
-        # s3_key = key.s3_key.with_suffix(".json")
-        # meta = metadata.to_json()
-        # buckets = {
-        #     "assets": METADATA_ASSETS_BUCKET_NAME,
-        # }
-        # for domain, bucket in buckets.items():
-        #     body = json.dumps(meta[domain], default=str)
-        #     resp = s3.put_object(Body=body, Bucket=bucket, Key=str(s3_key))
-        # logger.info(
-        #     f"Response from s3.put_object(Bucket={bucket}, Key={str(s3_key)}): "
-        #     + json.dumps(resp, default=str)
-        # )
+        s3_key = AssetDatapoint.get_s3_key(key)
+        bucket = METADATA_ASSETS_BUCKET_NAME
+        body = json.dumps([ass.to_json() for ass in metadata.assets], default=str)
+        resp = s3.put_object(Body=body, Bucket=bucket, Key=s3_key)
+        logger.info(
+            f"Response from s3.put_object(Bucket={bucket}, Key={s3_key}): "
+            + json.dumps(resp, default=str)
+        )
     except Exception as e:
         logger.exception(f"Putting assets info to s3 bucket failed. Error: {repr(e)}")
         _log_audit_event(

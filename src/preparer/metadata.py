@@ -224,6 +224,19 @@ class AssetDatapoint(DatapointBase):
                 MediumEnum.PAPER_AND_DIGITAL,
             )
 
+    @property
+    def s3_key(self) -> str:
+        # TODO: implement
+        # # AssetInfoFromUpload
+        # return f"{self.slug}/{self.key}.json"
+        # # AssetInfoFromBook
+        # return f"{self.slug}/_data_from_book.json"
+        return f"{self.slug}/{self.location.stem}.json"
+
+    @staticmethod
+    def get_s3_key(key: KeyPath) -> str:
+        return f"{key.slug}/{key.stem}.json"
+
 
 @dataclasses.dataclass
 class HeadingDatapoint(DatapointBase):
