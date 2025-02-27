@@ -210,8 +210,6 @@ def _prepare_config(key: KeyPath) -> None:
         config = yaml.safe_load(f)
 
     metadatas = {}
-    mddir = (key.efs_slug_dir / "_metadata").glob("**/*.json")
-    logger.info(f"Metadata files in {str(mddir)}: {str(os.listdir(mddir))}")
     for meta_file in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
         meta_file: KeyPath
         with meta_file.open("r") as f:
