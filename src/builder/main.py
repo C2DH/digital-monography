@@ -210,12 +210,20 @@ def _prepare_config(key: KeyPath) -> None:
         config = yaml.safe_load(f)
 
     metadatas = {}
+    mddir = (key.efs_slug_dir / "_metadata").glob("**/*.json")
+    logger.info(f"Metadata files in {str(mddir)}: {str(os.listdir(mddir))}")
     for meta_file in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
         meta_file: KeyPath
         with meta_file.open("r") as f:
             metadata = DocumentMetadata(meta_file)
-            metadata.from_json(json.load(f))
-            metadatas[meta_file.stem] = metadata
+            try:
+                metadata.from_json(json.load(f))
+                metadatas[meta_file.stem] = metadata
+            except KeyError as e:
+                logger.info(
+                    f"Invalid or obsolete DataPoint structure. Skipping "
+                    f"metadata file {meta_file}. KeyError: {repr(e)}"
+                )
     THIS_IS_HOW_WE_CAN_ACHIEVE_COUNTING_FIGURES_ETC = """
     # ROMAN_NUMS = {
     #     "1": "I",
