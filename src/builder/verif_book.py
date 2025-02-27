@@ -1,5 +1,7 @@
 import bs4
 import datetime
+import json
+import logging
 import pathlib
 import typing as t
 import uuid
@@ -260,7 +262,14 @@ class RefsAndTargetsVerifier:
         return target is None
 
     def _check_a_f2f_filename_is_invalid(self, target_fn: str) -> bool:
+        logging.info("_check_a_f2f_filename_is_invalid")
+        logging.info(
+            f"fns_types={json.dumps(self._metadatas_stemmed_filenames, default=str)}"
+        )
+        fns_types = [type(fn) for fn in self._metadatas_stemmed_filenames]
+        logging.info(f"fns_types={json.dumps(fns_types, default=str)}")
         p = pathlib.Path(target_fn)
+        logging.info(f"p.stem={p.stem}")
         return p.stem not in self._metadatas_stemmed_filenames
 
     def _check_a_f2f_filename_is_absolute(self, target_fn: str) -> bool:
