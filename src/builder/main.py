@@ -483,8 +483,14 @@ def _verify_book(key: KeyPath) -> list[dict[str, str]]:
         meta_file: KeyPath
         with meta_file.open("r") as f:
             metadata = DocumentMetadata(meta_file)
-            metadata.from_json(json.load(f))
-            metadatas[meta_file.stem] = metadata
+            try:
+                metadata.from_json(json.load(f))
+                metadatas[meta_file.stem] = metadata
+            except KeyError as e:
+                logger.info(
+                    f"Invalid or obsolete DataPoint structure. Skipping "
+                    f"metadata file {meta_file}. KeyError: {repr(e)}"
+                )
     # TODO: stop repeating metadata parsing after _prepare_config()
     # the only difference is just stem str vs pathlib path
     verifier = RefsAndTargetsVerifier()
