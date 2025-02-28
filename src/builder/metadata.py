@@ -215,6 +215,7 @@ class AssetDatapoint(DatapointBase):
     alttext: str
     caption: str
     comments: str
+    target: str
     is_color: bool | None
     is_ready: bool
     is_on_paper: bool = dataclasses.field(default=None)

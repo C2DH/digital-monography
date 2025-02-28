@@ -8,6 +8,12 @@ from src.preparer.html2md import convert_to_md
 from src.preparer.metadata import DocumentMetadata, AssetDatapoint
 from src.preparer.metadata_extraction import prepare_metadata_tables
 from src.preparer.keys import KeyPath
+from src.preparer.refs import (
+    prepare_ref_targets_in_captions,
+    prepare_references,
+    is_caption,
+    is_reference,
+)
 
 
 SLUG = "book-content-examples"
@@ -24,12 +30,24 @@ class TestMetadataTablesExtraction:
     def setup_class(cls):
         with open(cls.fp, "rb") as f:
             result = mammoth.convert_to_html(f, style_map=MAMMOTH_STYLE_MAP)
-        cls.html_soup = bs4.BeautifulSoup(result.value, "html.parser")
+        cls.soup = bs4.BeautifulSoup(result.value, "html.parser")
         cls.metadata = DocumentMetadata(cls.fp.relative_to(cls.fp.parent.parent))
-        tables = cls.html_soup.find_all("table")
-        cls.html_soup = prepare_metadata_tables(cls.html_soup, cls.metadata, tables)
-        cls.html_soup = remove_metadata_tables(cls.html_soup, cls.metadata, tables)
-        cls.md = convert_to_md(cls.html_soup, cls.metadata)
+        tables = cls.soup.find_all("table")
+        captions = []
+        references = []
+        classifiers = [
+            (is_caption, captions),
+            (is_reference, references),
+        ]
+        for node in cls.soup.descendants:
+            for check_if_meets_criteria, container in classifiers:
+                if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
+                    container.append(node)
+        cls.soup = prepare_ref_targets_in_captions(cls.soup, cls.metadata, captions)
+        cls.soup = prepare_references(cls.soup, cls.metadata, references)
+        cls.soup = prepare_metadata_tables(cls.soup, cls.metadata, tables)
+        cls.soup = remove_metadata_tables(cls.soup, cls.metadata, tables)
+        cls.md = convert_to_md(cls.soup, cls.metadata)
         cls.asset_0 = cls.metadata.assets[0]
         cls.asset_1 = cls.metadata.assets[1]
         cls.asset_2 = cls.metadata.assets[2]
@@ -51,15 +69,17 @@ class TestMetadataTablesExtraction:
         assert self.asset_0.metadata_table == self.metadata.metadata_tables[0].pk
         assert self.asset_0.medium == MediumEnum.PAPER
         assert self.asset_0.slug == SLUG
-        assert self.asset_0.author == "Jean Carlo Emer"
+        assert self.asset_0.author == "Unknown"
         assert (
             self.asset_0.source
             == "https://unsplash.com/photos/beige-concrete-house-2d-RL-xa4mk"
         )
         assert self.asset_0.location == KeyPath(f"{SLUG}/metadata_extraction.docx")
         assert self.asset_0.alttext == "Red square"
-        assert self.asset_0.caption == ""
+        assert self.asset_0.caption.startswith("Figure ")
+        assert self.asset_0.caption.endswith(": Red square.")
         assert self.asset_0.comments == ""
+        assert self.asset_0.target == "f-metadata-extraction-fig1redsquare"  # bookmark
         assert self.asset_0.is_color == False
         assert self.asset_0.is_ready == False
         assert self.asset_0.is_on_paper == True
@@ -73,8 +93,10 @@ class TestMetadataTablesExtraction:
         assert self.asset_1.source == ""
         assert self.asset_1.location == KeyPath(f"{SLUG}/metadata_extraction.docx")
         assert self.asset_1.alttext == "Yellow square - alt text written in MS Word"
-        assert self.asset_1.caption == "Figure 1: Yellow square."
+        assert self.asset_1.caption.startswith("Figure ")
+        assert self.asset_1.caption.endswith(": Yellow square.")
         assert self.asset_1.comments == ""
+        assert self.asset_1.target == "f-metadata-extraction-ref191564298"  # auto ref
         assert self.asset_1.is_color == True
         assert self.asset_1.is_ready == False
         assert self.asset_1.is_on_paper == True
@@ -90,6 +112,7 @@ class TestMetadataTablesExtraction:
         assert self.asset_2.alttext == ""
         assert self.asset_2.caption == ""
         assert self.asset_2.comments == "Looks good"
+        assert self.asset_2.target == ""  # no caption, no target
         assert self.asset_2.is_color == None
         assert self.asset_2.is_ready == True
         assert self.asset_2.is_on_paper == True
@@ -105,6 +128,7 @@ class TestMetadataTablesExtraction:
         assert self.asset_3.alttext == ""
         assert self.asset_3.caption == ""
         assert self.asset_3.comments == "Looks good"
+        assert self.asset_3.target == ""  # no caption, no target
         assert self.asset_3.is_color == None
         assert self.asset_3.is_ready == True
         assert self.asset_3.is_on_paper == False
@@ -123,6 +147,7 @@ class TestMetadataTablesExtraction:
         assert jsonified["alttext"] == ""
         assert jsonified["caption"] == ""
         assert jsonified["comments"] == "Looks good"
+        assert jsonified["target"] == ""  # no caption, no target
         assert jsonified["is_color"] == None
         assert jsonified["is_ready"] == True
         assert jsonified["is_on_paper"] == False
@@ -141,6 +166,10 @@ class TestMetadataTablesExtraction:
         assert asset.alttext == ""
         assert asset.caption == ""
         assert asset.comments == "Looks good"
+        assert asset.target == ""  # no caption, no target
         assert asset.is_color == None
         assert asset.is_ready == True
         assert asset.is_on_paper == False
+
+    # TODO: missing test case where target points to unref
+    # (there is a caption, but no reference)

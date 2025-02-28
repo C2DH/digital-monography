@@ -176,11 +176,11 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
                     container.append(node)
         html_soup, bibliography = prepare_citations(html_soup, metadata, citations)
         html_soup = add_bibliography(html_soup, bibliography)
-        html_soup = prepare_metadata_tables(html_soup, metadata, tables)
         html_soup = prepare_ref_targets_in_headers(html_soup, metadata, headers)
         html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
         html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, footnotes)
         html_soup = prepare_references(html_soup, metadata, references)
+        html_soup = prepare_metadata_tables(html_soup, metadata, tables)
         html_soup = remove_empty_tables(html_soup, metadata, tables)
         html_soup = prepare_alt_texts(html_soup, metadata, images_with_alttxt)
 

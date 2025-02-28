@@ -71,6 +71,7 @@ def prepare_metadata_tables(
             if metadata_tbl:
                 described_el = _find_described_element(table)
                 caption_el = _find_related_caption(described_el)
+                target_el = _find_related_ref_target(described_el)
                 if (
                     metadata_tbl.includes(FIELD_DELETE_PREVIOUS)
                     and metadata_tbl.includes(FIELD_DIGITAL_SOURCE)
@@ -96,6 +97,8 @@ def prepare_metadata_tables(
                     caption_el[ATTRIB_METADATA_UUID] = metadata_tbl.uuid
                     # metadata_tbl_values.update({"caption": caption_el.text})
                     metadata_tbl.add_caption(caption_el.text)
+                if target_el:
+                    metadata_tbl.add_target(target_el.text)
 
             metadata_tbl.add_slug(document_metadata.slug)
             metadata_tbl.add_location(document_metadata.filepath)
@@ -135,6 +138,25 @@ def _find_related_caption(
             break
         prev = prev.previous_sibling
         if hasattr(prev, "get") and "dgt-mon-caption" in prev.get("class", []):
+            return prev
+        elif hasattr(prev, "name") and (
+            prev.name == "table" or re.match(r"^h[1-6]$", prev.name)
+        ):
+            break
+    return None
+
+
+def _find_related_ref_target(
+    prev: t.Optional[bs4.element.Tag],
+) -> t.Optional[bs4.element.Tag]:
+    """
+    Look backwards for a related target.pk, but no more than 5 siblings or until table/heading.
+    """
+    for _ in range(15):
+        if not hasattr(prev, "previous_sibling"):
+            break
+        prev = prev.previous_sibling
+        if hasattr(prev, "name") and prev.name == "pre":
             return prev
         elif hasattr(prev, "name") and (
             prev.name == "table" or re.match(r"^h[1-6]$", prev.name)
@@ -223,6 +245,14 @@ class MetadataTable:
         self.rows.append(("caption", caption))
         self.kwargs["caption"] = caption
 
+    def add_target(self, target: str) -> None:
+        if target.startswith("(") and target.endswith(")="):
+            target_pk = target[1:-2]
+        else:
+            target_pk = target
+        self.rows.append(("target", target_pk))
+        self.kwargs["target"] = target_pk
+
     def assetdatapoint_for_paper(self) -> t.Optional[AssetDatapoint]:
         if self.kwargs.get(FIELD_PAPER_SOURCE) is None:
             return None
@@ -237,6 +267,7 @@ class MetadataTable:
             caption=self.kwargs.get("caption", ""),
             comments=self.kwargs.get("comments", ""),
             metadata_table=self.uuid,
+            target=self.kwargs.get("target", ""),
             is_color=self.kwargs.get("iscolor"),
             is_ready=self.kwargs.get("isready", False),
         )
@@ -255,6 +286,7 @@ class MetadataTable:
             caption=self.kwargs.get("caption", ""),
             comments=self.kwargs.get("comments", ""),
             metadata_table=self.uuid,
+            target=self.kwargs.get("target", ""),
             is_color=self.kwargs.get("iscolor"),
             is_ready=self.kwargs.get("isready", False),
         )
