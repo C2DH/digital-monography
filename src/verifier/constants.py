@@ -61,6 +61,7 @@ IR_APKG_MD_BUCKET_NAME = "cpy-dgtmon-dev-ir-apkg-md"
 STATICWS_WIP_BUCKET_NAME = "cpy-dgtmon-dev-staticws-wip"
 STATICWS_DASHBOARD_BUCKET_NAME = "cpy-dgtmon-dev-staticws-dashboard"
 METADATA_ASSETS_BUCKET_NAME = "cpy-dgtmon-dev-metadata-assets"
+METADATA_REFS_BUCKET_NAME = "cpy-dgtmon-dev-metadata-refs"
 VERIFIER_MSGS = "cpy-dgtmon-dev-verifier-msgs"
 # python-mammoth options
 MAMMOTH_STYLE_MAP = """
