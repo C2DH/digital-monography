@@ -11,6 +11,9 @@ import typing as t
 import yaml
 from jupyter_book.cli.main import build
 
+from mypy_boto3_s3.client import S3Client as boto3_S3Client
+from mypy_boto3_dynamodb.client import DynamoDBClient as boto3_DynamoDBClient
+
 IS_DEBUG = bool(int(os.environ.get("DGTMON_DEBUG", 0)))
 if not IS_DEBUG:
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -27,9 +30,16 @@ try:
         DYNAMODB_HEADINGS_TBL,
         DYNAMODB_WARNINGS_TBL,
         STATICWS_WIP_BUCKET_NAME,
+        METADATA_REFS_BUCKET_NAME,
         VERIFIER_MSGS,
     )
-    from metadata import DocumentMetadata, SubstitutionDatapoint
+    from metadata import (
+        DocumentMetadata,
+        AssetDatapoint,
+        SubstitutionDatapoint,
+        RefDatapoint,
+        TargetDatapoint,
+    )
     from fakers import Faker
     from keys import KeyPath
     from verif_book import RefsAndTargetsVerifier
@@ -45,9 +55,16 @@ except (ImportError, ModuleNotFoundError):
         DYNAMODB_HEADINGS_TBL,
         DYNAMODB_WARNINGS_TBL,
         STATICWS_WIP_BUCKET_NAME,
+        METADATA_REFS_BUCKET_NAME,
         VERIFIER_MSGS,
     )
-    from .metadata import DocumentMetadata, SubstitutionDatapoint
+    from .metadata import (
+        DocumentMetadata,
+        AssetDatapoint,
+        SubstitutionDatapoint,
+        RefDatapoint,
+        TargetDatapoint,
+    )
     from .fakers import Faker
     from .keys import KeyPath
     from .verif_book import RefsAndTargetsVerifier
@@ -72,8 +89,8 @@ if IS_DEBUG:
     dynamodb = None  # TODO: add fakers
     s3 = Faker("s3")
 else:
-    dynamodb = boto3.resource("dynamodb")
-    s3 = boto3.client("s3")
+    dynamodb: boto3_DynamoDBClient = boto3.resource("dynamodb")
+    s3: boto3_S3Client = boto3.client("s3")
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
@@ -88,8 +105,12 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     _build_book(key)
     _distribute_book(key)
     _log_audit_event(key, AuditStatus.SUCCESS.value, "Digital version was created.")
-    # this should probably go to another Lambda service
-    warnings = _verify_book(key)
+    # NOTE: post-build phase, this should probably go to another Lambda service
+    book_metadata = _read_book_metadata(key)
+    _connect_assets_to_references_to_assets(book_metadata)
+    _write_assets_info_to_s3(book_metadata, key)
+    #
+    warnings = _verify_book(book_metadata)
     _put_json_to_s3(key, warnings)
     # _write_warnings_to_db(warnings)
     # _build_verification_report(key)
@@ -477,24 +498,107 @@ def _sync_efs_to_staticws(src: pathlib.Path, dstdir: str, slug: str) -> None:
     p.wait()
 
 
-def _verify_book(key: KeyPath) -> list[dict[str, str]]:
-    metadatas: dict[KeyPath, DocumentMetadata] = {}
+def _read_book_metadata(key: KeyPath) -> dict[str, DocumentMetadata]:
+    """
+    Read JSON metadata hidden in Elastic File System (EFS) and return a dict
+    with all DocumentMetadata objects for a single book.
+    """
+    book_metadata: dict[str, DocumentMetadata] = {}
     for meta_file in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
         meta_file: KeyPath
         with meta_file.open("r") as f:
             metadata = DocumentMetadata(meta_file)
             try:
                 metadata.from_json(json.load(f))
-                metadatas[meta_file.stem] = metadata
+                book_metadata[meta_file.stem] = metadata
             except KeyError as e:
                 logger.info(
                     f"Invalid or obsolete DataPoint structure. Skipping "
                     f"metadata file {meta_file}. KeyError: {repr(e)}"
                 )
+    return book_metadata
+
+
+def _connect_assets_to_references_to_assets(
+    book_metadata: dict[str, DocumentMetadata]
+) -> None:
+    """
+    Find asset id for each reference to asset in the book.
+    Assign assets' primary keys to references.
+    """
+    # internal_links: list[RefDatapoint] = []
+    for _, meta in book_metadata.items():
+        for ref in meta.refs:
+            ref: RefDatapoint
+            if ref.is_internal_infile() or ref.is_internal_f2f():
+                try:
+                    asset = next(
+                        ass for ass in meta.assets if ass.target == ref.target_id
+                    )
+                    ref.asset_id = asset.pk
+                except StopIteration:
+                    continue
+
+        # internal_links.extend(
+        #     [
+        #         ref
+        #         for ref in meta.refs
+        #         if ref.is_internal_infile() or ref.is_internal_f2f()
+        #     ]
+        # )
+    # for fn, meta in book_metadata.items():
+    #     fn: str
+    #     logger.info(f"fn: {fn} type: {type(fn)}")
+    #     for asset in meta.assets:
+    #         asset: AssetDatapoint
+    #         if asset.target:
+    #             asset.refs = [r for r in internal_links if r.target_id == asset.target]
+
+
+def _write_assets_info_to_s3(
+    book_metadata: dict[str, DocumentMetadata], key: KeyPath
+) -> None:
+    for fn, metadata in book_metadata.items():
+        fn: str
+        try:
+            s3_key = RefDatapoint.get_s3_key(key.slug, fn)
+            bucket = METADATA_REFS_BUCKET_NAME
+            body = json.dumps([ref.to_json() for ref in metadata.refs], default=str)
+            resp = s3.put_object(Body=body, Bucket=bucket, Key=s3_key)
+            logger.info(
+                f"Response from s3.put_object(Bucket={bucket}, Key={s3_key}): "
+                + json.dumps(resp, default=str)
+            )
+        except Exception as e:
+            logger.exception(f"Putting refs info to s3 bucket failed. Error: {repr(e)}")
+            _log_audit_event(
+                key,
+                AuditStatus.FAILED.value,
+                "Error upon writing assets info from docs.",
+            )
+            raise
+
+
+def _verify_book(
+    book_metadata: dict[KeyPath, DocumentMetadata]
+) -> list[dict[str, str]]:
     # TODO: stop repeating metadata parsing after _prepare_config()
     # the only difference is just stem str vs pathlib path
+    #
+    # TODO: move making targets to other place (e.g. metadata???)
+    MAYBE_WE_CAN_COMPUTE_TARGETS_BEFOREHAND = """
+    targets: dict[str, tuple[pathlib.PurePath, TargetDatapoint]] = {}
+    for fn, meta in metadatas.items():
+        fn: pathlib.PurePath
+        # TODO: check if KeyPath, if yes change from PurePath to KeyPath
+        logger.info(f"fn: {fn} type: {type(fn)}")
+        for target in meta.targets:
+            target: TargetDatapoint
+            targets[target.pk] = (fn, target)
+    """
+
     verifier = RefsAndTargetsVerifier()
-    return verifier.verify(metadatas)
+    return verifier.verify(book_metadata)
     # verifer = BookVerifier()
     # verifer.verify(key, timestamp)
     # verifer.sort()

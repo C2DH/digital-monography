@@ -276,6 +276,28 @@ class RefDatapoint(DatapointBase):
     prev_string: str
     prev_href: str
     elem: str
+    asset_id: str | None = None
+
+    @staticmethod
+    def get_s3_key(slug: str, stem: str) -> str:
+        return f"{slug}/{stem}.json"
+
+    def is_external(self) -> bool:
+        """Is it a link to an external target
+        (currently only email and http protocol is recognized)."""
+        if self.href.startswith("mailto:") and "@" in self.href:
+            return True
+        return self.href.startswith("http") and ".sharepoint.com/" not in self.href
+
+    def is_internal_infile(self) -> bool:
+        "Is it a link to a target in the same document (file)?"
+        return self.href.startswith("#")
+
+    def is_internal_f2f(self) -> bool:
+        "Is it a link to another document (file)?"
+        if self.is_internal_infile() or self.is_external():
+            return False
+        return "#" in self.href
 
     # def to_json(self) -> dict[str, t.Union[str, int]]:
     #     omit = []  # ("elem",)

@@ -62,27 +62,30 @@ class RefsAndTargetsVerifier:
         # TODO: self._messages: VerifierMessages = VerifierMessages()
 
     def verify(
-        self, multidocs_meta: dict[str, DocumentMetadata]
+        self,
+        book_metadata: dict[str, DocumentMetadata],
+        # targets: dict[str, tuple[pathlib.PurePath, TargetDatapoint]],
     ) -> list[dict[str, str]]:
         # mark targets
-        self._metadatas = multidocs_meta
-        self._metadatas_stemmed_filenames = [m for m in self._metadatas]
-        for fn, meta in self._metadatas.items():
+        self._book_metadata = book_metadata
+        # self._book_metadata_stemmed_filenames = [m for m in self._book_metadata]
+        # self._targets = targets
+        for fn, meta in self._book_metadata.items():
             for target in meta.targets:
                 target: TargetDatapoint
                 self._targets[target.pk] = (fn, target)
         # iterate over refs, matching them with targets
         i = 0
-        for fn, md in self._metadatas.items():
+        for fn, md in self._book_metadata.items():
             for ref in md.refs:
                 i += 1
                 ref: RefDatapoint
                 self.md_elem = ""
-                if ref.href.startswith("http") and ".sharepoint.com/" not in ref.href:
+                if ref.is_external():
                     self._verify_external_links(ref)
-                elif ref.href.startswith("#"):
+                elif ref.is_internal_infile():
                     self._verify_internal_infile_links(ref)
-                elif "#" in ref.href:
+                elif ref.is_internal_f2f():
                     self._verify_internal_f2f_links(ref)
                 else:
                     check = "check_a_without_hash_or_http"
@@ -263,7 +266,8 @@ class RefsAndTargetsVerifier:
 
     def _check_a_f2f_filename_is_invalid(self, target_fn: str) -> bool:
         p = pathlib.Path(target_fn)
-        return p.stem not in self._metadatas_stemmed_filenames
+        return p.stem not in [m for m in self._book_metadata]
+        # return p.stem not in self._book_metadata_stemmed_filenames
 
     def _check_a_f2f_filename_is_absolute(self, target_fn: str) -> bool:
         check_idx = len("./")
