@@ -80,7 +80,7 @@ resource "aws_s3_bucket_cors_configuration" "metadata_assets_s3_config" {
 }
 
 resource "aws_s3_bucket" "metadata_refs_s3" {
-  bucket        = var.metadata_assets_bucket_name
+  bucket        = var.metadata_refs_bucket_name
   force_destroy = true
 }
 
