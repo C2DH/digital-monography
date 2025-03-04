@@ -5,11 +5,13 @@ import {
     Column,
     ColumnDef,
     ColumnFiltersState,
-    RowData,
     flexRender,
     getCoreRowModel,
+    getExpandedRowModel,
     getFilteredRowModel,
     getSortedRowModel,
+    RowData,
+    Row,
     SortingFn,
     SortingState,
     useReactTable,
@@ -66,74 +68,81 @@ const sortStatusFn: SortingFn<Person> = (rowA, rowB, _columnId) => {
     return statusOrder.indexOf(statusA) - statusOrder.indexOf(statusB);
 }
 
+const renderSubComponent = ({ row }: { row: Row<Person> }) => {
+    return (
+        <pre style={{ fontSize: '10px' }}>
+            <code>{JSON.stringify(row.original, null, 2)}</code>
+        </pre>
+    )
+}
+
 export default function AssetsTable(): React.JSX.Element {
     const [sorting, setSorting] = React.useState<SortingState>([]);
-    const columns = React.useMemo<ColumnDef<Person>[]>(
-        () => [
-            {
-                accessorKey: 'firstName',
-                cell: info => info.getValue(),
-                //this column will sort in ascending order by default since it is a string column
+    const columns: ColumnDef<Person>[] = [
+        {
+            id: 'expander',
+            header: () => null,
+            cell: ({ row }) => {
+                console.log("expand action");
+                console.log("row.getIsExpanded()", row.getIsExpanded());
+                return row.getCanExpand() ? (
+                    <button
+                        {...{
+                            onClick: row.getToggleExpandedHandler(),
+                            style: { cursor: 'pointer' },
+                        }}
+                    >
+                        {row.getIsExpanded() ? '👇' : '👉'}
+                    </button>
+                ) : (
+                    '🔵'
+                )
             },
-            {
-                accessorFn: row => row.lastName,
-                id: 'lastName',
-                cell: info => info.getValue(),
-                header: () => <span>Last Name</span>,
-                sortUndefined: 'last', //force undefined values to the end
-                sortDescFirst: false, //first sort order will be ascending (nullable values can mess up auto detection of sort order)
+        },
+        {
+            accessorKey: 'firstName',
+            cell: info => info.getValue(),
+            //this column will sort in ascending order by default since it is a string column
+        },
+        {
+            accessorFn: row => row.lastName,
+            id: 'lastName',
+            cell: info => info.getValue(),
+            header: () => <span>Last Name</span>,
+            sortUndefined: 'last', //force undefined values to the end
+            sortDescFirst: false, //first sort order will be ascending (nullable values can mess up auto detection of sort order)
+        },
+        {
+            accessorKey: 'age',
+            header: () => 'Age',
+            //this column will sort in descending order by default since it is a number column
+            meta: {
+                filterVariant: 'range',
             },
-            {
-                accessorKey: 'age',
-                header: () => 'Age',
-                //this column will sort in descending order by default since it is a number column
-                meta: {
-                    filterVariant: 'range',
-                },
+        },
+        {
+            accessorKey: 'visits',
+            header: () => <span>Visits</span>,
+            sortUndefined: 'last', //force undefined values to the end
+        },
+        {
+            accessorKey: 'status',
+            header: 'Status',
+            sortingFn: sortStatusFn, //use our custom sorting function for this enum column
+            meta: {
+                filterVariant: 'select',
             },
-            {
-                accessorKey: 'visits',
-                header: () => <span>Visits</span>,
-                sortUndefined: 'last', //force undefined values to the end
-            },
-            {
-                accessorKey: 'status',
-                header: 'Status',
-                sortingFn: sortStatusFn, //use our custom sorting function for this enum column
-                meta: {
-                    filterVariant: 'select',
-                },
-            },
-            {
-                accessorKey: 'progress',
-                header: 'Profile Progress',
-                // enableSorting: false, //disable sorting for this column
-                meta: {
-                    filterVariant: 'range',
-                },
-            },
-            {
-                accessorKey: 'rank',
-                header: 'Rank',
-                invertSorting: true, //invert the sorting order (golf score-like where smaller is better)
-                meta: {
-                    filterVariant: 'range',
-                },
-
-            },
-            {
-                accessorKey: 'createdAt',
-                header: 'Created At',
-                // sortingFn: 'datetime' //make sure table knows this is a datetime column (usually can detect if no null values)
-            },
-        ],
-        []
-    )
+        },
+        {
+            accessorKey: 'createdAt',
+            header: 'Created At',
+            // sortingFn: 'datetime' //make sure table knows this is a datetime column (usually can detect if no null values)
+        },
+    ]
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
         []
     )
     const [data, setData] = React.useState<Person[]>([person1, person2, person3]);
-
     const table = useReactTable({
         columns,
         data,
@@ -142,9 +151,12 @@ export default function AssetsTable(): React.JSX.Element {
         debugColumns: false,
         filterFns: {},
         getCoreRowModel: getCoreRowModel(),
+        getExpandedRowModel: getExpandedRowModel(),
         getFilteredRowModel: getFilteredRowModel(), //client side filtering
+        getRowCanExpand: () => true,
         getSortedRowModel: getSortedRowModel(), //client-side sorting
         onColumnFiltersChange: setColumnFilters,
+        // onExpandedChange: () => { console.log("expanded") },
         onSortingChange: setSorting, //optionally control sorting state in your own scope for easy access
         // sortingFns: {
         //   sortStatusFn, //or provide our custom sorting function globally for all columns to be able to use
@@ -206,18 +218,28 @@ export default function AssetsTable(): React.JSX.Element {
             <tbody>
                 {table.getRowModel().rows.map(row => {
                     return (
-                        <tr key={row.id}>
-                            {row.getVisibleCells().map(cell => {
-                                return (
-                                    <td key={cell.id}>
-                                        {flexRender(
-                                            cell.column.columnDef.cell,
-                                            cell.getContext()
-                                        )}
+                        <React.Fragment key={row.id}>
+                            <tr>
+                                {row.getVisibleCells().map(cell => {
+                                    return (
+                                        <td key={cell.id}>
+                                            {flexRender(
+                                                cell.column.columnDef.cell,
+                                                cell.getContext()
+                                            )}
+                                        </td>
+                                    )
+                                })}
+                            </tr>
+                            {/* row details */}
+                            {row.getIsExpanded() && (
+                                <tr>
+                                    <td colSpan={row.getVisibleCells().length}>
+                                        {renderSubComponent({ row })}
                                     </td>
-                                )
-                            })}
-                        </tr>
+                                </tr>
+                            )}
+                        </React.Fragment>
                     )
                 })}
             </tbody>
