@@ -110,7 +110,7 @@ function getLastPart(s: string): string {
 }
 
 function getColSums(col: string, isColorSum: number,
-    isOnPaperSum: number, isReadySum: number, tableLength: number): JSX.Element {
+    isOnPaperSum: number, isReadySum: number, tableLength: number): React.JSX.Element {
     if (col == "isColor") {
         return <th key={`${col}-sum`}>{isColorSum}/<small>{tableLength}</small></th>;
     } else if (col == "isOnPaper") {
@@ -258,11 +258,29 @@ export default function DynamicTable() {
         }
     }, [slug]);
 
+    const fetchAssetsListFromS3 = useCallback(async (pk: string) => {
+        try {
+            const resp = await fetch(`${endpoint}/test/list-assets?slug=${pk}`);
+            const respJson = await resp.json();
+            console.log("respJson", respJson);
+
+            // TODO: merge responses with a Promise api
+            // const [movie, genre] = await Promise.all([
+            //     fetch(MOVIE_URL),
+            //     fetch(GENRE_URL)
+            // ]);
+
+        } catch (e) {
+            console.error(e);
+        }
+    }, [slug]);
+
     useEffect(() => {
         if (slug) {
             fetchRecords(slug);
+            // fetchAssetsListFromS3(slug);
         }
-    }, [fetchRecords, slug]);
+    }, [fetchAssetsListFromS3, fetchRecords, slug]);
 
     useEffect(() => {
         if (sorting.column == "caption") {

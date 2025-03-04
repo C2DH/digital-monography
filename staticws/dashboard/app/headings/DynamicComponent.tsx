@@ -35,7 +35,7 @@ function getNestedNum(rec: any, attr: string): number {
     }
 }
 
-export default function DynamicListGroup(): JSX.Element {
+export default function DynamicListGroup(): React.JSX.Element {
     const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
     const [data, setData] = useState<IHeadings>({});
     const [loading, setLoading] = useState<boolean>(true);
