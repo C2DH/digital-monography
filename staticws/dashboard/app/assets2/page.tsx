@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense } from 'react';
-import AssetsTable from "./AssetsTable";
+import AssetsComponent from "./AssetsComponent";
 
 export default function Page() {
     return (
@@ -10,7 +10,7 @@ export default function Page() {
                 <h1 className="mt-5">Assets</h1>
                 <div className="d-flex flex-column p-4 justify-content-center">
                     <Suspense>
-                        <AssetsTable></AssetsTable>
+                        <AssetsComponent></AssetsComponent>
                     </Suspense>
                 </div>
             </div>
