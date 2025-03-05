@@ -15,8 +15,16 @@ import {
     SortingFn,
     SortingState,
     useReactTable,
+    Updater,
 } from '@tanstack/react-table';
 
+
+declare module '@tanstack/react-table' {
+    //allows us to define custom properties for our columns
+    interface ColumnMeta<TData extends RowData, TValue> {
+        filterVariant?: 'text' | 'range' | 'select'
+    }
+}
 
 type Person = {
     firstName: string,
@@ -76,73 +84,108 @@ const renderSubComponent = ({ row }: { row: Row<Person> }) => {
     )
 }
 
+const columns: ColumnDef<Person>[] = [
+    {
+        id: 'expander',
+        header: () => null,
+        cell: ({ row }) => {
+            console.log("expand action");
+            console.log("row.getIsExpanded()", row.getIsExpanded());
+            return row.getCanExpand() ? (
+                <button
+                    {...{
+                        onClick: row.getToggleExpandedHandler(),
+                        style: { cursor: 'pointer' },
+                    }}
+                >
+                    {row.getIsExpanded() ? '👇' : '👉'}
+                </button>
+            ) : (
+                '🔵'
+            )
+        },
+    },
+    {
+        accessorKey: 'firstName',
+        cell: info => info.getValue(),
+        //this column will sort in ascending order by default since it is a string column
+    },
+    {
+        accessorFn: row => row.lastName,
+        id: 'lastName',
+        cell: info => info.getValue(),
+        header: () => <span>Last Name</span>,
+        sortUndefined: 'last', //force undefined values to the end
+        sortDescFirst: false, //first sort order will be ascending (nullable values can mess up auto detection of sort order)
+    },
+    {
+        accessorKey: 'age',
+        header: () => 'Age',
+        //this column will sort in descending order by default since it is a number column
+        meta: {
+            filterVariant: 'range',
+        },
+    },
+    {
+        accessorKey: 'visits',
+        header: () => <span>Visits</span>,
+        sortUndefined: 'last', //force undefined values to the end
+    },
+    {
+        accessorKey: 'status',
+        header: 'Status',
+        sortingFn: sortStatusFn, //use our custom sorting function for this enum column
+        meta: {
+            filterVariant: 'select',
+        },
+    },
+    {
+        accessorKey: 'createdAt',
+        header: 'Created At',
+        // enableSorting: false
+        // sortingFn: 'datetime' //make sure table knows this is a datetime column (usually can detect if no null values)
+    },
+]
+
 export default function AssetsTable(): React.JSX.Element {
+    const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
     const [sorting, setSorting] = React.useState<SortingState>([]);
-    const columns: ColumnDef<Person>[] = [
-        {
-            id: 'expander',
-            header: () => null,
-            cell: ({ row }) => {
-                console.log("expand action");
-                console.log("row.getIsExpanded()", row.getIsExpanded());
-                return row.getCanExpand() ? (
-                    <button
-                        {...{
-                            onClick: row.getToggleExpandedHandler(),
-                            style: { cursor: 'pointer' },
-                        }}
-                    >
-                        {row.getIsExpanded() ? '👇' : '👉'}
-                    </button>
-                ) : (
-                    '🔵'
-                )
-            },
-        },
-        {
-            accessorKey: 'firstName',
-            cell: info => info.getValue(),
-            //this column will sort in ascending order by default since it is a string column
-        },
-        {
-            accessorFn: row => row.lastName,
-            id: 'lastName',
-            cell: info => info.getValue(),
-            header: () => <span>Last Name</span>,
-            sortUndefined: 'last', //force undefined values to the end
-            sortDescFirst: false, //first sort order will be ascending (nullable values can mess up auto detection of sort order)
-        },
-        {
-            accessorKey: 'age',
-            header: () => 'Age',
-            //this column will sort in descending order by default since it is a number column
-            meta: {
-                filterVariant: 'range',
-            },
-        },
-        {
-            accessorKey: 'visits',
-            header: () => <span>Visits</span>,
-            sortUndefined: 'last', //force undefined values to the end
-        },
-        {
-            accessorKey: 'status',
-            header: 'Status',
-            sortingFn: sortStatusFn, //use our custom sorting function for this enum column
-            meta: {
-                filterVariant: 'select',
-            },
-        },
-        {
-            accessorKey: 'createdAt',
-            header: 'Created At',
-            // sortingFn: 'datetime' //make sure table knows this is a datetime column (usually can detect if no null values)
-        },
-    ]
-    const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-        []
-    )
     const [data, setData] = React.useState<Person[]>([person1, person2, person3]);
+    return (
+        <Table
+            data={data}
+            columns={columns}
+            // getRowCanExpand={() => true}
+            renderSubComponent={renderSubComponent}
+            columnFilters={columnFilters}
+            setColumnFilters={setColumnFilters}
+            sorting={sorting}
+            setSorting={setSorting}
+        ></Table>
+    )
+}
+
+type TableProps<TData> = {
+    data: TData[]
+    columns: ColumnDef<TData>[]
+    renderSubComponent: (props: { row: Row<TData> }) => React.ReactElement
+    // getRowCanExpand?: (row: Row<TData>) => boolean
+    columnFilters: ColumnFiltersState
+    setColumnFilters: (updaterOrValue: Updater<ColumnFiltersState>) => void
+    sorting: SortingState
+    setSorting: (updaterOrValue: Updater<SortingState>) => void
+}
+
+function Table({
+    data,
+    columns,
+    renderSubComponent,
+    // getRowCanExpand,
+    columnFilters,
+    setColumnFilters,
+    sorting,
+    setSorting,
+}: TableProps<Person>): React.JSX.Element {
     const table = useReactTable({
         columns,
         data,
@@ -173,8 +216,6 @@ export default function AssetsTable(): React.JSX.Element {
         // isMultiSortEvent: (e) => true, //Make all clicks multi-sort - default requires `shift` key
         // maxMultiSortColCount: 3, // only allow 3 columns to be sorted at once - default is Infinity
     })
-
-    console.log(table.getState().sorting);
     return (<>
         <table className="table table-striped table-bordered">
             <thead>
@@ -247,7 +288,6 @@ export default function AssetsTable(): React.JSX.Element {
     </>)
 }
 
-
 function Filter({ column }: { column: Column<any, unknown> }) {
     const columnFilterValue = column.getFilterValue();
     const { filterVariant } = column.columnDef.meta ?? {};
@@ -300,7 +340,7 @@ function Filter({ column }: { column: Column<any, unknown> }) {
     )
 }
 
-// A typical debounced input react component
+// debounce filtering the table
 function DebouncedInput({
     value: initialValue,
     onChange,
