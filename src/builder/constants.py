@@ -63,6 +63,11 @@ STATICWS_DASHBOARD_BUCKET_NAME = "cpy-dgtmon-dev-staticws-dashboard"
 METADATA_ASSETS_BUCKET_NAME = "cpy-dgtmon-dev-metadata-assets"
 METADATA_REFS_BUCKET_NAME = "cpy-dgtmon-dev-metadata-refs"
 VERIFIER_MSGS = "cpy-dgtmon-dev-verifier-msgs"
+# API endpoints
+BE_PATH_ASSET_METADATA = "assets-metadata"
+BE_PATH_ASSET_UPLOAD = "assets-s3-list"
+BE_PATH_ASSET_RETRIEVE = "asset-retrieve"
+BE_PATH_REF_METADATA = "refs-metadata"
 # python-mammoth options
 MAMMOTH_STYLE_MAP = """
 p[style-name='Quote'] => blockquote:fresh
