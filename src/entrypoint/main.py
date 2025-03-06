@@ -24,6 +24,7 @@ try:
         DYNAMODB_ALERTS_TBL,
         DYNAMODB_CITATIONS_TBL,
         DYNAMODB_HEADINGS_TBL,
+        DYNAMODB_REFS_TBL,
         DYNAMODB_TOKENS_TBL,
         VERIFIER_MSGS,
     )
@@ -37,6 +38,7 @@ except (ImportError, ModuleNotFoundError):
         DYNAMODB_ASSETS_TBL,
         DYNAMODB_CITATIONS_TBL,
         DYNAMODB_HEADINGS_TBL,
+        DYNAMODB_REFS_TBL,
         DYNAMODB_TOKENS_TBL,
         VERIFIER_MSGS,
     )
@@ -206,6 +208,27 @@ def list_assets_from_dynamodb() -> flask.Response:
     slug = flask.request.args.get("slug")
     contents = dynamodb.query(
         TableName=DYNAMODB_ASSETS_TBL,
+        KeyConditionExpression="slug = :slug",
+        ExpressionAttributeValues={":slug": {"S": slug}},
+    )
+    resp = flask.Response(
+        response=flask.json.dumps(contents),
+        status=200,
+        mimetype="application/json",
+    )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
+
+
+@app.route("/refs", methods=["GET"])
+def list_refs_from_dynamodb() -> flask.Response:
+    """Retrieve refs from the database and return them to the client."""
+    logger.info("Retrieve refs from the database and return them to the client.")
+    slug = flask.request.args.get("slug")
+    contents = dynamodb.query(
+        TableName=DYNAMODB_REFS_TBL,
         KeyConditionExpression="slug = :slug",
         ExpressionAttributeValues={":slug": {"S": slug}},
     )
