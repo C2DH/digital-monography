@@ -64,6 +64,22 @@ resource "aws_dynamodb_table" "warnings_tbl" {
   }
 }
 
+resource "aws_dynamodb_table" "refs_tbl" {
+  name         = var.dgtmon_dev_dyndb_refs_tbl
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "slug"
+  range_key    = "fn"
+
+  attribute {
+    name = "slug"
+    type = "S"
+  }
+  attribute {
+    name = "fn"
+    type = "S"
+  }
+}
+
 resource "aws_s3_bucket" "metadata_assets_s3" {
   bucket        = var.metadata_assets_bucket_name
   force_destroy = true
