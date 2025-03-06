@@ -40,8 +40,10 @@ export type IRef = {
 }
 
 export type IS3Object = {
-    keyEncoded: string,
-    key: string,
-    lastModified: string | undefined,
-    size: number | undefined,
+    // keyEncoded: string,
+    ETag: string,
+    Key: string,
+    LastModified: Date,
+    Size: number | undefined,
+    StorageClass: string,
 }

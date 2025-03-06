@@ -11,6 +11,7 @@ import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { useSearchParams } from 'next/navigation';
 import { renderSubComponent, Table } from './AssetsTable';
 import { Person, IAsset, IRef, IS3Object } from "./types";
+import TnbBookNav from "./../_components/TnbBookNav";
 
 enum MediumEnum {
     PAPER = "P",
@@ -131,23 +132,24 @@ const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
 const stage = "test";
 // the paths should be consistent with backend
 const pathAssetMetadata = "assets";
-// const pathAssetUpload = "assets-s3-list"; // ListObject req to s3
+const pathAssetS3List = "list-assets"; // ListObject req to s3
 const pathAssetRetrieve = "asset-retrieve";
 const pathRefMetadata = "refs";
 
-export default function AssetsTable(): React.JSX.Element {
+export default function AssetsComponent(): React.JSX.Element {
     const searchParams = useSearchParams();
     const slug = searchParams?.get("slug");
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [data, setData] = React.useState<Person[]>([person1, person2, person3]);
-    const [loading, setLoading] = React.useState<boolean>(true);
+    const [loadingTable, setLoadingTable] = React.useState<boolean>(true);
+    const [loadingExistsCol, setLoadingExistsCol] = React.useState<boolean>(true);
     const [assetMetadata, setAssetMetadata] = React.useState<IAsset[]>([]);
-    const [assetUpload, setAssetUpload] = React.useState<IS3Object[]>([]);
+    const [assetS3List, setAssetS3List] = React.useState<IS3Object[]>([]);
     const [refMetadata, setRefMetadata] = React.useState<IRef[]>([]);
 
     const fetchAssetMetadata = React.useCallback(async (inputSlug: string) => {
-        setLoading(true);
+        setLoadingTable(true);
         try {
             const resp = await fetch(`${endpoint}/${stage}/${pathAssetMetadata}?slug=${inputSlug}`);
             const respJson = await resp.json();
@@ -158,11 +160,34 @@ export default function AssetsTable(): React.JSX.Element {
                 tempAssetMetadata.push(...Object.values(unmarshall(items[i].records?.L || [])));
             }
             setAssetMetadata(tempAssetMetadata);
-            setLoading(false);
+            setLoadingTable(false);
         } catch (e) {
             console.error(e);
             // setAssetMetadata([]);
-            setLoading(false);
+            setLoadingTable(false);
+        }
+    }, [slug])
+    const fetchAssetS3List = React.useCallback(async (inputSlug: string) => {
+        setLoadingExistsCol(true);
+        try {
+            const response = await fetch(`${endpoint}/test/${pathAssetS3List}?slug=${inputSlug}`);
+            const json = await response.json();
+            const tempAssetS3List: IS3Object[] = [];
+            for (let i = 0; i < json.length; i++) {
+                tempAssetS3List.push({
+                    ETag: json[i].ETag,
+                    Key: json[i].Key,
+                    LastModified: new Date(json[i].LastModified),
+                    Size: json[i].Size,
+                    StorageClass: json[i].StorageClass,
+                });
+            }
+            setAssetS3List(tempAssetS3List);
+            setLoadingExistsCol(false);
+        } catch (e) {
+            console.error(e);
+            // setAssetS3List([]);
+            setLoadingExistsCol(false);
         }
     }, [slug])
     const fetchRefMetadata = React.useCallback(async (inputSlug: string) => {
@@ -184,20 +209,30 @@ export default function AssetsTable(): React.JSX.Element {
     React.useEffect(() => {
         if (slug) {
             fetchAssetMetadata(slug);
+            fetchAssetS3List(slug);
             fetchRefMetadata(slug);
         }
-    }, [fetchAssetMetadata, fetchRefMetadata, slug]);
+    }, [fetchAssetMetadata, fetchAssetS3List, fetchRefMetadata, slug]);
 
     return (
-        <Table
-            data={data}
-            columns={columns}
-            // getRowCanExpand={() => true}
-            renderSubComponent={renderSubComponent}
-            columnFilters={columnFilters}
-            setColumnFilters={setColumnFilters}
-            sorting={sorting}
-            setSorting={setSorting}
-        ></Table>
+        <>
+            {slug && <TnbBookNav slug={slug} color="secondary"></TnbBookNav>}
+            {!loadingTable && <Table
+                data={data}
+                columns={columns}
+                // getRowCanExpand={() => true}
+                renderSubComponent={renderSubComponent}
+                columnFilters={columnFilters}
+                setColumnFilters={setColumnFilters}
+                sorting={sorting}
+                setSorting={setSorting}
+            ></Table>}
+            {loadingTable && <div className="d-flex justify-content-center">
+                <h4>Please wait for the data to load...</h4>
+                <div className="spinner-grow text-secondary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                </div>
+            </div>}
+        </>
     )
 }
