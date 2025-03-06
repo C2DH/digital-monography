@@ -133,7 +133,7 @@ const stage = "test";
 const pathAssetMetadata = "assets";
 // const pathAssetUpload = "assets-s3-list"; // ListObject req to s3
 const pathAssetRetrieve = "asset-retrieve";
-const pathRefMetadata = "refs-metadata";
+const pathRefMetadata = "refs";
 
 export default function AssetsTable(): React.JSX.Element {
     const searchParams = useSearchParams();
@@ -165,11 +165,28 @@ export default function AssetsTable(): React.JSX.Element {
             setLoading(false);
         }
     }, [slug])
+    const fetchRefMetadata = React.useCallback(async (inputSlug: string) => {
+        try {
+            const resp = await fetch(`${endpoint}/${stage}/${pathRefMetadata}?slug=${inputSlug}`);
+            const respJson = await resp.json();
+            const items = respJson.Items || [];
+            const tempRefMetadata: IRef[] = [];
+            for (let i = 0; i < items.length; i++) {
+                // unmarshall "records" column and extend the temp array with it
+                tempRefMetadata.push(...Object.values(unmarshall(items[i].records?.L || [])));
+            }
+            setRefMetadata(tempRefMetadata);
+        } catch (e) {
+            console.error(e);
+            // setRefMetadata([]);
+        }
+    }, [slug])
     React.useEffect(() => {
         if (slug) {
             fetchAssetMetadata(slug);
+            fetchRefMetadata(slug);
         }
-    }, [fetchAssetMetadata, slug]);
+    }, [fetchAssetMetadata, fetchRefMetadata, slug]);
 
     return (
         <Table

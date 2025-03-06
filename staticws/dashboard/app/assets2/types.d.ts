@@ -28,15 +28,15 @@ export type IAsset = {
 }
 
 export type IRef = {
-    pk: number // this probably should be string
-    fn: string
-    targetId: string
-    text: string
-    href: string
-    prevString: string
-    prevHref: string
+    asset_id: string | null
     elem: string
-    assetId: string | null
+    fn: string
+    href: string
+    pk: string
+    prev_href: string
+    prev_string: string
+    target_id: string
+    text: string
 }
 
 export type IS3Object = {
