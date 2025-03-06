@@ -138,39 +138,6 @@ def _mkdir_read():
         new_path.mkdir(exist_ok=True)
 
 
-def _write_metadata_to_db(
-    book_metadata: dict[str, DocumentMetadata], key: KeyPath
-) -> None:
-    if dynamodb is None:
-        return
-    try:
-        tables = {
-            "refs": DYNAMODB_REFS_TBL,
-        }
-        for domain, tbl in tables.items():
-            table = dynamodb.Table(tbl)
-            for _, metadata in book_metadata.items():
-                resp = table.put_item(
-                    Item={
-                        "slug": key.slug,
-                        "fn": metadata.filepath.name,
-                        "records": [rec.to_json() for rec in getattr(metadata, domain)],
-                    }
-                )
-                logger.info(
-                    f"Response from dynamodb.Table({tbl}).put_item: {json.dumps(resp, default=str)}"
-                )
-        return
-    except Exception as e:
-        logger.exception(f"Writing metadata to database failed. Error: {repr(e)}")
-        _log_audit_event(
-            key,
-            AuditStatus.FAILED.value,
-            "Error upon writing metadata to database.",
-        )
-        raise
-
-
 # def merge_jsons(path, key: str):
 #     result = []
 #     for fp in path.glob("**/*.json"):
@@ -530,6 +497,39 @@ def _connect_assets_to_references_to_assets(
     #         asset: AssetDatapoint
     #         if asset.target:
     #             asset.refs = [r for r in internal_links if r.target_id == asset.target]
+
+
+def _write_metadata_to_db(
+    book_metadata: dict[str, DocumentMetadata], key: KeyPath
+) -> None:
+    if dynamodb is None:
+        return
+    try:
+        tables = {
+            "refs": DYNAMODB_REFS_TBL,
+        }
+        for domain, tbl in tables.items():
+            table = dynamodb.Table(tbl)
+            for _, metadata in book_metadata.items():
+                resp = table.put_item(
+                    Item={
+                        "slug": key.slug,
+                        "fn": metadata.filepath.name,
+                        "records": [rec.to_json() for rec in getattr(metadata, domain)],
+                    }
+                )
+                logger.info(
+                    f"Response from dynamodb.Table({tbl}).put_item: {json.dumps(resp, default=str)}"
+                )
+        return
+    except Exception as e:
+        logger.exception(f"Writing metadata to database failed. Error: {repr(e)}")
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            "Error upon writing metadata to database.",
+        )
+        raise
 
 
 def _write_assets_info_to_s3(
