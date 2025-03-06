@@ -29,6 +29,7 @@ try:
         DYNAMODB_CITATIONS_TBL,
         DYNAMODB_HEADINGS_TBL,
         DYNAMODB_WARNINGS_TBL,
+        DYNAMODB_REFS_TBL,
         STATICWS_WIP_BUCKET_NAME,
         METADATA_REFS_BUCKET_NAME,
         VERIFIER_MSGS,
@@ -54,6 +55,7 @@ except (ImportError, ModuleNotFoundError):
         DYNAMODB_CITATIONS_TBL,
         DYNAMODB_HEADINGS_TBL,
         DYNAMODB_WARNINGS_TBL,
+        DYNAMODB_REFS_TBL,
         STATICWS_WIP_BUCKET_NAME,
         METADATA_REFS_BUCKET_NAME,
         VERIFIER_MSGS,
@@ -99,7 +101,6 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     key = _get_key(event)
     _log_audit_event(key, AuditStatus.PENDING.value, "Building book in progress...")
     _mkdir_read()
-    # _write_metadata_to_db(key)
     _copy_assets(key)
     _prepare_config(key)
     _build_book(key)
@@ -108,7 +109,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     # NOTE: post-build phase, this should probably go to another Lambda service
     book_metadata = _read_book_metadata(key)
     _connect_assets_to_references_to_assets(book_metadata)
-    _write_assets_info_to_s3(book_metadata, key)
+    # _write_assets_info_to_s3(book_metadata, key)
+    _write_metadata_to_db(book_metadata, key)
     #
     warnings = _verify_book(book_metadata)
     _put_json_to_s3(key, warnings)
@@ -136,60 +138,35 @@ def _mkdir_read():
         new_path.mkdir(exist_ok=True)
 
 
-def _write_metadata_to_db(key: KeyPath) -> None:
+def _write_metadata_to_db(
+    book_metadata: dict[str, DocumentMetadata], key: KeyPath
+) -> None:
+    if dynamodb is None:
+        return
     try:
         tables = {
-            "assets": DYNAMODB_ASSETS_TBL,
-            "citation_groups": DYNAMODB_CITATIONS_TBL,
-            "headings": DYNAMODB_HEADINGS_TBL,
-            "warnings": DYNAMODB_WARNINGS_TBL,
+            "refs": DYNAMODB_REFS_TBL,
         }
-        records = {
-            "assets": [],
-            "citation_groups": [],
-            "headings": [],
-            "warnings": [],
-        }
-        # merge json per file to json per domain like headings, citations, etc.
-        for fp in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
-            st_size = fp.stat().st_size
-            logger.info(f"{fp} st_size={st_size}")
-            if st_size < 126:
-                continue
-            with open(fp, "rb") as infile:
-                logger.info(f"type(infile): {type(infile)}")
-                records_in_one_file = json.load(infile)
-                for domain, tbl in tables.items():
-                    # if infile:
-                    # resp = s3.put_object(Body=body.decode("utf-8"), Bucket=dst, Key=str(key))
-                    # logger.info(
-                    #     f"Response from s3.put_object(Bucket={dst}, Key={key}): "
-                    #     + json.dumps(resp, default=str)
-                    # )
-                    try:
-                        records[domain].extend(records_in_one_file.get(domain, []))
-                    except json.JSONDecodeError as e:
-                        logger.exception(
-                            f"Unable to write '{fp}' metadata to dynamodb. Error: {repr(e)}"
-                        )
-                        continue
-        # print("records['citation_groups']")
-        # from pprint import pprint
-        # pprint(records["citation_groups"])
-        logger.info(f"{json.dumps(records, default=str)}")
-        if dynamodb is None:
-            return
-        # write to db
         for domain, tbl in tables.items():
             table = dynamodb.Table(tbl)
-            resp = table.put_item(Item={"slug": key.slug, "records": records[domain]})
-            logger.info(
-                f"Response from dynamodb.Table({tbl}).put_item: {json.dumps(resp, default=str)}"
-            )
+            for _, metadata in book_metadata.items():
+                resp = table.put_item(
+                    Item={
+                        "slug": key.slug,
+                        "fn": metadata.filepath.name,
+                        "records": [rec.to_json() for rec in getattr(metadata, domain)],
+                    }
+                )
+                logger.info(
+                    f"Response from dynamodb.Table({tbl}).put_item: {json.dumps(resp, default=str)}"
+                )
+        return
     except Exception as e:
-        logging.exception(f"Unable to write metadata to dynamodb. Error: {repr(e)}")
+        logger.exception(f"Writing metadata to database failed. Error: {repr(e)}")
         _log_audit_event(
-            key, AuditStatus.FAILED.value, "Exception while saving metadata."
+            key,
+            AuditStatus.FAILED.value,
+            "Error upon writing metadata to database.",
         )
         raise
 
@@ -500,8 +477,8 @@ def _sync_efs_to_staticws(src: pathlib.Path, dstdir: str, slug: str) -> None:
 
 def _read_book_metadata(key: KeyPath) -> dict[str, DocumentMetadata]:
     """
-    Read JSON metadata hidden in Elastic File System (EFS) and return a dict
-    with all DocumentMetadata objects for a single book.
+    Read JSON metadata stored in Elastic File System (EFS) and return a dict
+    with all DocumentMetadata objects for a specific book.
     """
     book_metadata: dict[str, DocumentMetadata] = {}
     for meta_file in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
@@ -612,7 +589,7 @@ def _write_warnings_to_db(warnings: MessagesJson) -> None:
 
 def _put_json_to_s3(key: KeyPath, warnings: list[dict[str, str]]) -> None:
     try:
-        warnings_grouped = {}
+        warnings_grouped: dict[str, list[dict[str, str]]] = {}
         for w in warnings:
             if w.get("fn") not in warnings_grouped:
                 warnings_grouped[w.get("fn")] = []
