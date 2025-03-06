@@ -7,8 +7,16 @@ import {
     SortingFn,
     SortingState,
 } from '@tanstack/react-table';
+import { unmarshall } from "@aws-sdk/util-dynamodb";
+import { useSearchParams } from 'next/navigation';
 import { renderSubComponent, Table } from './AssetsTable';
-import { Person } from "./types";
+import { Person, IAsset, IRef, IS3Object } from "./types";
+
+enum MediumEnum {
+    PAPER = "P",
+    DIGITAL = "D",
+    PAPER_AND_DIGITAL = "P+D",
+}
 
 const person1: Person = {
     firstName: "Jeff",
@@ -54,8 +62,8 @@ const columns: ColumnDef<Person>[] = [
         id: 'expander',
         header: () => null,
         cell: ({ row }) => {
-            console.log("expand action");
-            console.log("row.getIsExpanded()", row.getIsExpanded());
+            // console.log("expand action");
+            // console.log("row.getIsExpanded()", row.getIsExpanded());
             return row.getCanExpand() ? (
                 <button
                     {...{
@@ -63,7 +71,8 @@ const columns: ColumnDef<Person>[] = [
                         style: { cursor: 'pointer' },
                     }}
                 >
-                    {row.getIsExpanded() ? '👇' : '👉'}
+                    {row.getIsExpanded() ? '🔽' : '▶️'}
+                    {/* {row.getIsExpanded() ? '👇' : '👉'} */}
                 </button>
             ) : (
                 '🔵'
@@ -113,10 +122,55 @@ const columns: ColumnDef<Person>[] = [
     },
 ]
 
+function getLastPart(s: string): string {
+    let split = s.split("/");
+    return split[split.length - 1];
+}
+
+const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
+const stage = "test";
+// the paths should be consistent with backend
+const pathAssetMetadata = "assets";
+// const pathAssetUpload = "assets-s3-list"; // ListObject req to s3
+const pathAssetRetrieve = "asset-retrieve";
+const pathRefMetadata = "refs-metadata";
+
 export default function AssetsTable(): React.JSX.Element {
+    const searchParams = useSearchParams();
+    const slug = searchParams?.get("slug");
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [data, setData] = React.useState<Person[]>([person1, person2, person3]);
+    const [loading, setLoading] = React.useState<boolean>(true);
+    const [assetMetadata, setAssetMetadata] = React.useState<IAsset[]>([]);
+    const [assetUpload, setAssetUpload] = React.useState<IS3Object[]>([]);
+    const [refMetadata, setRefMetadata] = React.useState<IRef[]>([]);
+
+    const fetchAssetMetadata = React.useCallback(async (inputSlug: string) => {
+        setLoading(true);
+        try {
+            const resp = await fetch(`${endpoint}/${stage}/${pathAssetMetadata}?slug=${inputSlug}`);
+            const respJson = await resp.json();
+            const items = respJson.Items || [];
+            const tempAssetMetadata: IAsset[] = [];
+            for (let i = 0; i < items.length; i++) {
+                // unmarshall "records" column and extend the temp array with it
+                tempAssetMetadata.push(...Object.values(unmarshall(items[i].records?.L || [])));
+            }
+            setAssetMetadata(tempAssetMetadata);
+            setLoading(false);
+        } catch (e) {
+            console.error(e);
+            // setAssetMetadata([]);
+            setLoading(false);
+        }
+    }, [slug])
+    React.useEffect(() => {
+        if (slug) {
+            fetchAssetMetadata(slug);
+        }
+    }, [fetchAssetMetadata, slug]);
+
     return (
         <Table
             data={data}
