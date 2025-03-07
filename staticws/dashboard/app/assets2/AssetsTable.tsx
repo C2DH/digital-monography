@@ -16,7 +16,7 @@ import {
     useReactTable,
     Updater,
 } from '@tanstack/react-table';
-import { Person } from "./types";
+import { ITableRow } from "./types";
 
 declare module '@tanstack/react-table' {
     //allows us to define custom properties for our columns
@@ -25,7 +25,7 @@ declare module '@tanstack/react-table' {
     }
 }
 
-export const renderSubComponent = ({ row }: { row: Row<Person> }) => {
+export const renderSubComponent = ({ row }: { row: Row<ITableRow> }) => {
     return (
         <pre style={{ fontSize: '10px' }}>
             <code>{JSON.stringify(row.original, null, 2)}</code>
@@ -53,7 +53,7 @@ export function Table({
     setColumnFilters,
     sorting,
     setSorting,
-}: TableProps<Person>): React.JSX.Element {
+}: TableProps<ITableRow>): React.JSX.Element {
     const table = useReactTable({
         columns,
         data,

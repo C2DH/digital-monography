@@ -10,7 +10,7 @@ import {
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { useSearchParams } from 'next/navigation';
 import { renderSubComponent, Table } from './AssetsTable';
-import { Person, IAsset, IRef, IS3Object } from "./types";
+import { Person, IAsset, ITableRow, IRef, IS3Object } from "./types";
 import TnbBookNav from "./../_components/TnbBookNav";
 
 enum MediumEnum {
@@ -19,46 +19,15 @@ enum MediumEnum {
     PAPER_AND_DIGITAL = "P+D",
 }
 
-const person1: Person = {
-    firstName: "Jeff",
-    lastName: "Belzebos",
-    age: 99,
-    visits: 1,
-    progress: 3,
-    createdAt: new Date(1999, 1, 1),
-    status: "cool-guy",
-    rank: 1,
-}
-const person2: Person = {
-    firstName: "Bill",
-    lastName: "Gates of Hell",
-    age: 666,
-    visits: 1,
-    progress: 3,
-    createdAt: new Date(2004, 2, 25),
-    status: "cool-guy",
-    rank: 1,
-}
-const person3: Person = {
-    firstName: "Larry",
-    lastName: "Hellison",
-    age: 999,
-    visits: 1,
-    progress: 3,
-    createdAt: new Date(2020, 1, 15),
-    status: "db-guy",
-    rank: 1,
-}
-
 //custom sorting logic for one of our enum columns
-const sortStatusFn: SortingFn<Person> = (rowA, rowB, _columnId) => {
-    const statusA = rowA.original.status;
-    const statusB = rowB.original.status;
-    const statusOrder = ['cool-guy', 'db-guy', 'lame-guy'];
-    return statusOrder.indexOf(statusA) - statusOrder.indexOf(statusB);
+const sortStatusFn: SortingFn<ITableRow> = (rowA, rowB, _columnId) => {
+    const locA = rowA.original.location || "";
+    const locB = rowB.original.location || "";
+    const locOrder = ['cool-guy', 'db-guy', 'lame-guy'];
+    return locOrder.indexOf(locA) - locOrder.indexOf(locB);
 }
 
-const columns: ColumnDef<Person>[] = [
+const columns: ColumnDef<ITableRow>[] = [
     {
         id: 'expander',
         header: () => null,
@@ -81,45 +50,55 @@ const columns: ColumnDef<Person>[] = [
         },
     },
     {
-        accessorKey: 'firstName',
-        cell: info => info.getValue(),
-        //this column will sort in ascending order by default since it is a string column
+        accessorKey: 'fp',
+        header: () => <span>Name</span>,
     },
     {
-        accessorFn: row => row.lastName,
-        id: 'lastName',
-        cell: info => info.getValue(),
-        header: () => <span>Last Name</span>,
-        sortUndefined: 'last', //force undefined values to the end
-        sortDescFirst: false, //first sort order will be ascending (nullable values can mess up auto detection of sort order)
-    },
-    {
-        accessorKey: 'age',
-        header: () => 'Age',
-        //this column will sort in descending order by default since it is a number column
+        accessorKey: 'location',
+        header: () => <span>Location</span>,
         meta: {
-            filterVariant: 'range',
+            filterVariant: 'select', // special select
         },
     },
     {
-        accessorKey: 'visits',
-        header: () => <span>Visits</span>,
-        sortUndefined: 'last', //force undefined values to the end
-    },
-    {
-        accessorKey: 'status',
-        header: 'Status',
-        sortingFn: sortStatusFn, //use our custom sorting function for this enum column
-        meta: {
-            filterVariant: 'select',
-        },
-    },
-    {
-        accessorKey: 'createdAt',
-        header: 'Created At',
+        accessorKey: 'trunc_caption',
+        header: () => <span>Caption</span>,
         enableColumnFilter: false,
-        // enableSorting: false
-        sortingFn: 'datetime' //make sure table knows this is a datetime column
+    },
+    {
+        accessorKey: 'alttext',
+        header: () => <span>Alt text</span>,
+        enableColumnFilter: false,
+    },
+    {
+        accessorKey: 'is_color',
+        header: () => <span>Is color?</span>,
+        cell: (info) => {
+            let val = info.getValue();
+            switch (val) {
+                case true:
+                    return "✅";
+                case false:
+                    return "❌";
+                default:
+                    return "❓";
+            }
+        }
+    },
+    {
+        accessorKey: 'is_on_paper',
+        header: () => <span>Is on paper?</span>,
+        cell: (info) => info.getValue() ? "✅" : "❌"
+    },
+    {
+        accessorKey: 'is_ready',
+        header: () => <span>Is ready?</span>,
+        cell: (info) => info.getValue() ? "✅" : "❌"
+    },
+    {
+        accessorKey: 'exists',
+        header: () => <span>Exists?</span>,
+        // header: () => <div className="spinner-border spinner-border-sm" role="status"></div>,
     },
 ]
 
@@ -128,12 +107,22 @@ function getLastPart(s: string): string {
     return split[split.length - 1];
 }
 
+function getTruncatedCaption(caption: string): string {
+    if (caption && caption.includes(":")) {
+        return caption.split(":")[1];
+    } else if (!caption) {
+        return "❌";
+    } else {
+        return caption;
+    }
+}
+
 const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
 const stage = "test";
 // the paths should be consistent with backend
 const pathAssetMetadata = "assets";
-const pathAssetS3List = "list-assets"; // ListObject req to s3
-const pathAssetRetrieve = "asset-retrieve";
+const pathAssetS3List = "list-assets";
+// const pathAssetRetrieve = "asset-retrieve";
 const pathRefMetadata = "refs";
 
 export default function AssetsComponent(): React.JSX.Element {
@@ -141,9 +130,9 @@ export default function AssetsComponent(): React.JSX.Element {
     const slug = searchParams?.get("slug");
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
     const [sorting, setSorting] = React.useState<SortingState>([]);
-    const [data, setData] = React.useState<Person[]>([person1, person2, person3]);
     const [loadingTable, setLoadingTable] = React.useState<boolean>(true);
     const [loadingExistsCol, setLoadingExistsCol] = React.useState<boolean>(true);
+    const [table, setTable] = React.useState<ITableRow[]>([]);
     const [assetMetadata, setAssetMetadata] = React.useState<IAsset[]>([]);
     const [assetS3List, setAssetS3List] = React.useState<IS3Object[]>([]);
     const [refMetadata, setRefMetadata] = React.useState<IRef[]>([]);
@@ -154,16 +143,33 @@ export default function AssetsComponent(): React.JSX.Element {
             const resp = await fetch(`${endpoint}/${stage}/${pathAssetMetadata}?slug=${inputSlug}`);
             const respJson = await resp.json();
             const items = respJson.Items || [];
+            const tempTable: ITableRow[] = [];
             const tempAssetMetadata: IAsset[] = [];
             for (let i = 0; i < items.length; i++) {
                 // unmarshall "records" column and extend the temp array with it
-                tempAssetMetadata.push(...Object.values(unmarshall(items[i].records?.L || [])));
+                let records = Object.values(unmarshall(items[i].records?.L || []));
+                tempAssetMetadata.push(...records);
+                for (let j = 0; j < records.length; j++) {
+                    tempTable.push({
+                        pk: records[j].pk,
+                        fp: getLastPart(records[j].fp),
+                        location: getLastPart(records[j].location),
+                        trunc_caption: getTruncatedCaption(records[j].caption),
+                        alttext: records[j].alttext,
+                        is_color: records[j].is_color,
+                        is_on_paper: records[j].is_on_paper,
+                        is_ready: records[j].is_ready,
+                        exists: null,
+                    })
+                }
             }
             setAssetMetadata(tempAssetMetadata);
+            setTable(tempTable);
             setLoadingTable(false);
         } catch (e) {
             console.error(e);
             // setAssetMetadata([]);
+            // setTable([]);
             setLoadingTable(false);
         }
     }, [slug])
@@ -218,7 +224,7 @@ export default function AssetsComponent(): React.JSX.Element {
         <>
             {slug && <TnbBookNav slug={slug} color="secondary"></TnbBookNav>}
             {!loadingTable && <Table
-                data={data}
+                data={table}
                 columns={columns}
                 // getRowCanExpand={() => true}
                 renderSubComponent={renderSubComponent}

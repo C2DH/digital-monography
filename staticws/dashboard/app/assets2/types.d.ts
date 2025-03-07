@@ -9,6 +9,18 @@ export type Person = {
     rank: number,
 }
 
+export type ITableRow = {
+    pk: string
+    fp: string
+    location: string | null
+    trunc_caption: string
+    alttext: string
+    is_color: boolean | null
+    is_on_paper: boolean
+    is_ready: boolean
+    exists: bool | null
+}
+
 export type IAsset = {
     alttext: string
     author: string
