@@ -18,7 +18,7 @@ import {
     useReactTable,
     Updater,
 } from '@tanstack/react-table';
-import { ITableRow } from "./types";
+import { IAsset, ITableRow, IRef, IS3Object } from "./types";
 
 declare module '@tanstack/react-table' {
     //allows us to define custom properties for our columns
@@ -27,18 +27,30 @@ declare module '@tanstack/react-table' {
     }
 }
 
-export const renderSubComponent = ({ row }: { row: Row<ITableRow> }) => {
+export const renderSubComponent = (props: { row: Row<ITableRow>, assetMetadata: IAsset[], assetS3List: IS3Object[], refMetadata: IRef[] }) => {
+    const { row, assetMetadata, assetS3List, refMetadata } = props;
+    const pk = row.original.pk;
+    const asset = assetMetadata.find((asset) => asset.pk == pk);
+    const s3object = asset ? assetS3List.find((s3obj) => s3obj.Key == `${asset.slug}/${asset.fp}`) : null;
+    const refs = asset && asset.target ? refMetadata.filter((ref) => { ref.asset_id == pk }) : null;
+    // debugger;
     return (
-        <pre style={{ fontSize: '10px' }}>
-            <code>{JSON.stringify(row.original, null, 2)}</code>
-        </pre>
+        <>
+            <pre style={{ fontSize: '10px' }}>
+                <code>{JSON.stringify(asset, null, 2)}</code>
+                <code>{JSON.stringify(refs, null, 2)}</code>
+                <code>{JSON.stringify(s3object, null, 2)}</code>
+            </pre>
+        </>
     )
 }
 
 export type TableProps<TData> = {
     data: TData[]
     columns: ColumnDef<TData>[]
-    renderSubComponent: (props: { row: Row<TData> }) => React.ReactElement
+    additionalData: { assetMetadata: IAsset[], refMetadata: IRef[], assetS3List: IS3Object[] }
+    renderSubComponent: (props: { row: Row<TData>, assetMetadata: IAsset[], assetS3List: IS3Object[], refMetadata: IRef[] }) => React.ReactElement
+    // renderSubComponent: (props: { row: Row<TData> }) => React.ReactElement
     // getRowCanExpand?: (row: Row<TData>) => boolean
     columnFilters: ColumnFiltersState
     setColumnFilters: (updaterOrValue: Updater<ColumnFiltersState>) => void
@@ -49,6 +61,7 @@ export type TableProps<TData> = {
 export function Table({
     data,
     columns,
+    additionalData,
     renderSubComponent,
     // getRowCanExpand,
     columnFilters,
@@ -56,6 +69,10 @@ export function Table({
     sorting,
     setSorting,
 }: TableProps<ITableRow>): React.JSX.Element {
+    const { assetMetadata, assetS3List, refMetadata } = additionalData;
+    // console.log("assetMetadata", assetMetadata);
+    // console.log("assetS3List", assetS3List);
+    // console.log("refMetadata", refMetadata);
     const table = useReactTable({
         columns,
         data,
@@ -148,7 +165,7 @@ export function Table({
                             {row.getIsExpanded() && (
                                 <tr>
                                     <td colSpan={row.getVisibleCells().length}>
-                                        {renderSubComponent({ row })}
+                                        {renderSubComponent({ row, assetMetadata, assetS3List, refMetadata })}
                                     </td>
                                 </tr>
                             )}

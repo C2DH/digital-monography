@@ -5,6 +5,7 @@ import {
     ColumnDef,
     ColumnFiltersState,
     SortingState,
+    Row,
 } from '@tanstack/react-table';
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { useSearchParams } from 'next/navigation';
@@ -108,6 +109,19 @@ function getTruncatedCaption(caption: string): string {
         return caption;
     }
 }
+
+// const renderSubComponentOG = ({ row }: { row: Row<ITableRow> }) => {
+//     console.log("row", row);
+//     return (
+//         <pre style={{ fontSize: '10px' }}>
+//             <code>{JSON.stringify(row.original, null, 2)}</code>
+//         </pre>
+//     )
+// }
+
+// const renderSubComponent =(sth: any) {
+//     console.log()
+// }
 
 const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
 const stage = "test";
@@ -218,6 +232,7 @@ export default function AssetsComponent(): React.JSX.Element {
             {!loadingTable && <Table
                 data={table}
                 columns={columns}
+                additionalData={{ assetMetadata, assetS3List, refMetadata }}
                 // getRowCanExpand={() => true}
                 renderSubComponent={renderSubComponent}
                 columnFilters={columnFilters}
