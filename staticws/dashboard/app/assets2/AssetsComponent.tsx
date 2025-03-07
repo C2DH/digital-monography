@@ -4,28 +4,13 @@ import React from 'react';
 import {
     ColumnDef,
     ColumnFiltersState,
-    SortingFn,
     SortingState,
 } from '@tanstack/react-table';
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { useSearchParams } from 'next/navigation';
 import { renderSubComponent, Table } from './AssetsTable';
-import { Person, IAsset, ITableRow, IRef, IS3Object } from "./types";
+import { IAsset, ITableRow, IRef, IS3Object } from "./types";
 import TnbBookNav from "./../_components/TnbBookNav";
-
-enum MediumEnum {
-    PAPER = "P",
-    DIGITAL = "D",
-    PAPER_AND_DIGITAL = "P+D",
-}
-
-//custom sorting logic for one of our enum columns
-const sortStatusFn: SortingFn<ITableRow> = (rowA, rowB, _columnId) => {
-    const locA = rowA.original.location || "";
-    const locB = rowB.original.location || "";
-    const locOrder = ['cool-guy', 'db-guy', 'lame-guy'];
-    return locOrder.indexOf(locA) - locOrder.indexOf(locB);
-}
 
 const columns: ColumnDef<ITableRow>[] = [
     {
@@ -57,18 +42,18 @@ const columns: ColumnDef<ITableRow>[] = [
         accessorKey: 'location',
         header: () => <span>Location</span>,
         meta: {
-            filterVariant: 'select', // special select
+            filterVariant: 'select',
         },
     },
     {
         accessorKey: 'trunc_caption',
         header: () => <span>Caption</span>,
-        enableColumnFilter: false,
+        // enableColumnFilter: false,
     },
     {
         accessorKey: 'alttext',
         header: () => <span>Alt text</span>,
-        enableColumnFilter: false,
+        // enableColumnFilter: false,
     },
     {
         accessorKey: 'is_color',
@@ -83,21 +68,28 @@ const columns: ColumnDef<ITableRow>[] = [
                 default:
                     return "❓";
             }
-        }
+        },
+        enableColumnFilter: false,
+        // meta: {
+        //     filterVariant: 'select',
+        // },
     },
     {
         accessorKey: 'is_on_paper',
         header: () => <span>Is on paper?</span>,
-        cell: (info) => info.getValue() ? "✅" : "❌"
+        cell: (info) => info.getValue() ? "✅" : "❌",
+        enableColumnFilter: false,
     },
     {
         accessorKey: 'is_ready',
         header: () => <span>Is ready?</span>,
-        cell: (info) => info.getValue() ? "✅" : "❌"
+        cell: (info) => info.getValue() ? "✅" : "❌",
+        enableColumnFilter: false,
     },
     {
         accessorKey: 'exists',
         header: () => <span>Exists?</span>,
+        enableColumnFilter: false,
         // header: () => <div className="spinner-border spinner-border-sm" role="status"></div>,
     },
 ]

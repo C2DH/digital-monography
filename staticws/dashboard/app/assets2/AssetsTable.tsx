@@ -8,6 +8,8 @@ import {
     flexRender,
     getCoreRowModel,
     getExpandedRowModel,
+    getFacetedRowModel,
+    getFacetedUniqueValues,
     getFilteredRowModel,
     getSortedRowModel,
     RowData,
@@ -63,6 +65,8 @@ export function Table({
         filterFns: {},
         getCoreRowModel: getCoreRowModel(),
         getExpandedRowModel: getExpandedRowModel(),
+        getFacetedRowModel: getFacetedRowModel(),
+        getFacetedUniqueValues: getFacetedUniqueValues(), // generate unique values for select filter/autocomplete
         getFilteredRowModel: getFilteredRowModel(), //client side filtering
         getRowCanExpand: () => true,
         getSortedRowModel: getSortedRowModel(), //client-side sorting
@@ -159,7 +163,13 @@ export function Table({
 export function Filter({ column }: { column: Column<any, unknown> }) {
     const columnFilterValue = column.getFilterValue();
     const { filterVariant } = column.columnDef.meta ?? {};
-
+    const sortedUniqueValues = React.useMemo(
+        () =>
+            filterVariant === 'select'
+                ? Array.from(column.getFacetedUniqueValues().keys()).sort()
+                : [],
+        [column.getFacetedUniqueValues(), filterVariant]
+    )
     return filterVariant === 'range' ? (
         <div>
             <div className="flex space-x-2">
@@ -190,11 +200,13 @@ export function Filter({ column }: { column: Column<any, unknown> }) {
             onChange={e => column.setFilterValue(e.target.value)}
             value={columnFilterValue?.toString()}
         >
-            {/* See faceted column filters example for dynamic select options */}
+            {/* dynamically generated select options from faceted values feature */}
             <option value="">All</option>
-            <option value="cool-guy">cool-guy</option>
-            <option value="db-guy">db-guy</option>
-            <option value="lame-guy">lame-guy</option>
+            {sortedUniqueValues.map(value => (
+                <option value={`${value}`} key={`${value}`}>
+                    {`${value}`}
+                </option>
+            ))}
         </select>
     ) : (
         <DebouncedInput
