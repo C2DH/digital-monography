@@ -5,7 +5,6 @@ import {
     ColumnDef,
     ColumnFiltersState,
     SortingState,
-    // Row,
 } from '@tanstack/react-table';
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { useSearchParams } from 'next/navigation';
@@ -19,8 +18,6 @@ const columns: ColumnDef<ITableRow>[] = [
         id: 'expander',
         header: () => null,
         cell: ({ row }) => {
-            // console.log("expand action");
-            // console.log("row.getIsExpanded()", row.getIsExpanded());
             return row.getCanExpand() ? (
                 <button
                     {...{
@@ -91,8 +88,8 @@ const columns: ColumnDef<ITableRow>[] = [
     {
         accessorKey: 'exists',
         header: () => <span>Exists?</span>,
+        cell: (info) => info.getValue() ? "✅" : "❌",
         enableColumnFilter: false,
-        // header: () => <div className="spinner-border spinner-border-sm" role="status"></div>,
     },
 ]
 
@@ -121,25 +118,11 @@ function getTruncatedCaption(caption: string): string {
     }
 }
 
-// const renderSubComponentOG = ({ row }: { row: Row<ITableRow> }) => {
-//     console.log("row", row);
-//     return (
-//         <pre style={{ fontSize: '10px' }}>
-//             <code>{JSON.stringify(row.original, null, 2)}</code>
-//         </pre>
-//     )
-// }
-
-// const renderSubComponent =(sth: any) {
-//     console.log()
-// }
-
 const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
 const stage = "test";
-// the paths should be consistent with backend
+// the paths must be consistent with backend
 const pathAssetMetadata = "assets";
 const pathAssetS3List = "list-assets";
-// const pathAssetRetrieve = "asset-retrieve";
 const pathRefMetadata = "refs";
 
 export default function AssetsComponent(): React.JSX.Element {
@@ -148,70 +131,76 @@ export default function AssetsComponent(): React.JSX.Element {
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [loadingTable, setLoadingTable] = React.useState<boolean>(true);
-    const [loadingExistsCol, setLoadingExistsCol] = React.useState<boolean>(true);
     const [table, setTable] = React.useState<ITableRow[]>([]);
     const [assetMetadata, setAssetMetadata] = React.useState<IAsset[]>([]);
     const [assetS3List, setAssetS3List] = React.useState<IS3Object[]>([]);
     const [refMetadata, setRefMetadata] = React.useState<IRef[]>([]);
-
-    const fetchAssetMetadata = React.useCallback(async (inputSlug: string) => {
-        setLoadingTable(true);
+    /* 
+    This function:
+    1) fetches data from dynamoDb about assets metadata,
+    2) fetches data from s3 about objects (s3:ListObjects),
+    3) iterates over assets from step 1 and adds "exists" property from s3
+       - this data will be used to be displayed on the main table,
+    4) updates react state based on 1, 2 and 3.
+     */
+    const fetchAssetsData = React.useCallback(async (inputSlug: string) => {
         try {
-            const resp = await fetch(`${endpoint}/${stage}/${pathAssetMetadata}?slug=${inputSlug}`);
-            const respJson = await resp.json();
-            const items = respJson.Items || [];
+            const [assetsResp, s3objectsResp] = await Promise.all([
+                fetch(`${endpoint}/${stage}/${pathAssetMetadata}?slug=${inputSlug}`),
+                fetch(`${endpoint}/test/${pathAssetS3List}?slug=${inputSlug}`),
+            ]);
+            const assetsJson = await assetsResp.json();
+            const s3objectsJson = await s3objectsResp.json();
+            // assets metadata list
+            const assetsItems = assetsJson.Items || [];
             const tempTable: ITableRow[] = [];
             const tempAssetMetadata: IAsset[] = [];
-            for (let i = 0; i < items.length; i++) {
+            for (let i = 0; i < assetsItems.length; i++) {
                 // unmarshall "records" column and extend the temp array with it
-                let records = Object.values(unmarshall(items[i].records?.L || []));
-                tempAssetMetadata.push(...records);
-                for (let j = 0; j < records.length; j++) {
-                    tempTable.push({
-                        pk: records[j].pk,
-                        fp: getLastPart(records[j].fp),
-                        location: getLastPart(records[j].location),
-                        trunc_caption: getTruncatedCaption(records[j].caption),
-                        alttext: records[j].alttext,
-                        is_color: records[j].is_color,
-                        is_on_paper: records[j].is_on_paper,
-                        is_ready: records[j].is_ready,
-                        exists: null,
-                    })
-                }
+                let assetRecords = Object.values(unmarshall(assetsItems[i].records?.L || []));
+                tempAssetMetadata.push(...assetRecords);
             }
+            // s3 objects list
+            const tempAssetS3List: IS3Object[] = [];
+            const tempAssetS3Mapping = {};
+            for (let i = 0; i < s3objectsJson.length; i++) {
+                tempAssetS3Mapping[s3objectsJson[i].Key] = s3objectsJson[i];
+                tempAssetS3List.push({
+                    ETag: s3objectsJson[i].ETag,
+                    Key: s3objectsJson[i].Key,
+                    LastModified: new Date(s3objectsJson[i].LastModified),
+                    Size: s3objectsJson[i].Size,
+                    SizeAsStr: formatBytes(s3objectsJson[i].Size),
+                    StorageClass: s3objectsJson[i].StorageClass,
+                });
+            }
+            // data to display in the table
+            for (let j = 0; j < tempAssetMetadata.length; j++) {
+                let asset = tempAssetMetadata[j];
+                let s3key = `${asset.slug}/${asset.fp}`;
+                tempTable.push({
+                    pk: asset.pk,
+                    fp: getLastPart(asset.fp),
+                    location: getLastPart(asset.location || ""),
+                    trunc_caption: getTruncatedCaption(asset.caption),
+                    alttext: asset.alttext,
+                    is_color: asset.is_color,
+                    is_on_paper: asset.is_on_paper,
+                    is_ready: asset.is_ready,
+                    exists: Object.hasOwn(tempAssetS3Mapping, s3key) ? true : false,
+                })
+            }
+            // set react state
             setAssetMetadata(tempAssetMetadata);
+            setAssetS3List(tempAssetS3List);
             setTable(tempTable);
             setLoadingTable(false);
         } catch (e) {
             console.error(e);
-            // setAssetMetadata([]);
-            // setTable([]);
+            setAssetMetadata([]);
+            setAssetS3List([]);
+            setTable([]);
             setLoadingTable(false);
-        }
-    }, [slug])
-    const fetchAssetS3List = React.useCallback(async (inputSlug: string) => {
-        setLoadingExistsCol(true);
-        try {
-            const response = await fetch(`${endpoint}/test/${pathAssetS3List}?slug=${inputSlug}`);
-            const json = await response.json();
-            const tempAssetS3List: IS3Object[] = [];
-            for (let i = 0; i < json.length; i++) {
-                tempAssetS3List.push({
-                    ETag: json[i].ETag,
-                    Key: json[i].Key,
-                    LastModified: new Date(json[i].LastModified),
-                    Size: json[i].Size,
-                    SizeAsStr: formatBytes(json[i].Size),
-                    StorageClass: json[i].StorageClass,
-                });
-            }
-            setAssetS3List(tempAssetS3List);
-            setLoadingExistsCol(false);
-        } catch (e) {
-            console.error(e);
-            // setAssetS3List([]);
-            setLoadingExistsCol(false);
         }
     }, [slug])
     const fetchRefMetadata = React.useCallback(async (inputSlug: string) => {
@@ -227,16 +216,15 @@ export default function AssetsComponent(): React.JSX.Element {
             setRefMetadata(tempRefMetadata);
         } catch (e) {
             console.error(e);
-            // setRefMetadata([]);
+            setRefMetadata([]);
         }
     }, [slug])
     React.useEffect(() => {
         if (slug) {
-            fetchAssetMetadata(slug);
-            fetchAssetS3List(slug);
+            fetchAssetsData(slug);
             fetchRefMetadata(slug);
         }
-    }, [fetchAssetMetadata, fetchAssetS3List, fetchRefMetadata, slug]);
+    }, [fetchAssetsData, fetchRefMetadata, slug]);
 
     return (
         <>

@@ -7,7 +7,7 @@ export type ITableRow = {
     is_color: boolean | null
     is_on_paper: boolean
     is_ready: boolean
-    exists: bool | null
+    exists: boolean
 }
 
 export type IAsset = {
