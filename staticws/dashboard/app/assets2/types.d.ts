@@ -45,6 +45,7 @@ export type IS3Object = {
     ETag: string,
     Key: string,
     LastModified: Date,
-    Size: number | undefined,
+    Size: number,
+    SizeAsStr: string,
     StorageClass: string,
 }

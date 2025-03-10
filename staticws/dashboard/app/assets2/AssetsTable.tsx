@@ -27,30 +27,11 @@ declare module '@tanstack/react-table' {
     }
 }
 
-export const renderSubComponent = (props: { row: Row<ITableRow>, assetMetadata: IAsset[], assetS3List: IS3Object[], refMetadata: IRef[] }) => {
-    const { row, assetMetadata, assetS3List, refMetadata } = props;
-    const pk = row.original.pk;
-    const asset = assetMetadata.find((asset) => asset.pk == pk);
-    const s3object = asset ? assetS3List.find((s3obj) => s3obj.Key == `${asset.slug}/${asset.fp}`) : null;
-    const refs = asset && asset.target ? refMetadata.filter((ref) => { ref.asset_id == pk }) : null;
-    // debugger;
-    return (
-        <>
-            <pre style={{ fontSize: '10px' }}>
-                <code>{JSON.stringify(asset, null, 2)}</code>
-                <code>{JSON.stringify(refs, null, 2)}</code>
-                <code>{JSON.stringify(s3object, null, 2)}</code>
-            </pre>
-        </>
-    )
-}
-
 export type TableProps<TData> = {
     data: TData[]
     columns: ColumnDef<TData>[]
     additionalData: { assetMetadata: IAsset[], refMetadata: IRef[], assetS3List: IS3Object[] }
     renderSubComponent: (props: { row: Row<TData>, assetMetadata: IAsset[], assetS3List: IS3Object[], refMetadata: IRef[] }) => React.ReactElement
-    // renderSubComponent: (props: { row: Row<TData> }) => React.ReactElement
     // getRowCanExpand?: (row: Row<TData>) => boolean
     columnFilters: ColumnFiltersState
     setColumnFilters: (updaterOrValue: Updater<ColumnFiltersState>) => void
@@ -70,9 +51,6 @@ export function Table({
     setSorting,
 }: TableProps<ITableRow>): React.JSX.Element {
     const { assetMetadata, assetS3List, refMetadata } = additionalData;
-    // console.log("assetMetadata", assetMetadata);
-    // console.log("assetS3List", assetS3List);
-    // console.log("refMetadata", refMetadata);
     const table = useReactTable({
         columns,
         data,

@@ -5,11 +5,12 @@ import {
     ColumnDef,
     ColumnFiltersState,
     SortingState,
-    Row,
+    // Row,
 } from '@tanstack/react-table';
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { useSearchParams } from 'next/navigation';
-import { renderSubComponent, Table } from './AssetsTable';
+import { Table } from './AssetsTable';
+import { AssetDetails } from "./AssetDetails";
 import { IAsset, ITableRow, IRef, IS3Object } from "./types";
 import TnbBookNav from "./../_components/TnbBookNav";
 
@@ -94,6 +95,16 @@ const columns: ColumnDef<ITableRow>[] = [
         // header: () => <div className="spinner-border spinner-border-sm" role="status"></div>,
     },
 ]
+
+/* Convert s3 object size in bytes to a human readable format. */
+function formatBytes(bytes: number | undefined, decimals = 2): string {
+    if (typeof bytes == "undefined" || !+bytes) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+}
 
 function getLastPart(s: string): string {
     let split = s.split("/");
@@ -191,6 +202,7 @@ export default function AssetsComponent(): React.JSX.Element {
                     Key: json[i].Key,
                     LastModified: new Date(json[i].LastModified),
                     Size: json[i].Size,
+                    SizeAsStr: formatBytes(json[i].Size),
                     StorageClass: json[i].StorageClass,
                 });
             }
@@ -234,7 +246,7 @@ export default function AssetsComponent(): React.JSX.Element {
                 columns={columns}
                 additionalData={{ assetMetadata, assetS3List, refMetadata }}
                 // getRowCanExpand={() => true}
-                renderSubComponent={renderSubComponent}
+                renderSubComponent={AssetDetails}
                 columnFilters={columnFilters}
                 setColumnFilters={setColumnFilters}
                 sorting={sorting}
