@@ -64,7 +64,9 @@ export const AssetDetails = (props: { row: Row<ITableRow>, assetMetadata: IAsset
                 {refsFound && <div>
                     <p>Found the following references pointing to this asset:</p>
                     <ul>
-                        {refs.map((ref) => <li>{JSON.stringify(ref, null, 2)}</li>)}
+                        {refs.map((ref) => <li key={ref.pk}>
+                            {JSON.stringify(ref, null, 2)}
+                        </li>)}
                     </ul>
                 </div>}
             </div>

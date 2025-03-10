@@ -202,7 +202,7 @@ export default function AssetsComponent(): React.JSX.Element {
             setTable([]);
             setLoadingTable(false);
         }
-    }, [slug])
+    }, [])
     const fetchRefMetadata = React.useCallback(async (inputSlug: string) => {
         try {
             const resp = await fetch(`${endpoint}/${stage}/${pathRefMetadata}?slug=${inputSlug}`);
@@ -218,7 +218,7 @@ export default function AssetsComponent(): React.JSX.Element {
             console.error(e);
             setRefMetadata([]);
         }
-    }, [slug])
+    }, [])
     React.useEffect(() => {
         if (slug) {
             fetchAssetsData(slug);

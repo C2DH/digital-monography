@@ -163,7 +163,7 @@ export function Filter({ column }: { column: Column<any, unknown> }) {
             filterVariant === 'select'
                 ? Array.from(column.getFacetedUniqueValues().keys()).sort()
                 : [],
-        [column.getFacetedUniqueValues(), filterVariant]
+        [column, filterVariant]
     )
     return filterVariant === 'range' ? (
         <div>
@@ -238,7 +238,7 @@ export function DebouncedInput({
         }, debounce)
 
         return () => clearTimeout(timeout)
-    }, [value])
+    }, [debounce, onChange, value])
 
     return (
         <input {...props} value={value} onChange={e => setValue(e.target.value)} />
