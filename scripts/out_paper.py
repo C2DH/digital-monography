@@ -1,7 +1,11 @@
 import argparse
 import bs4
 import docx
+import json
 import pathlib
+
+from constants import CLS_METADATA_TABLE_JSONDATA
+from metadata import DocumentMetadata
 
 
 parser = argparse.ArgumentParser(description="...")
@@ -47,6 +51,14 @@ def p_handler(doc: docx.document.Document, elem: bs4.element.Tag) -> None:
     doc.add_paragraph(elem.text)
 
 
+def _get_document_metadata(html_soup: bs4.BeautifulSoup) -> DocumentMetadata:
+    script_html = html_soup.find("script", {"class": CLS_METADATA_TABLE_JSONDATA})
+    metadata = DocumentMetadata()
+    if isinstance(script_html, bs4.element.Tag):
+        metadata.from_json(json.loads(script_html.text))
+    return metadata
+
+
 checks_and_handlers = [
     (is_div, div_handler),
     (is_h, h_handler),
@@ -62,7 +74,9 @@ checks_and_handlers = [
 if __name__ == "__main__":
     args = parser.parse_args()
     book_path_arg = args.book_path.split("=")
-    assert len(book_path_arg) == 2
+    assert (
+        len(book_path_arg) == 2
+    ), "Please provide book_path=/path/to/book as an agrument"
     book_path = pathlib.Path(book_path_arg[1])
     # toprint = set()
     for src in book_path.glob("*"):
@@ -75,6 +89,7 @@ if __name__ == "__main__":
                 html_str = f.read()
                 html_soup = bs4.BeautifulSoup(html_str, "html.parser")
                 doc = docx.Document()
+                metadata = _get_document_metadata(html_soup)
                 for elem in html_soup.children:
                     if not isinstance(elem, bs4.element.Tag):
                         continue
@@ -83,11 +98,5 @@ if __name__ == "__main__":
                     for check, handler in checks_and_handlers:
                         if check(elem):
                             handler(doc, elem)
-                    # elif elem.name.startswith("h") and elem.name[1:].isdigit():
-                    #     doc.add_heading(elem.text, level=int(elem.name[1:]))
-                    # elif elem.name == "p":
-                    #     doc.add_paragraph(elem.text)
-                    # else:
-                    #     toprint.add(elem.name)
                 doc.save(f"/tmp/efs/{dst.name}")
         # print(toprint)

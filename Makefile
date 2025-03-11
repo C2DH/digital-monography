@@ -64,6 +64,7 @@ copy/constants:
 	cp src/_common/constants.py src/gpu/constants.py
 
 copy/keys:
+	cp src/_common/keys.py scripts/keys.py
 	cp src/_common/keys.py src/dropbox/keys.py
 	cp src/_common/keys.py src/preparer/keys.py
 	cp src/_common/keys.py src/builder/keys.py
@@ -71,6 +72,7 @@ copy/keys:
 	cp src/_common/keys.py src/verifier/keys.py
 
 copy/metadata:
+	cp src/_common/metadata.py scripts/metadata.py
 	cp src/_common/metadata.py src/preparer/metadata.py
 	cp src/_common/metadata.py src/builder/metadata.py
 	cp src/_common/metadata.py src/verifier/metadata.py
