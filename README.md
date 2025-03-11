@@ -27,6 +27,7 @@ The development cycle is based on release cycles 4 months each. The direction of
 * Code shared between microservices should be writen and stored in `src/_common/<filename>.py` files and copied to the microservices that use it with a command specified in the `Makefile` file.
 * Rely on features of MS Word for `.docx` input, JupyterLab/Notebook for `.ipynb` input and on JupyterBook/Sphinx-doc for output as much as possible.
 * Target MyST specification rather that bespoke solutions.
+* The deployment is steered by the `git push` command ran in the develop or master branches. Note however that the code of the microservices is pulled by the infrastructure from the docker image repository, so the developer has to point to the proper version number in `.versions.json` and push an image tagged with this version before the CI/CD pipeline tries to pull the image from the repo.
 
 ## Architecture design
 
@@ -38,11 +39,13 @@ The project consists of the following main software components.
 | ---- | ----- | ----------- |
 | [pipeline](src/) | BL | Microservices that process input manuscript, verify it, and build output for other apps to use. The pipeline includes multiple micro services that are described below. |
 | [mammoth](https://github.com/kaminski-pawel/python-mammoth) | BL | Python library for transforming `.docx` into markdown. |
-| [CI pipeline](./.gitlab-ci.yml) | DevOps | Set of scripts for applying changes to the infrastructure. |
+| [CI/CD pipeline](./.gitlab-ci.yml) | DevOps | Set of scripts for applying changes to the infrastructure. |
 | [dashboard](staticws/dashboard/) | UI | Dashboard with tools for authors and editors to help their work on the manuscript. |
 | [reader](staticws/reader/) | UI | Copy of degruyter.com website to show how the digital books can be integrated with de Gruyter's platform. |
 
 ![architecture_abstract](./arch_abstract.svg)
+
+_Image repo_ is the docker image repository from where the CI/CD pipeline pulls a specific microservice code.
 
 ### Details of pipeline architecture
 
