@@ -12,4 +12,5 @@ python-docx==1.1.*
 
 # TODO: consider adding linting and type checking
 # flake8==7.0.*
-# mypy==1.15.*
+mypy==1.15.*
+types-beautifulsoup4==4.12.*
