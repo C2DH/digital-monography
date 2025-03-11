@@ -22,7 +22,9 @@ The development cycle is based on release cycles 4 months each. The direction of
 
 ## Design principles
 
-* Sustainability is the highest priority of this project. Books should be hosted as static web pages without a need for dedicated servers. When possible, websites related to the project should, like the dashboard, should not require any application logic on the server-side after web pages are built.
+* Sustainability is the highest priority of this project. Books should be hosted as static web pages without a need for dedicated servers. When possible, websites related to the project, like the dashboard, should not require any application logic on the server-side after web pages are built.
+* The functionality of the code should be guessable just by looking at `src/<microservice>/main.py` module. The details of implementing this functionality can be hidden in other modules in this microservice.
+* Code shared between microservices should be writen and stored in `src/_common/<filename>.py` files and copied to the microservices that use it with a command specified in the `Makefile` file.
 * Rely on features of MS Word for `.docx` input, JupyterLab/Notebook for `.ipynb` input and on JupyterBook/Sphinx-doc for output as much as possible.
 * Target MyST specification rather that bespoke solutions.
 
@@ -34,7 +36,7 @@ The project consists of the following main software components.
 
 | Name | Layer | Description |
 | ---- | ----- | ----------- |
-| pipeline | BL | Microservices that process input manuscript, verify it, and build output for other apps to use. The pipeline includes multiple micro services that are described below. |
+| [pipeline](src/) | BL | Microservices that process input manuscript, verify it, and build output for other apps to use. The pipeline includes multiple micro services that are described below. |
 | [mammoth](https://github.com/kaminski-pawel/python-mammoth) | BL | Python library for transforming `.docx` into markdown. |
 | [CI pipeline](./.gitlab-ci.yml) | DevOps | Set of scripts for applying changes to the infrastructure. |
 | [dashboard](staticws/dashboard/) | UI | Dashboard with tools for authors and editors to help their work on the manuscript. |
@@ -50,7 +52,7 @@ For the full architecture see [the instructions on generating an infrastrucutre 
 
 The architecture attempts to follow the pattern of `... -> s3 upload -> Lambda invoke -> s3 upload -> ...`. Sometimes an upload to s3 can and should invoke multiple Lambda functions. It can be also advantageous to have an SQS queue as a part of the chain. This allows for a modular design, which brings some benefits with it.
 
-The platform consists of the following modules (Lambda functions):
+The platform consists of the following microservices (Lambda functions):
 | Name              | In VPC? | Description |
 | ---               | ---   | --- |
 | **entrypoint**    | false | Opens up REST endpoints, incl. OAuth and webhooks to integrate with Dropbox. |
@@ -61,17 +63,17 @@ The platform consists of the following modules (Lambda functions):
 | **builder**       | true  | Runs Jupyter Book to build a book out of processed documents. |
 | **gpu**           | false | Generates pre-signed url from private S3 bucket. |
 
-Deployment of each module should be done in order:
+Deployment of each microservice should be done in order:
 
 | Order | Stage name    | Command               | Description |
 | ---   | ---           | ---                   | --- |
-| 1     | **version**   | `vim .versions.json`  | In `.versions.json` appropriately increment a _stable_ version number of a module you've made changes to in the `src/<module>` dir |
+| 1     | **version**   | `vim .versions.json`  | In `.versions.json` appropriately increment a _stable_ version number of a microservice you've made changes to in the `src/<microservice>` dir |
 | 2     | **apply**     | `git push`            | As you push your changes to GitLab, the CI/CD pipeline is run, including deployment of changes to the infrastructure; if the _stable_ version changed in the `.versions.json`, the Docker container will be updated on the cloud |
-| 3     | **build**     | `make <module>/build` | Builds Docker image |
-| 4     | **tag**       | `make <module>/tag`   | Tags the image with a tag specified in `.versions.json` |
-| 5     | **push**      | `make <module>/push`  | Pushes the image to docker registry (remember to login to the registry with `make login`) |
+| 3     | **build**     | `make <microservice>/build` | Builds Docker image |
+| 4     | **tag**       | `make <microservice>/tag`   | Tags the image with a tag specified in `.versions.json` |
+| 5     | **push**      | `make <microservice>/push`  | Pushes the image to docker registry (remember to login to the registry with `make login`) |
 
-`make <module>/push` is a useful alias for builing, tagging and pushing a particular module. Note that there is a **race condition** - docker container has to be built, tagged and pushed before the apply stage pulls the image from registry. If CI/CD pipeline job fails with error `Source image <registry>/<image>:<tag> does not exist. Provide a valid source image.` re-run that job. Make sure that you had built, tagged and pushed the image in question.
+`make <microservice>/push` is a useful alias for builing, tagging and pushing a particular microservice. Note that there is a **race condition** - docker container has to be built, tagged and pushed before the apply stage pulls the image from registry. If CI/CD pipeline job fails with error `Source image <registry>/<image>:<tag> does not exist. Provide a valid source image.` re-run that job. Make sure that you had built, tagged and pushed the image in question.
 
 ## Local development
 
@@ -235,8 +237,8 @@ Also, add the "AWS_DEFAULT_REGION" variable with value equal to the AWS region s
 
 ## Adding a new Lambda function
 
-When adding a new Lambda function (a new module), please follow these steps:
-1. Add the module code to the `src/ ` directory.
+When adding a new Lambda function (a new microservice), please follow these steps:
+1. Add the microservice code to the `src/ ` directory.
 1. Add the test code to the `tests/ ` directory.
 1. Copy and modify one of the `.tf` files that define a Lambda function. Usually you can reuse all of the IaC code changing only the `<old-function-name>` to `<new-function-name>`.
 1. Update the `Makefile`.
