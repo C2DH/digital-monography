@@ -5,6 +5,7 @@ PREPARER_STABLE_V := $(shell jq -r '.PREPARER_STABLE_V' < .versions.json)
 GITHUB_STABLE_V  := $(shell jq -r '.GITHUB_STABLE_V' < .versions.json) 
 VERIFIER_STABLE_V  := $(shell jq -r '.VERIFIER_STABLE_V' < .versions.json) 
 GPU_STABLE_V  := $(shell jq -r '.GPU_STABLE_V' < .versions.json) 
+WORDPROCESSOR_STABLE_V  := $(shell jq -r '.WORDPROCESSOR_STABLE_V' < .versions.json) 
 LOCAL_STABLE_V := $(shell jq -r '.LOCAL_STABLE_V' < .versions.json)
 AWS_KMS_ARN = 'arn:aws:kms:eu-west-1:367031255351:key/34644061-6a4d-4414-b0e4-90a9df0e2cff'
 DOCKER_ECR = 367031255351.dkr.ecr.eu-west-1.amazonaws.com
@@ -62,20 +63,21 @@ copy/constants:
 	cp src/_common/constants.py src/github/constants.py
 	cp src/_common/constants.py src/verifier/constants.py
 	cp src/_common/constants.py src/gpu/constants.py
+	cp src/_common/constants.py src/wordprocessor/constants.py
 
 copy/keys:
-	cp src/_common/keys.py scripts/keys.py
 	cp src/_common/keys.py src/dropbox/keys.py
 	cp src/_common/keys.py src/preparer/keys.py
 	cp src/_common/keys.py src/builder/keys.py
 	cp src/_common/keys.py src/github/keys.py
 	cp src/_common/keys.py src/verifier/keys.py
+	cp src/_common/keys.py src/wordprocessor/keys.py
 
 copy/metadata:
-	cp src/_common/metadata.py scripts/metadata.py
 	cp src/_common/metadata.py src/preparer/metadata.py
 	cp src/_common/metadata.py src/builder/metadata.py
 	cp src/_common/metadata.py src/verifier/metadata.py
+	cp src/_common/metadata.py src/wordprocessor/metadata.py
 
 copy/html2md:
 	cp src/_common/html2md.py src/preparer/html2md.py
@@ -192,4 +194,18 @@ gpu/push:
 	docker push ${DOCKER_HUB}/dgtmon-dev-gpu:${GPU_STABLE_V}
 
 gpu/make: gpu/build gpu/tag gpu/push
+
+wordprocessor/build:
+	cp src/_common/constants.py src/wordprocessor/constants.py
+	docker build -t dgtmon-dev-wordprocessor src/wordprocessor
+
+wordprocessor/tag:
+	docker tag dgtmon-dev-wordprocessor ${DOCKER_ECR}/dgtmon-dev-wordprocessor:${WORDPROCESSOR_STABLE_V}
+	docker tag dgtmon-dev-wordprocessor ${DOCKER_HUB}/dgtmon-dev-wordprocessor:${WORDPROCESSOR_STABLE_V}
+
+wordprocessor/push:
+	docker push ${DOCKER_ECR}/dgtmon-dev-wordprocessor:${WORDPROCESSOR_STABLE_V}
+	docker push ${DOCKER_HUB}/dgtmon-dev-wordprocessor:${WORDPROCESSOR_STABLE_V}
+
+wordprocessor/make: wordprocessor/build wordprocessor/tag wordprocessor/push
 

@@ -71,7 +71,7 @@ checks_and_handlers = [
 ]
 
 
-if __name__ == "__main__":
+def lambda_handler():
     args = parser.parse_args()
     book_path_arg = args.book_path.split("=")
     assert (
