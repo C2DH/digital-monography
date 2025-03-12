@@ -6,6 +6,7 @@ import pathlib
 
 from constants import CLS_METADATA_TABLE_JSONDATA
 from metadata import DocumentMetadata
+from html2docx import Html2DocxConverter
 
 
 parser = argparse.ArgumentParser(description="...")
@@ -100,3 +101,29 @@ def lambda_handler():
                             handler(doc, elem)
                 doc.save(f"/tmp/efs/{dst.name}")
         # print(toprint)
+
+
+def main():
+    args = parser.parse_args()
+    book_path_arg = args.book_path.split("=")
+    assert (
+        len(book_path_arg) == 2
+    ), "Please provide book_path=/path/to/book as an agrument"
+    book_path = pathlib.Path(book_path_arg[1])
+    # toprint = set()
+    for src in book_path.glob("*"):
+        # print("src ", src)
+        if not src.exists() or src.is_dir() or src.name.startswith("~$"):
+            continue
+        elif src.suffix == ".html":
+            dst = src.with_suffix(".docx")
+            with src.open("r") as f:
+                html_str = f.read()
+                html_soup = bs4.BeautifulSoup(html_str, "html.parser")
+                doc = Html2DocxConverter().convert_soup(html_soup)
+                # print("html_soup", html_soup)
+                doc.save(f"/tmp/efs/{dst.name}")
+
+
+if __name__ == "__main__":
+    main()
