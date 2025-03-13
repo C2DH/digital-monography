@@ -1,4 +1,73 @@
+// import { unified } from 'unified';
+// import { mystToDocx, fetchImagesAsBuffers, DocxResult } from 'myst-to-docx';
+import type { DocxResult } from 'myst-to-docx';
+import { u } from 'unist-builder';
+
+
 import TnbBookNav from "./TnbBookNav";
+
+function downloadBlob(filename: string, blob: Blob) {
+    const a = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    a.href = url;
+    a.download = filename;
+    a.click();
+}
+
+async function saveDocxFile(filename: string, mdast: any) {
+    const { unified } = await import('unified');
+    const { mystToDocx, fetchImagesAsBuffers } = await import('myst-to-docx');
+    // Clone the tree
+    const tree = JSON.parse(JSON.stringify(mdast));
+    const opts = await fetchImagesAsBuffers(tree);
+    const docxBlob = await (unified()
+        .use(mystToDocx, opts)
+        .stringify(tree as any).result as DocxResult);
+    downloadBlob(filename, docxBlob as Blob);
+}
+
+const mdast = u('root', [
+    u('heading', { depth: 1 }, [u('text', { value: 'Welcome to docx' })]),
+    u('paragraph', [
+        u('text', { value: 'Some ' }),
+        u('break'),
+        u('emphasis', [u('text', { value: 'italic' })]),
+        u('text', { value: ' ' }),
+        u('strong', [u('text', { value: 'bold' })]),
+        u('text', { value: ' ' }),
+        u('underline', [u('text', { value: 'underline' })]),
+        u('text', { value: ' ' }),
+        u('smallcaps', [u('text', { value: 'MyST' })]),
+        u('text', { value: ' ' }),
+        u('inlineCode', { value: 'code' }),
+        u('text', { value: ' ' }),
+        u('link', { url: 'https://www.c2dh.uni.lu/' }, [u('text', { value: 'linky-link' })]),
+    ]),
+    u('thematicBreak'),
+    u('list', { ordered: true }, [
+        u('listItem', [u('paragraph', [u('text', { value: 'point 1' })])]),
+        u('listItem', [
+            u('paragraph', [u('text', { value: 'point 2' })]),
+            u('list', { ordered: false }, [
+                u('listItem', [u('paragraph', [u('text', { value: 'point 2a' })])]),
+                u('listItem', [u('paragraph', [u('text', { value: 'point 2b' })])]),
+            ]),
+        ]),
+    ]),
+    u('list', { ordered: false }, [
+        u('listItem', [u('paragraph', [u('text', { value: 'point 1' })])]),
+        u('listItem', [
+            u('paragraph', [u('text', { value: 'point 2' })]),
+            u('list', { ordered: false }, [
+                u('listItem', [u('paragraph', [u('text', { value: 'point 2a' })])]),
+                u('listItem', [u('paragraph', [u('text', { value: 'point 2b' })])]),
+            ]),
+        ]),
+    ]),
+    u('blockquote', [u('paragraph', [u('text', { value: 'Do not quote this.' })])]),
+    u('comment', 'hello world'),
+]);
+
 
 export default function TnbBookCard(
     { authors, slug, title, alert }: { authors: string, slug: string, title: string, alert: string }
@@ -63,7 +132,8 @@ export default function TnbBookCard(
                                     href={`https://cpy-dgtmon-dev-staticws-wip.s3.eu-west-1.amazonaws.com/read/${slug}/index.html`}
                                     className="btn btn-outline-primary"
                                 >Digital</a>
-                                <a href="" className="btn btn-outline-primary disabled">Paper</a>
+                                <a onClick={() => saveDocxFile('demo.docx', mdast)} className="btn btn-outline-primary">Paper</a>
+                                {/* <a href="" className="btn btn-outline-primary disabled">Paper</a> */}
                                 <a href="" className="btn btn-outline-primary disabled">Zip package</a>
                             </div>
                         </div>

@@ -16,9 +16,11 @@
     "bootstrap": "^5.3.3",
     "github-markdown-css": "^5.8.1",
     "markdown-it": "^14.1.0",
+    "myst-to-docx": "^1.0.14",
     "next": "^15.2.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "unist-builder": "^4.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.1",
