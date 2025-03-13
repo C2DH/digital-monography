@@ -2,6 +2,7 @@ import argparse
 import bs4
 import docx
 import json
+import os
 import pathlib
 
 from constants import CLS_METADATA_TABLE_JSONDATA
@@ -111,18 +112,23 @@ def main():
     ), "Please provide book_path=/path/to/book as an agrument"
     book_path = pathlib.Path(book_path_arg[1])
     # toprint = set()
+    try:
+        os.mkdir("/tmp/efs/test/")
+    except FileExistsError as e:
+        pass
     for src in book_path.glob("*"):
         # print("src ", src)
         if not src.exists() or src.is_dir() or src.name.startswith("~$"):
             continue
-        elif src.suffix == ".html":
+        # elif src.suffix == ".html": # <= TODO: restore, the one below is for testing only
+        elif src.suffix == ".html" and src.name == "simple.html":
             dst = src.with_suffix(".docx")
             with src.open("r") as f:
                 html_str = f.read()
                 html_soup = bs4.BeautifulSoup(html_str, "html.parser")
                 doc = Html2DocxConverter().convert_soup(html_soup)
                 # print("html_soup", html_soup)
-                doc.save(f"/tmp/efs/{dst.name}")
+                doc.save(f"/tmp/efs/test/{dst.name}")
 
 
 if __name__ == "__main__":
