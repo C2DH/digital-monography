@@ -70,11 +70,13 @@ BE_PATH_ASSET_UPLOAD = "assets-s3-list"
 BE_PATH_ASSET_RETRIEVE = "asset-retrieve"
 BE_PATH_REF_METADATA = "refs-metadata"
 # python-mammoth options
-MAMMOTH_STYLE_MAP = """
+COLOR_DIGITAL_ONLY = "lightGray"
+COLOR_PAPER_ONLY = "cyan"
+MAMMOTH_STYLE_MAP = f"""
 p[style-name='Quote'] => blockquote:fresh
 p[style-name='Caption'] => p.dgt-mon-caption:fresh
-highlight[color='lightGray'] => span.dgt-mon-digital-only
-highlight[color='cyan'] => span.dgt-mon-paper-only
+highlight[color='{COLOR_DIGITAL_ONLY}'] => span.dgt-mon-digital-only
+highlight[color='{COLOR_PAPER_ONLY}'] => span.dgt-mon-paper-only
 """
 # html classes
 CLS_METADATA_TABLE = "dgt-mon-metadata-table"
