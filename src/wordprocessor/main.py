@@ -5,7 +5,7 @@ import json
 import os
 import pathlib
 
-from constants import CLS_METADATA_TABLE_JSONDATA
+from constants import CLS_METADATA_TABLE_JSONDATA, COLOR_DIGITAL_ONLY, COLOR_PAPER_ONLY
 from metadata import DocumentMetadata
 from html2docx import Html2DocxConverter
 from keys import KeyPath
@@ -135,8 +135,10 @@ def main():
 import docx.shared
 import docx.styles.style
 import docx.text.paragraph
+import docx.text.run
 import docx.oxml.text.font
 import docx.oxml.text.paragraph
+import docx.oxml.xmlchemy
 
 
 def main2():
@@ -164,56 +166,33 @@ def main2():
     # accessing xml
     print(doc._element.xml)
     """
-    highlights = doc.paragraphs[0]._element.xpath(".//w:rPr/w:highlight")
-
-    # conditional rendering
-    digital_only = "lightGray"
-    paper_only = "cyan"
     for p in doc.paragraphs:
-
-        # If paragraph's properties (pPr) have a highlight,
-        # then whole paragraph is highlighted
-        # highlights: list[docx.oxml.text.font.CT_Highlight] = []
-        # highlights = p._element.xpath(".//w:pPr/w:rPr/w:highlight")
-        # if len(highlights) == 1 and digital_only in highlights[0].values():
-        if _is_whole_paragraph_only_for_digital(p, digital_only):
-            # par: docx.oxml.text.paragraph.CT_P = p._element
-            # assert isinstance(par, docx.oxml.text.paragraph.CT_P)
-            # par_parent: docx.oxml.document.CT_Body = par.getparent()
-            # assert isinstance(par_parent, docx.oxml.document.CT_Body)
-            # par_parent.remove(par)
-            # par._p = None
-            # par._element = None
+        if _is_whole_paragraph_only_for_digital(p):
             _remove_whole_paragraph(p)
             continue
 
+        for hyperlink in p.hyperlinks:
+            _handle_highlights_in_runs(hyperlink.runs)
         for r in p.runs:
             if (r.element.rPr is None) or (r.element.rPr.highlight is None):
                 continue
-            if digital_only in r.element.rPr.highlight.values():
+            if COLOR_DIGITAL_ONLY in r.element.rPr.highlight.values():
                 r.clear()
-            elif paper_only in r.element.rPr.highlight.values():
-                print("REMOVE HIGHLIGHT, LEAVE RUN")
+            elif COLOR_PAPER_ONLY in r.element.rPr.highlight.values():
+                r.element.rPr._remove_highlight()
 
     for tbl in doc.tables:
         for row in tbl.rows:
             for cell in row.cells:
                 for p in cell.paragraphs:
-                    for r in p.runs:
-                        if (r.element.rPr is None) or (r.element.rPr.highlight is None):
-                            continue
-                        if digital_only in r.element.rPr.highlight.values():
-                            tbl._element.clear()
-                            break
-                        elif paper_only in r.element.rPr.highlight.values():
-                            print("REMOVE HIGHLIGHT, LEAVE TABLE")
+                    _handle_highlights_in_runs(p.runs, tbl._element)
+                    for link in p.hyperlinks:
+                        _handle_highlights_in_runs(link.runs, tbl._element)
 
     return doc
 
 
-def _is_whole_paragraph_only_for_digital(
-    p: docx.text.paragraph.Paragraph, digital_only: str
-) -> bool:
+def _is_whole_paragraph_only_for_digital(p: docx.text.paragraph.Paragraph) -> bool:
     """
     If paragraph's properties (pPr) have a highlight,
     then whole paragraph is highlighted.
@@ -241,7 +220,7 @@ def _is_whole_paragraph_only_for_digital(
     """
     highlights: list[docx.oxml.text.font.CT_Highlight] = []
     highlights = p._element.xpath(".//w:pPr/w:rPr/w:highlight")
-    return len(highlights) == 1 and digital_only in highlights[0].values()
+    return len(highlights) == 1 and COLOR_DIGITAL_ONLY in highlights[0].values()
 
 
 def _remove_whole_paragraph(p: docx.text.paragraph.Paragraph) -> None:
@@ -252,6 +231,24 @@ def _remove_whole_paragraph(p: docx.text.paragraph.Paragraph) -> None:
     par_parent.remove(par)
     par._p = None
     par._element = None
+
+
+def _handle_highlights_in_runs(
+    runs: list[docx.text.run.Run],
+    el_to_clear: docx.oxml.xmlchemy.BaseOxmlElement | None = None,
+) -> None:
+    for r in runs:
+        if (r.element.rPr is None) or (r.element.rPr.highlight is None):
+            pass
+        elif COLOR_DIGITAL_ONLY in r.element.rPr.highlight.values():
+            if el_to_clear is not None:
+                assert isinstance(el_to_clear, docx.oxml.xmlchemy.BaseOxmlElement)
+                el_to_clear.clear()
+            else:
+                r.clear()
+            break
+        elif COLOR_PAPER_ONLY in r.element.rPr.highlight.values():
+            r.element.rPr._remove_highlight()
 
 
 doc = None
