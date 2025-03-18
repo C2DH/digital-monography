@@ -1,0 +1,5 @@
+format: jb-book
+root: 00_index
+chapters:
+  - file: 01_simple
+  - file: 02_assets_and_links

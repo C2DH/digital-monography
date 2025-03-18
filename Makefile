@@ -16,12 +16,15 @@ test/prep:
 	cp '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/links/01_a.docx' tests/_fixtures/refs/01_a.docx
 	cp '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/links/02_b.docx' tests/_fixtures/refs/02_b.docx
 	cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/book-content-examples/' tests/_fixtures/
+	# rm -r tests/_fixtures/docx2docx/
+	cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/docx2docx/' tests/_fixtures/
+	DGTMON_NO_WAIT=1 python scripts/prepare_and_build.py book_path="tests/_fixtures/docx2docx/"
 
 test/run:
-	DGTMON_DEBUG=1 python -m pytest tests/preparer/ tests/verifier/ tests/builder/
+	DGTMON_DEBUG=1 python -m pytest tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
 
 test:
-	DGTMON_DEBUG=1 python -m pytest tests/preparer/ tests/verifier/ tests/builder/
+	DGTMON_DEBUG=1 python -m pytest tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
 
 login:
 	aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin ${DOCKER_ECR}

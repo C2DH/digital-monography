@@ -24,6 +24,7 @@ from scripts.sync import listen_for_updates
 parser = argparse.ArgumentParser(description="...")
 parser.add_argument("book_path")
 parser.add_argument("--skip-build", action="store_true")
+# parser.add_argument("--wait", action="store_true")
 
 
 DEFAULT_S3_EVENT = {
