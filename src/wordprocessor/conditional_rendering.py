@@ -10,7 +10,7 @@ import docx.oxml.xmlchemy
 try:
     from constants import COLOR_DIGITAL_ONLY, COLOR_PAPER_ONLY
 except (ImportError, ModuleNotFoundError):
-    from .constants import COLOR_DIGITAL_ONLY, COLOR_PAPER_ONLY
+    from .constants import COLOR_DIGITAL_ONLY, COLOR_PAPER_ONLY  # type: ignore
 
 
 def remove_parts_and_highlights_due_to_conditional_rendering(

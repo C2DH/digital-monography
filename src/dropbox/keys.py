@@ -12,14 +12,14 @@ from functools import cached_property
 try:
     from constants import DEFAULT_SFS_DIR
 except (ImportError, ModuleNotFoundError):
-    from .constants import DEFAULT_SFS_DIR
+    from .constants import DEFAULT_SFS_DIR  # type: ignore
 
 
 class InvalidKey(Exception):
     pass
 
 
-class KeyPath(type(pathlib.Path())):
+class KeyPath(type(pathlib.Path())):  # type: ignore
     _abs_root = DEFAULT_SFS_DIR
 
     def __new__(cls, *pathsegments):
