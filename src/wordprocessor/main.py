@@ -20,12 +20,10 @@ try:
     from metadata import DocumentMetadata
     from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
-    from .constants import IS_DEBUG
-    from .conditional_rendering import (
-        remove_parts_and_highlights_due_to_conditional_rendering,
-    )
-    from .metadata import DocumentMetadata
-    from .keys import KeyPath
+    from .constants import IS_DEBUG  # type: ignore
+    from .conditional_rendering import remove_parts_and_highlights_due_to_conditional_rendering  # type: ignore
+    from .metadata import DocumentMetadata  # type: ignore
+    from .keys import KeyPath  # type: ignore
 
 
 parser = argparse.ArgumentParser(description="...")
@@ -46,7 +44,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-def lambda_handler() -> docx.document.Document:
+def lambda_handler() -> tuple[docx.document.Document, dict[str, DocumentMetadata]]:
     key: KeyPath = KeyPath("/tmp/efs/docx2docx/")
     # book_metadata: dict[str, DocumentMetadata] = {}
     # for meta_file in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
@@ -76,7 +74,6 @@ def _read_book_metadata(key: KeyPath) -> dict[str, DocumentMetadata]:
     """
     book_metadata: dict[str, DocumentMetadata] = {}
     for meta_file in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
-        meta_file: KeyPath
         with meta_file.open("r") as f:
             metadata = DocumentMetadata(meta_file)
             try:
