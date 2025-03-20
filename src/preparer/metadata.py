@@ -26,65 +26,6 @@ except (ImportError, ModuleNotFoundError):
     from .constants import MediumEnum  # type: ignore
 
 
-# class FieldTypeRecord(t.TypedDict):
-#     """Structure of fields definition in METADATA_FIELDS."""
-
-#     key: str
-#     is_bool: bool
-#     is_required: bool
-#     aliases: list[str]
-#     desc: str
-
-
-# class AssetRecord(t.TypedDict):
-#     pk: str
-#     kwargs: dict[str, AcceptedValues]
-
-
-# class HeadingRecord(t.TypedDict):
-#     pk: str
-#     file: str
-#     # elem: str
-#     level: str
-#     text: str
-#     target: str
-
-
-# class RefRecord(t.TypedDict):
-#     pk: str
-#     target_id: int
-#     text: str
-#     href: str
-#     prev_string: str
-#     prev_href: str
-
-
-# class TargetRecord(t.TypedDict):
-#     pk: str
-#     html: str
-#     text: str
-
-
-# class SubstitutionRecord(t.TypedDict):
-#     pk: str
-#     src: str
-
-
-# class CitationGroupRecord(t.TypedDict):
-#     pk: str
-#     schema: str
-#     formattedCitation: str
-#     noteIndex: int
-#     plainCitation: str
-
-
-# class CitationItemRecord(t.TypedDict):
-#     pk: str
-#     citationId: str
-#     uris: list[str]
-#     itemData: dict[str, t.Any]
-
-
 # TODO: elem attributes should be left as bs4.element.PageElement,
 # not immediatly stringified.
 
@@ -101,11 +42,9 @@ class DatapointBase(abc.ABC):
         raise NotImplementedError
 
     # TODO: rename, because it's not really json...
-    # def to_json(self) -> dict[str, str | int | bool | None]:
     def to_json(self) -> dict[str, PrimitiveValues]:
         "Converts the dataclass obj to a dict with primitive values."
 
-        # def _primitive_dict(fields) -> dict[str, str | int | bool | None]:
         def _primitive_dict(fields) -> dict[str, PrimitiveValues]:
             res = {}
             for key, val in fields:
@@ -161,9 +100,7 @@ class DatapointBase(abc.ABC):
             else:
                 v = (_get_field_type(field))(val)
             res[field.name] = v
-        dataclass_instance = cls(**res)
-        # assert isinstance(dataclass_instance, DataclassInstance)
-        return dataclass_instance
+        return cls(**res)
 
 
 @dataclasses.dataclass
@@ -174,12 +111,10 @@ class MetadataTableDatapoint(DatapointBase):
 
     kwargs: dict[str, str]
 
-    # def to_json(self) -> dict[str, str | int | bool | None]:
     def to_json(self) -> dict[str, PrimitiveValues]:
         "Converts the dataclass obj to a dict with str/int/bool as values."
         return {"pk": self.pk, "kwargs": json.dumps(self.kwargs, default=str)}
 
-    # def from_json(cls: t.Type[T], json_data: dict[str, str | int | bool | None]) -> T:
     @classmethod
     def from_json(cls: t.Type[T], json_data: dict[str, PrimitiveValues]) -> T:
         return cls(
@@ -188,7 +123,6 @@ class MetadataTableDatapoint(DatapointBase):
 
 
 @dataclasses.dataclass
-# class AssetInfoFromDoc(DatapointBase):
 class AssetDatapoint(DatapointBase):
     """
     Information about an asset extracted from a document, especially from
@@ -201,7 +135,6 @@ class AssetDatapoint(DatapointBase):
     * book level information
     """
 
-    # pk: str
     fp: pathlib.Path
     metadata_table: str
     medium: MediumEnum
@@ -236,7 +169,6 @@ class AssetDatapoint(DatapointBase):
 
 @dataclasses.dataclass
 class HeadingDatapoint(DatapointBase):
-    # pk: int = dataclasses.field(default_factory=itertools.count().__next__, init=False)
     file_name: str
     elem: str
     level: str
@@ -245,27 +177,9 @@ class HeadingDatapoint(DatapointBase):
     char_count: int
     target: str
 
-    # def to_json(self) -> dict[str, t.Union[str, int]]:
-    #     omit = ("elem",)
-    #     return {
-    #         f.name: getattr(self, f.name)
-    #         for f in dataclasses.fields(self)
-    #         if f.name not in omit
-    #     }
-
-    # @staticmethod
-    # def from_json(jsml: dict[str, t.Union[str, int]]) -> "HeadingDatapoint":
-    #     del jsml["pk"]
-    #     jsml["elem"] = ""
-    #     return HeadingDatapoint(**jsml)
-
-    # def __getitem__(self, name: str) -> t.Union[int, str]:
-    #     return getattr(self, name)
-
 
 @dataclasses.dataclass
 class RefDatapoint(DatapointBase):
-    # pk: int = dataclasses.field(default_factory=itertools.count().__next__, init=False)
     fn: str
     target_id: str
     text: str
@@ -296,51 +210,16 @@ class RefDatapoint(DatapointBase):
             return False
         return "#" in self.href
 
-    # def to_json(self) -> dict[str, t.Union[str, int]]:
-    #     omit = []  # ("elem",)
-    #     return {
-    #         f.name: getattr(self, f.name)
-    #         for f in dataclasses.fields(self)
-    #         if f.name not in omit
-    #     }
-
-    # @staticmethod
-    # def from_json(jsml: dict[str, t.Union[str, int]]) -> "RefDatapoint":
-    #     del jsml["pk"]
-    #     # jsml["elem"] = ""
-    #     return RefDatapoint(**jsml)
-
-    # def __getitem__(self, name: str) -> t.Union[int, str]:
-    #     return getattr(self, name)
-
 
 @dataclasses.dataclass
 class TargetDatapoint(DatapointBase):
-    # pk: str
     html: str
     text: str
     elem: str
 
-    # def to_json(self) -> dict[str, t.Union[str, int]]:
-    #     omit = ("elem",)
-    #     return {
-    #         f.name: getattr(self, f.name)
-    #         for f in dataclasses.fields(self)
-    #         if f.name not in omit
-    #     }
-
-    # @staticmethod
-    # def from_json(jsml: dict[str, t.Union[str, int]]) -> "TargetDatapoint":
-    #     jsml["elem"] = ""
-    #     return TargetDatapoint(**jsml)
-
-    # def __getitem__(self, name: str) -> t.Union[int, str]:
-    #     return getattr(self, name)
-
 
 @dataclasses.dataclass
 class SubstitutionDatapoint(DatapointBase):
-    # pk: str
     was: str
     placeholder: str
     # make sure that literal options are equal to constants.CAPTION_ITEM_TYPE_*
@@ -348,54 +227,22 @@ class SubstitutionDatapoint(DatapointBase):
     # TODO: for now item_type doesn't do anything, but it can be crucial e.g. for
     # adding counting numbers of figures and tables upon substitution
 
-    # def to_json(self) -> dict[str, t.Union[str, int]]:
-    #     return {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}
-
-    # @staticmethod
-    # def from_json(jsml: dict[str, t.Union[str, int]]) -> "SubstitutionDatapoint":
-    #     return SubstitutionDatapoint(**jsml)
-
-    # def __getitem__(self, name: str) -> t.Union[int, str]:
-    #     return getattr(self, name)
-
 
 @dataclasses.dataclass
 class CitationGroupDatapoint(DatapointBase):
-    # pk: str
     file_name: str
     schema: str
     formattedCitation: str
     noteIndex: int
     plainCitation: str
 
-    # def to_json(self) -> dict[str, t.Union[str, int]]:
-    #     return {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}
-
-    # @staticmethod
-    # def from_json(jsml: dict[str, t.Union[str, int]]) -> "CitationGroupDatapoint":
-    #     return CitationGroupDatapoint(**jsml)
-
-    # def __getitem__(self, name: str) -> t.Union[int, str]:
-    #     return getattr(self, name)
-
 
 @dataclasses.dataclass
 class CitationItemDatapoint(DatapointBase):
-    # pk: t.Union[int, str]
     file_name: str
     citationId: str
     uris: list[str]
     itemData: dict[str, t.Any]
-
-    # def to_json(self) -> dict[str, t.Union[str, int]]:
-    #     return {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}
-
-    # @staticmethod
-    # def from_json(jsml: dict[str, t.Union[str, int]]) -> "CitationItemDatapoint":
-    #     return CitationItemDatapoint(**jsml)
-
-    # def __getitem__(self, name: str) -> t.Union[int, str]:
-    #     return getattr(self, name)
 
 
 type DatapointUnion = t.Union[
@@ -463,7 +310,6 @@ class DocumentMetadata:
         records = getattr(self, records_name)
         try:
             return next(rec for rec in records if getattr(rec, attrib) == val)
-            # return next(rec for rec in records if rec[attrib] == val)
         except StopIteration:
             return None
 
