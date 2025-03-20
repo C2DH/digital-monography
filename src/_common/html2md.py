@@ -6,14 +6,14 @@
 # using Makefile commands, as the copy command is already included.
 # ======================
 import bs4
-import markdownify
+import markdownify  # type: ignore
 import re
 import typing as t
 
 try:
     from metadata import DocumentMetadata
 except (ImportError, ModuleNotFoundError):
-    from .metadata import DocumentMetadata
+    from .metadata import DocumentMetadata  # type: ignore
 
 
 line_beginning_re = re.compile(r"^", re.MULTILINE)
@@ -43,6 +43,8 @@ def sub_inline_conversion(markup_fn):
 class MystMdConverter(markdownify.MarkdownConverter):
 
     def __init__(self, metadata: t.Optional[DocumentMetadata], **options):
+        if metadata is None:
+            metadata = DocumentMetadata()
         self._metadata: DocumentMetadata = metadata
         self._soup = bs4.BeautifulSoup("", "html.parser")
         super().__init__(**options)
@@ -182,10 +184,11 @@ class MystMdConverter(markdownify.MarkdownConverter):
         self, el: bs4.element.Tag, text: str, convert_as_inline: bool
     ) -> str:
         src = el.get("src")
-        if src and src.startswith("https:/") and not src.startswith("https://"):
-            el["src"] = src.replace("https:/", "https://")
-        if src and src.startswith("http:/") and not src.startswith("http://"):
-            el["src"] = src.replace("http:/", "http://")
+        if isinstance(src, str):
+            if src and src.startswith("https:/") and not src.startswith("https://"):
+                el["src"] = src.replace("https:/", "https://")
+            if src and src.startswith("http:/") and not src.startswith("http://"):
+                el["src"] = src.replace("http:/", "http://")
         return "\n\n<html>%s</html>\n\n" % str(el)
 
     def convert_script(self, el, text, convert_as_inline):

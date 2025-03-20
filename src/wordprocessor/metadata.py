@@ -15,100 +15,81 @@ import functools
 import pathlib
 import typing as t
 import uuid
+from _typeshed import DataclassInstance
 
 
 try:
     from keys import KeyPath
     from constants import MediumEnum
 except (ImportError, ModuleNotFoundError):
-    from .keys import KeyPath
-    from .constants import MediumEnum
-
-T = t.TypeVar("T")
-type AcceptedValues = t.Union[str, bool, pathlib.Path]
-type DatapointUnion = t.Union[
-    AssetDatapoint,
-    HeadingDatapoint,
-    RefDatapoint,
-    TargetDatapoint,
-    SubstitutionDatapoint,
-    CitationGroupDatapoint,
-    CitationItemDatapoint,
-    MetadataTableDatapoint,
-]
-type RecordsUnion = t.Union[
-    AssetRecord,
-    HeadingRecord,
-    RefRecord,
-    TargetRecord,
-    SubstitutionRecord,
-    CitationGroupRecord,
-    CitationItemRecord,
-    MetadataTableDatapoint,
-]
+    from .keys import KeyPath  # type: ignore
+    from .constants import MediumEnum  # type: ignore
 
 
-class FieldTypeRecord(t.TypedDict):
-    """Structure of fields definition in METADATA_FIELDS."""
+# class FieldTypeRecord(t.TypedDict):
+#     """Structure of fields definition in METADATA_FIELDS."""
 
-    key: str
-    is_bool: bool
-    is_required: bool
-    aliases: list[str]
-    desc: str
-
-
-class AssetRecord(t.TypedDict):
-    pk: str
-    kwargs: dict[str, AcceptedValues]
+#     key: str
+#     is_bool: bool
+#     is_required: bool
+#     aliases: list[str]
+#     desc: str
 
 
-class HeadingRecord(t.TypedDict):
-    pk: str
-    file: str
-    # elem: str
-    level: str
-    text: str
-    target: str
+# class AssetRecord(t.TypedDict):
+#     pk: str
+#     kwargs: dict[str, AcceptedValues]
 
 
-class RefRecord(t.TypedDict):
-    pk: str
-    target_id: int
-    text: str
-    href: str
-    prev_string: str
-    prev_href: str
+# class HeadingRecord(t.TypedDict):
+#     pk: str
+#     file: str
+#     # elem: str
+#     level: str
+#     text: str
+#     target: str
 
 
-class TargetRecord(t.TypedDict):
-    pk: str
-    html: str
-    text: str
+# class RefRecord(t.TypedDict):
+#     pk: str
+#     target_id: int
+#     text: str
+#     href: str
+#     prev_string: str
+#     prev_href: str
 
 
-class SubstitutionRecord(t.TypedDict):
-    pk: str
-    src: str
+# class TargetRecord(t.TypedDict):
+#     pk: str
+#     html: str
+#     text: str
 
 
-class CitationGroupRecord(t.TypedDict):
-    pk: str
-    schema: str
-    formattedCitation: str
-    noteIndex: int
-    plainCitation: str
+# class SubstitutionRecord(t.TypedDict):
+#     pk: str
+#     src: str
 
 
-class CitationItemRecord(t.TypedDict):
-    pk: str
-    citationId: str
-    uris: list[str]
-    itemData: dict[str, t.Any]
+# class CitationGroupRecord(t.TypedDict):
+#     pk: str
+#     schema: str
+#     formattedCitation: str
+#     noteIndex: int
+#     plainCitation: str
+
+
+# class CitationItemRecord(t.TypedDict):
+#     pk: str
+#     citationId: str
+#     uris: list[str]
+#     itemData: dict[str, t.Any]
 
 
 # TODO: elem attributes should be left as bs4.element.PageElement,
 # not immediatly stringified.
+
+T = t.TypeVar("T", bound=DataclassInstance)
+type PrimitiveValues = str | int | bool | None
 
 
 @dataclasses.dataclass
@@ -120,10 +101,12 @@ class DatapointBase(abc.ABC):
         raise NotImplementedError
 
     # TODO: rename, because it's not really json...
-    def to_json(self) -> dict[str, str | int | bool, None]:
-        "Converts the dataclass obj to a dict with str/int/bool as values."
+    # def to_json(self) -> dict[str, str | int | bool | None]:
+    def to_json(self) -> dict[str, PrimitiveValues]:
+        "Converts the dataclass obj to a dict with primitive values."
 
-        def _primitive_dict(fields) -> dict[str, str | int | bool]:
+        # def _primitive_dict(fields) -> dict[str, str | int | bool | None]:
+        def _primitive_dict(fields) -> dict[str, PrimitiveValues]:
             res = {}
             for key, val in fields:
                 if isinstance(val, datetime.datetime):
@@ -140,7 +123,10 @@ class DatapointBase(abc.ABC):
         return dataclasses.asdict(self, dict_factory=_primitive_dict)
 
     @classmethod
-    def from_json(cls: t.Type[T], json_data: dict[str, str | int | bool, None]) -> T:
+    def from_json(
+        cls: t.Type[T],
+        json_data: dict[str, PrimitiveValues],
+    ) -> T:
         "Constructs a dataclass instance from a JSON-like dictionary."
         if not dataclasses.is_dataclass(cls):
             raise ValueError(f"{cls.__name__} must be a dataclass")
@@ -149,28 +135,35 @@ class DatapointBase(abc.ABC):
         def _get_field_type(field: dataclasses.Field) -> t.Type:
             "If type is Union, Optional, Literal, etc. return their argument type."
             if getattr(field.type, "__args__", None) is not None:
-                args = getattr(field.type, "__args__", tuple())
-                return next(type(arg) for arg in args if arg not in (None,))
+                args: tuple = getattr(field.type, "__args__", tuple())
+                typ = next(type(arg) for arg in args if arg not in (None,))
+                assert isinstance(typ, type)
+                return typ
             else:
+                assert isinstance(field.type, type)
                 return field.type
 
         for field in dataclasses.fields(cls):
             val = json_data[field.name]
+            assert field.type != datetime.datetime  # for now unsupported
             if val is None or val == "None":
                 v = None
             elif field.name == "elem":
                 v = ""  # NOTE: for now, html is not included in the JSON
-            elif field.type == bs4.element.Tag:
+            elif field.type == bs4.element.Tag and isinstance(val, str):
                 soup = bs4.BeautifulSoup(val, "html.parser")
-                v = next(soup.children)
-            elif field.type == datetime.datetime:
-                v = datetime.datetime.fromisoformat(val)
+                v = next(soup.children)  # type: ignore
+                # v is a b4 page element, whatever it may be
+            # elif field.type == datetime.datetime:
+            #     v = datetime.datetime.fromisoformat(str(val))
             elif field.type == t.Optional[KeyPath]:
                 v = KeyPath(val)
             else:
                 v = (_get_field_type(field))(val)
             res[field.name] = v
-        return cls(**res)
+        dataclass_instance = cls(**res)
+        # assert isinstance(dataclass_instance, DataclassInstance)
+        return dataclass_instance
 
 
 @dataclasses.dataclass
@@ -181,13 +174,17 @@ class MetadataTableDatapoint(DatapointBase):
 
     kwargs: dict[str, str]
 
-    def to_json(self) -> dict[str, str | int | bool, None]:
+    # def to_json(self) -> dict[str, str | int | bool | None]:
+    def to_json(self) -> dict[str, PrimitiveValues]:
         "Converts the dataclass obj to a dict with str/int/bool as values."
         return {"pk": self.pk, "kwargs": json.dumps(self.kwargs, default=str)}
 
+    # def from_json(cls: t.Type[T], json_data: dict[str, str | int | bool | None]) -> T:
     @classmethod
-    def from_json(cls: t.Type[T], json_data: dict[str, str | int | bool, None]) -> T:
-        return cls(pk=json_data["pk"], kwargs=json.loads(json_data["kwargs"]))
+    def from_json(cls: t.Type[T], json_data: dict[str, PrimitiveValues]) -> T:
+        return cls(
+            **{"pk": json_data["pk"], "kwargs": json.loads(str(json_data["kwargs"]))}
+        )
 
 
 @dataclasses.dataclass
@@ -218,7 +215,7 @@ class AssetDatapoint(DatapointBase):
     target: str
     is_color: bool | None
     is_ready: bool
-    is_on_paper: bool = dataclasses.field(default=None)
+    is_on_paper: bool = dataclasses.field(default=False)
 
     def __post_init__(self):
         if self.medium:
@@ -401,6 +398,32 @@ class CitationItemDatapoint(DatapointBase):
     #     return getattr(self, name)
 
 
+type DatapointUnion = t.Union[
+    AssetDatapoint,
+    HeadingDatapoint,
+    RefDatapoint,
+    TargetDatapoint,
+    SubstitutionDatapoint,
+    CitationGroupDatapoint,
+    CitationItemDatapoint,
+    MetadataTableDatapoint,
+]
+
+
+class DocumentMetadataAsDict(t.TypedDict):
+    assets: list[AssetDatapoint]
+    metadata_tables: list[MetadataTableDatapoint]
+    headings: list[HeadingDatapoint]
+    refs: list[RefDatapoint]
+    targets: list[TargetDatapoint]
+    substitutions: list[SubstitutionDatapoint]
+    citation_groups: list[CitationGroupDatapoint]
+    citation_items: list[CitationItemDatapoint]
+
+
+type DocumentMetadataSerialized = dict[str, list[dict[str, PrimitiveValues]]]
+
+
 class DocumentMetadata:
     """
     Collection of records (lists of dictionaries) about:
@@ -471,8 +494,7 @@ class DocumentMetadata:
     add_citation_item = functools.partialmethod(add, "citation_items")
     get_citation_item = functools.partialmethod(get, "citation_items")
 
-    def to_dict(self) -> dict[str, list[dict[str, AcceptedValues]]]:
-        # NOTE: metadata_tables is not present, as it mostly repeats assets
+    def to_dict(self) -> DocumentMetadataAsDict:
         return {
             "assets": self.assets,
             "metadata_tables": self.metadata_tables,
@@ -484,7 +506,8 @@ class DocumentMetadata:
             "citation_items": self.citation_items,
         }
 
-    def to_json(self) -> dict[str, list[dict[str, t.Union[str, t.Union[str, int]]]]]:
+    # def to_json(self) -> dict[str, list[dict[str, PrimitiveValues]]]:
+    def to_json(self) -> DocumentMetadataSerialized:
         return {
             "assets": [rec.to_json() for rec in self.assets],
             "metadata_tables": [rec.to_json() for rec in self.metadata_tables],
@@ -496,7 +519,8 @@ class DocumentMetadata:
             "citation_items": [rec.to_json() for rec in self.citation_items],
         }
 
-    def from_json(self, jsml: dict[str, RecordsUnion]) -> None:
+    # def from_json(self, jsml: dict[str, list[dict[str, PrimitiveValues]]]) -> None:
+    def from_json(self, jsml: DocumentMetadataSerialized) -> None:
         self.assets = [AssetDatapoint.from_json(rec) for rec in jsml.get("assets", [])]
         self.metadata_tables = [
             MetadataTableDatapoint.from_json(rec)

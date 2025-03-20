@@ -6,7 +6,7 @@ import typing as t
 try:
     from constants import DYNAMODB_AUDIT_TBL, DYNAMODB_ALERTS_TBL
 except (ImportError, ModuleNotFoundError):
-    from .constants import DYNAMODB_AUDIT_TBL, DYNAMODB_ALERTS_TBL
+    from .constants import DYNAMODB_AUDIT_TBL, DYNAMODB_ALERTS_TBL  # type: ignore
 
 
 class AuditStatus(enum.Enum):

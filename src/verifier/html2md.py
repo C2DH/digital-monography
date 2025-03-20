@@ -181,7 +181,7 @@ class MystMdConverter(markdownify.MarkdownConverter):
     def convert_iframe(
         self, el: bs4.element.Tag, text: str, convert_as_inline: bool
     ) -> str:
-        src = el.get("src")
+        src: str = el.get("src", "")
         if src and src.startswith("https:/") and not src.startswith("https://"):
             el["src"] = src.replace("https:/", "https://")
         if src and src.startswith("http:/") and not src.startswith("http://"):
