@@ -3,6 +3,12 @@ import boto3
 import json
 import logging
 from mypy_boto3_s3.client import S3Client as boto3_S3Client
+from aws_lambda_powertools.utilities.typing import LambdaContext
+from aws_lambda_powertools.utilities.data_classes import (
+    event_source,
+    APIGatewayProxyEventV2,
+)
+
 
 try:
     from constants import (
@@ -34,7 +40,8 @@ logger.setLevel(logging.INFO)
 s3: boto3_S3Client = boto3.client("s3")
 
 
-def lambda_handler(event, context):
+@event_source(data_class=APIGatewayProxyEventV2)
+def lambda_handler(event: APIGatewayProxyEventV2, context: LambdaContext):
     encoded_key = event["queryStringParameters"]["key"]
     one_day_in_seconds = 86_400
     bucket = _get_s3_bucket_name(event["queryStringParameters"]["type"])

@@ -3,6 +3,8 @@
 -r src/verifier/requirements.txt
 -r src/github/requirements.txt
 -r src/builder/requirements.txt
+-r src/gpu/requirements.txt
+-r src/wordprocessor/requirements.txt
 
 # testing
 pytest==7.4.*
