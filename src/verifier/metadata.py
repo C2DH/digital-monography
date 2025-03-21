@@ -15,7 +15,11 @@ import functools
 import pathlib
 import typing as t
 import uuid
-from _typeshed import DataclassInstance
+
+if t.TYPE_CHECKING:
+    from _typeshed import DataclassInstance
+else:
+    DataclassInstance = None
 
 
 try:

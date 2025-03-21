@@ -16,7 +16,7 @@ try:
         VERIFIER_MSGS,
     )
 except (ImportError, ModuleNotFoundError):
-    from .constants import (
+    from .constants import (  # type: ignore
         APKG_UPLOAD_BUCKET_NAME,
         BE_PATH_ASSET_METADATA,
         # BE_PATH_ASSET_UPLOAD,
