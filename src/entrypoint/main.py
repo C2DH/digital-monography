@@ -1,4 +1,4 @@
-import aws_lambda_wsgi
+# import aws_lambda_wsgi
 import base64
 import boto3
 import datetime
@@ -42,6 +42,7 @@ except (ImportError, ModuleNotFoundError):
         DYNAMODB_TOKENS_TBL,
         VERIFIER_MSGS,
     )
+    from .lambda_wsgi import response as lambda_wsgi_response  # type: ignore
 
 
 if IS_DEBUG:
@@ -427,4 +428,4 @@ def dynamodb_get(tbl: str, pk: dict[str, str]) -> dict[str, t.Any]:
 def lambda_handler(event, context):
     logger.info(f"Event: {json.dumps(event, default=str)}")
     logger.info(f"Context: {json.dumps(context, default=str)}")
-    return aws_lambda_wsgi.response(app, event, context)
+    return lambda_wsgi_response(app, event, context)
