@@ -65,6 +65,7 @@ The platform consists of the following microservices (Lambda functions):
 | **github**        | false | Pushes the processed documents to GitHub remote repository. |
 | **builder**       | true  | Runs Jupyter Book to build a book out of processed documents. |
 | **gpu**           | false | Generates pre-signed url from private S3 bucket. |
+| **wordprocessor** | false | Transforms docx files for the paper version. |
 
 Deployment of each microservice should be done in order:
 

@@ -23,6 +23,11 @@ test/prep:
 test/run:
 	DGTMON_DEBUG=1 python -m pytest tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
 
+typecheck:
+	mypy src/entrypoint/ --check-untyped-defs
+	mypy src/gpu/ --check-untyped-defs
+	mypy src/wordprocessor/ --check-untyped-defs
+
 test:
 	DGTMON_DEBUG=1 python -m pytest tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
 

@@ -2,7 +2,7 @@
 import base64
 import boto3
 import datetime
-import dropbox
+import dropbox  # type: ignore[import-untyped]
 import flask  # TODO: consider replacing flask with something microVM specific (fastapi? bottle?)
 import hashlib
 import hmac
@@ -51,7 +51,9 @@ except (ImportError, ModuleNotFoundError):
     from .lambda_wsgi import response as lambda_wsgi_response  # type: ignore
 
 from mypy_boto3_dynamodb.client import DynamoDBClient as boto3_DynamoDBClient
-from mypy_boto3_dynamodb.type_defs import GetItemOutputTypeDef as boto3_GetItemOutputTypeDef
+from mypy_boto3_dynamodb.type_defs import (
+    GetItemOutputTypeDef as boto3_GetItemOutputTypeDef,
+)
 from mypy_boto3_s3.client import S3Client as boto3_S3Client
 from mypy_boto3_s3.type_defs import ObjectTypeDef as boto3_ObjectTypeDef
 from mypy_boto3_sqs import SQSClient as boto3_SQSClient
