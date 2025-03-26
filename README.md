@@ -15,9 +15,9 @@ The development cycle is based on release cycles 4 months each. The direction of
 
 ## CI/CD pipeline status
 
-| Branch  | Status |
-| ------- | ------ |
-|   main  | [![pipeline status](https://gitlab.com/uniluxembourg/c2dh/private/degruyter/digital-monography/badges/main/pipeline.svg)](https://gitlab.com/uniluxembourg/c2dh/private/degruyter/digital-monography/-/commits/main) |
+| Branch  | Status                                                                                                                                                                                                                     |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| main    | [![pipeline status](https://gitlab.com/uniluxembourg/c2dh/private/degruyter/digital-monography/badges/main/pipeline.svg)](https://gitlab.com/uniluxembourg/c2dh/private/degruyter/digital-monography/-/commits/main)       |
 | develop | [![pipeline status](https://gitlab.com/uniluxembourg/c2dh/private/degruyter/digital-monography/badges/develop/pipeline.svg)](https://gitlab.com/uniluxembourg/c2dh/private/degruyter/digital-monography/-/commits/develop) |
 
 ## Design principles
@@ -35,13 +35,13 @@ The development cycle is based on release cycles 4 months each. The direction of
 
 The project consists of the following main software components.
 
-| Name | Layer | Description |
-| ---- | ----- | ----------- |
-| [pipeline](src/) | BL | Microservices that process input manuscript, verify it, and build output for other apps to use. The pipeline includes multiple micro services that are described below. |
-| [mammoth](https://github.com/kaminski-pawel/python-mammoth) | BL | Python library for transforming `.docx` into markdown. |
-| [CI/CD pipeline](./.gitlab-ci.yml) | DevOps | Set of scripts for applying changes to the infrastructure. |
-| [dashboard](staticws/dashboard/) | UI | Dashboard with tools for authors and editors to help their work on the manuscript. |
-| [reader](staticws/reader/) | UI | Copy of degruyter.com website to show how the digital books can be integrated with de Gruyter's platform. |
+| Name                                                        | Layer  | Description                                                                                                                                                             |
+| ----------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [pipeline](src/)                                            | BL     | Microservices that process input manuscript, verify it, and build output for other apps to use. The pipeline includes multiple micro services that are described below. |
+| [mammoth](https://github.com/kaminski-pawel/python-mammoth) | BL     | Python library for transforming `.docx` into markdown.                                                                                                                  |
+| [CI/CD pipeline](./.gitlab-ci.yml)                          | DevOps | Set of scripts for applying changes to the infrastructure.                                                                                                              |
+| [dashboard](staticws/dashboard/)                            | UI     | Dashboard with tools for authors and editors to help their work on the manuscript.                                                                                      |
+| [reader](staticws/reader/)                                  | UI     | Copy of degruyter.com website to show how the digital books can be integrated with de Gruyter's platform.                                                               |
 
 ![architecture_abstract](./arch_abstract.svg)
 
@@ -56,26 +56,26 @@ For the full architecture see [the instructions on generating an infrastrucutre 
 The architecture attempts to follow the pattern of `... -> s3 upload -> Lambda invoke -> s3 upload -> ...`. Sometimes an upload to s3 can and should invoke multiple Lambda functions. It can be also advantageous to have an SQS queue as a part of the chain. This allows for a modular design, which brings some benefits with it.
 
 The platform consists of the following microservices (Lambda functions):
-| Name              | In VPC? | Description |
-| ---               | ---   | --- |
-| **entrypoint**    | false | Opens up REST endpoints, incl. OAuth and webhooks to integrate with Dropbox. |
-| **dropbox**       | false | Calls Dropbox API to retrieve files from Dropbox and writes them to s3. |
-| **preparer**      | true  | Does all the transformations of the files in the author package. |
-| **verifier**      | true  | Checks the author package against the verification rules. |
-| **github**        | false | Pushes the processed documents to GitHub remote repository. |
-| **builder**       | true  | Runs Jupyter Book to build a book out of processed documents. |
-| **gpu**           | false | Generates pre-signed url from private S3 bucket. |
-| **wordprocessor** | false | Transforms docx files for the paper version. |
+| Name              | In VPC? | Description                                                                  |
+| ----------------- | ------- | ---------------------------------------------------------------------------- |
+| **entrypoint**    | false   | Opens up REST endpoints, incl. OAuth and webhooks to integrate with Dropbox. |
+| **dropbox**       | false   | Calls Dropbox API to retrieve files from Dropbox and writes them to s3.      |
+| **preparer**      | true    | Does all the transformations of the files in the author package.             |
+| **verifier**      | true    | Checks the author package against the verification rules.                    |
+| **github**        | false   | Pushes the processed documents to GitHub remote repository.                  |
+| **builder**       | true    | Runs Jupyter Book to build a book out of processed documents.                |
+| **gpu**           | false   | Generates pre-signed url from private S3 bucket.                             |
+| **wordprocessor** | false   | Transforms docx files for the paper version.                                 |
 
 Deployment of each microservice should be done in order:
 
-| Order | Stage name    | Command               | Description |
-| ---   | ---           | ---                   | --- |
-| 1     | **version**   | `vim .versions.json`  | In `.versions.json` appropriately increment a _stable_ version number of a microservice you've made changes to in the `src/<microservice>` dir |
-| 2     | **apply**     | `git push`            | As you push your changes to GitLab, the CI/CD pipeline is run, including deployment of changes to the infrastructure; if the _stable_ version changed in the `.versions.json`, the Docker container will be updated on the cloud |
-| 3     | **build**     | `make <microservice>/build` | Builds Docker image |
-| 4     | **tag**       | `make <microservice>/tag`   | Tags the image with a tag specified in `.versions.json` |
-| 5     | **push**      | `make <microservice>/push`  | Pushes the image to docker registry (remember to login to the registry with `make login`) |
+| Order | Stage name  | Command                     | Description                                                                                                                                                                                                                      |
+| ----- | ----------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | **version** | `vim .versions.json`        | In `.versions.json` appropriately increment a _stable_ version number of a microservice you've made changes to in the `src/<microservice>` dir                                                                                   |
+| 2     | **apply**   | `git push`                  | As you push your changes to GitLab, the CI/CD pipeline is run, including deployment of changes to the infrastructure; if the _stable_ version changed in the `.versions.json`, the Docker container will be updated on the cloud |
+| 3     | **build**   | `make <microservice>/build` | Builds Docker image                                                                                                                                                                                                              |
+| 4     | **tag**     | `make <microservice>/tag`   | Tags the image with a tag specified in `.versions.json`                                                                                                                                                                          |
+| 5     | **push**    | `make <microservice>/push`  | Pushes the image to docker registry (remember to login to the registry with `make login`)                                                                                                                                        |
 
 `make <microservice>/push` is a useful alias for builing, tagging and pushing a particular microservice. Note that there is a **race condition** - docker container has to be built, tagged and pushed before the apply stage pulls the image from registry. If CI/CD pipeline job fails with error `Source image <registry>/<image>:<tag> does not exist. Provide a valid source image.` re-run that job. Make sure that you had built, tagged and pushed the image in question.
 
@@ -251,6 +251,16 @@ When adding a new Lambda function (a new microservice), please follow these step
 1. Push the git repository to remote
 1. Build, tag and push the new image to the container registry (see `Makefile`).
 1. Retry the GitLab job.
+
+## Linting and type checking
+
+### Type cheching
+
+To run type check use `make typecheck` function. You can also run `mypy src/<microservice>/` to run the type checker directly on a given microservice.
+
+### Linting
+
+We use flake8 for linting. Run `flake8 src/<microservice>/` to run the linting script. 
 
 ## Sundry
 
