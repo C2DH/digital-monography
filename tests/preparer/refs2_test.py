@@ -193,6 +193,38 @@ class TestRefDatapointsCreated:
             == "https://web.archive.org/web/20250101004557/http:/example.com/"
         )
 
+    def test_substitution_fig1(self):
+        subst = next(
+            subst
+            for subst in self.multidocs_meta[self.fp_a.stem].substitutions
+            if subst.pk == "f01aref177042490"
+        )
+        assert subst.was == "1"
+        assert subst.item_type == "fig"
+
+    def test_substitution_tbl1(self):
+        subst = next(
+            subst
+            for subst in self.multidocs_meta[self.fp_a.stem].substitutions
+            if subst.pk == "f01aref177044323"
+        )
+        assert subst.was == "1"
+        assert subst.item_type == "tbl"
+
+    # def test_substitution_figRedSquare_bookmark_from_ref(self):
+    #     subst = next(
+    #         subst
+    #         for subst in self.multidocs_meta[self.fp_a.stem].substitutions
+    #         if subst.pk == "02bdocxf02bfigredsquare"
+    #     )
+    #     assert subst.was == ""
+    #     assert subst.item_type == "fig"
+
+    def test_testing(self):
+        for s in self.meta_a.substitutions:
+            print(s)
+        assert 1 == 666
+
     # def test_testing(self):
     #     print(">>> LEN=", len(self.multidocs_meta[self.fp_a.stem].refs))
     #     for ref in self.multidocs_meta[self.fp_a.stem].refs:

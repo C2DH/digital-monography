@@ -210,15 +210,17 @@ def _extract_anchor_tags(
 
 
 def _get_item_type(caption: bs4.element.Tag) -> str:
-    caption_match = re.match(r"^\s*(\w+) (\d+):\s*", caption.text)
+    caption_match = re.match(r"^\s*(\w+) (\d+)", caption.text)
     if caption_match is not None:
         item = caption_match.group(1)
+        item = item.lower() if item else item
     else:
         return CAPTION_ITEM_TYPE_OTHER
     item_types_mapping = {
         "fig": CAPTION_ITEM_TYPE_FIGURE,
         "figure": CAPTION_ITEM_TYPE_FIGURE,
         "table": CAPTION_ITEM_TYPE_TABLE,
+        "tbl": CAPTION_ITEM_TYPE_TABLE,
         "graph": CAPTION_ITEM_TYPE_GRAPH,
     }
     if item not in item_types_mapping.keys():
@@ -303,7 +305,7 @@ def prepare_references(
                         pk=link.unique_id,
                         was=link.text_to_replace,
                         placeholder=link.unique_id,
-                        item_type="",  # item_type,
+                        item_type="nul",
                     )
                 )
     return html_soup
