@@ -90,9 +90,23 @@ def _is_whole_paragraph_only_for_digital(p: docx.text.paragraph.Paragraph) -> bo
         ...
     ```
     """
-    highlights: list[docx.oxml.text.font.CT_Highlight] = []
-    highlights = p._element.xpath(".//w:pPr/w:rPr/w:highlight")
-    return len(highlights) == 1 and COLOR_DIGITAL_ONLY in highlights[0].values()
+    # check highlights in paragraph properties
+    highlights = set()
+    _highlights: list[docx.oxml.text.font.CT_Highlight] = []
+    _highlights = p._element.xpath(".//w:pPr/w:rPr/w:highlight")
+    for h in _highlights:
+        highlights.update(h.values())
+    if len(highlights) == 1 and COLOR_DIGITAL_ONLY in highlights:
+        return True
+    # check highlights in properties of all runs in the paragraph
+    highlights = set()
+    for run in p.runs:
+        if run.element.rPr is not None and run.element.rPr.highlight is not None:
+            highlights.update(run.element.rPr.highlight.values())
+    if len(highlights) == 1 and COLOR_DIGITAL_ONLY in highlights:
+        return True
+    # else
+    return False
 
 
 def _remove_whole_paragraph(p: docx.text.paragraph.Paragraph) -> None:
