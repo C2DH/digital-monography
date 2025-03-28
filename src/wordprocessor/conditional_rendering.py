@@ -1,6 +1,7 @@
 import docx.document
 import docx.shared
 import docx.styles.style
+import docx.text.hyperlink
 import docx.text.paragraph
 import docx.text.run
 import docx.oxml.text.font
@@ -30,7 +31,10 @@ def remove_parts_and_highlights_due_to_conditional_rendering(
             continue
 
         for hyperlink in p.hyperlinks:
+            prev_text = hyperlink.text
             _handle_highlights_in_runs(hyperlink.runs)
+            _remove_hyperlink(p, hyperlink, prev_text)
+
         for r in p.runs:
             if (r.element.rPr is None) or (r.element.rPr.highlight is None):
                 continue
@@ -117,6 +121,17 @@ def _remove_whole_paragraph(p: docx.text.paragraph.Paragraph) -> None:
     par_parent.remove(par)
     par._p = None
     par._element = None
+
+
+def _remove_hyperlink(
+    p: docx.text.paragraph.Paragraph,
+    hyperlink: docx.text.hyperlink.Hyperlink,
+    prev_text: str,
+) -> None:
+    """Without explicit xml node removal, hyperlinks come back after refresh."""
+    if hyperlink.text == "" and prev_text != "":
+        p._element.remove(hyperlink._element)
+        hyperlink._element = None
 
 
 def _handle_highlights_in_runs(
