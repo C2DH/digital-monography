@@ -118,6 +118,5 @@ def _handle_highlights_in_runs(
                 el_to_clear.clear()
             else:
                 r.clear()
-            break
         elif COLOR_PAPER_ONLY in r.element.rPr.highlight.values():
             r.element.rPr._remove_highlight()
