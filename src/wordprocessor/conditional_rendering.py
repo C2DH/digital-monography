@@ -131,7 +131,7 @@ def _remove_hyperlink(
     """Without explicit xml node removal, hyperlinks come back after refresh."""
     if hyperlink.text == "" and prev_text != "":
         p._element.remove(hyperlink._element)
-        hyperlink._element = None
+        hyperlink._element = None  # type: ignore[assignment]
 
 
 def _handle_highlights_in_runs(
