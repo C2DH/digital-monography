@@ -68,79 +68,79 @@ def lambda_handler() -> tuple[docx.document.Document, dict[str, DocumentMetadata
     return doc, book_metadata
 
 
-def prepare_references(
-    doc: docx.document.Document, book_metadata: dict[str, DocumentMetadata]
-):
-    return
-    for child in doc.paragraphs[0].runs[13].element.getchildren():
-        if isinstance(child, docx.oxml.text.run.CT_Text):
-            print("child.text", child.text)
-            child.text = "666"
-            print("child.text", child.text)
-    return
+# def prepare_references(
+#     doc: docx.document.Document, book_metadata: dict[str, DocumentMetadata]
+# ):
+#     return
+#     for child in doc.paragraphs[0].runs[13].element.getchildren():
+#         if isinstance(child, docx.oxml.text.run.CT_Text):
+#             print("child.text", child.text)
+#             child.text = "666"
+#             print("child.text", child.text)
+#     return
 
-    ##### refs
+#     ##### refs
 
-    doc.paragraphs[0].hyperlinks[0].fragment == "_Heading"
-    doc.paragraphs[0].hyperlinks[0].text == "Link to direct heading"
-    doc.paragraphs[0].hyperlinks[0].address == ""
-    doc.paragraphs[0].hyperlinks[0].url == ""
+#     doc.paragraphs[0].hyperlinks[0].fragment == "_Heading"
+#     doc.paragraphs[0].hyperlinks[0].text == "Link to direct heading"
+#     doc.paragraphs[0].hyperlinks[0].address == ""
+#     doc.paragraphs[0].hyperlinks[0].url == ""
 
-    # check if you can replace _r with element, should be the same obj
-    doc.paragraphs[0].runs[3]._r.keys()[0].endswith("rsidR")
-    doc.paragraphs[0].runs[3]._r.values() == ["002D78BD"]
-    doc.paragraphs[0].runs[3]._r.getchildren()[0].values() == ["begin"]
-    doc.paragraphs[0].runs[3]._r.getchildren()[0].tag.endswith("fldChar")
-    doc.paragraphs[0].runs[3]._r.getchildren()[0].text == ""
+#     # check if you can replace _r with element, should be the same obj
+#     doc.paragraphs[0].runs[3]._r.keys()[0].endswith("rsidR")
+#     doc.paragraphs[0].runs[3]._r.values() == ["002D78BD"]
+#     doc.paragraphs[0].runs[3]._r.getchildren()[0].values() == ["begin"]
+#     doc.paragraphs[0].runs[3]._r.getchildren()[0].tag.endswith("fldChar")
+#     doc.paragraphs[0].runs[3]._r.getchildren()[0].text == ""
 
-    doc.paragraphs[0].runs[4]._r.keys()[0].endswith("rsidR")
-    doc.paragraphs[0].runs[4]._r.values() == ["002D78BD"]
-    doc.paragraphs[0].runs[4]._r.getchildren()[0].text == r" REF _Ref193896300 \h "
-    doc.paragraphs[0].runs[4]._r.getchildren()[0].values() == ["preserve"]
-    doc.paragraphs[0].runs[4]._r.getchildren()[0].tag.endswith("instrText")
-    doc.paragraphs[0].runs[4]._r.getchildren()[0].text == ""
+#     doc.paragraphs[0].runs[4]._r.keys()[0].endswith("rsidR")
+#     doc.paragraphs[0].runs[4]._r.values() == ["002D78BD"]
+#     doc.paragraphs[0].runs[4]._r.getchildren()[0].text == r" REF _Ref193896300 \h "
+#     doc.paragraphs[0].runs[4]._r.getchildren()[0].values() == ["preserve"]
+#     doc.paragraphs[0].runs[4]._r.getchildren()[0].tag.endswith("instrText")
+#     doc.paragraphs[0].runs[4]._r.getchildren()[0].text == ""
 
-    doc.paragraphs[0].runs[5]._r.keys()[0].endswith("rsidR")
-    doc.paragraphs[0].runs[5]._r.values() == ["002D78BD"]
-    doc.paragraphs[0].runs[5]._r.getchildren()[0].values() == ["separate"]
-    doc.paragraphs[0].runs[5]._r.getchildren()[0].tag.endswith("fldChar")
-    doc.paragraphs[0].runs[5]._r.getchildren()[0].text == ""
+#     doc.paragraphs[0].runs[5]._r.keys()[0].endswith("rsidR")
+#     doc.paragraphs[0].runs[5]._r.values() == ["002D78BD"]
+#     doc.paragraphs[0].runs[5]._r.getchildren()[0].values() == ["separate"]
+#     doc.paragraphs[0].runs[5]._r.getchildren()[0].tag.endswith("fldChar")
+#     doc.paragraphs[0].runs[5]._r.getchildren()[0].text == ""
 
-    doc.paragraphs[0].runs[6]._r.keys()[0].endswith("rsidR")
-    doc.paragraphs[0].runs[6]._r.values() == ["002D78BD"]
-    doc.paragraphs[0].runs[6]._r.getchildren()[0].text == "Heading"
+#     doc.paragraphs[0].runs[6]._r.keys()[0].endswith("rsidR")
+#     doc.paragraphs[0].runs[6]._r.values() == ["002D78BD"]
+#     doc.paragraphs[0].runs[6]._r.getchildren()[0].text == "Heading"
 
-    doc.paragraphs[0].runs[7]._r.keys()[0].endswith("rsidR")
-    doc.paragraphs[0].runs[7]._r.values() == ["002D78BD"]
-    doc.paragraphs[0].runs[7]._r.getchildren()[0].values() == ["end"]
-    doc.paragraphs[0].runs[7]._r.getchildren()[0].tag.endswith("fldChar")
-    doc.paragraphs[0].runs[7]._r.getchildren()[0].text == ""
+#     doc.paragraphs[0].runs[7]._r.keys()[0].endswith("rsidR")
+#     doc.paragraphs[0].runs[7]._r.values() == ["002D78BD"]
+#     doc.paragraphs[0].runs[7]._r.getchildren()[0].values() == ["end"]
+#     doc.paragraphs[0].runs[7]._r.getchildren()[0].tag.endswith("fldChar")
+#     doc.paragraphs[0].runs[7]._r.getchildren()[0].text == ""
 
-    doc.paragraphs[0].runs[9]._r.keys()[0].endswith("rsidR")
-    doc.paragraphs[0].runs[9]._r.values() == ["00602226"]
-    doc.paragraphs[0].runs[9]._r.getchildren()[0].values() == ["begin"]
-    doc.paragraphs[0].runs[9]._r.getchildren()[0].tag.endswith("fldChar")
-    doc.paragraphs[0].runs[9]._r.getchildren()[0].text == ""
+#     doc.paragraphs[0].runs[9]._r.keys()[0].endswith("rsidR")
+#     doc.paragraphs[0].runs[9]._r.values() == ["00602226"]
+#     doc.paragraphs[0].runs[9]._r.getchildren()[0].values() == ["begin"]
+#     doc.paragraphs[0].runs[9]._r.getchildren()[0].tag.endswith("fldChar")
+#     doc.paragraphs[0].runs[9]._r.getchildren()[0].text == ""
 
-    doc.paragraphs[0].runs[10]._r.keys()[0].endswith("rsidR")
-    doc.paragraphs[0].runs[10]._r.values() == ["00602226"]
-    doc.paragraphs[0].runs[10]._r.getchildren()[0].values() == ["preserve"]
-    doc.paragraphs[0].runs[10]._r.getchildren()[0].tag.endswith("fldChar")
-    doc.paragraphs[0].runs[10]._r.getchildren()[0].text == r" REF _Ref193903648 \h "
+#     doc.paragraphs[0].runs[10]._r.keys()[0].endswith("rsidR")
+#     doc.paragraphs[0].runs[10]._r.values() == ["00602226"]
+#     doc.paragraphs[0].runs[10]._r.getchildren()[0].values() == ["preserve"]
+#     doc.paragraphs[0].runs[10]._r.getchildren()[0].tag.endswith("fldChar")
+#     doc.paragraphs[0].runs[10]._r.getchildren()[0].text == r" REF _Ref193903648 \h "
 
-    doc.paragraphs[0].runs[10].element.keys()[0].endswith("rsidR")
-    doc.paragraphs[0].runs[10].element.values() == ["00602226"]
-    for child in doc.paragraphs[0].runs[13].element.getchildren():
-        if isinstance(child, docx.oxml.text.run.CT_Text):
-            child.text == "1"  # <== replace txt in ref !!
-        # ref.target_id = "f-ref-n-target-ref193903648"
-        # target.pk = "f-ref-n-target-ref193903648"
-        # target.html = '<data value=" SEQ Table \* ARABIC \">1</data>'
-        # target.text = "1"
-        # substitution.pk = "frefntargetref193903648"
-        # substitution.was = "f-ref-n-target-ref193903648"
+#     doc.paragraphs[0].runs[10].element.keys()[0].endswith("rsidR")
+#     doc.paragraphs[0].runs[10].element.values() == ["00602226"]
+#     for child in doc.paragraphs[0].runs[13].element.getchildren():
+#         if isinstance(child, docx.oxml.text.run.CT_Text):
+#             child.text == "1"  # <== replace txt in ref !!
+#         # ref.target_id = "f-ref-n-target-ref193903648"
+#         # target.pk = "f-ref-n-target-ref193903648"
+#         # target.html = '<data value=" SEQ Table \* ARABIC \">1</data>'
+#         # target.text = "1"
+#         # substitution.pk = "frefntargetref193903648"
+#         # substitution.was = "f-ref-n-target-ref193903648"
 
-    ### targets
+#     ### targets
 
 
 def _read_book_metadata(key: KeyPath) -> dict[str, DocumentMetadata]:
