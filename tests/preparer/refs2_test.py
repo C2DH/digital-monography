@@ -220,9 +220,111 @@ class TestRefDatapointsCreated:
     #     assert subst.was == ""
     #     assert subst.item_type == "fig"
 
+
+class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
+    fp = KeyPath(
+        pathlib.Path("tests") / "_fixtures" / "docx2docx" / "02_assets_and_links.docx"
+    )
+
+    @classmethod
+    def setup_class(cls):
+        cls.multidocs_meta: dict[str, DocumentMetadata] = {}
+        cls.soup, cls.metadata = cls._prepare_docx_for_ref_handing(cls.fp)
+        # cls.multidocs_meta[cls.fp.stem] = cls.meta
+
+    @classmethod
+    def _prepare_docx_for_ref_handing(
+        cls, fp: KeyPath
+    ) -> tuple[bs4.BeautifulSoup, DocumentMetadata]:
+        html_str = _convert_to_html(fp)
+        html_soup = bs4.BeautifulSoup(html_str, "html.parser")
+        metadata = DocumentMetadata(fp)
+        headers, captions, footnotes, references = [], [], [], []
+        classifiers = [
+            (is_header, headers),
+            (is_caption, captions),
+            (is_footnote, footnotes),
+            (is_reference, references),
+        ]
+        for node in html_soup.descendants:
+            for check_if_meets_criteria, container in classifiers:
+                if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
+                    container.append(node)
+        html_soup = prepare_ref_targets_in_headers(html_soup, metadata, headers)
+        html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
+        html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, footnotes)
+        html_soup = prepare_references(html_soup, metadata, references)
+        return html_soup, metadata
+
+    def test_target_for_digital(self):
+        target = self.metadata.get("targets", "f-02-assets-and-links-figfordigital")
+        assert target
+        assert target.text == "1"
+        assert target.is_digital == True
+        assert target.is_paper == False
+
+    def test_target_for_paper(self):
+        target = self.metadata.get("targets", "f-02-assets-and-links-figforpaper")
+        assert target
+        assert target.text == "2"
+        assert target.is_digital == False
+        assert target.is_paper == True
+
+    def test_target_for_digital_and_for_paper(self):
+        target = self.metadata.get(
+            "targets", "f-02-assets-and-links-figfordigitalandpaper"
+        )
+        assert target
+        assert target.text == "3"
+        assert target.is_digital == True
+        assert target.is_paper == True
+
+    def test_substitution_for_digital(self):
+        subs = self.metadata.get("substitutions", "f02assetsandlinksref193102947")
+        assert subs
+        assert subs.was == "1"
+        assert subs.is_digital == True
+        assert subs.is_paper == False
+
+    def test_substitution_for_paper(self):
+        subs = self.metadata.get("substitutions", "f02assetsandlinksref193102988")
+        assert subs
+        assert subs.was == "2"
+        assert subs.is_digital == False
+        assert subs.is_paper == True
+
+    def test_substitution_for_digital_and_for_paper(self):
+        subs = self.metadata.get("substitutions", "f02assetsandlinksref193103002")
+        assert subs
+        assert subs.was == "3"
+        assert subs.is_digital == True
+        assert subs.is_paper == True
+
+    def test_substitution_for_refs(self):
+        assert len(self.metadata.substitutions) == 6  # 3 targets + 3 refs
+        subs = self.metadata.get("substitutions", "f02assetsandlinksfigfordigital")
+        assert subs
+        assert subs.was == "1"
+        assert subs.is_digital == None
+        assert subs.is_paper == None
+        subs = self.metadata.get("substitutions", "f02assetsandlinksfigforpaper")
+        assert subs
+        assert subs.was == "2"
+        assert subs.is_digital == None
+        assert subs.is_paper == None
+        subs = self.metadata.get(
+            "substitutions", "f02assetsandlinksfigfordigitalandpaper"
+        )
+        assert subs
+        assert subs.was == "3"
+        assert subs.is_digital == None
+        assert subs.is_paper == None
+
     def test_testing(self):
-        for s in self.meta_a.substitutions:
-            print(s)
+        # for xxx in self.metadata.targets:
+        for xxx in self.metadata.substitutions:
+            print(xxx)
+            print("-" * 75)
         assert 1 == 666
 
     # def test_testing(self):
