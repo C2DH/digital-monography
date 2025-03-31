@@ -285,6 +285,7 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.was == "1"
         assert subs.is_digital == True
         assert subs.is_paper == False
+        assert subs.file_count == 2
 
     def test_substitution_for_paper(self):
         subs = self.metadata.get("substitutions", "f02assetsandlinksref193102988")
@@ -292,6 +293,7 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.was == "2"
         assert subs.is_digital == False
         assert subs.is_paper == True
+        assert subs.file_count == 2
 
     def test_substitution_for_digital_and_for_paper(self):
         subs = self.metadata.get("substitutions", "f02assetsandlinksref193103002")
@@ -299,9 +301,10 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.was == "3"
         assert subs.is_digital == True
         assert subs.is_paper == True
+        assert subs.file_count == 2
 
     def test_substitution_for_refs(self):
-        assert len(self.metadata.substitutions) == 6  # 3 targets + 3 refs
+        assert len(self.metadata.substitutions) == 7  # 4 targets + 3 refs
         subs = self.metadata.get("substitutions", "f02assetsandlinksfigfordigital")
         assert subs
         assert subs.was == "1"
@@ -319,20 +322,4 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.was == "3"
         assert subs.is_digital == None
         assert subs.is_paper == None
-
-    def test_testing(self):
-        # for xxx in self.metadata.targets:
-        for xxx in self.metadata.substitutions:
-            print(xxx)
-            print("-" * 75)
-        assert 1 == 666
-
-    # def test_testing(self):
-    #     print(">>> LEN=", len(self.multidocs_meta[self.fp_a.stem].refs))
-    #     for ref in self.multidocs_meta[self.fp_a.stem].refs:
-    #         print(ref.text)
-    #         print(ref.href)
-    #         print(ref.prev_string)
-    #         print(ref.prev_href)
-    #         print("-" * 75)
-    #     assert 1 == 222
+        assert subs.file_count == 2

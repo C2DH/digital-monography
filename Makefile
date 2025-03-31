@@ -82,6 +82,7 @@ copy/keys:
 	cp src/_common/keys.py src/wordprocessor/keys.py
 
 copy/metadata:
+	cp src/_common/metadata.py scripts/metadata.py
 	cp src/_common/metadata.py src/preparer/metadata.py
 	cp src/_common/metadata.py src/builder/metadata.py
 	cp src/_common/metadata.py src/verifier/metadata.py

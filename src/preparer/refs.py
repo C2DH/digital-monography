@@ -21,6 +21,8 @@ try:
         CAPTION_ITEM_TYPE_TABLE,
         CAPTION_ITEM_TYPE_GRAPH,
         CAPTION_ITEM_TYPE_OTHER,
+        CLS_DIGITAL_ONLY,
+        CLS_PAPER_ONLY,
     )
 except (ImportError, ModuleNotFoundError):
     from .metadata import (
@@ -36,6 +38,8 @@ except (ImportError, ModuleNotFoundError):
         CAPTION_ITEM_TYPE_TABLE,
         CAPTION_ITEM_TYPE_GRAPH,
         CAPTION_ITEM_TYPE_OTHER,
+        CLS_DIGITAL_ONLY,
+        CLS_PAPER_ONLY,
     )
 
 
@@ -78,11 +82,14 @@ def prepare_ref_targets_in_headers(
                 target_tag.string = link.mystify_target()
                 tag.insert_before(target_tag)
                 anchors.append(child)
+                is_digital, is_paper = _get_isdigital_and_ispaper(tag, "")
                 target = TargetDatapoint(
                     pk=link.id,
                     html=str(tag),
                     text=link.id,
                     elem=str(tag),
+                    is_digital=is_digital,
+                    is_paper=is_paper,
                 )
                 metadata.add_target(target)
         h_lvl = "".join(ch for ch in tag.name if ch.isdigit())
@@ -159,15 +166,20 @@ def prepare_ref_targets_in_captions(
 
         # TODO: maybe there should be some id for the caption
         # to group bookmarks that relate to the same object
+        # breakpoint()
         for a in anchors:
             link = LinkMystifier()
             link.set_filepath(metadata.filepath)
             link.set_from_id(a["id"])
+            identifier = link.id.replace("-", "") if not unique_id else unique_id[0]
+            is_digital, is_paper = _get_isdigital_and_ispaper(caption, identifier)
             target = TargetDatapoint(
                 pk=link.id,
                 html="".join(str(elem) for elem in ref_stack),
                 text=_get_plain_text_numbering(ref_stack),
                 elem=str(caption),
+                is_digital=is_digital,
+                is_paper=is_paper,
             )
             metadata.add_target(target)
             if unique_id and metadata.get_substitution(unique_id[0]) is None:
@@ -177,6 +189,9 @@ def prepare_ref_targets_in_captions(
                         was=target.text,
                         placeholder=unique_id[0],
                         item_type=item_type,
+                        is_digital=is_digital,
+                        is_paper=is_paper,
+                        file_count=metadata.get_chapter_number(),
                     )
                 )
             target_tag = html_soup.new_tag("pre")
@@ -236,6 +251,23 @@ def _get_plain_text_numbering(ref_stack: list[bs4.element.PageElement]) -> str:
         else:
             res += str(el)
     return res
+
+
+def _get_isdigital_and_ispaper(caption: bs4.Tag, identifier: str) -> tuple[bool, bool]:
+    css_classes = [
+        tag.get("class", [])
+        for tag in caption.descendants
+        if isinstance(tag, bs4.element.Tag) and (identifier in tag.text)
+    ]
+    css_classes: list[str] = [item for sublist in css_classes for item in sublist]
+    is_digital = is_paper = True
+    if CLS_DIGITAL_ONLY in css_classes and CLS_PAPER_ONLY in css_classes:
+        is_digital = is_paper = None
+    elif CLS_DIGITAL_ONLY in css_classes:
+        is_paper = False
+    elif CLS_PAPER_ONLY in css_classes:
+        is_digital = False
+    return is_digital, is_paper
 
 
 def prepare_ref_targets_in_footnotes(
@@ -300,12 +332,16 @@ def prepare_references(
                 )
             )
             if link.unique_id and metadata.get_substitution(link.unique_id) is None:
+                # breakpoint()
                 metadata.add_substitution(
                     SubstitutionDatapoint(
                         pk=link.unique_id,
                         was=link.text_to_replace,
                         placeholder=link.unique_id,
-                        item_type="nul",
+                        file_count=metadata.get_chapter_number(),
+                        item_type="ref",
+                        is_digital=None,
+                        is_paper=None,
                     )
                 )
     return html_soup

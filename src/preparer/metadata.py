@@ -220,14 +220,22 @@ class TargetDatapoint(DatapointBase):
     html: str
     text: str
     elem: str
+    is_paper: bool | None
+    is_digital: bool | None
 
 
 @dataclasses.dataclass
 class SubstitutionDatapoint(DatapointBase):
     was: str
+    file_count: int | None
+    # item_count: int | None
+    is_digital: bool | None
+    is_paper: bool | None
     placeholder: str
+    # to_digital: str
+    # to_paper: str
     # make sure that literal options are equal to constants.CAPTION_ITEM_TYPE_*
-    item_type: t.Literal["fig", "tbl", "graph", "nul"]
+    item_type: t.Literal["fig", "tbl", "graph", "nul", "ref"]
     # TODO: for now item_type doesn't do anything, but it can be crucial e.g. for
     # adding counting numbers of figures and tables upon substitution
 
