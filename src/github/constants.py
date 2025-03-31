@@ -73,11 +73,13 @@ BE_PATH_REF_METADATA = "refs-metadata"
 # python-mammoth options
 COLOR_DIGITAL_ONLY = "lightGray"
 COLOR_PAPER_ONLY = "cyan"
+CLS_DIGITAL_ONLY = "dgt-mon-digital-only"
+CLS_PAPER_ONLY = "dgt-mon-paper-only"
 MAMMOTH_STYLE_MAP = f"""
 p[style-name='Quote'] => blockquote:fresh
 p[style-name='Caption'] => p.dgt-mon-caption:fresh
-highlight[color='{COLOR_DIGITAL_ONLY}'] => span.dgt-mon-digital-only
-highlight[color='{COLOR_PAPER_ONLY}'] => span.dgt-mon-paper-only
+highlight[color='{COLOR_DIGITAL_ONLY}'] => span.{CLS_DIGITAL_ONLY}
+highlight[color='{COLOR_PAPER_ONLY}'] => span.{CLS_PAPER_ONLY}
 """
 # html classes
 CLS_METADATA_TABLE = "dgt-mon-metadata-table"
@@ -88,6 +90,7 @@ CAPTION_ITEM_TYPE_FIGURE = "fig"
 CAPTION_ITEM_TYPE_TABLE = "tbl"
 CAPTION_ITEM_TYPE_GRAPH = "graph"
 CAPTION_ITEM_TYPE_OTHER = "oth"
+CAPTION_ALLOWED_ITEMS = ["figure", "fig", "table", "graph"]
 # metadata fields
 FIELD_DIGITAL_SOURCE = "digitalinput"
 FIELD_PAPER_SOURCE = "paperinput"
