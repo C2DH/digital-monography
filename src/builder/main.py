@@ -224,7 +224,8 @@ def _prepare_config(key: KeyPath) -> None:
     for metadata in metadatas.values():
         metadata: DocumentMetadata
         # TODO:
-        file_no = _get_file_number(metadata.filepath.stem)
+        # file_no = _get_file_number(metadata.filepath.stem)
+        file_no = metadata.get_chapter_number()
         for dp in metadata.substitutions:
             dp: SubstitutionDatapoint
             if not dp.was.isdigit() and not _is_roman_numeral(dp.was):
@@ -232,7 +233,7 @@ def _prepare_config(key: KeyPath) -> None:
             elif dp.was and not file_no:
                 substitutions[dp.placeholder] = dp.was
             elif dp.was:
-                substitutions[dp.placeholder] = file_no + "." + dp.was
+                substitutions[dp.placeholder] = str(file_no) + "." + dp.was
     try:
         config["sphinx"]["config"]["myst_substitutions"] = substitutions
     except KeyError:
@@ -243,19 +244,6 @@ def _prepare_config(key: KeyPath) -> None:
         config["sphinx"]["config"]["myst_substitutions"] = substitutions
     with open(key.efs_slug_dir / "_config.yml", "w") as f:
         yaml.dump(config, f)
-
-
-def _get_file_number(filename: str) -> str:
-    """Extract '1' from file name '01_book_chapter'."""
-    number = ""
-    for ch in filename:
-        if number and not ch.isdigit():
-            return number
-        elif number == "" and ch == "0":
-            pass
-        elif ch.isdigit():
-            number += ch
-    return number
 
 
 def _is_roman_numeral(was: str) -> bool:
@@ -464,7 +452,7 @@ def _read_book_metadata(key: KeyPath) -> dict[str, DocumentMetadata]:
 
 
 def _connect_assets_to_references_to_assets(
-    book_metadata: dict[str, DocumentMetadata]
+    book_metadata: dict[str, DocumentMetadata],
 ) -> None:
     """
     Find asset id for each reference to asset in the book.
@@ -557,7 +545,7 @@ def _write_assets_info_to_s3(
 
 
 def _verify_book(
-    book_metadata: dict[KeyPath, DocumentMetadata]
+    book_metadata: dict[KeyPath, DocumentMetadata],
 ) -> list[dict[str, str]]:
     # TODO: stop repeating metadata parsing after _prepare_config()
     # the only difference is just stem str vs pathlib path
