@@ -15,6 +15,7 @@ from mypy_boto3_dynamodb.client import DynamoDBClient as boto3_DynamoDBClient
 
 try:
     from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
+    from conditional_rendering import is_paper_only, remove_paper_only
     from constants import (
         ModuleEnum,
         # ARCHIVE_APKG_ALL,
@@ -56,6 +57,7 @@ try:
     from fakers import Faker
 except (ImportError, ModuleNotFoundError):
     from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
+    from .conditional_rendering import is_paper_only, remove_paper_only
     from .constants import (
         ModuleEnum,
         # ARCHIVE_APKG_ALL,
@@ -141,6 +143,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     citations = []
     footnotes = []
     references = []
+    paper_only = []
     key = _get_key(event)
     src = _get_source_bucket(event)
     _download_fileobj(src, key)
@@ -164,6 +167,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
             (is_caption, captions),
             (is_footnote, footnotes),
             (is_reference, references),
+            (is_paper_only, paper_only),
         ]
         """
         Before applying the processing, this subprocedure traverses the tree
@@ -181,6 +185,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, footnotes)
         html_soup = prepare_references(html_soup, metadata, references)
         html_soup = prepare_metadata_tables(html_soup, metadata, tables)
+        html_soup = remove_paper_only(html_soup, metadata, paper_only)
         html_soup = remove_empty_tables(html_soup, metadata, tables)
         html_soup = prepare_alt_texts(html_soup, metadata, images_with_alttxt)
 
