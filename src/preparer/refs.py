@@ -313,6 +313,15 @@ def prepare_references(
         elif _is_target_footnote(a_tag):
             pass
         else:
+            if _check_if_link_marked_as_paper_only(a_tag):
+                # a_tag.extract()
+                tag_class = a_tag.get("class", [])
+                tag_class.append(CLS_PAPER_ONLY)
+                a_tag["class"] = tag_class
+                # print("REMOVE: ", a_tag)
+
+            # print("a_tag", a_tag)
+
             link = LinkMystifier()
             link.set_filepath(metadata.filepath)
             link.set_from_href(a_tag["href"])
@@ -358,6 +367,32 @@ def _is_ref_footnote(a_tag: bs4.element.Tag) -> bool:
 
 def _is_target_footnote(a_tag: bs4.element.Tag) -> bool:
     return bool(a_tag.attrs.get("href", "").startswith("#footnote-ref-"))
+
+
+def _check_if_link_marked_as_paper_only(a_tag: bs4.Tag) -> bool:
+    """
+    The way it is implemented now, "paper-only" css class will mark only
+    descendants of the hyperlink tag and not the hyperlink tag itself.
+    `<a href="https://example.com"><span class="dgt-mon-paper-only">text</span></a>`
+    This is because in OOXML, highlight is a property of runs inside of hyperlink tag,
+    while the hyperlink tag itself is not considered highlited. This enables .docx users
+    to have different highlights in the same hyperlink element, but requires additional
+    processing from the preparer microservice.
+
+    To mitigate that, iterate over descendents and check if all of them are marked
+    as paper-only.
+    """
+    res = set()
+    for tag in a_tag.descendants:
+        if isinstance(tag, bs4.Tag) and tag.get("class", []) == [CLS_PAPER_ONLY]:
+            res.add(True)
+        elif isinstance(tag, bs4.NavigableString):
+            pass
+        else:
+            res.add(False)
+    if not res:
+        return False
+    return all(res)
 
 
 class LinkMystifier:

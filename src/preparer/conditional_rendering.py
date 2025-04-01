@@ -22,4 +22,12 @@ def remove_paper_only(
     """
     for tag in paper_only:
         tag.extract()
+    """
+    Note the refs.prepare_references() function marks hyperlinks with paper_only class
+    AFTER the whole html tree is traversed to find all paper_only elements.
+    """
+    for a_tag in html_soup.find_all("a", {"class": CLS_PAPER_ONLY}):
+        if isinstance(a_tag, bs4.Tag):
+            a_tag.extract()
+
     return html_soup
