@@ -22,6 +22,7 @@ try:
         CAPTION_ITEM_TYPE_TABLE,
         CAPTION_ITEM_TYPE_GRAPH,
         CAPTION_ITEM_TYPE_OTHER,
+        CLS_CAPTION,
     )
     from local_constants import RECOGNIZED_LICENSE_NAMES
     from path_handler import PathHandler, SUPPORTED_SUFFIXES
@@ -41,6 +42,7 @@ except (ImportError, ModuleNotFoundError):
         CAPTION_ITEM_TYPE_TABLE,
         CAPTION_ITEM_TYPE_GRAPH,
         CAPTION_ITEM_TYPE_OTHER,
+        CLS_CAPTION,
     )
     from .local_constants import RECOGNIZED_LICENSE_NAMES
     from .path_handler import PathHandler, SUPPORTED_SUFFIXES
@@ -186,7 +188,8 @@ class HtmlVerifier:
                     self._headings_lvls.append(int(re.findall(r"\d+", child.name)[0]))
                 elif child.name == "a":
                     self._links.append(child)
-                elif "dgt-mon-caption" in child.attrs.get("class", []):
+                # elif "dgt-mon-caption" in child.attrs.get("class", []):
+                elif CLS_CAPTION in child.attrs.get("class", []):
                     self._captions.append(child)
                 elif child.name == "table" and CLS_METADATA_TABLE in child.attrs.get(
                     "class", []
@@ -537,7 +540,8 @@ class HtmlVerifier:
 
     def _check_cap_many_bookmarks(self, tag: bs4.element.Tag) -> list[str]:
         ref_nums = []
-        if "dgt-mon-caption" in tag.get("class", []):
+        # if "dgt-mon-caption" in tag.get("class", []):
+        if CLS_CAPTION in tag.get("class", []):
             for child in tag.children:
                 if child.name == "a" and child.get("id", "").startswith("_Ref"):
                     ref_nums.append(child.get("id", ""))
@@ -603,7 +607,8 @@ class HtmlVerifier:
                 prev = prev.previous_sibling
             else:
                 break
-        if prev and "dgt-mon-caption" in prev.get("class", []):
+        # if prev and "dgt-mon-caption" in prev.get("class", []):
+        if prev and CLS_CAPTION in prev.get("class", []):
             return False
         return True
 

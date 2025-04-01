@@ -21,6 +21,7 @@ try:
         CAPTION_ITEM_TYPE_TABLE,
         CAPTION_ITEM_TYPE_GRAPH,
         CAPTION_ITEM_TYPE_OTHER,
+        CLS_CAPTION,
         CLS_DIGITAL_ONLY,
         CLS_PAPER_ONLY,
     )
@@ -38,6 +39,7 @@ except (ImportError, ModuleNotFoundError):
         CAPTION_ITEM_TYPE_TABLE,
         CAPTION_ITEM_TYPE_GRAPH,
         CAPTION_ITEM_TYPE_OTHER,
+        CLS_CAPTION,
         CLS_DIGITAL_ONLY,
         CLS_PAPER_ONLY,
     )
@@ -49,7 +51,8 @@ def is_header(tag: bs4.element.Tag) -> bool:
 
 def is_caption(tag: bs4.element.Tag) -> bool:
     # "p", {"class": "dgt-mon-caption"}
-    return bool(tag.name == "p" and "dgt-mon-caption" in tag.attrs.get("class", []))
+    # return bool(tag.name == "p" and "dgt-mon-caption" in tag.attrs.get("class", []))
+    return bool(tag.name == "p" and CLS_CAPTION in tag.attrs.get("class", []))
 
 
 def is_footnote(tag: bs4.element.Tag) -> bool:

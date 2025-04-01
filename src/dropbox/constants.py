@@ -75,9 +75,10 @@ COLOR_DIGITAL_ONLY = "lightGray"
 COLOR_PAPER_ONLY = "cyan"
 CLS_DIGITAL_ONLY = "dgt-mon-digital-only"
 CLS_PAPER_ONLY = "dgt-mon-paper-only"
+CLS_CAPTION = "dgt-mon-caption"
 MAMMOTH_STYLE_MAP = f"""
 p[style-name='Quote'] => blockquote:fresh
-p[style-name='Caption'] => p.dgt-mon-caption:fresh
+p[style-name='Caption'] => p.{CLS_CAPTION}:fresh
 highlight[color='{COLOR_DIGITAL_ONLY}'] => span.{CLS_DIGITAL_ONLY}
 highlight[color='{COLOR_PAPER_ONLY}'] => span.{CLS_PAPER_ONLY}
 """
