@@ -151,8 +151,8 @@ def _read_book_metadata(key: KeyPath) -> dict[str, DocumentMetadata]:
     Similar to the src/builder/main/_read_book_metadata function
     """
     book_metadata: dict[str, DocumentMetadata] = {}
-    # for meta_file in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
-    for meta_file in (key / "_metadata").glob("**/*.json"):
+    # for meta_file in (key / "_metadata").glob("**/*.json"):
+    for meta_file in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
         with meta_file.open("r") as f:
             metadata = DocumentMetadata(meta_file)
             try:

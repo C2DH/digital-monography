@@ -44,6 +44,7 @@ from src.wordprocessor.conditional_rendering import (
 from src.wordprocessor.constants import MAMMOTH_STYLE_MAP
 from src.wordprocessor.main import _read_book_metadata
 from src.wordprocessor.keys import KeyPath
+from src.wordprocessor.captions_numbering import add_chapter_number_to_captions
 from src.preparer.html2md import convert_to_md
 
 
@@ -65,7 +66,9 @@ class TestWordprocessor:
             cls.before_md = convert_to_md(cls.before_soup)
         # wordprocessor
         cls.doc = docx.Document(cls.key)
+        cls.metadata = cls.book_metadata["02_assets_and_links"]
         remove_parts_and_highlights_due_to_conditional_rendering(cls.doc)
+        add_chapter_number_to_captions(cls.doc, cls.metadata)
         file_stream = io.BytesIO()
         cls.doc.save(file_stream)
         file_stream.seek(0)
@@ -129,3 +132,24 @@ class TestWordprocessor:
         assert len(before_link.span.get("class")) == 1
         assert before_link.span.get("class")[0] == "dgt-mon-paper-only"
         assert after_link.span is None
+
+    def test_targets_in_captions_with_added_chapter_numbers(self):
+        # Figure 1 removed during conditional rendering
+        assert "**Figure 2.1:** Drawing" not in self.before_md
+        assert "**Figure 2.1:** Drawing" not in self.after_md
+        assert "**Figure 1:** Drawing" not in self.after_md
+
+        assert "**Figure 2:** Image" in self.before_md
+        assert "**Figure 2.2:** Image" not in self.before_md
+        assert "**Figure 2.2:** Image" in self.after_md
+        assert "**Figure 2:** Image" not in self.after_md
+
+        assert "**Figure 3:** An example" in self.before_md
+        assert "**Figure 2.3:** An example" not in self.before_md
+        assert "**Figure 2.3:** An example" in self.after_md
+        assert "**Figure 3:** An example" not in self.after_md
+
+        assert "**Figure 4:** Target" in self.before_md
+        assert "**Figure 2.4:** Target" not in self.before_md
+        assert "**Figure 2.4:** Target" in self.after_md
+        assert "**Figure 4:** Target" not in self.after_md
