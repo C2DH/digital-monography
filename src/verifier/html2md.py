@@ -6,14 +6,16 @@
 # using Makefile commands, as the copy command is already included.
 # ======================
 import bs4
-import markdownify
+import markdownify  # type: ignore
 import re
 import typing as t
 
 try:
+    from constants import CLS_DIGITAL_ONLY
     from metadata import DocumentMetadata
 except (ImportError, ModuleNotFoundError):
-    from .metadata import DocumentMetadata
+    from .constants import CLS_DIGITAL_ONLY
+    from .metadata import DocumentMetadata  # type: ignore
 
 
 line_beginning_re = re.compile(r"^", re.MULTILINE)
@@ -43,6 +45,8 @@ def sub_inline_conversion(markup_fn):
 class MystMdConverter(markdownify.MarkdownConverter):
 
     def __init__(self, metadata: t.Optional[DocumentMetadata], **options):
+        if metadata is None:
+            metadata = DocumentMetadata()
         self._metadata: DocumentMetadata = metadata
         self._soup = bs4.BeautifulSoup("", "html.parser")
         super().__init__(**options)
@@ -112,6 +116,9 @@ class MystMdConverter(markdownify.MarkdownConverter):
     def convert_span(self, el, text, convert_as_inline):
         if text.startswith("% :::{") and text.endswith(":::"):
             return "\n%s\n\n" % text
+        # elif el.get("class") == "dgt-mon-digital-only":
+        elif CLS_DIGITAL_ONLY in el.get("class", []):
+            return text
         return super().convert_p(el, text, convert_as_inline)
 
     def convert_pre(self, el, text, convert_as_inline):
@@ -181,11 +188,12 @@ class MystMdConverter(markdownify.MarkdownConverter):
     def convert_iframe(
         self, el: bs4.element.Tag, text: str, convert_as_inline: bool
     ) -> str:
-        src: str = el.get("src", "")
-        if src and src.startswith("https:/") and not src.startswith("https://"):
-            el["src"] = src.replace("https:/", "https://")
-        if src and src.startswith("http:/") and not src.startswith("http://"):
-            el["src"] = src.replace("http:/", "http://")
+        src = el.get("src")
+        if isinstance(src, str):
+            if src and src.startswith("https:/") and not src.startswith("https://"):
+                el["src"] = src.replace("https:/", "https://")
+            if src and src.startswith("http:/") and not src.startswith("http://"):
+                el["src"] = src.replace("http:/", "http://")
         return "\n\n<html>%s</html>\n\n" % str(el)
 
     def convert_script(self, el, text, convert_as_inline):

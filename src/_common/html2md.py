@@ -11,8 +11,10 @@ import re
 import typing as t
 
 try:
+    from constants import CLS_DIGITAL_ONLY
     from metadata import DocumentMetadata
 except (ImportError, ModuleNotFoundError):
+    from .constants import CLS_DIGITAL_ONLY
     from .metadata import DocumentMetadata  # type: ignore
 
 
@@ -114,6 +116,8 @@ class MystMdConverter(markdownify.MarkdownConverter):
     def convert_span(self, el, text, convert_as_inline):
         if text.startswith("% :::{") and text.endswith(":::"):
             return "\n%s\n\n" % text
+        elif CLS_DIGITAL_ONLY in el.get("class", []):
+            return text
         return super().convert_p(el, text, convert_as_inline)
 
     def convert_pre(self, el, text, convert_as_inline):
