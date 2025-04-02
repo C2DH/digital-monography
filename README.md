@@ -22,9 +22,10 @@ The development cycle is based on release cycles 4 months each. The direction of
 
 ## Design principles
 
-* Sustainability is the highest priority of this project. Books should be hosted as static web pages without a need for dedicated servers. When possible, websites related to the project, like the dashboard, should not require any application logic on the server-side after web pages are built.
+* Sustainability is the highest priority of this project. Books should be hosted as static web pages without a need for dedicated servers. When possible, websites related to the project, like the reader or the dashboard, should not require any application logic on the server-side after web pages are built.
 * The functionality of the code should be guessable just by looking at `src/<microservice>/main.py` module. The details of implementing this functionality can be hidden in other modules in this microservice.
 * Code shared between microservices should be writen and stored in `src/_common/<filename>.py` files and copied to the microservices that use it with a command specified in the `Makefile` file.
+* The state of the pipeline (state resulting from processing a manuscript) should be shared using the "metadata" object. For example, if you want to pass some information from the Preparer microservice to the Builder Microservice, you should store it in appropriate record in `metadata.DocumentMetadata` in Preparer and load from this object in Builder. Metadata is saved in multiple places for conveniance, e.g. in the database, as json files in the file storage shared between microservices and as json in `<scripts>` tag in html.
 * Rely on features of MS Word for `.docx` input, JupyterLab/Notebook for `.ipynb` input and on JupyterBook/Sphinx-doc for output as much as possible.
 * Target MyST specification rather that bespoke solutions.
 * The deployment is steered by the `git push` command ran in the develop or master branches. Note however that the code of the microservices is pulled by the infrastructure from the docker image repository, so the developer has to point to the proper version number in `.versions.json` and push an image tagged with this version before the CI/CD pipeline tries to pull the image from the repo.
@@ -69,13 +70,13 @@ The platform consists of the following microservices (Lambda functions):
 
 Deployment of each microservice should be done in order:
 
-| Order | Stage name  | Command                     | Description                                                                                                                                                                                                                      |
-| ----- | ----------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1     | **version** | `vim .versions.json`        | In `.versions.json` appropriately increment a _stable_ version number of a microservice you've made changes to in the `src/<microservice>` dir                                                                                   |
+| Order | Stage name  | Command | Description |
+| ----- | ----------- | ------- | ----------- |
+| 1     | **version** | `vim .versions.json`        | In `.versions.json` appropriately increment a _stable_ version number of a microservice you've made changes to in the `src/<microservice>` dir |
 | 2     | **apply**   | `git push`                  | As you push your changes to GitLab, the CI/CD pipeline is run, including deployment of changes to the infrastructure; if the _stable_ version changed in the `.versions.json`, the Docker container will be updated on the cloud |
-| 3     | **build**   | `make <microservice>/build` | Builds Docker image                                                                                                                                                                                                              |
-| 4     | **tag**     | `make <microservice>/tag`   | Tags the image with a tag specified in `.versions.json`                                                                                                                                                                          |
-| 5     | **push**    | `make <microservice>/push`  | Pushes the image to docker registry (remember to login to the registry with `make login`)                                                                                                                                        |
+| 3     | **build**   | `make <microservice>/build` | Builds Docker image |
+| 4     | **tag**     | `make <microservice>/tag`   | Tags the image with a tag specified in `.versions.json` |
+| 5     | **push**    | `make <microservice>/push`  | Pushes the image to docker registry (remember to login to the registry with `make login`) |
 
 `make <microservice>/push` is a useful alias for builing, tagging and pushing a particular microservice. Note that there is a **race condition** - docker container has to be built, tagged and pushed before the apply stage pulls the image from registry. If CI/CD pipeline job fails with error `Source image <registry>/<image>:<tag> does not exist. Provide a valid source image.` re-run that job. Make sure that you had built, tagged and pushed the image in question.
 
