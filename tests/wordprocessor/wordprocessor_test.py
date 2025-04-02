@@ -45,6 +45,7 @@ from src.wordprocessor.constants import MAMMOTH_STYLE_MAP
 from src.wordprocessor.main import _read_book_metadata
 from src.wordprocessor.keys import KeyPath
 from src.wordprocessor.captions_numbering import add_chapter_number_to_captions
+from src.wordprocessor.remove_images import remove_images
 from src.preparer.html2md import convert_to_md
 
 
@@ -69,6 +70,7 @@ class TestWordprocessor:
         cls.metadata = cls.book_metadata["02_assets_and_links"]
         remove_parts_and_highlights_due_to_conditional_rendering(cls.doc)
         add_chapter_number_to_captions(cls.doc, cls.metadata)
+        remove_images(cls.doc, cls.metadata)
         file_stream = io.BytesIO()
         cls.doc.save(file_stream)
         file_stream.seek(0)
@@ -153,3 +155,9 @@ class TestWordprocessor:
         assert "**Figure 2.4:** Target" not in self.before_md
         assert "**Figure 2.4:** Target" in self.after_md
         assert "**Figure 4:** Target" not in self.after_md
+
+    def test_remove_images(self):
+        imgs = self.before_soup.find_all("img")
+        assert len(imgs) == 4
+        imgs = self.after_soup.find_all("img")
+        assert len(imgs) == 0
