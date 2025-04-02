@@ -114,13 +114,13 @@ def _is_whole_paragraph_only_for_digital(p: docx.text.paragraph.Paragraph) -> bo
 
 
 def _remove_whole_paragraph(p: docx.text.paragraph.Paragraph) -> None:
-    par: docx.oxml.text.paragraph.CT_P = p._element
-    assert isinstance(par, docx.oxml.text.paragraph.CT_P)
-    par_parent: docx.oxml.document.CT_Body = par.getparent()
-    assert isinstance(par_parent, docx.oxml.document.CT_Body)
-    par_parent.remove(par)
-    par._p = None
-    par._element = None
+    p_elem: docx.oxml.text.paragraph.CT_P = p._element
+    assert isinstance(p_elem, docx.oxml.text.paragraph.CT_P)
+    p_parent: docx.oxml.document.CT_Body = p_elem.getparent()
+    assert isinstance(p_parent, docx.oxml.document.CT_Body)
+    p_parent.remove(p_elem)
+    p_elem._p = None
+    p_elem._element = None
 
 
 def _remove_hyperlink(

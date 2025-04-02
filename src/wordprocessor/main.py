@@ -13,12 +13,14 @@ try:
     from captions_numbering import add_chapter_number_to_captions
     from metadata import DocumentMetadata
     from keys import KeyPath
+    from remove_images import remove_images
 except (ImportError, ModuleNotFoundError):
     from .constants import IS_DEBUG  # type: ignore
     from .conditional_rendering import remove_parts_and_highlights_due_to_conditional_rendering  # type: ignore
     from .captions_numbering import add_chapter_number_to_captions  # type: ignore
     from .metadata import DocumentMetadata  # type: ignore
     from .keys import KeyPath  # type: ignore
+    from .remove_images import remove_images  # type: ignore
 
 
 parser = argparse.ArgumentParser(description="...")
@@ -65,6 +67,9 @@ def lambda_handler() -> tuple[docx.document.Document, dict[str, DocumentMetadata
 
     # add_chapter_number(doc, book_metadata)
     # _merge_docs(key, book_metadata)
+
+    remove_images(doc, metadata)
+
     return doc, book_metadata
 
 
