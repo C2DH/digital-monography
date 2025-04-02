@@ -18,8 +18,8 @@ from src.builder.verif_book import RefsAndTargetsVerifier
 
 
 class TestRefsAndTargetsVerifier:
-    fp_a = KeyPath(pathlib.Path("tests") / "_fixtures" / "refs" / "01_a.docx")
-    fp_b = KeyPath(pathlib.Path("tests") / "_fixtures" / "refs" / "02_b.docx")
+    fp_a = KeyPath(pathlib.Path("tests") / "_fixtures" / "a_book" / "01_a.docx")
+    fp_b = KeyPath(pathlib.Path("tests") / "_fixtures" / "a_book" / "02_b.docx")
 
     @classmethod
     def setup_class(cls):

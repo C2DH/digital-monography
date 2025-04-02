@@ -51,7 +51,7 @@ from src.preparer.html2md import convert_to_md
 
 class TestWordprocessor:
     key = KeyPath(
-        pathlib.Path("/tmp") / "efs" / "docx2docx" / "02_assets_and_links.docx"
+        pathlib.Path("/tmp") / "efs" / "a_book" / "05_conditional_rendering.docx"
     )
 
     @classmethod
@@ -67,7 +67,7 @@ class TestWordprocessor:
             cls.before_md = convert_to_md(cls.before_soup)
         # wordprocessor
         cls.doc = docx.Document(cls.key)
-        cls.metadata = cls.book_metadata["02_assets_and_links"]
+        cls.metadata = cls.book_metadata["05_conditional_rendering"]
         remove_parts_and_highlights_due_to_conditional_rendering(cls.doc)
         add_chapter_number_to_captions(cls.doc, cls.metadata)
         remove_images(cls.doc, cls.metadata)
@@ -137,23 +137,23 @@ class TestWordprocessor:
 
     def test_targets_in_captions_with_added_chapter_numbers(self):
         # Figure 1 removed during conditional rendering
-        assert "**Figure 2.1:** Drawing" not in self.before_md
-        assert "**Figure 2.1:** Drawing" not in self.after_md
+        assert "**Figure 5.1:** Drawing" not in self.before_md
+        assert "**Figure 5.1:** Drawing" not in self.after_md
         assert "**Figure 1:** Drawing" not in self.after_md
 
         assert "**Figure 2:** Image" in self.before_md
-        assert "**Figure 2.2:** Image" not in self.before_md
-        assert "**Figure 2.2:** Image" in self.after_md
+        assert "**Figure 5.2:** Image" not in self.before_md
+        assert "**Figure 5.2:** Image" in self.after_md
         assert "**Figure 2:** Image" not in self.after_md
 
         assert "**Figure 3:** An example" in self.before_md
-        assert "**Figure 2.3:** An example" not in self.before_md
-        assert "**Figure 2.3:** An example" in self.after_md
+        assert "**Figure 5.3:** An example" not in self.before_md
+        assert "**Figure 5.3:** An example" in self.after_md
         assert "**Figure 3:** An example" not in self.after_md
 
         assert "**Figure 4:** Target" in self.before_md
-        assert "**Figure 2.4:** Target" not in self.before_md
-        assert "**Figure 2.4:** Target" in self.after_md
+        assert "**Figure 5.4:** Target" not in self.before_md
+        assert "**Figure 5.4:** Target" in self.after_md
         assert "**Figure 4:** Target" not in self.after_md
 
     def test_remove_images(self):

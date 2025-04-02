@@ -21,7 +21,7 @@ from src.preparer.refs import (
 
 class TestConditionalRendering:
     fp = KeyPath(
-        pathlib.Path("/tmp") / "efs" / "docx2docx" / "02_assets_and_links.docx"
+        pathlib.Path("/tmp") / "efs" / "a_book" / "05_conditional_rendering.docx"
     )
 
     @classmethod
@@ -110,7 +110,8 @@ class TestConditionalRendering:
     def test_removal_of_hyperlink(self):
         should_exist = self.before_soup.find("a", href="#figForPaper")
         should_not_exist = self.after_soup.find(
-            "a", href="#f-02-assets-and-links-figforpaper"
+            "a",
+            href="#f-05-conditional-rendering-figforpaper",
         )
         assert should_exist is not None
         assert should_exist.text == "link to figForPaper bookmark"

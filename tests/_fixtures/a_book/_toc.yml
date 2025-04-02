@@ -1,0 +1,8 @@
+format: jb-book
+root: 00_index
+chapters:
+  - file: 01_a
+  - file: 02_b
+  - file: 03_c
+  - file: 04_d
+  - file: 05_conditional_rendering

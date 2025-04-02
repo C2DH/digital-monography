@@ -17,8 +17,8 @@ from src.preparer.keys import KeyPath
 
 
 class TestRefDatapointsCreated:
-    fp_a = KeyPath(pathlib.Path("tests") / "_fixtures" / "refs" / "01_a.docx")
-    fp_b = KeyPath(pathlib.Path("tests") / "_fixtures" / "refs" / "02_b.docx")
+    fp_a = KeyPath(pathlib.Path("tests") / "_fixtures" / "a_book" / "01_a.docx")
+    fp_b = KeyPath(pathlib.Path("tests") / "_fixtures" / "a_book" / "02_b.docx")
 
     @classmethod
     def setup_class(cls):
@@ -223,7 +223,7 @@ class TestRefDatapointsCreated:
 
 class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
     fp = KeyPath(
-        pathlib.Path("tests") / "_fixtures" / "docx2docx" / "02_assets_and_links.docx"
+        pathlib.Path("tests") / "_fixtures" / "a_book" / "05_conditional_rendering.docx"
     )
 
     @classmethod
@@ -257,14 +257,16 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         return html_soup, metadata
 
     def test_target_for_digital(self):
-        target = self.metadata.get("targets", "f-02-assets-and-links-figfordigital")
+        target = self.metadata.get(
+            "targets", "f-05-conditional-rendering-figfordigital"
+        )
         assert target
         assert target.text == "1"
         assert target.is_digital == True
         assert target.is_paper == False
 
     def test_target_for_paper(self):
-        target = self.metadata.get("targets", "f-02-assets-and-links-figforpaper")
+        target = self.metadata.get("targets", "f-05-conditional-rendering-figforpaper")
         assert target
         assert target.text == "2"
         assert target.is_digital == False
@@ -272,7 +274,7 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
 
     def test_target_for_digital_and_for_paper(self):
         target = self.metadata.get(
-            "targets", "f-02-assets-and-links-figfordigitalandpaper"
+            "targets", "f-05-conditional-rendering-figfordigitalandpaper"
         )
         assert target
         assert target.text == "3"
@@ -280,46 +282,48 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert target.is_paper == True
 
     def test_substitution_for_digital(self):
-        subs = self.metadata.get("substitutions", "f02assetsandlinksref193102947")
+        subs = self.metadata.get("substitutions", "f05conditionalrenderingref193102947")
         assert subs
         assert subs.was == "1"
         assert subs.is_digital == True
         assert subs.is_paper == False
-        assert subs.file_count == 2
+        assert subs.file_count == 5
 
     def test_substitution_for_paper(self):
-        subs = self.metadata.get("substitutions", "f02assetsandlinksref193102988")
+        subs = self.metadata.get("substitutions", "f05conditionalrenderingref193102988")
         assert subs
         assert subs.was == "2"
         assert subs.is_digital == False
         assert subs.is_paper == True
-        assert subs.file_count == 2
+        assert subs.file_count == 5
 
     def test_substitution_for_digital_and_for_paper(self):
-        subs = self.metadata.get("substitutions", "f02assetsandlinksref193103002")
+        subs = self.metadata.get("substitutions", "f05conditionalrenderingref193103002")
         assert subs
         assert subs.was == "3"
         assert subs.is_digital == True
         assert subs.is_paper == True
-        assert subs.file_count == 2
+        assert subs.file_count == 5
 
     def test_substitution_for_refs(self):
         assert len(self.metadata.substitutions) == 7  # 4 targets + 3 refs
-        subs = self.metadata.get("substitutions", "f02assetsandlinksfigfordigital")
+        subs = self.metadata.get(
+            "substitutions", "f05conditionalrenderingfigfordigital"
+        )
         assert subs
         assert subs.was == "1"
         assert subs.is_digital == None
         assert subs.is_paper == None
-        subs = self.metadata.get("substitutions", "f02assetsandlinksfigforpaper")
+        subs = self.metadata.get("substitutions", "f05conditionalrenderingfigforpaper")
         assert subs
         assert subs.was == "2"
         assert subs.is_digital == None
         assert subs.is_paper == None
         subs = self.metadata.get(
-            "substitutions", "f02assetsandlinksfigfordigitalandpaper"
+            "substitutions", "f05conditionalrenderingfigfordigitalandpaper"
         )
         assert subs
         assert subs.was == "3"
         assert subs.is_digital == None
         assert subs.is_paper == None
-        assert subs.file_count == 2
+        assert subs.file_count == 5

@@ -1,0 +1,36 @@
+title: "Examples of book contents"
+author: Pawel Kaminski
+copyright: "2024"
+
+repository:
+  url: https://github.com/kaminski-pawel/book-content-examples
+html:
+  use_repository_button: true
+  use_issues_button: true
+
+execute:
+  execute_notebooks: off
+
+parse:
+  myst_enable_extensions:
+    - attrs_block
+    - attrs_inline
+    - substitution
+    - colon_fence
+
+sphinx:
+  config: # key-value pairs to directly over-ride the Sphinx configuration
+    language: en
+    myst_heading_anchors: 6
+    myst_substitutions:
+        f\\-01\\-a\\-ref177044323: LLLLLLLLLLL
+        f\-01\-a\-ref177044323: XXXXXXXXXXXXXX
+        f-01-a-ref177044323: YYYYYYYYYYYY
+        f01aref177044323: WWWWWWWWWWWWWWWWW
+        testing: 888888888888
+        slug-with-hyphens: 9999999999
+        slugwithouthyphens: 444444444
+        02_b.docx\#f02btblsimpletable: uuuuuuuuuuuuuuuuu
+
+
+

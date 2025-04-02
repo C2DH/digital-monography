@@ -11,25 +11,27 @@ AWS_KMS_ARN = 'arn:aws:kms:eu-west-1:367031255351:key/34644061-6a4d-4414-b0e4-90
 DOCKER_ECR = 367031255351.dkr.ecr.eu-west-1.amazonaws.com
 DOCKER_HUB = c2dhunilu
 
+test/copy:
+	# rm -r tests/_fixtures/a_book/
+	cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/a_book/' tests/_fixtures/
 
 test/prep:
-	cp '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/links/01_a.docx' tests/_fixtures/refs/01_a.docx
-	cp '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/links/02_b.docx' tests/_fixtures/refs/02_b.docx
+	# echo 'maybe book-content-examples dir can be better utilized'
 	cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/book-content-examples/' tests/_fixtures/
-	# rm -r tests/_fixtures/docx2docx/
-	cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/docx2docx/' tests/_fixtures/
-	DGTMON_NO_WAIT=1 python scripts/prepare_and_build.py book_path="tests/_fixtures/docx2docx/"
+	DGTMON_NO_WAIT=1 python scripts/prepare_and_build.py book_path="tests/_fixtures/a_book/"
 
 test/run:
 	DGTMON_DEBUG=1 python -m pytest tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
+
+test:
+	DGTMON_DEBUG=1 python -m pytest tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
+
+test/make: test/copy test/prep test/run
 
 typecheck:
 	mypy src/entrypoint/ --check-untyped-defs
 	mypy src/gpu/ --check-untyped-defs
 	mypy src/wordprocessor/ --check-untyped-defs
-
-test:
-	DGTMON_DEBUG=1 python -m pytest tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
 
 login:
 	aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin ${DOCKER_ECR}
