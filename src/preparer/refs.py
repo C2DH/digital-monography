@@ -200,11 +200,16 @@ def prepare_ref_targets_in_captions(
                     SubstitutionDatapoint(
                         pk=unique_id[0],
                         was=target.text,
-                        placeholder=unique_id[0],
-                        item_type=item_type,
+                        placeholder=target.pk,
+                        # placeholder=unique_id[0],
+                        # item_type=item_type,
+                        item_type=target.item_type,
                         is_digital=is_digital,
                         is_paper=is_paper,
                         file_count=metadata.get_chapter_number(),
+                        # new
+                        prefix=target.prefix,
+                        prev_item_num=target.prev_item_num,
                     )
                 )
             target_tag = html_soup.new_tag("pre")
@@ -342,28 +347,30 @@ def prepare_references(
             prev_href = a_tag["href"]
             a_tag.string = link_text
             a_tag["href"] = link_dest
-            metadata.add_ref(
-                RefDatapoint(
-                    target_id=target.pk if target else "",
-                    fn=metadata.filepath.name,
-                    text=link_text,
-                    href=link_dest,
-                    prev_string=prev_string,
-                    prev_href=prev_href,
-                    elem=str(a_tag.parent),
-                )
+            ref = RefDatapoint(
+                target_id=target.pk if target else "",
+                fn=metadata.filepath.name,
+                text=link_text,
+                href=link_dest,
+                prev_string=prev_string,
+                prev_href=prev_href,
+                elem=str(a_tag.parent),
             )
+            metadata.add_ref(ref)
             if link.unique_id and metadata.get_substitution(link.unique_id) is None:
                 # breakpoint()
                 metadata.add_substitution(
                     SubstitutionDatapoint(
                         pk=link.unique_id,
                         was=link.text_to_replace,
-                        placeholder=link.unique_id,
-                        file_count=metadata.get_chapter_number(),
+                        # placeholder=link.unique_id,
+                        placeholder=link.id,
                         item_type="ref",
                         is_digital=None,
                         is_paper=None,
+                        file_count=metadata.get_chapter_number(),
+                        prefix="",
+                        prev_item_num=None,
                     )
                 )
     return html_soup

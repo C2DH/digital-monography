@@ -51,6 +51,7 @@ try:
         is_footnote,
         is_reference,
     )
+    from substitutions_prep import count_targets_for_substitutions
     from html2md import convert_to_md
     from ipynb_prep import tags_to_myst_crossref_targets
     from keys import KeyPath
@@ -93,6 +94,7 @@ except (ImportError, ModuleNotFoundError):
         is_footnote,
         is_reference,
     )
+    from .substitutions_prep import count_targets_for_substitutions
     from .html2md import convert_to_md
     from .ipynb_prep import tags_to_myst_crossref_targets
     from .keys import KeyPath
@@ -155,6 +157,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         # _put_to_archive_s3(key)
         return {"statusCode": 200, "body": ""}
     if key.suffix.lower() == ".docx":
+        # TODO: Move all docx conversion to a separate function, then use it in tests
         html_str = _convert_to_html(key.efs_filepath)
         metadata = DocumentMetadata(key)
         html_soup = bs4.BeautifulSoup(html_str, "html.parser")
@@ -188,6 +191,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_soup = remove_paper_only(html_soup, metadata, paper_only)
         html_soup = remove_empty_tables(html_soup, metadata, tables)
         html_soup = prepare_alt_texts(html_soup, metadata, images_with_alttxt)
+        html_soup = count_targets_for_substitutions(html_soup, metadata)
 
         logger.info("====================================")
         logger.info(f"Looking for {FIELD_DIGITAL_SOURCE}")

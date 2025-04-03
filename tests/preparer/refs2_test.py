@@ -254,7 +254,11 @@ class TestRefDatapointsCreated:
             if subst.pk == "f01aref177042490"
         )
         assert subst.was == "1"
-        assert subst.item_type == "fig"
+        assert subst.item_type == "figure"
+        # assert subst.item_type == "fig"
+        assert subst.file_count == 1
+        assert subst.prefix == ""
+        assert subst.prev_item_num == 1
 
     def test_substitution_tbl1(self):
         subst = next(
@@ -263,7 +267,12 @@ class TestRefDatapointsCreated:
             if subst.pk == "f01aref177044323"
         )
         assert subst.was == "1"
-        assert subst.item_type == "tbl"
+        assert subst.item_type == "table"
+        # assert subst.item_type == "tbl"
+        assert subst.file_count == 1
+        assert subst.prefix == ""
+        assert subst.prefix == ""
+        assert subst.prev_item_num == 1
 
     # def test_substitution_figRedSquare_bookmark_from_ref(self):
     #     subst = next(
@@ -275,20 +284,16 @@ class TestRefDatapointsCreated:
     #     assert subst.item_type == "fig"
 
 
-class TestSubstitutions:
-    fp_a = KeyPath(pathlib.Path("tests") / "_fixtures" / "a_book" / "01_a.docx")
-    fp_b = KeyPath(pathlib.Path("tests") / "_fixtures" / "a_book" / "02_b.docx")
-    # fp = KeyPath(
-    #     pathlib.Path("tests") / "_fixtures" / "a_book" / "05_conditional_rendering.docx"
-    # )
+class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
+    fp = KeyPath(
+        pathlib.Path("tests") / "_fixtures" / "a_book" / "05_conditional_rendering.docx"
+    )
 
     @classmethod
     def setup_class(cls):
         cls.multidocs_meta: dict[str, DocumentMetadata] = {}
-        cls.soup_a, cls.meta_a = cls._prepare_docx_for_ref_handing(cls.fp_a)
-        cls.soup_b, cls.meta_b = cls._prepare_docx_for_ref_handing(cls.fp_b)
-        cls.multidocs_meta[cls.fp_a.stem] = cls.meta_a
-        cls.multidocs_meta[cls.fp_b.stem] = cls.meta_b
+        cls.soup, cls.metadata = cls._prepare_docx_for_ref_handing(cls.fp)
+        # cls.multidocs_meta[cls.fp.stem] = cls.meta
 
     @classmethod
     def _prepare_docx_for_ref_handing(
@@ -313,50 +318,8 @@ class TestSubstitutions:
         html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
         html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, footnotes)
         html_soup = prepare_references(html_soup, metadata, references)
-        # html_soup = prepare_metadata_tables(html_soup, metadata, tables)
         html_soup = remove_paper_only(html_soup, metadata, paper_only)
-        # html_soup = remove_empty_tables(html_soup, metadata, tables)
-        # html_soup = prepare_alt_texts(html_soup, metadata, images_with_alttxt)
         html_soup = count_targets_for_substitutions(html_soup, metadata)
-        return html_soup, metadata
-
-    def test_testing(self):
-        assert False
-
-
-class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
-    fp = KeyPath(
-        pathlib.Path("tests") / "_fixtures" / "a_book" / "05_conditional_rendering.docx"
-    )
-
-    @classmethod
-    def setup_class(cls):
-        cls.multidocs_meta: dict[str, DocumentMetadata] = {}
-        cls.soup, cls.metadata = cls._prepare_docx_for_ref_handing(cls.fp)
-        # cls.multidocs_meta[cls.fp.stem] = cls.meta
-
-    @classmethod
-    def _prepare_docx_for_ref_handing(
-        cls, fp: KeyPath
-    ) -> tuple[bs4.BeautifulSoup, DocumentMetadata]:
-        html_str = _convert_to_html(fp)
-        html_soup = bs4.BeautifulSoup(html_str, "html.parser")
-        metadata = DocumentMetadata(fp)
-        headers, captions, footnotes, references = [], [], [], []
-        classifiers = [
-            (is_header, headers),
-            (is_caption, captions),
-            (is_footnote, footnotes),
-            (is_reference, references),
-        ]
-        for node in html_soup.descendants:
-            for check_if_meets_criteria, container in classifiers:
-                if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
-                    container.append(node)
-        html_soup = prepare_ref_targets_in_headers(html_soup, metadata, headers)
-        html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
-        html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, footnotes)
-        html_soup = prepare_references(html_soup, metadata, references)
         return html_soup, metadata
 
     def test_target_for_digital(self):
@@ -390,7 +353,11 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.was == "1"
         assert subs.is_digital == True
         assert subs.is_paper == False
+        assert subs.item_type == "figure"
         assert subs.file_count == 5
+        assert subs.prefix == ""
+        assert subs.prev_item_num == 1
+        assert subs.new_item_num == 1
 
     def test_substitution_for_paper(self):
         subs = self.metadata.get("substitutions", "f05conditionalrenderingref193102988")
@@ -398,7 +365,11 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.was == "2"
         assert subs.is_digital == False
         assert subs.is_paper == True
+        assert subs.item_type == "figure"
         assert subs.file_count == 5
+        assert subs.prefix == ""
+        assert subs.prev_item_num == 2
+        assert subs.new_item_num == None
 
     def test_substitution_for_digital_and_for_paper(self):
         subs = self.metadata.get("substitutions", "f05conditionalrenderingref193103002")
@@ -406,7 +377,11 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.was == "3"
         assert subs.is_digital == True
         assert subs.is_paper == True
+        assert subs.item_type == "figure"
         assert subs.file_count == 5
+        assert subs.prefix == ""
+        assert subs.prev_item_num == 3
+        assert subs.new_item_num == 2
 
     def test_substitution_for_refs(self):
         assert len(self.metadata.substitutions) == 7  # 4 targets + 3 refs
@@ -417,11 +392,21 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.was == "1"
         assert subs.is_digital == None
         assert subs.is_paper == None
+        assert subs.item_type == "ref"
+        assert subs.file_count == 5
+        assert subs.prefix == ""
+        assert subs.prev_item_num == None
+        assert subs.new_item_num == 1
         subs = self.metadata.get("substitutions", "f05conditionalrenderingfigforpaper")
         assert subs
         assert subs.was == "2"
         assert subs.is_digital == None
         assert subs.is_paper == None
+        assert subs.item_type == "ref"
+        assert subs.file_count == 5
+        assert subs.prefix == ""
+        assert subs.prev_item_num == None
+        assert subs.new_item_num == None
         subs = self.metadata.get(
             "substitutions", "f05conditionalrenderingfigfordigitalandpaper"
         )
@@ -429,4 +414,19 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.was == "3"
         assert subs.is_digital == None
         assert subs.is_paper == None
+        assert subs.item_type == "ref"
         assert subs.file_count == 5
+        assert subs.prefix == ""
+        assert subs.prev_item_num == None
+        assert subs.new_item_num == 2
+
+    # def test_testing(self):
+    #     for target in self.metadata.targets:
+    #         print(target.to_json())
+    #         print("-" * 75)
+    #     print("=" * 75)
+    #     for subs in self.metadata.substitutions:
+    #         if subs.item_type == "ref":
+    #             print(subs.to_json())
+    #             print("-" * 75)
+    #     assert 1 == 666

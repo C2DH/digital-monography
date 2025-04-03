@@ -225,15 +225,16 @@ def _prepare_config(key: KeyPath) -> None:
         metadata: DocumentMetadata
         # TODO:
         # file_no = _get_file_number(metadata.filepath.stem)
-        file_no = metadata.get_chapter_number()
+        # file_no = metadata.get_chapter_number()
         for dp in metadata.substitutions:
             dp: SubstitutionDatapoint
             if not dp.was.isdigit() and not _is_roman_numeral(dp.was):
                 pass
-            elif dp.was and not file_no:
-                substitutions[dp.placeholder] = dp.was
+            elif dp.was and not dp.file_count:
+                substitutions[dp.pk] = dp.was
             elif dp.was:
-                substitutions[dp.placeholder] = str(file_no) + "." + dp.was
+                # substitutions[dp.pk] = f"{dp.file_count}.{dp.prefix}{dp.new_item_num}" # TODO fix
+                substitutions[dp.pk] = str(dp.file_count) + "." + dp.was
     try:
         config["sphinx"]["config"]["myst_substitutions"] = substitutions
     except KeyError:

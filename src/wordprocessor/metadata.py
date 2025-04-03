@@ -232,9 +232,10 @@ class TargetDatapoint(DatapointBase):
     elem: str
     is_paper: bool | None
     is_digital: bool | None
-    item_type: t.Literal["heading", "equation", "figure", "table", ""]
+    item_type: t.Literal["heading", "equation", "figure", "table", ""]  # no "ref"
     prefix: str
     prev_item_num: int | None
+    new_item_num: int | None = None
 
     @staticmethod
     def parse_ref_stack(
@@ -323,17 +324,16 @@ def _roman_to_int(text: str) -> int:
 @dataclasses.dataclass
 class SubstitutionDatapoint(DatapointBase):
     was: str
-    file_count: int | None
-    # item_count: int | None
+    placeholder: str
     is_digital: bool | None
     is_paper: bool | None
-    placeholder: str
-    # to_digital: str
-    # to_paper: str
+    item_type: t.Literal["heading", "equation", "figure", "table", "ref", ""]
+    file_count: int | None
+    prefix: str
+    prev_item_num: int | None
+    new_item_num: int | None = None
     # make sure that literal options are equal to constants.CAPTION_ITEM_TYPE_*
-    item_type: t.Literal["fig", "tbl", "graph", "nul", "ref"]
-    # TODO: for now item_type doesn't do anything, but it can be crucial e.g. for
-    # adding counting numbers of figures and tables upon substitution
+    # item_type: t.Literal["fig", "tbl", "graph", "nul", "ref"]
 
 
 @dataclasses.dataclass

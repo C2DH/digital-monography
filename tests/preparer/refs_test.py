@@ -173,7 +173,8 @@ def test_targets_in_captions__duplicated_target_id():
     assert target.text == "3"
     assert len(metadata.substitutions) == 1
     assert metadata.substitutions[0].was == "3"
-    assert metadata.substitutions[0].placeholder == "ffileref178606187"
+    assert metadata.substitutions[0].pk == "ffileref178606187"
+    assert metadata.substitutions[0].placeholder == "f-file-ref178606187"
     # assert metadata.substitutions[0]["placeholder"] == "f-file-ref178606187"
 
 
@@ -201,8 +202,8 @@ def test_targets_in_captions__replace_complex_numbering_in_caption():
     assert target.text == "5.B"
     assert len(metadata.substitutions) == 1
     assert metadata.substitutions[0].was == "5.B"
-    assert metadata.substitutions[0].placeholder == "ffileref178606189"
-    # assert metadata.substitutions[0].placeholder == "f-file-ref178606189"
+    assert metadata.substitutions[0].pk == "ffileref178606189"
+    assert metadata.substitutions[0].placeholder == "f-file-ref178606189"
 
 
 def test_targets_in_captions__replace_roman_numbering_in_caption():
@@ -222,8 +223,8 @@ def test_targets_in_captions__replace_roman_numbering_in_caption():
     assert target.text == "IV"
     assert len(metadata.substitutions) == 1
     assert metadata.substitutions[0].was == "IV"
-    assert metadata.substitutions[0].placeholder == "ffileref178606189"
-    # assert metadata.substitutions[0].placeholder == "f-file-ref178606189"
+    assert metadata.substitutions[0].pk == "ffileref178606189"
+    assert metadata.substitutions[0].placeholder == "f-file-ref178606189"
 
 
 def test_targets_in_captions__link_in_caption_is_left_not_changed():
@@ -248,8 +249,8 @@ def test_targets_in_captions__link_in_caption_is_left_not_changed():
     assert target.text == "2"
     assert len(metadata.substitutions) == 1
     assert metadata.substitutions[0].was == "2"
-    assert metadata.substitutions[0].placeholder == "ffileref178606190"
-    # assert metadata.substitutions[0].placeholder == "f-file-ref178606190"
+    assert metadata.substitutions[0].pk == "ffileref178606190"
+    assert metadata.substitutions[0].placeholder == "f-file-ref178606190"
 
 
 # targets and refs in footnotes
