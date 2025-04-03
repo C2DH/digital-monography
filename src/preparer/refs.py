@@ -89,8 +89,10 @@ def prepare_ref_targets_in_headers(
                 target = TargetDatapoint(
                     pk=link.id,
                     html=str(tag),
-                    text=link.id,
+                    # text=link.id,
+                    text=tag.text,
                     elem=str(tag),
+                    item_type="heading",
                     is_digital=is_digital,
                     is_paper=is_paper,
                     prefix="",
@@ -178,19 +180,19 @@ def prepare_ref_targets_in_captions(
             link.set_from_id(a["id"])
             identifier = link.id.replace("-", "") if not unique_id else unique_id[0]
             is_digital, is_paper = _get_isdigital_and_ispaper(caption, identifier)
-            plain_text_num = _get_plain_text_numbering(ref_stack)
-            prefix, prev_item_num = TargetDatapoint.autonum_to_prefix_and_item_num(
-                ref_stack
-            )
+            # plain_text_num = _get_plain_text_numbering(ref_stack)
+            seq = TargetDatapoint.parse_ref_stack(ref_stack)
             target = TargetDatapoint(
+                # html="".join(str(elem) for elem in ref_stack),
                 pk=link.id,
-                html="".join(str(elem) for elem in ref_stack),
-                text=plain_text_num,  # calc from ref_stack
+                html=seq["html"],
+                text=seq["plain_text_num"],  # calc from ref_stack
                 elem=str(caption),
+                item_type=seq["item_type"],
                 is_digital=is_digital,  # calc from caption and identifier
                 is_paper=is_paper,  # calc from caption and identifier
-                prefix=prefix,  # calc from ref_stack
-                prev_item_num=prev_item_num,  # calc from ref_stack
+                prefix=seq["prefix"],  # calc from ref_stack
+                prev_item_num=seq["prev_item_num"],  # calc from ref_stack
             )
             metadata.add_target(target)
             if unique_id and metadata.get_substitution(unique_id[0]) is None:
@@ -254,14 +256,14 @@ def _get_item_type(caption: bs4.element.Tag) -> str:
     return item_types_mapping[item]
 
 
-def _get_plain_text_numbering(ref_stack: list[bs4.element.PageElement]) -> str:
-    res = ""
-    for el in ref_stack:
-        if hasattr(el, "string"):
-            res += el.string
-        else:
-            res += str(el)
-    return res
+# def _get_plain_text_numbering(ref_stack: list[bs4.element.PageElement]) -> str:
+#     res = ""
+#     for el in ref_stack:
+#         if hasattr(el, "string"):
+#             res += el.string
+#         else:
+#             res += str(el)
+#     return res
 
 
 def _get_isdigital_and_ispaper(caption: bs4.Tag, identifier: str) -> tuple[bool, bool]:

@@ -217,6 +217,14 @@ class RefDatapoint(DatapointBase):
         return "#" in self.href
 
 
+class IRefStack(t.TypedDict):
+    html: str
+    plain_text_num: str
+    prefix: str
+    prev_item_num: int | None
+    item_type: str
+
+
 @dataclasses.dataclass
 class TargetDatapoint(DatapointBase):
     html: str
@@ -224,20 +232,31 @@ class TargetDatapoint(DatapointBase):
     elem: str
     is_paper: bool | None
     is_digital: bool | None
+    item_type: t.Literal["heading", "equation", "figure", "table", ""]
     prefix: str
     prev_item_num: int | None
 
     @staticmethod
-    def autonum_to_prefix_and_item_num(
+    def parse_ref_stack(
         ref_stack: list[bs4.PageElement],
-    ) -> tuple[str, int | None]:
-        prefix = ""
+    ) -> IRefStack:
+        res = {
+            "html": "",
+            "plain_text_num": "",
+            "item_type": "",
+            "prefix": "",
+            "prev_item_num": None,
+        }
         for elem in ref_stack:
+            res["html"] += str(elem)
+            res["plain_text_num"] += (
+                elem.string if hasattr(elem, "string") else str(elem)
+            )
             if isinstance(elem, bs4.element.NavigableString) or isinstance(elem, str):
-                prefix += elem.strip()
-            if not isinstance(elem, bs4.element.Tag):
+                res["prefix"] += elem.strip()
+            elif not isinstance(elem, bs4.element.Tag):
                 pass
-            elif "SEQ " in elem.get("value", ""):
+            elif "SEQ " in elem.get("value", "").upper():
                 """
                 SEQ denotes describes sequential numbers of chapters, tables, figures,
                 and other user-defined lists of items in a document.
@@ -249,13 +268,21 @@ class TargetDatapoint(DatapointBase):
                 """
                 text = elem.text.strip().upper()
                 if _is_roman_numeral(text):
-                    prev_item_num = _roman_to_int(text)
+                    res["prev_item_num"] = _roman_to_int(text)
                 elif text.isdigit():
-                    prev_item_num = int(text)
+                    res["prev_item_num"] = int(text)
                 elif text.isalpha() and len(text) == 1:
-                    prev_item_num = string.ascii_uppercase.index(text) + 1
+                    res["prev_item_num"] = string.ascii_uppercase.index(text) + 1
                 else:
-                    prev_item_num = None
+                    raise NotImplementedError(
+                        f"Alphabet sequential numbering is not implemented for "
+                        "numbers bigger than 26. Text: {text}"
+                    )
+
+                for w in elem.get("value", "").split():
+                    word = w.lower()
+                    if word in ["equation", "figure", "table"]:
+                        res["item_type"] = word
             elif "STYLEREF " in elem.get("value", ""):
                 r"""
                 STYLEREF inserts the nearest text that is formatted by the style
@@ -265,10 +292,10 @@ class TargetDatapoint(DatapointBase):
                 Heading1 styled text.
                 See ECMA-376 17.16.5.59 for more details.
                 """
-                prefix += elem.text
+                res["prefix"] += elem.text
             else:
-                prev_item_num = None
-        return prefix, prev_item_num
+                res["prev_item_num"] = None
+        return res
 
 
 def _is_roman_numeral(text: str) -> bool:
