@@ -13,6 +13,8 @@ import datetime
 import enum
 import functools
 import pathlib
+import re
+import string
 import typing as t
 import uuid
 
@@ -222,6 +224,73 @@ class TargetDatapoint(DatapointBase):
     elem: str
     is_paper: bool | None
     is_digital: bool | None
+    prefix: str
+    prev_item_num: int | None
+
+    @staticmethod
+    def autonum_to_prefix_and_item_num(
+        ref_stack: list[bs4.PageElement],
+    ) -> tuple[str, int | None]:
+        prefix = ""
+        for elem in ref_stack:
+            if isinstance(elem, bs4.element.NavigableString) or isinstance(elem, str):
+                prefix += elem.strip()
+            if not isinstance(elem, bs4.element.Tag):
+                pass
+            elif "SEQ " in elem.get("value", ""):
+                """
+                SEQ denotes describes sequential numbers of chapters, tables, figures,
+                and other user-defined lists of items in a document.
+                See ECMA-376 17.16.5.56 for more details.
+
+                Alternatively, I could parse the value to get other useful information,
+                like item type. However, parsing OOXML syntax seems full of unnecessary
+                edge cases.
+                """
+                text = elem.text.strip().upper()
+                if _is_roman_numeral(text):
+                    prev_item_num = _roman_to_int(text)
+                elif text.isdigit():
+                    prev_item_num = int(text)
+                elif text.isalpha() and len(text) == 1:
+                    prev_item_num = string.ascii_uppercase.index(text) + 1
+                else:
+                    prev_item_num = None
+            elif "STYLEREF " in elem.get("value", ""):
+                r"""
+                STYLEREF inserts the nearest text that is formatted by the style
+                whose name is specified by the argument. In most cases, it the search goes
+                backwards. Commonly used with "\s" field argument, which includes a case
+                or section number. E.g. ` STYLEREF 1 \s ` inserts the number of the previous
+                Heading1 styled text.
+                See ECMA-376 17.16.5.59 for more details.
+                """
+                prefix += elem.text
+            else:
+                prev_item_num = None
+        return prefix, prev_item_num
+
+
+def _is_roman_numeral(text: str) -> bool:
+    roman_num_chars = ["I", "V", "X", "L", "C", "D", "M"]
+    if not text:
+        return False
+    for ch in text:
+        if ch not in roman_num_chars:
+            return False
+    return True
+
+
+def _roman_to_int(text: str) -> int:
+    nums = {"I": 1, "V": 5, "X": 10, "L": 50, "C": 100, "D": 500, "M": 1000}
+    res = 0
+    for i in range(len(text)):
+        if text[i] in nums:
+            if i + 1 < len(text) and nums[text[i]] < nums[text[i + 1]]:
+                res -= nums[text[i]]
+            else:
+                res += nums[text[i]]
+    return res
 
 
 @dataclasses.dataclass

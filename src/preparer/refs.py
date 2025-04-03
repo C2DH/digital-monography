@@ -93,6 +93,8 @@ def prepare_ref_targets_in_headers(
                     elem=str(tag),
                     is_digital=is_digital,
                     is_paper=is_paper,
+                    prefix="",
+                    prev_item_num=None,
                 )
                 metadata.add_target(target)
         h_lvl = "".join(ch for ch in tag.name if ch.isdigit())
@@ -176,13 +178,19 @@ def prepare_ref_targets_in_captions(
             link.set_from_id(a["id"])
             identifier = link.id.replace("-", "") if not unique_id else unique_id[0]
             is_digital, is_paper = _get_isdigital_and_ispaper(caption, identifier)
+            plain_text_num = _get_plain_text_numbering(ref_stack)
+            prefix, prev_item_num = TargetDatapoint.autonum_to_prefix_and_item_num(
+                ref_stack
+            )
             target = TargetDatapoint(
                 pk=link.id,
                 html="".join(str(elem) for elem in ref_stack),
-                text=_get_plain_text_numbering(ref_stack),
+                text=plain_text_num,  # calc from ref_stack
                 elem=str(caption),
-                is_digital=is_digital,
-                is_paper=is_paper,
+                is_digital=is_digital,  # calc from caption and identifier
+                is_paper=is_paper,  # calc from caption and identifier
+                prefix=prefix,  # calc from ref_stack
+                prev_item_num=prev_item_num,  # calc from ref_stack
             )
             metadata.add_target(target)
             if unique_id and metadata.get_substitution(unique_id[0]) is None:
