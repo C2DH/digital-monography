@@ -14,6 +14,8 @@ from src.preparer.refs import (
 from src.preparer.main import _convert_to_html
 from src.preparer.metadata import DocumentMetadata
 from src.preparer.keys import KeyPath
+from src.preparer.substitutions_prep import count_targets_for_substitutions
+from src.preparer.conditional_rendering import is_paper_only, remove_paper_only
 
 
 class TestRefDatapointsCreated:
@@ -51,6 +53,58 @@ class TestRefDatapointsCreated:
         html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, footnotes)
         html_soup = prepare_references(html_soup, metadata, references)
         return html_soup, metadata
+
+    def test_target_as_a_user_placed_bookmark(self):
+        # target = self.multidocs_meta[self.fp_a.stem].get_target("f-01-a-heading")
+        target = self.multidocs_meta[self.fp_a.stem].get_target("f-01-a-a-heading")
+        assert target
+        assert target.text == "Heading"
+        assert target.is_digital == True
+        assert target.is_paper == True
+        assert target.item_type == "heading"
+        assert target.prefix == ""
+        assert target.prev_item_num == None
+
+    def test_target_simple(self):
+        target = self.multidocs_meta[self.fp_a.stem].get_target("f-01-a-ref177042490")
+        assert target
+        assert target.text == "1"
+        assert target.is_digital == True
+        assert target.is_paper == True
+        assert target.item_type == "figure"
+        assert target.prefix == ""
+        assert target.prev_item_num == 1
+
+    def test_two_targets_to_the_same_object(self):
+        """The caption has two bookmarks assigned to it.
+        This should be taken into account when updating the table numbering."""
+        target1 = self.multidocs_meta[self.fp_a.stem].get_target("f-01-a-ref177044323")
+        assert target1
+        assert target1.text == "1"
+        assert target1.is_digital == True
+        assert target1.is_paper == True
+        assert target1.item_type == "table"
+        assert target1.prefix == ""
+        assert target1.prev_item_num == 1
+
+        target2 = self.multidocs_meta[self.fp_a.stem].get_target("f-01-a-ref177044319")
+        assert target2
+        assert target1.text == target2.text
+        assert target1.is_digital == target2.is_digital
+        assert target1.is_paper == target2.is_paper
+        assert target1.item_type == target2.item_type
+        assert target1.prefix == target2.prefix
+        assert target1.prev_item_num == target2.prev_item_num
+
+    def test_target_complex(self):
+        target = self.multidocs_meta[self.fp_a.stem].get("targets", "I.A", "text")
+        assert target
+        assert target.text == "I.A"
+        assert target.is_digital == True
+        assert target.is_paper == True
+        assert target.item_type == "equation"
+        assert target.prefix == "I."
+        assert target.prev_item_num == 1
 
     def test_caption_to_external(self):
         ref = next(
@@ -219,6 +273,55 @@ class TestRefDatapointsCreated:
     #     )
     #     assert subst.was == ""
     #     assert subst.item_type == "fig"
+
+
+class TestSubstitutions:
+    fp_a = KeyPath(pathlib.Path("tests") / "_fixtures" / "a_book" / "01_a.docx")
+    fp_b = KeyPath(pathlib.Path("tests") / "_fixtures" / "a_book" / "02_b.docx")
+    # fp = KeyPath(
+    #     pathlib.Path("tests") / "_fixtures" / "a_book" / "05_conditional_rendering.docx"
+    # )
+
+    @classmethod
+    def setup_class(cls):
+        cls.multidocs_meta: dict[str, DocumentMetadata] = {}
+        cls.soup_a, cls.meta_a = cls._prepare_docx_for_ref_handing(cls.fp_a)
+        cls.soup_b, cls.meta_b = cls._prepare_docx_for_ref_handing(cls.fp_b)
+        cls.multidocs_meta[cls.fp_a.stem] = cls.meta_a
+        cls.multidocs_meta[cls.fp_b.stem] = cls.meta_b
+
+    @classmethod
+    def _prepare_docx_for_ref_handing(
+        cls, fp: KeyPath
+    ) -> tuple[bs4.BeautifulSoup, DocumentMetadata]:
+        html_str = _convert_to_html(fp)
+        html_soup = bs4.BeautifulSoup(html_str, "html.parser")
+        metadata = DocumentMetadata(fp)
+        headers, captions, footnotes, references, paper_only = [], [], [], [], []
+        classifiers = [
+            (is_header, headers),
+            (is_caption, captions),
+            (is_footnote, footnotes),
+            (is_reference, references),
+            (is_paper_only, paper_only),
+        ]
+        for node in html_soup.descendants:
+            for check_if_meets_criteria, container in classifiers:
+                if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
+                    container.append(node)
+        html_soup = prepare_ref_targets_in_headers(html_soup, metadata, headers)
+        html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
+        html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, footnotes)
+        html_soup = prepare_references(html_soup, metadata, references)
+        # html_soup = prepare_metadata_tables(html_soup, metadata, tables)
+        html_soup = remove_paper_only(html_soup, metadata, paper_only)
+        # html_soup = remove_empty_tables(html_soup, metadata, tables)
+        # html_soup = prepare_alt_texts(html_soup, metadata, images_with_alttxt)
+        html_soup = count_targets_for_substitutions(html_soup, metadata)
+        return html_soup, metadata
+
+    def test_testing(self):
+        assert False
 
 
 class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:

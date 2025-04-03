@@ -399,7 +399,9 @@ def test_markownify_anchor_if_is_inner_reference__complex_a_tag():
         html='<data value=" SEQ Figure \\* ARABIC ">1</data>',
         text="1",
         elem=str(bs.a),
-        prev_num="1",
+        item_type="figure",
+        prefix="",
+        prev_item_num=1,
         is_digital=None,
         is_paper=None,
     )
@@ -421,7 +423,9 @@ def test_markownify_anchor_if_is_inner_reference__simple_a_tag():
         html='<data value=" SEQ Figure \\* ARABIC ">2</data>',
         text="2",
         elem=str(bs.a),
-        prev_num="2",
+        item_type="figure",
+        prefix="",
+        prev_item_num=2,
         is_digital=None,
         is_paper=None,
     )
