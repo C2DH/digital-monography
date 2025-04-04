@@ -15,7 +15,8 @@ function getNestedStr(rec: any, attr: string): string {
 
 type ICitationGroup = {
     location: string,
-    plainCitation: string,
+    // plainCitation: string,
+    citationInJson: string,
 }
 
 export default function DynamicTable() {
@@ -37,7 +38,8 @@ export default function DynamicTable() {
                 for (let j = 0; j < records.length; j++) {
                     tableItems.push({
                         location: getNestedStr(records[j], "file_name"),
-                        plainCitation: getNestedStr(records[j], "plainCitation"),
+                        // plainCitation: getNestedStr(records[j], "plainCitation"),
+                        citationInJson: JSON.stringify(records[j], null, 2),
                     })
                 }
             }
@@ -70,7 +72,8 @@ export default function DynamicTable() {
                         tableData.map((val: ICitationGroup, idx: number) => (
                             <tr key={idx}>
                                 <td>{val.location}</td>
-                                <td>{val.plainCitation}</td>
+                                {/* <td>{val.plainCitation}</td> */}
+                                <td>{val.citationInJson}</td>
                             </tr>
                         ))
                     }
