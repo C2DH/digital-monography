@@ -108,6 +108,14 @@ function getLastPart(s: string): string {
     return split[split.length - 1];
 }
 
+function getTruncatedLocation(s: string): string {
+    if (s.length > 40) {
+        return s.substring(0, 12) + "..." + s.substring(s.length - 12);
+    } else {
+        return s;
+    }
+}
+
 function getTruncatedCaption(caption: string): string {
     if (caption && caption.includes(":")) {
         return caption.split(":")[1];
@@ -181,7 +189,7 @@ export default function AssetsComponent(): React.JSX.Element {
                 tempTable.push({
                     pk: asset.pk,
                     fp: getLastPart(asset.fp),
-                    location: getLastPart(asset.location || ""),
+                    location: getTruncatedLocation(getLastPart(asset.location || "")),
                     trunc_caption: getTruncatedCaption(asset.caption),
                     alttext: asset.alttext,
                     is_color: asset.is_color,
