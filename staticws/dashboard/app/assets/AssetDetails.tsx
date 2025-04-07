@@ -5,9 +5,21 @@ import { IAsset, ITableRow, IRef, IS3Object } from "./types";
 import React from 'react';
 
 const READ_BUCKET = "https://cpy-dgtmon-dev-staticws-wip.s3.eu-west-1.amazonaws.com";
+const API_GATEWAY = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
+const STAGE = "test";
+
+function isImage(key: string): boolean {
+    const imgExtensions = ["jpg", "jpeg", "png", "gif", "bmp", "tiff"];
+    const ext = key.split(".").pop();
+    if (ext && imgExtensions.includes(ext.toLowerCase())) {
+        return true;
+    }
+    return false;
+}
 
 export const AssetDetails = (props: { row: Row<ITableRow>, assetMetadata: IAsset[], assetS3List: IS3Object[], refMetadata: IRef[] }) => {
     const { row, assetMetadata, assetS3List, refMetadata } = props;
+    let imgSrc = "";
     const pk = row.original.pk;
     const asset = assetMetadata.find((asset) => asset.pk == pk);
     if (!asset) {
@@ -16,10 +28,22 @@ export const AssetDetails = (props: { row: Row<ITableRow>, assetMetadata: IAsset
     let s3object: IS3Object | undefined = assetS3List.find((s3obj) => s3obj.Key == `${asset.slug}/${asset.fp}`);
     const refs = asset && asset.target ? refMetadata.filter((ref) => { ref.asset_id == pk }) : null;
     // NOTE: maybe instead of reading from staticws bucket we should read from upload via gpu?
-    const imgSrc = asset ? `${READ_BUCKET}/read/${asset.slug}/${asset.fp}` : "";
+    // const imgSrc = asset ? `${READ_BUCKET}/read/${asset.slug}/${asset.fp}` : "";
     // return `asset?slug=${slug}&pk=${btoa(slug + "/" + inputFieldVal)}`; // maybe via backend is better?
     const exists = s3object && s3object.Size > 1;
     const refsFound = refs && (refs?.length || 0) > 0;
+    try {
+        if (s3object && s3object.Key && isImage(s3object.Key)) {
+            let url = s3object ? `${API_GATEWAY}/${STAGE}/gpu?type=asset&key=${btoa(s3object.Key)}` : "";
+            const request = new XMLHttpRequest();
+            request.open("GET", url, false); // `false` === synchronous request
+            request.send(null);
+            imgSrc = JSON.parse(request.responseText)["presigned_url"] || "";
+        }
+    } catch (e) {
+        console.error(e);
+        imgSrc = "";
+    }
     return (
         <>
             <div className="container">
