@@ -41,7 +41,7 @@ export default function Home() {
         console.error(e);
       }
     };
-    fetchStatusData();
+    // fetchStatusData();
   }, []);
   return (
     <div className="container">
