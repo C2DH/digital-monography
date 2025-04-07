@@ -263,6 +263,11 @@ def _get_source_bucket(event) -> str:
 def _download_fileobj(src: str, key: KeyPath) -> None:
     try:
         key = key.efs_filepath
+        # temp to remove the "assets" file
+        assets_dir = pathlib.Path("/mnt/efs/{key.slug}/assets")
+        if assets_dir.exists() and not assets_dir.is_dir() and assets_dir.is_file():
+            assets_dir.unlink()
+        # end temp
         key.parent.mkdir(parents=True, exist_ok=True)
         with open(key, "wb") as fileobj:
             logger.info(f"sys.getsizeof(fileobj): {str(sys.getsizeof(fileobj))}")
