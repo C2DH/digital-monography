@@ -135,15 +135,19 @@ class TestMetadataTablesExtraction:
 
     def test_asset_to_json_handling(self):
         jsonified = self.asset_3.to_json()
-        assert jsonified["fp"] == "assets/10x10px-img.png"
+        assert jsonified["fp"] == pathlib.PurePath("assets/10x10px-img.png")
+        # assert jsonified["fp"] == "assets/10x10px-img.png"
         assert jsonified["metadata_table"] == self.metadata.metadata_tables[2].pk
         assert type(jsonified["metadata_table"]) == str
-        assert jsonified["medium"] == "D"
-        assert type(jsonified["medium"]) == str
+        assert jsonified["medium"] == MediumEnum.DIGITAL
+        # assert jsonified["medium"] == "D"
+        assert type(jsonified["medium"]) == MediumEnum
+        # assert type(jsonified["medium"]) == str
         assert jsonified["slug"] == SLUG
         assert jsonified["author"] == ""
         assert jsonified["source"] == ""
-        assert jsonified["location"] == f"{SLUG}/metadata_extraction.docx"
+        assert jsonified["location"] == KeyPath(f"{SLUG}/metadata_extraction.docx")
+        # assert jsonified["location"] == f"{SLUG}/metadata_extraction.docx"
         assert jsonified["alttext"] == ""
         assert jsonified["caption"] == ""
         assert jsonified["comments"] == "Looks good"

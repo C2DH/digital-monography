@@ -234,6 +234,9 @@ class MetadataTable:
         self.kwargs["slug"] = slug
 
     def add_location(self, location: t.Optional[KeyPath]) -> None:
+        # print("location", location, type(location))
+        if isinstance(location, pathlib.PurePath):
+            location = KeyPath(location)
         self.rows.append(("location", location))
         self.kwargs["location"] = location
 

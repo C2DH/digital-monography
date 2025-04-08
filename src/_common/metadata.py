@@ -13,7 +13,7 @@ import datetime
 import enum
 import functools
 import pathlib
-import re
+import pydantic
 import string
 import typing as t
 import uuid
@@ -39,83 +39,103 @@ T = t.TypeVar("T", bound=DataclassInstance)
 type PrimitiveValues = str | int | bool | None
 
 
-@dataclasses.dataclass
-class DatapointBase(abc.ABC):
-    pk: str = dataclasses.field(default_factory=lambda: str(uuid.uuid4()), kw_only=True)
+# @dataclasses.dataclass
+class DatapointBase(pydantic.BaseModel, abc.ABC):
+    # pk: str = dataclasses.field(default_factory=lambda: str(uuid.uuid4()), kw_only=True)
+    pk: str
+
+    def __init__(self, **data) -> None:
+        pk = data.pop("pk", str(uuid.uuid4()))
+        super().__init__(pk=pk, **data)
 
     @property
     def s3_key(self) -> str:
         raise NotImplementedError
 
-    # TODO: rename, because it's not really json...
+    # # TODO: rename, because it's not really json...
     def to_json(self) -> dict[str, PrimitiveValues]:
-        "Converts the dataclass obj to a dict with primitive values."
+        # to_json() should be `return self.model_dump_json()`
+        return self.model_dump()
 
-        def _primitive_dict(fields) -> dict[str, PrimitiveValues]:
-            res = {}
-            for key, val in fields:
-                if isinstance(val, datetime.datetime):
-                    val = val.isoformat()
-                elif isinstance(val, enum.Enum):
-                    val = val.value
-                elif key == "elem":
-                    val = ""  # NOTE: for now, html is not included in the JSON
-                elif val not in [str, int, None] and not isinstance(val, bool):
-                    val = str(val)
-                res[key] = val
-            return res
+    # # TODO: rename, because it's not really json...
+    # def to_json(self) -> dict[str, PrimitiveValues]:
+    #     "Converts the dataclass obj to a dict with primitive values."
 
-        return dataclasses.asdict(self, dict_factory=_primitive_dict)
+    #     def _primitive_dict(fields) -> dict[str, PrimitiveValues]:
+    #         res = {}
+    #         for key, val in fields:
+    #             if isinstance(val, datetime.datetime):
+    #                 val = val.isoformat()
+    #             elif isinstance(val, enum.Enum):
+    #                 val = val.value
+    #             elif key == "elem":
+    #                 val = ""  # NOTE: for now, html is not included in the JSON
+    #             elif val not in [str, int, None] and not isinstance(val, bool):
+    #                 val = str(val)
+    #             res[key] = val
+    #         return res
 
+    #     return dataclasses.asdict(self, dict_factory=_primitive_dict)
+
+    # # TODO: rename, because it's not really json...
     @classmethod
     def from_json(
         cls: t.Type[T],
         json_data: dict[str, PrimitiveValues],
     ) -> T:
         "Constructs a dataclass instance from a JSON-like dictionary."
-        if not dataclasses.is_dataclass(cls):
-            raise ValueError(f"{cls.__name__} must be a dataclass")
-        res = {}
+        # from_json() should be `return cls(**json.loads(data))`
+        return cls(**json_data)
 
-        def _get_field_type(field: dataclasses.Field) -> t.Type:
-            "If type is Union, Optional, Literal, etc. return their argument type."
-            if getattr(field.type, "__args__", None) is not None:
-                args: tuple = getattr(field.type, "__args__", tuple())
-                typ = next(type(arg) for arg in args if arg not in (None,))
-                assert isinstance(typ, type)
-                return typ
-            else:
-                assert isinstance(field.type, type)
-                return field.type
+    # # # TODO: rename, because it's not really json...
+    # @classmethod
+    # def from_json(
+    #     cls: t.Type[T],
+    #     json_data: dict[str, PrimitiveValues],
+    # ) -> T:
+    #     "Constructs a dataclass instance from a JSON-like dictionary."
+    #     if not dataclasses.is_dataclass(cls):
+    #         raise ValueError(f"{cls.__name__} must be a dataclass")
+    #     res = {}
 
-        for field in dataclasses.fields(cls):
-            val = json_data[field.name]
-            assert field.type != datetime.datetime  # for now unsupported
-            if val is None or val == "None":
-                v = None
-            elif field.name == "elem":
-                v = ""  # NOTE: for now, html is not included in the JSON
-            elif field.type == bs4.element.Tag and isinstance(val, str):
-                soup = bs4.BeautifulSoup(val, "html.parser")
-                v = next(soup.children)  # type: ignore
-                # v is a b4 page element, whatever it may be
-            # elif field.type == datetime.datetime:
-            #     v = datetime.datetime.fromisoformat(str(val))
-            elif field.type == t.Optional[KeyPath]:
-                v = KeyPath(val)
-            else:
-                v = (_get_field_type(field))(val)
-            res[field.name] = v
-        return cls(**res)
+    #     def _get_field_type(field: dataclasses.Field) -> t.Type:
+    #         "If type is Union, Optional, Literal, etc. return their argument type."
+    #         if getattr(field.type, "__args__", None) is not None:
+    #             args: tuple = getattr(field.type, "__args__", tuple())
+    #             typ = next(type(arg) for arg in args if arg not in (None,))
+    #             assert isinstance(typ, type)
+    #             return typ
+    #         else:
+    #             assert isinstance(field.type, type)
+    #             return field.type
+
+    #     for field in dataclasses.fields(cls):
+    #         val = json_data[field.name]
+    #         assert field.type != datetime.datetime  # for now unsupported
+    #         if val is None or val == "None":
+    #             v = None
+    #         elif field.name == "elem":
+    #             v = ""  # NOTE: for now, html is not included in the JSON
+    #         elif field.type == bs4.element.Tag and isinstance(val, str):
+    #             soup = bs4.BeautifulSoup(val, "html.parser")
+    #             v = next(soup.children)  # type: ignore
+    #             # v is a b4 page element, whatever it may be
+    #         # elif field.type == datetime.datetime:
+    #         #     v = datetime.datetime.fromisoformat(str(val))
+    #         elif field.type == t.Optional[KeyPath]:
+    #             v = KeyPath(val)
+    #         else:
+    #             v = (_get_field_type(field))(val)
+    #         res[field.name] = v
+    #     return cls(**res)
 
 
-@dataclasses.dataclass
 class MetadataTableDatapoint(DatapointBase):
     """
     Unprocessed data from a Metadata table that describes an asset.
     """
 
-    kwargs: dict[str, str]
+    kwargs: dict[str, t.Any]
 
     def to_json(self) -> dict[str, PrimitiveValues]:
         "Converts the dataclass obj to a dict with str/int/bool as values."
@@ -124,11 +144,16 @@ class MetadataTableDatapoint(DatapointBase):
     @classmethod
     def from_json(cls: t.Type[T], json_data: dict[str, PrimitiveValues]) -> T:
         return cls(
-            **{"pk": json_data["pk"], "kwargs": json.loads(str(json_data["kwargs"]))}
+            **{
+                "pk": json_data["pk"],
+                "kwargs": json.loads(json.dumps(json_data["kwargs"])),
+            }
         )
+        # return cls(
+        #     **{"pk": json_data["pk"], "kwargs": json.loads(str(json_data["kwargs"]))}
+        # )
 
 
-@dataclasses.dataclass
 class AssetDatapoint(DatapointBase):
     """
     Information about an asset extracted from a document, especially from
@@ -154,14 +179,43 @@ class AssetDatapoint(DatapointBase):
     target: str
     is_color: bool | None
     is_ready: bool
-    is_on_paper: bool = dataclasses.field(default=False)
+    is_on_paper: bool
+    # is_on_paper: bool = dataclasses.field(default=False)
 
-    def __post_init__(self):
-        if self.medium:
-            self.is_on_paper = self.medium in (
-                MediumEnum.PAPER,
-                MediumEnum.PAPER_AND_DIGITAL,
-            )
+    model_config = pydantic.ConfigDict(
+        arbitrary_types_allowed=True, json_encoders={KeyPath: lambda v: str(v)}
+    )
+
+    # class Config:
+    #     arbitrary_types_allowed = True
+    #     json_encoders = {KeyPath: lambda v: str(v)}
+
+    # @pydantic.field_validator("location", mode="before")
+    # def deserialize_location(cls, v):
+    #     if isinstance(v, str):
+    #         return KeyPath(v)
+    #     return v
+
+    def __init__(self, **data) -> None:
+        # if data.get("medium") is not None:
+        data["is_on_paper"] = data["medium"] in (
+            MediumEnum.PAPER,
+            MediumEnum.PAPER_AND_DIGITAL,
+        )
+        super().__init__(**data)
+
+    # def __post_init__(self):
+    #     if self.medium:
+    #         self.is_on_paper = self.medium in (
+    #             MediumEnum.PAPER,
+    #             MediumEnum.PAPER_AND_DIGITAL,
+    #         )
+
+    @pydantic.field_validator("location", mode="before")
+    def deserialize_location(cls, v):
+        if isinstance(v, str):
+            return KeyPath(v)
+        return v
 
     @staticmethod
     def get_s3_key(key: KeyPath) -> str:
@@ -173,7 +227,6 @@ class AssetDatapoint(DatapointBase):
         return f"{key.slug}/{key.stem}.json"
 
 
-@dataclasses.dataclass
 class HeadingDatapoint(DatapointBase):
     file_name: str
     elem: str
@@ -184,7 +237,6 @@ class HeadingDatapoint(DatapointBase):
     target: str
 
 
-@dataclasses.dataclass
 class RefDatapoint(DatapointBase):
     fn: str
     target_id: str
@@ -225,7 +277,6 @@ class IRefStack(t.TypedDict):
     item_type: str
 
 
-@dataclasses.dataclass
 class TargetDatapoint(DatapointBase):
     html: str
     text: str
@@ -322,7 +373,6 @@ def _roman_to_int(text: str) -> int:
     return res
 
 
-@dataclasses.dataclass
 class SubstitutionDatapoint(DatapointBase):
     was: str
     placeholder: str
@@ -336,17 +386,18 @@ class SubstitutionDatapoint(DatapointBase):
     # make sure that literal options are equal to constants.CAPTION_ITEM_TYPE_*
 
 
-@dataclasses.dataclass
 class CitationGroupDatapoint(DatapointBase):
+    # id: int
     file_name: str
-    schema: str
+    citation_schema: str
+    # schema: str
     formattedCitation: str
     noteIndex: int
     plainCitation: str
 
 
-@dataclasses.dataclass
 class CitationItemDatapoint(DatapointBase):
+    id: int
     file_name: str
     citationId: str
     uris: list[str]
@@ -478,17 +529,38 @@ class DocumentMetadata:
         }
 
     # def to_json(self) -> dict[str, list[dict[str, PrimitiveValues]]]:
+    # TODO: rename
     def to_json(self) -> DocumentMetadataSerialized:
         return {
-            "assets": [rec.to_json() for rec in self.assets],
-            "metadata_tables": [rec.to_json() for rec in self.metadata_tables],
-            "headings": [rec.to_json() for rec in self.headings],
-            "refs": [rec.to_json() for rec in self.refs],
-            "targets": [rec.to_json() for rec in self.targets],
-            "substitutions": [rec.to_json() for rec in self.substitutions],
-            "citation_groups": [rec.to_json() for rec in self.citation_groups],
-            "citation_items": [rec.to_json() for rec in self.citation_items],
+            "assets": [rec.model_dump(mode="json") for rec in self.assets],
+            "metadata_tables": [
+                rec.model_dump(mode="json") for rec in self.metadata_tables
+            ],
+            "headings": [rec.model_dump(mode="json") for rec in self.headings],
+            "refs": [rec.model_dump(mode="json") for rec in self.refs],
+            "targets": [rec.model_dump(mode="json") for rec in self.targets],
+            "substitutions": [
+                rec.model_dump(mode="json") for rec in self.substitutions
+            ],
+            "citation_groups": [
+                rec.model_dump(mode="json") for rec in self.citation_groups
+            ],
+            "citation_items": [
+                rec.model_dump(mode="json") for rec in self.citation_items
+            ],
         }
+
+    # def to_json(self) -> DocumentMetadataSerialized:
+    #     return {
+    #         "assets": [rec.to_json() for rec in self.assets],
+    #         "metadata_tables": [rec.to_json() for rec in self.metadata_tables],
+    #         "headings": [rec.to_json() for rec in self.headings],
+    #         "refs": [rec.to_json() for rec in self.refs],
+    #         "targets": [rec.to_json() for rec in self.targets],
+    #         "substitutions": [rec.to_json() for rec in self.substitutions],
+    #         "citation_groups": [rec.to_json() for rec in self.citation_groups],
+    #         "citation_items": [rec.to_json() for rec in self.citation_items],
+    #     }
 
     # def from_json(self, jsml: dict[str, list[dict[str, PrimitiveValues]]]) -> None:
     def from_json(self, jsml: DocumentMetadataSerialized) -> None:

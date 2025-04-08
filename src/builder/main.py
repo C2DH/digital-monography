@@ -176,11 +176,25 @@ def _prepare_config(key: KeyPath) -> None:
 
     metadatas = {}
     for meta_file in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
-        meta_file: KeyPath
+        meta_file = KeyPath(meta_file)
         with meta_file.open("r") as f:
             metadata = DocumentMetadata(meta_file)
             try:
-                metadata.from_json(json.load(f))
+                json_data = json.load(f)
+                # print("json_data", json_data)
+                metadata.from_json(json_data)
+                print(">>>>>>>>> metadata", metadata)
+
+                if meta_file.stem in ["substitutions"]:
+                    for rec in json_data["substitutions"]:
+                        print(rec)
+                        print("-" * 75)
+                    print("=" * 75)
+                    for subs in metadata.substitutions:
+                        print(subs)
+                        print("-" * 75)
+                    print("=" * 75)
+                # metadata.from_json(json.load(f))
                 metadatas[meta_file.stem] = metadata
             except KeyError as e:
                 logger.info(
@@ -223,11 +237,22 @@ def _prepare_config(key: KeyPath) -> None:
     substitutions = {}
     for metadata in metadatas.values():
         metadata: DocumentMetadata
+        print("BUILDER/MAIN.PY", end="")
+        print("=" * 40)
         # TODO:
         # file_no = _get_file_number(metadata.filepath.stem)
         # file_no = metadata.get_chapter_number()
         for dp in metadata.substitutions:
-            dp: SubstitutionDatapoint
+
+            print(dp.to_json())
+
+            print("dp.item_type", dp.item_type, type(dp.item_type))
+            print("dp.file_count", dp.file_count, type(dp.file_count))
+            print("dp.prefix", dp.prefix, type(dp.prefix))
+            print("dp.new_item_num", dp.new_item_num, type(dp.new_item_num))
+            print("dp.was", dp.was, type(dp.was))
+            print("-" * 40)
+
             if not dp.was.isdigit() and not _is_roman_numeral(dp.was):
                 pass
             elif dp.was and not dp.file_count:

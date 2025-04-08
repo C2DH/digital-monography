@@ -12,7 +12,7 @@ from src.preparer.refs import (
     prepare_references,
 )
 from src.preparer.main import _convert_to_html
-from src.preparer.metadata import DocumentMetadata
+from src.preparer.metadata import DocumentMetadata, SubstitutionDatapoint
 from src.preparer.keys import KeyPath
 from src.preparer.substitutions_prep import count_targets_for_substitutions
 from src.preparer.conditional_rendering import is_paper_only, remove_paper_only
@@ -418,6 +418,31 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.file_count == 5
         assert subs.prefix == ""
         assert subs.prev_item_num == None
+        assert subs.new_item_num == 2
+
+    def test_substitution_to_json_handling(self):
+        subs = self.metadata.get("substitutions", "f05conditionalrenderingref193103002")
+        jsonified = subs.to_json()
+        assert jsonified["was"] == "3"
+        assert jsonified["is_digital"] == True
+        assert jsonified["is_paper"] == True
+        assert jsonified["item_type"] == "figure"
+        assert jsonified["file_count"] == 5
+        assert jsonified["prefix"] == ""
+        assert jsonified["prev_item_num"] == 3
+        assert jsonified["new_item_num"] == 2
+
+    def test_substitution_from_json_handling(self):
+        subs = self.metadata.get("substitutions", "f05conditionalrenderingref193103002")
+        jsonified = subs.to_json()
+        subs = SubstitutionDatapoint.from_json(jsonified)
+        assert subs.was == "3"
+        assert subs.is_digital == True
+        assert subs.is_paper == True
+        assert subs.item_type == "figure"
+        assert subs.file_count == 5
+        assert subs.prefix == ""
+        assert subs.prev_item_num == 3
         assert subs.new_item_num == 2
 
     # def test_testing(self):

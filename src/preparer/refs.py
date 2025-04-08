@@ -212,6 +212,9 @@ def prepare_ref_targets_in_captions(
                         prev_item_num=target.prev_item_num,
                     )
                 )
+                # subs = metadata.get_substitution(unique_id[0])
+                # print(subs.to_json())
+                # print("-" * 40)
             target_tag = html_soup.new_tag("pre")
             target_tag.string = link.mystify_target()
             try:
