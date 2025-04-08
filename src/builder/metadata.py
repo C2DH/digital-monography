@@ -232,7 +232,8 @@ class TargetDatapoint(DatapointBase):
     elem: str
     is_paper: bool | None
     is_digital: bool | None
-    item_type: t.Literal["heading", "equation", "figure", "table", ""]  # no "ref"
+    # no "ref"
+    item_type: t.Literal["heading", "equation", "figure", "table", "graph", ""]
     prefix: str
     prev_item_num: int | None
     new_item_num: int | None = None
@@ -327,13 +328,12 @@ class SubstitutionDatapoint(DatapointBase):
     placeholder: str
     is_digital: bool | None
     is_paper: bool | None
-    item_type: t.Literal["heading", "equation", "figure", "table", "ref", ""]
+    item_type: t.Literal["heading", "equation", "figure", "table", "graph", "ref", ""]
     file_count: int | None
     prefix: str
     prev_item_num: int | None
     new_item_num: int | None = None
     # make sure that literal options are equal to constants.CAPTION_ITEM_TYPE_*
-    # item_type: t.Literal["fig", "tbl", "graph", "nul", "ref"]
 
 
 @dataclasses.dataclass
