@@ -42,7 +42,7 @@ logger.setLevel(logging.INFO)
 
 
 def lambda_handler() -> tuple[docx.document.Document, dict[str, DocumentMetadata]]:
-    key: KeyPath = KeyPath("/tmp/efs/docx2docx/")
+    key: KeyPath = KeyPath("/tmp/efs/a_book/")
     # book_metadata: dict[str, DocumentMetadata] = {}
     # for meta_file in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
     # for meta_file in (key / "_metadata").glob("**/*.json"):
@@ -54,9 +54,9 @@ def lambda_handler() -> tuple[docx.document.Document, dict[str, DocumentMetadata
 
     book_metadata = _read_book_metadata(key)
     # per each doc
-    metadata = book_metadata["02_assets_and_links"]
-    doc = docx.Document("/tmp/efs/docx2docx/02_assets_and_links.docx")
-    # doc = docx.Document("/tmp/efs/docx2docx/ref-n-target.docx")
+    metadata = book_metadata["05_conditional_rendering"]
+    doc = docx.Document("/tmp/efs/a_book/05_conditional_rendering.docx")
+    # doc = docx.Document("/tmp/efs/a_book/ref-n-target.docx")
     remove_parts_and_highlights_due_to_conditional_rendering(doc)
     # prepare_ref_targets_in_headers(doc, book_metadata)
     add_chapter_number_to_captions(doc, metadata)
@@ -174,4 +174,4 @@ def _read_book_metadata(key: KeyPath) -> dict[str, DocumentMetadata]:
 doc = None
 if __name__ == "__main__":
     doc, book_metadata = lambda_handler()
-    doc.save("/tmp/efs/docx2docx/test.docx")
+    doc.save("/tmp/efs/a_book/test.docx")

@@ -181,20 +181,7 @@ def _prepare_config(key: KeyPath) -> None:
             metadata = DocumentMetadata(meta_file)
             try:
                 json_data = json.load(f)
-                # print("json_data", json_data)
                 metadata.from_json(json_data)
-                print(">>>>>>>>> metadata", metadata)
-
-                if meta_file.stem in ["substitutions"]:
-                    for rec in json_data["substitutions"]:
-                        print(rec)
-                        print("-" * 75)
-                    print("=" * 75)
-                    for subs in metadata.substitutions:
-                        print(subs)
-                        print("-" * 75)
-                    print("=" * 75)
-                # metadata.from_json(json.load(f))
                 metadatas[meta_file.stem] = metadata
             except KeyError as e:
                 logger.info(
@@ -237,29 +224,13 @@ def _prepare_config(key: KeyPath) -> None:
     substitutions = {}
     for metadata in metadatas.values():
         metadata: DocumentMetadata
-        print("BUILDER/MAIN.PY", end="")
-        print("=" * 40)
-        # TODO:
-        # file_no = _get_file_number(metadata.filepath.stem)
-        # file_no = metadata.get_chapter_number()
         for dp in metadata.substitutions:
-
-            print(dp.to_json())
-
-            print("dp.item_type", dp.item_type, type(dp.item_type))
-            print("dp.file_count", dp.file_count, type(dp.file_count))
-            print("dp.prefix", dp.prefix, type(dp.prefix))
-            print("dp.new_item_num", dp.new_item_num, type(dp.new_item_num))
-            print("dp.was", dp.was, type(dp.was))
-            print("-" * 40)
-
-            if not dp.was.isdigit() and not _is_roman_numeral(dp.was):
-                pass
-            elif dp.was and not dp.file_count:
-                substitutions[dp.pk] = dp.was
+            if dp.new_item_num and not dp.file_count:
+                substitutions[dp.pk] = f"{dp.prefix}{dp.new_item_num}"
             elif dp.was:
-                # substitutions[dp.pk] = f"{dp.file_count}.{dp.prefix}{dp.new_item_num}" # TODO fix
-                substitutions[dp.pk] = str(dp.file_count) + "." + dp.was
+                substitutions[dp.pk] = f"{dp.file_count}.{dp.prefix}{dp.new_item_num}"
+            else:
+                substitutions[dp.pk] = dp.was
     try:
         config["sphinx"]["config"]["myst_substitutions"] = substitutions
     except KeyError:

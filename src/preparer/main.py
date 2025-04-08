@@ -507,18 +507,6 @@ def _write_metadata_to_db(metadata: DocumentMetadata, key: KeyPath) -> None:
                 f"Response from dynamodb.Table({tbl}).put_item: {json.dumps(resp, default=str)}"
             )
 
-        # assets = [rec.to_json() for rec in metadata.assets]
-        # citation_groups = [rec.to_json() for rec in metadata.citation_groups]
-        # headings = [rec.to_json() for rec in metadata.headings]
-
-        # self.assets: list[AssetDatapoint] = []
-        # self.headings: list[HeadingDatapoint] = []
-        # self.refs: list[RefDatapoint] = []
-        # self.targets: list[TargetDatapoint] = []
-        # self.substitutions: list[SubstitutionDatapoint] = []
-        # self.citation_groups: list[CitationGroupDatapoint] = []
-        # self.citation_items: list[CitationItemDatapoint] = []
-
         return
     except Exception as e:
         logger.exception(

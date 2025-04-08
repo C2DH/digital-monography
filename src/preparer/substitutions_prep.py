@@ -56,9 +56,6 @@ def update_substitutions_for_refs(
         if subs.item_type == "ref":
             target: TargetDatapoint | None = metadata.get_target(subs.placeholder)
             if target is not None:
-
-                print(">> target", target.to_json())
-
                 # subs.file_count = target.file_count # I should not be needed it, right?
                 subs.prefix = target.prefix
                 subs.new_item_num = target.new_item_num
