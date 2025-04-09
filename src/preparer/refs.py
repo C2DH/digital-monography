@@ -212,9 +212,6 @@ def prepare_ref_targets_in_captions(
                         prev_item_num=target.prev_item_num,
                     )
                 )
-                # subs = metadata.get_substitution(unique_id[0])
-                # print(subs.to_json())
-                # print("-" * 40)
             target_tag = html_soup.new_tag("pre")
             target_tag.string = link.mystify_target()
             try:
@@ -588,7 +585,13 @@ class LinkMystifier:
         """
         Markdown link text to be placed in `[text](...)` syntax.
         """
-        if self.is_cross_file_reference():
+        match = self._match_complex_numbering(tag_text)
+        if isinstance(match, re.Match):
+            start, end = match.span(1)
+            self.text_to_replace = tag_text[start:end]
+            replace_with = r"{{ " + self.unique_id + r" }}"
+            tag_text = tag_text.replace(self.text_to_replace, replace_with)
+        elif self.is_cross_file_reference():
             to_replace = ""
             for i in range(len(tag_text)):
                 if tag_text[i].isdigit():
@@ -611,6 +614,22 @@ class LinkMystifier:
 
     def __str__(self) -> str:
         return f"LinkMystifier(scheme={self.scheme}, netloc={self.netloc}, path={self.path}, query={self.query}, fragment={self.fragment})"
+
+    def _match_complex_numbering(self, tag_text: str) -> re.Match | None:
+        """
+        Search for complex numbering in the text of the anchor tag.
+        Complex number pattern is either `<roman_num><sep><digit>` (e.g. 'iv.1')
+        or `<letter of the alphabet><sep><digit>` (e.g. 'a.1') or `<digit><sep><digit>`.
+        This solution assumes the alphabetical numbering will not be greater than 'z' (26).
+        Accepted separators match MS Word separators: '.:—-'
+        """
+        before = r"(?:\s)"  # make sure starts with a whitespace
+        heading_number = r"([ivxlcdm]+|[a-z]{1}|\d+)"
+        sep = r"[.:—-]{1}"
+        pattern = rf"{before}({heading_number}{sep}\d)"
+        assert pattern == r"(?:\s)(([ivxlcdm]+|[a-z]{1}|\d+)[.:—-]{1}\d)"
+        return re.search(pattern, tag_text.lower())
+        # r"(?:\s)(([ivxlcdm]+|[a-z]{1}|\d+)[.:—-]{1}\d)", tag_text.lower()
 
 
 class FootnoteMystifier:

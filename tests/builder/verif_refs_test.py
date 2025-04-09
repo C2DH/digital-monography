@@ -20,14 +20,19 @@ from src.builder.verif_book import RefsAndTargetsVerifier
 class TestRefsAndTargetsVerifier:
     fp_a = KeyPath(pathlib.Path("tests") / "_fixtures" / "a_book" / "01_a.docx")
     fp_b = KeyPath(pathlib.Path("tests") / "_fixtures" / "a_book" / "02_b.docx")
+    fp_cr = KeyPath(
+        pathlib.Path("tests") / "_fixtures" / "a_book" / "05_conditional_rendering.docx"
+    )
 
     @classmethod
     def setup_class(cls):
         cls.multidocs_meta: dict[str, DocumentMetadata] = {}
         cls.soup_a, cls.meta_a = cls._prepare_docx_for_ref_handing(cls.fp_a)
         cls.soup_b, cls.meta_b = cls._prepare_docx_for_ref_handing(cls.fp_b)
+        cls.soup_cr, cls.meta_cr = cls._prepare_docx_for_ref_handing(cls.fp_cr)
         cls.multidocs_meta[cls.fp_a.stem] = cls.meta_a
         cls.multidocs_meta[cls.fp_b.stem] = cls.meta_b
+        cls.multidocs_meta[cls.fp_cr.stem] = cls.meta_cr
         cls.verifier = RefsAndTargetsVerifier()
         cls.warnings = cls.verifier.verify(cls.multidocs_meta)
 
@@ -56,13 +61,21 @@ class TestRefsAndTargetsVerifier:
         return html_soup, metadata
 
     def test_check_a_is_not_https(self):
-        warnings = [w for w in self.warnings if w["check"] == "check_a_not_archived"]
+        warnings = [
+            w
+            for w in self.warnings
+            if w["check"] == "check_a_not_archived" and w["fn"] == "01_a.docx"
+        ]
         ref_string = "Link to external website without using https nor archived link"
         assert ref_string in warnings[0]["recommend"]
         assert len(warnings) == 1
 
     def test_check_a_not_archived(self):
-        warnings = [w for w in self.warnings if w["check"] == "check_a_not_archived"]
+        warnings = [
+            w
+            for w in self.warnings
+            if w["check"] == "check_a_not_archived" and w["fn"] == "01_a.docx"
+        ]
         ref_string = "Link to external website without using https nor archived link"
         assert ref_string in warnings[0]["recommend"]
         assert len(warnings) == 1

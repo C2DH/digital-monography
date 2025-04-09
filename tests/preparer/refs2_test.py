@@ -274,14 +274,26 @@ class TestRefDatapointsCreated:
         assert subst.prefix == ""
         assert subst.prev_item_num == 1
 
-    # def test_substitution_figRedSquare_bookmark_from_ref(self):
-    #     subst = next(
-    #         subst
-    #         for subst in self.multidocs_meta[self.fp_a.stem].substitutions
-    #         if subst.pk == "02bdocxf02bfigredsquare"
-    #     )
-    #     assert subst.was == ""
-    #     assert subst.item_type == "fig"
+    def test_substitution_in_ref__crossref(self):
+        ref = self.soup_a.find("a", href="#f-01-a-ref177042490")
+        assert ref.text == r"Figure {{ f01aref177042490 }}"
+
+    def test_substitution_in_ref__infile_link(self):
+        ref = self.soup_a.find("a", href="#f-01-a-equationwithcomplexnumbering")
+        assert (
+            ref.text
+            == r"link to equation {{ f01aequationwithcomplexnumbering }} in the same document"
+        )
+
+    def test_substitution_in_ref__f2f_link(self):
+        ref = self.soup_a.find(
+            "a",
+            href="./05_conditional_rendering.md#f-05-conditional-rendering-figfordigitalandpaper",
+        )
+        assert (
+            ref.text
+            == r"link to figure {{ 05conditionalrenderingdocxf05conditionalrenderingfigfordigitalandpaper }} in a separate document"
+        )
 
 
 class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
