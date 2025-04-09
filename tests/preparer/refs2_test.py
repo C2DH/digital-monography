@@ -37,12 +37,13 @@ class TestRefDatapointsCreated:
         html_str = _convert_to_html(fp)
         html_soup = bs4.BeautifulSoup(html_str, "html.parser")
         metadata = DocumentMetadata(fp)
-        headers, captions, footnotes, references = [], [], [], []
+        headers, captions, footnotes, references, paper_only = [], [], [], [], []
         classifiers = [
             (is_header, headers),
             (is_caption, captions),
             (is_footnote, footnotes),
             (is_reference, references),
+            (is_paper_only, paper_only),
         ]
         for node in html_soup.descendants:
             for check_if_meets_criteria, container in classifiers:
@@ -52,6 +53,8 @@ class TestRefDatapointsCreated:
         html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
         html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, footnotes)
         html_soup = prepare_references(html_soup, metadata, references)
+        html_soup = remove_paper_only(html_soup, metadata, paper_only)
+        html_soup = count_targets_for_substitutions(html_soup, metadata)
         return html_soup, metadata
 
     def test_target_as_a_user_placed_bookmark(self):
@@ -294,6 +297,10 @@ class TestRefDatapointsCreated:
             ref.text
             == r"link to figure {{ 05conditionalrenderingdocxf05conditionalrenderingfigfordigitalandpaper }} in a separate document"
         )
+        # for subst in self.multidocs_meta[self.fp_a.stem].substitutions:
+        #     if subst.item_type == "ref":
+        #         print(subst)
+        # assert 1 == 666
 
 
 class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:

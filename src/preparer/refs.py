@@ -96,6 +96,7 @@ def prepare_ref_targets_in_headers(
                     is_digital=is_digital,
                     is_paper=is_paper,
                     prefix="",
+                    file_count=metadata.get_chapter_number(),
                     prev_item_num=None,
                 )
                 metadata.add_target(target)
@@ -191,6 +192,7 @@ def prepare_ref_targets_in_captions(
                 item_type=seq["item_type"],
                 is_digital=is_digital,  # calc from caption and identifier
                 is_paper=is_paper,  # calc from caption and identifier
+                file_count=metadata.get_chapter_number(),
                 prefix=seq["prefix"],  # calc from ref_stack
                 prev_item_num=seq["prev_item_num"],  # calc from ref_stack
             )
@@ -333,9 +335,6 @@ def prepare_references(
                 tag_class = a_tag.get("class", [])
                 tag_class.append(CLS_PAPER_ONLY)
                 a_tag["class"] = tag_class
-                # print("REMOVE: ", a_tag)
-
-            # print("a_tag", a_tag)
 
             link = LinkMystifier()
             link.set_filepath(metadata.filepath)

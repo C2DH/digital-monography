@@ -285,6 +285,7 @@ class TargetDatapoint(DatapointBase):
     is_digital: bool | None
     # no "ref"
     item_type: t.Literal["heading", "equation", "figure", "table", "graph", ""]
+    file_count: int | None
     prefix: str
     prev_item_num: int | None
     new_item_num: int | None = None
