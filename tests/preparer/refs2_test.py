@@ -296,20 +296,40 @@ class TestRefDatapointsCreated:
         ref = self.soup_a.find("a", href="#f-01-a-equationwithcomplexnumbering")
         assert ref.text == r"see equation {{ f01aequationwithcomplexnumbering }}"
 
-    # def test_substitution_in_ref__f2f_link(self):
-    # NOTE: conditional rendering deserves more thought out tests
-    #     ref = self.soup_a.find(
-    #         "a",
-    #         href="./05_conditional_rendering.md#f-05-conditional-rendering-figfordigitalandpaper",
-    #     )
-    #     assert (
-    #         ref.text
-    #         == r"link to figure {{ 05conditionalrenderingdocxf05conditionalrenderingfigfordigitalandpaper }} in a separate document"
-    #     )
-    # for subst in self.book_metadata[self.fp_a.stem].substitutions:
-    #     if subst.item_type == "ref":
-    #         print(subst)
-    # assert 1 == 666
+    def test_substitution_in_ref__conditional_rendering_digital(self):
+        ref = self.soup_a.find(
+            "a",
+            href="./05_conditional_rendering.md#f-05-conditional-rendering-figfordigital",
+        )
+        assert (
+            ref.text
+            == r"link to fig {{ 05conditionalrenderingdocxf05conditionalrenderingfigfordigital }} (digital only)"
+        )
+
+    def test_substitution_in_ref__conditional_rendering_paper(self):
+        ref = self.soup_a.find(
+            "a",
+            href="./05_conditional_rendering.md#f-05-conditional-rendering-figforpaper",
+        )
+        assert (
+            ref.text
+            == r"link to fig {{ 05conditionalrenderingdocxf05conditionalrenderingfigforpaper }} (paper only)"
+        )
+
+    def test_substitution_in_ref__conditional_rendering_digital_and_paper(self):
+        ref = self.soup_a.find(
+            "a",
+            href="./05_conditional_rendering.md#f-05-conditional-rendering-figfordigitalandpaper",
+        )
+        assert (
+            ref.text
+            == r"link to fig {{ 05conditionalrenderingdocxf05conditionalrenderingfigfordigitalandpaper }} (digital and paper)"
+        )
+
+        # for subst in self.book_metadata[self.fp_a.stem].substitutions:
+        #     if subst.item_type == "ref":
+        #         print(subst)
+        # assert 1 == 666
 
     # def test_testing(self):
     #     for k, v in self.substitution_mapping.items():
