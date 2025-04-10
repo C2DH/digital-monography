@@ -269,10 +269,14 @@ class TestRefDatapointsCreated:
         )
         assert subst.was == "1"
         assert subst.item_type == "figure"
-        # assert subst.item_type == "fig"
         assert subst.file_count == 1
         assert subst.prefix == ""
         assert subst.prev_item_num == 1
+        assert subst.new_value() == "1.1"
+
+    def test_substitution_in_ref__crossref_fig1(self):
+        ref = self.soup_a.find("a", href="#f-01-a-ref177042490")
+        assert ref.text == r"Figure {{ f01aref177042490 }}"
 
     def test_substitution_tbl1(self):
         subst = next(
@@ -282,15 +286,27 @@ class TestRefDatapointsCreated:
         )
         assert subst.was == "1"
         assert subst.item_type == "table"
-        # assert subst.item_type == "tbl"
         assert subst.file_count == 1
         assert subst.prefix == ""
-        assert subst.prefix == ""
         assert subst.prev_item_num == 1
+        assert subst.new_value() == "1.1"
 
-    def test_substitution_in_ref__crossref(self):
-        ref = self.soup_a.find("a", href="#f-01-a-ref177042490")
-        assert ref.text == r"Figure {{ f01aref177042490 }}"
+    def test_substitution_in_ref__crossref_tbl1(self):
+        ref = self.soup_a.find("a", href="#f-01-a-ref177044323")
+        assert ref.text == r"Table {{ f01aref177044323 }}"
+
+    def test_substitution_tbl1(self):
+        subst = next(
+            subst
+            for subst in self.book_metadata[self.fp_a.stem].substitutions
+            if subst.pk == "f01aequationwithcomplexnumbering"
+        )
+        assert subst.was == "I.A"
+        assert subst.item_type == "equation"
+        assert subst.file_count == 1
+        assert subst.prefix == "I."
+        assert subst.prev_item_num == 1
+        assert subst.new_value() == "1.I.1"
 
     def test_substitution_in_ref__infile_link(self):
         ref = self.soup_a.find("a", href="#f-01-a-equationwithcomplexnumbering")
@@ -411,6 +427,7 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.prefix == ""
         assert subs.prev_item_num == 1
         assert subs.new_item_num == 1
+        assert subs.new_value() == "5.1"
 
     def test_substitution_for_paper(self):
         subs = self.metadata.get("substitutions", "f05conditionalrenderingref193102988")
@@ -423,6 +440,7 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.prefix == ""
         assert subs.prev_item_num == 2
         assert subs.new_item_num == None
+        # assert subs.new_value() == "" # TODO: should this be empty string?
 
     def test_substitution_for_digital_and_for_paper(self):
         subs = self.metadata.get("substitutions", "f05conditionalrenderingref193103002")
@@ -435,6 +453,7 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.prefix == ""
         assert subs.prev_item_num == 3
         assert subs.new_item_num == 2
+        assert subs.new_value() == "5.2"
 
     def test_substitution_for_refs(self):
         assert len(self.metadata.substitutions) == 7  # 4 targets + 3 refs
@@ -450,6 +469,7 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.prefix == ""
         assert subs.prev_item_num == None
         assert subs.new_item_num == 1
+        assert subs.new_value() == "5.1"
         subs = self.metadata.get("substitutions", "f05conditionalrenderingfigforpaper")
         assert subs
         assert subs.was == "2"
@@ -460,6 +480,7 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.prefix == ""
         assert subs.prev_item_num == None
         assert subs.new_item_num == None
+        # assert subs.new_value() == "" # TODO: should this be empty string?
         subs = self.metadata.get(
             "substitutions", "f05conditionalrenderingfigfordigitalandpaper"
         )
@@ -472,6 +493,7 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.prefix == ""
         assert subs.prev_item_num == None
         assert subs.new_item_num == 2
+        assert subs.new_value() == "5.2"
 
     def test_substitution_to_json_handling(self):
         subs = self.metadata.get("substitutions", "f05conditionalrenderingref193103002")
@@ -497,6 +519,7 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.prefix == ""
         assert subs.prev_item_num == 3
         assert subs.new_item_num == 2
+        assert subs.new_value() == "5.2"
 
     # def test_testing(self):
     #     for target in self.metadata.targets:

@@ -56,6 +56,7 @@ def lambda_handler() -> tuple[docx.document.Document, dict[str, DocumentMetadata
     # per each doc
     metadata = book_metadata["05_conditional_rendering"]
     doc = docx.Document("/tmp/efs/a_book/05_conditional_rendering.docx")
+    # doc = docx.Document("/tmp/efs/a_book/05_conditional_rendering.docx")
     # doc = docx.Document("/tmp/efs/a_book/ref-n-target.docx")
     remove_parts_and_highlights_due_to_conditional_rendering(doc)
     # prepare_ref_targets_in_headers(doc, book_metadata)

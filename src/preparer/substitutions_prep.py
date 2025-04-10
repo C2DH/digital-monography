@@ -60,4 +60,9 @@ def update_substitutions_for_refs(
                 subs.prefix = target.prefix
                 subs.new_item_num = target.new_item_num
 
+            print("subs", subs)
+            print("\n")
+            print("target", target)
+            print("-" * 50)
+
     return soup

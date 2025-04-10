@@ -386,6 +386,24 @@ class SubstitutionDatapoint(DatapointBase):
     new_item_num: int | None = None
     # make sure that literal options are equal to constants.CAPTION_ITEM_TYPE_*
 
+    def new_value(self) -> str:
+        """
+        Returns the value that will replace placeholder.
+        """
+        if self.new_item_num and not self.file_count:
+            return f"{self.prefix}{self.new_item_num}"
+        elif self.new_item_num:
+            return f"{self.file_count}.{self.prefix}{self.new_item_num}"
+        else:
+            return self.was
+
+    # if dp.new_item_num and not dp.file_count:
+    #     substitutions[dp.pk] = f"{dp.prefix}{dp.new_item_num}"
+    # elif dp.new_item_num:
+    #     substitutions[dp.pk] = f"{dp.file_count}.{dp.prefix}{dp.new_item_num}"
+    # else:
+    #     substitutions[dp.pk] = dp.was
+
 
 class CitationGroupDatapoint(DatapointBase):
     # id: int
