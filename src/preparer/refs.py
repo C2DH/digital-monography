@@ -584,12 +584,17 @@ class LinkMystifier:
         """
         Markdown link text to be placed in `[text](...)` syntax.
         """
+        if "XXX" in tag_text:
+            self.text_to_replace = "XXX"
+            replace_with = r"{{ " + self.unique_id + r" }}"
+            tag_text = tag_text.replace(self.text_to_replace, replace_with)
+            return tag_text
         match = self._match_complex_numbering(tag_text)
         if isinstance(match, re.Match):
             start, end = match.span(1)
             self.text_to_replace = tag_text[start:end]
             replace_with = r"{{ " + self.unique_id + r" }}"
-            tag_text = tag_text.replace(self.text_to_replace, replace_with)
+            return tag_text.replace(self.text_to_replace, replace_with)
         elif self.is_cross_file_reference():
             to_replace = ""
             for i in range(len(tag_text)):

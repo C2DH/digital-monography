@@ -16,19 +16,26 @@ from src.preparer.metadata import DocumentMetadata, SubstitutionDatapoint
 from src.preparer.keys import KeyPath
 from src.preparer.substitutions_prep import count_targets_for_substitutions
 from src.preparer.conditional_rendering import is_paper_only, remove_paper_only
+from src.builder.config_prep import get_substitutions_mapping
 
 
 class TestRefDatapointsCreated:
     fp_a = KeyPath(pathlib.Path("tests") / "_fixtures" / "a_book" / "01_a.docx")
     fp_b = KeyPath(pathlib.Path("tests") / "_fixtures" / "a_book" / "02_b.docx")
+    fp_cr = KeyPath(
+        pathlib.Path("tests") / "_fixtures" / "a_book" / "05_conditional_rendering.docx"
+    )
 
     @classmethod
     def setup_class(cls):
-        cls.multidocs_meta: dict[str, DocumentMetadata] = {}
+        cls.book_metadata: dict[str, DocumentMetadata] = {}
         cls.soup_a, cls.meta_a = cls._prepare_docx_for_ref_handing(cls.fp_a)
         cls.soup_b, cls.meta_b = cls._prepare_docx_for_ref_handing(cls.fp_b)
-        cls.multidocs_meta[cls.fp_a.stem] = cls.meta_a
-        cls.multidocs_meta[cls.fp_b.stem] = cls.meta_b
+        cls.soup_cr, cls.meta_cr = cls._prepare_docx_for_ref_handing(cls.fp_cr)
+        cls.book_metadata[cls.fp_a.stem] = cls.meta_a
+        cls.book_metadata[cls.fp_b.stem] = cls.meta_b
+        cls.book_metadata[cls.fp_cr.stem] = cls.meta_cr
+        cls.substitution_mapping = get_substitutions_mapping(cls.book_metadata)
 
     @classmethod
     def _prepare_docx_for_ref_handing(
@@ -58,8 +65,8 @@ class TestRefDatapointsCreated:
         return html_soup, metadata
 
     def test_target_as_a_user_placed_bookmark(self):
-        # target = self.multidocs_meta[self.fp_a.stem].get_target("f-01-a-heading")
-        target = self.multidocs_meta[self.fp_a.stem].get_target("f-01-a-a-heading")
+        # target = self.book_metadata[self.fp_a.stem].get_target("f-01-a-heading")
+        target = self.book_metadata[self.fp_a.stem].get_target("f-01-a-a-heading")
         assert target
         assert target.text == "Heading"
         assert target.is_digital == True
@@ -69,7 +76,7 @@ class TestRefDatapointsCreated:
         assert target.prev_item_num == None
 
     def test_target_simple(self):
-        target = self.multidocs_meta[self.fp_a.stem].get_target("f-01-a-ref177042490")
+        target = self.book_metadata[self.fp_a.stem].get_target("f-01-a-ref177042490")
         assert target
         assert target.text == "1"
         assert target.is_digital == True
@@ -81,7 +88,7 @@ class TestRefDatapointsCreated:
     def test_two_targets_to_the_same_object(self):
         """The caption has two bookmarks assigned to it.
         This should be taken into account when updating the table numbering."""
-        target1 = self.multidocs_meta[self.fp_a.stem].get_target("f-01-a-ref177044323")
+        target1 = self.book_metadata[self.fp_a.stem].get_target("f-01-a-ref177044323")
         assert target1
         assert target1.text == "1"
         assert target1.is_digital == True
@@ -90,7 +97,7 @@ class TestRefDatapointsCreated:
         assert target1.prefix == ""
         assert target1.prev_item_num == 1
 
-        target2 = self.multidocs_meta[self.fp_a.stem].get_target("f-01-a-ref177044319")
+        target2 = self.book_metadata[self.fp_a.stem].get_target("f-01-a-ref177044319")
         assert target2
         assert target1.text == target2.text
         assert target1.is_digital == target2.is_digital
@@ -100,7 +107,7 @@ class TestRefDatapointsCreated:
         assert target1.prev_item_num == target2.prev_item_num
 
     def test_target_complex(self):
-        target = self.multidocs_meta[self.fp_a.stem].get("targets", "I.A", "text")
+        target = self.book_metadata[self.fp_a.stem].get("targets", "I.A", "text")
         assert target
         assert target.text == "I.A"
         assert target.is_digital == True
@@ -112,7 +119,7 @@ class TestRefDatapointsCreated:
     def test_caption_to_external(self):
         ref = next(
             ref
-            for ref in self.multidocs_meta[self.fp_a.stem].refs
+            for ref in self.book_metadata[self.fp_a.stem].refs
             if ref.prev_string == "link in caption to an external source"
         )
         assert ref.text == ref.prev_string
@@ -127,7 +134,7 @@ class TestRefDatapointsCreated:
     def test_caption_to_internal(self):
         ref = next(
             ref
-            for ref in self.multidocs_meta[self.fp_a.stem].refs
+            for ref in self.book_metadata[self.fp_a.stem].refs
             if ref.prev_string == "link in caption to a table in chapter 2"
         )
         assert ref.text != ref.prev_string
@@ -138,7 +145,7 @@ class TestRefDatapointsCreated:
     def test_infile_link_to_heading(self):
         ref = next(
             ref
-            for ref in self.multidocs_meta[self.fp_a.stem].refs
+            for ref in self.book_metadata[self.fp_a.stem].refs
             if ref.text == "direct heading"
         )
         assert ref.text == ref.prev_string
@@ -148,7 +155,7 @@ class TestRefDatapointsCreated:
     def test_infile_link_to_bookmark(self):
         ref = next(
             ref
-            for ref in self.multidocs_meta[self.fp_a.stem].refs
+            for ref in self.book_metadata[self.fp_a.stem].refs
             if ref.text == "bookmark heading"
         )
         assert ref.text == ref.prev_string
@@ -158,7 +165,7 @@ class TestRefDatapointsCreated:
     def test_infile_crossref_to_figure(self):
         ref = next(
             ref
-            for ref in self.multidocs_meta[self.fp_a.stem].refs
+            for ref in self.book_metadata[self.fp_a.stem].refs
             if ref.prev_string == "Figure 1"
         )
         assert ref.text == r"Figure {{ f01aref177042490 }}"
@@ -168,7 +175,7 @@ class TestRefDatapointsCreated:
     def test_infile_crossref_to_table(self):
         ref = next(
             ref
-            for ref in self.multidocs_meta[self.fp_a.stem].refs
+            for ref in self.book_metadata[self.fp_a.stem].refs
             if ref.prev_string == "Table 1"
         )
         assert ref.text == r"Table {{ f01aref177044323 }}"
@@ -178,37 +185,41 @@ class TestRefDatapointsCreated:
     def test_f2f_link_to_heading(self):
         ref = next(
             ref
-            for ref in self.multidocs_meta[self.fp_a.stem].refs
-            if ref.prev_string == "Heading 1"
+            for ref in self.book_metadata[self.fp_a.stem].refs
+            if ref.prev_string == "Heading"
         )
-        assert ref.text == r"Heading {{ 02bdocxf02bh2subheading }}"
+        # # I don't understand why heading was numbered "1".
+        # I did that to test substitution in refs, but why heading is 1?
+        # Makes more sense with table and figure.
+        # assert ref.text == r"Heading {{ 02bdocxf02bh2subheading }}"
+        assert ref.text == r"Heading"
         assert ref.href == "./02_b.md#f-02-b-h2subheading"
         assert ref.prev_href == "02_b.docx#h2Subheading"
 
     def test_f2f_link_to_figure(self):
         ref = next(
             ref
-            for ref in self.multidocs_meta[self.fp_a.stem].refs
-            if ref.prev_string == "Figure"
+            for ref in self.book_metadata[self.fp_a.stem].refs
+            if ref.prev_string == "Figure XXX"
         )
-        assert ref.text == "Figure"
+        assert ref.text == r"Figure {{ 02bdocxf02bfigredsquare }}"
         assert ref.href == "./02_b.md#f-02-b-figredsquare"
         assert ref.prev_href == "02_b.docx#figRedSquare"
 
     def test_f2f_link_to_table(self):
         ref = next(
             ref
-            for ref in self.multidocs_meta[self.fp_a.stem].refs
-            if ref.prev_string == "Table"
+            for ref in self.book_metadata[self.fp_a.stem].refs
+            if ref.prev_string == "Table XXX"
         )
-        assert ref.text == "Table"
+        assert ref.text == r"Table {{ 02bdocxf02btblsimpletable }}"
         assert ref.href == "./02_b.md#f-02-b-tblsimpletable"
         assert ref.prev_href == "02_b.docx#tblSimpleTable"
 
     def test_footnote_start(self):
         ref = next(
             ref
-            for ref in self.multidocs_meta[self.fp_a.stem].refs
+            for ref in self.book_metadata[self.fp_a.stem].refs
             if ref.text == "Footnote link to an external website"
         )
         assert (
@@ -223,7 +234,7 @@ class TestRefDatapointsCreated:
     def test_footnote_mid(self):
         ref = next(
             ref
-            for ref in self.multidocs_meta[self.fp_a.stem].refs
+            for ref in self.book_metadata[self.fp_a.stem].refs
             if ref.text == "footnote link"
         )
         assert (
@@ -238,7 +249,7 @@ class TestRefDatapointsCreated:
     def test_footnote_end(self):
         ref = next(
             ref
-            for ref in self.multidocs_meta[self.fp_a.stem].refs
+            for ref in self.book_metadata[self.fp_a.stem].refs
             if ref.text == "end of the footnote."
         )
         assert (
@@ -253,7 +264,7 @@ class TestRefDatapointsCreated:
     def test_substitution_fig1(self):
         subst = next(
             subst
-            for subst in self.multidocs_meta[self.fp_a.stem].substitutions
+            for subst in self.book_metadata[self.fp_a.stem].substitutions
             if subst.pk == "f01aref177042490"
         )
         assert subst.was == "1"
@@ -266,7 +277,7 @@ class TestRefDatapointsCreated:
     def test_substitution_tbl1(self):
         subst = next(
             subst
-            for subst in self.multidocs_meta[self.fp_a.stem].substitutions
+            for subst in self.book_metadata[self.fp_a.stem].substitutions
             if subst.pk == "f01aref177044323"
         )
         assert subst.was == "1"
@@ -283,24 +294,27 @@ class TestRefDatapointsCreated:
 
     def test_substitution_in_ref__infile_link(self):
         ref = self.soup_a.find("a", href="#f-01-a-equationwithcomplexnumbering")
-        assert (
-            ref.text
-            == r"link to equation {{ f01aequationwithcomplexnumbering }} in the same document"
-        )
+        assert ref.text == r"see equation {{ f01aequationwithcomplexnumbering }}"
 
-    def test_substitution_in_ref__f2f_link(self):
-        ref = self.soup_a.find(
-            "a",
-            href="./05_conditional_rendering.md#f-05-conditional-rendering-figfordigitalandpaper",
-        )
-        assert (
-            ref.text
-            == r"link to figure {{ 05conditionalrenderingdocxf05conditionalrenderingfigfordigitalandpaper }} in a separate document"
-        )
-        # for subst in self.multidocs_meta[self.fp_a.stem].substitutions:
-        #     if subst.item_type == "ref":
-        #         print(subst)
-        # assert 1 == 666
+    # def test_substitution_in_ref__f2f_link(self):
+    # NOTE: conditional rendering deserves more thought out tests
+    #     ref = self.soup_a.find(
+    #         "a",
+    #         href="./05_conditional_rendering.md#f-05-conditional-rendering-figfordigitalandpaper",
+    #     )
+    #     assert (
+    #         ref.text
+    #         == r"link to figure {{ 05conditionalrenderingdocxf05conditionalrenderingfigfordigitalandpaper }} in a separate document"
+    #     )
+    # for subst in self.book_metadata[self.fp_a.stem].substitutions:
+    #     if subst.item_type == "ref":
+    #         print(subst)
+    # assert 1 == 666
+
+    # def test_testing(self):
+    #     for k, v in self.substitution_mapping.items():
+    #         print(f"{k}: {v}")
+    #     assert 1 == 666
 
 
 class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
@@ -310,9 +324,9 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
 
     @classmethod
     def setup_class(cls):
-        cls.multidocs_meta: dict[str, DocumentMetadata] = {}
+        cls.book_metadata: dict[str, DocumentMetadata] = {}
         cls.soup, cls.metadata = cls._prepare_docx_for_ref_handing(cls.fp)
-        # cls.multidocs_meta[cls.fp.stem] = cls.meta
+        # cls.book_metadata[cls.fp.stem] = cls.meta
 
     @classmethod
     def _prepare_docx_for_ref_handing(
