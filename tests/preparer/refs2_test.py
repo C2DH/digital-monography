@@ -11,7 +11,7 @@ from src.preparer.refs import (
     prepare_ref_targets_in_footnotes,
     prepare_references,
 )
-from src.preparer.main import _convert_to_html
+from src.preparer.main import _convert_to_html, prepare_docx
 from src.preparer.metadata import DocumentMetadata, SubstitutionDatapoint
 from src.preparer.keys import KeyPath
 from src.preparer.substitutions_prep import count_targets_for_substitutions
@@ -41,27 +41,9 @@ class TestRefDatapointsCreated:
     def _prepare_docx_for_ref_handing(
         cls, fp: KeyPath
     ) -> tuple[bs4.BeautifulSoup, DocumentMetadata]:
-        html_str = _convert_to_html(fp)
-        html_soup = bs4.BeautifulSoup(html_str, "html.parser")
         metadata = DocumentMetadata(fp)
-        headers, captions, footnotes, references, paper_only = [], [], [], [], []
-        classifiers = [
-            (is_header, headers),
-            (is_caption, captions),
-            (is_footnote, footnotes),
-            (is_reference, references),
-            (is_paper_only, paper_only),
-        ]
-        for node in html_soup.descendants:
-            for check_if_meets_criteria, container in classifiers:
-                if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
-                    container.append(node)
-        html_soup = prepare_ref_targets_in_headers(html_soup, metadata, headers)
-        html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
-        html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, footnotes)
-        html_soup = prepare_references(html_soup, metadata, references)
-        html_soup = remove_paper_only(html_soup, metadata, paper_only)
-        html_soup = count_targets_for_substitutions(html_soup, metadata)
+        html_str = _convert_to_html(fp)
+        html_soup, metadata, _ = prepare_docx(html_str, metadata)
         return html_soup, metadata
 
     def test_target_as_a_user_placed_bookmark(self):
@@ -206,6 +188,19 @@ class TestRefDatapointsCreated:
         assert ref.href == "./02_b.md#f-02-b-figredsquare"
         assert ref.prev_href == "02_b.docx#figRedSquare"
 
+    def test_f2f_fig_substitution(self):
+        subst = next(
+            subst
+            for subst in self.book_metadata[self.fp_a.stem].substitutions
+            if subst.pk == "02bdocxf02bfigredsquare"
+        )
+        assert subst.was == "XXX"
+        assert subst.item_type == "ref"
+        assert subst.file_count == 2
+        assert subst.prefix == ""
+        assert subst.prev_item_num == None  # TODO
+        # assert subst.new_value() == "2.1" # TODO
+
     def test_f2f_link_to_table(self):
         ref = next(
             ref
@@ -215,6 +210,22 @@ class TestRefDatapointsCreated:
         assert ref.text == r"Table {{ 02bdocxf02btblsimpletable }}"
         assert ref.href == "./02_b.md#f-02-b-tblsimpletable"
         assert ref.prev_href == "02_b.docx#tblSimpleTable"
+
+    def test_f2f_tbl_substitution__two_refs(self):
+        # NOTE: there are 2 separate references to the same table in the document.
+        # The first one is in the caption, the second one is in the text.
+        # But there was only one substitution created for them :/
+        subst = next(
+            subst
+            for subst in self.book_metadata[self.fp_a.stem].substitutions
+            if subst.pk == "02bdocxf02btblsimpletable"
+        )
+        assert subst.was == "XXX"
+        assert subst.item_type == "ref"
+        assert subst.file_count == 2
+        assert subst.prefix == ""
+        assert subst.prev_item_num == 1
+        assert subst.new_value() == "2.1"
 
     def test_footnote_start(self):
         ref = next(
@@ -312,6 +323,28 @@ class TestRefDatapointsCreated:
         ref = self.soup_a.find("a", href="#f-01-a-equationwithcomplexnumbering")
         assert ref.text == r"see equation {{ f01aequationwithcomplexnumbering }}"
 
+    def test_substitution_conditional_rendering_digital(self):
+        # for ref in self.book_metadata[self.fp_a.stem].refs:
+        #     print(ref)
+        #     print("-" * 50)
+        # print("=" * 75)
+        # for subst in self.book_metadata[self.fp_a.stem].substitutions:
+        #     print(subst)
+        #     print("-" * 50)
+        #     # print(subst.pk)
+        subst = next(
+            subst
+            for subst in self.book_metadata[self.fp_a.stem].substitutions
+            if subst.pk
+            == "05conditionalrenderingdocxf05conditionalrenderingfigfordigital"
+        )
+        assert subst.was == "XXX"
+        assert subst.item_type == "ref"
+        assert subst.file_count == 5
+        assert subst.prefix == ""
+        # assert subst.prev_item_num == None
+        # assert subst.new_value() == ""
+
     def test_substitution_in_ref__conditional_rendering_digital(self):
         ref = self.soup_a.find(
             "a",
@@ -322,6 +355,20 @@ class TestRefDatapointsCreated:
             == r"link to fig {{ 05conditionalrenderingdocxf05conditionalrenderingfigfordigital }} (digital only)"
         )
 
+    def test_substitution_conditional_rendering_paper(self):
+        subst = next(
+            subst
+            for subst in self.book_metadata[self.fp_a.stem].substitutions
+            if subst.pk
+            == "05conditionalrenderingdocxf05conditionalrenderingfigforpaper"
+        )
+        assert subst.was == "XXX"
+        assert subst.item_type == "ref"
+        assert subst.file_count == 5
+        assert subst.prefix == ""
+        # assert subst.prev_item_num == None
+        # assert subst.new_value() == ""
+
     def test_substitution_in_ref__conditional_rendering_paper(self):
         ref = self.soup_a.find(
             "a",
@@ -331,6 +378,20 @@ class TestRefDatapointsCreated:
             ref.text
             == r"link to fig {{ 05conditionalrenderingdocxf05conditionalrenderingfigforpaper }} (paper only)"
         )
+
+    def test_substitution_conditional_rendering_digital_and_paper(self):
+        subst = next(
+            subst
+            for subst in self.book_metadata[self.fp_a.stem].substitutions
+            if subst.pk
+            == "05conditionalrenderingdocxf05conditionalrenderingfigfordigitalandpaper"
+        )
+        assert subst.was == "XXX"
+        assert subst.item_type == "ref"
+        assert subst.file_count == 5
+        assert subst.prefix == ""
+        # assert subst.prev_item_num == None
+        # assert subst.new_value() == ""
 
     def test_substitution_in_ref__conditional_rendering_digital_and_paper(self):
         ref = self.soup_a.find(
@@ -368,28 +429,37 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
     def _prepare_docx_for_ref_handing(
         cls, fp: KeyPath
     ) -> tuple[bs4.BeautifulSoup, DocumentMetadata]:
-        html_str = _convert_to_html(fp)
-        html_soup = bs4.BeautifulSoup(html_str, "html.parser")
         metadata = DocumentMetadata(fp)
-        headers, captions, footnotes, references, paper_only = [], [], [], [], []
-        classifiers = [
-            (is_header, headers),
-            (is_caption, captions),
-            (is_footnote, footnotes),
-            (is_reference, references),
-            (is_paper_only, paper_only),
-        ]
-        for node in html_soup.descendants:
-            for check_if_meets_criteria, container in classifiers:
-                if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
-                    container.append(node)
-        html_soup = prepare_ref_targets_in_headers(html_soup, metadata, headers)
-        html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
-        html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, footnotes)
-        html_soup = prepare_references(html_soup, metadata, references)
-        html_soup = remove_paper_only(html_soup, metadata, paper_only)
-        html_soup = count_targets_for_substitutions(html_soup, metadata)
+        html_str = _convert_to_html(fp)
+        html_soup, metadata, _ = prepare_docx(html_str, metadata)
         return html_soup, metadata
+
+    # @classmethod
+    # def _prepare_docx_for_ref_handing(
+    #     cls, fp: KeyPath
+    # ) -> tuple[bs4.BeautifulSoup, DocumentMetadata]:
+    #     html_str = _convert_to_html(fp)
+    #     html_soup = bs4.BeautifulSoup(html_str, "html.parser")
+    #     metadata = DocumentMetadata(fp)
+    #     headers, captions, footnotes, references, paper_only = [], [], [], [], []
+    #     classifiers = [
+    #         (is_header, headers),
+    #         (is_caption, captions),
+    #         (is_footnote, footnotes),
+    #         (is_reference, references),
+    #         (is_paper_only, paper_only),
+    #     ]
+    #     for node in html_soup.descendants:
+    #         for check_if_meets_criteria, container in classifiers:
+    #             if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
+    #                 container.append(node)
+    #     html_soup = prepare_ref_targets_in_headers(html_soup, metadata, headers)
+    #     html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
+    #     html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, footnotes)
+    #     html_soup = prepare_references(html_soup, metadata, references)
+    #     html_soup = remove_paper_only(html_soup, metadata, paper_only)
+    #     html_soup = count_targets_for_substitutions(html_soup, metadata)
+    #     return html_soup, metadata
 
     def test_target_for_digital(self):
         target = self.metadata.get(

@@ -357,7 +357,12 @@ def prepare_references(
             )
             metadata.add_ref(ref)
             if link.unique_id and metadata.get_substitution(link.unique_id) is None:
-                # breakpoint()
+                # get chapter number from the href if f2f else number from current file
+                target_chapter_number = (
+                    metadata.get_chapter_number(link.path)
+                    if link.path and link.is_cross_file_reference()
+                    else metadata.get_chapter_number()
+                )
                 metadata.add_substitution(
                     SubstitutionDatapoint(
                         pk=link.unique_id,
@@ -367,7 +372,7 @@ def prepare_references(
                         item_type="ref",
                         is_digital=None,
                         is_paper=None,
-                        file_count=metadata.get_chapter_number(),
+                        file_count=target_chapter_number,
                         prefix="",
                         prev_item_num=None,
                     )

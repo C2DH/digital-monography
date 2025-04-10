@@ -474,12 +474,14 @@ class DocumentMetadata:
         self.citation_groups: list[CitationGroupDatapoint] = []
         self.citation_items: list[CitationItemDatapoint] = []
 
-    def get_chapter_number(self) -> int | None:
+    def get_chapter_number(self, s: str | None = None) -> int | None:
         """Extract `int(1)` from file name '01_book_chapter'."""
-        if self.filepath is None:
-            return None
+        if s is None:
+            if self.filepath is None:
+                return None
+            s = self.filepath.stem
         number = ""
-        for ch in self.filepath.stem:
+        for ch in s:
             if number and not ch.isdigit():
                 return int(number)
             elif number == "" and ch == "0":

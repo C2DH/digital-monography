@@ -138,15 +138,8 @@ def is_table(tag: bs4.element.Tag) -> bool:
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info(f"lambda_handler. Event: {json.dumps(event, default=str)}")
-    images_with_alttxt = []
-    tables = []
-    headers = []
-    captions = []
-    citations = []
-    footnotes = []
-    references = []
-    paper_only = []
     key = _get_key(event)
+    metadata = DocumentMetadata(key)
     src = _get_source_bucket(event)
     _download_fileobj(src, key)
     if key.suffix.lower() == ".ipynb":
@@ -157,41 +150,50 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         # _put_to_archive_s3(key)
         return {"statusCode": 200, "body": ""}
     if key.suffix.lower() == ".docx":
-        # TODO: Move all docx conversion to a separate function, then use it in tests
         html_str = _convert_to_html(key.efs_filepath)
-        metadata = DocumentMetadata(key)
-        html_soup = bs4.BeautifulSoup(html_str, "html.parser")
-        metadata.char_count, metadata.word_count = _get_char_and_word_count(html_soup)
-        classifiers = [
-            (is_img_with_alt_text, images_with_alttxt),
-            (is_citation, citations),
-            (is_table, tables),
-            (is_header, headers),
-            (is_caption, captions),
-            (is_footnote, footnotes),
-            (is_reference, references),
-            (is_paper_only, paper_only),
-        ]
-        """
-        Before applying the processing, this subprocedure traverses the tree
-        recursively and puts relevant bs4 objects (html elements) inside 
-        respective lists. Processing is then applied on the marked elements.
-        """
-        for node in html_soup.descendants:
-            for check_if_meets_criteria, container in classifiers:
-                if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
-                    container.append(node)
-        html_soup, bibliography = prepare_citations(html_soup, metadata, citations)
-        html_soup = add_bibliography(html_soup, bibliography)
-        html_soup = prepare_ref_targets_in_headers(html_soup, metadata, headers)
-        html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
-        html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, footnotes)
-        html_soup = prepare_references(html_soup, metadata, references)
-        html_soup = prepare_metadata_tables(html_soup, metadata, tables)
-        html_soup = remove_paper_only(html_soup, metadata, paper_only)
-        html_soup = remove_empty_tables(html_soup, metadata, tables)
-        html_soup = prepare_alt_texts(html_soup, metadata, images_with_alttxt)
-        html_soup = count_targets_for_substitutions(html_soup, metadata)
+        html_soup, metadata, tables = prepare_docx(html_str, metadata)
+        # images_with_alttxt = []
+        # tables = []
+        # headers = []
+        # captions = []
+        # citations = []
+        # footnotes = []
+        # references = []
+        # paper_only = []
+        # html_str = _convert_to_html(key.efs_filepath)
+        # html_soup = bs4.BeautifulSoup(html_str, "html.parser")
+        # metadata.char_count, metadata.word_count = _get_char_and_word_count(html_soup)
+        # classifiers = [
+        #     (is_img_with_alt_text, images_with_alttxt),
+        #     (is_citation, citations),
+        #     (is_table, tables),
+        #     (is_header, headers),
+        #     (is_caption, captions),
+        #     (is_footnote, footnotes),
+        #     (is_reference, references),
+        #     (is_paper_only, paper_only),
+        # ]
+        # """
+        # Before applying the processing, this subprocedure traverses the tree
+        # recursively and puts relevant bs4 objects (html elements) inside
+        # respective lists. Processing is then applied on the marked elements.
+        # """
+        # for node in html_soup.descendants:
+        #     for check_if_meets_criteria, container in classifiers:
+        #         if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
+        #             container.append(node)
+        # html_soup, bibliography = prepare_citations(html_soup, metadata, citations)
+        # html_soup = add_bibliography(html_soup, bibliography)
+        # html_soup = prepare_ref_targets_in_headers(html_soup, metadata, headers)
+        # html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
+        # html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, footnotes)
+        # html_soup = prepare_references(html_soup, metadata, references)
+        # html_soup = prepare_metadata_tables(html_soup, metadata, tables)
+        # html_soup = remove_paper_only(html_soup, metadata, paper_only)
+        # html_soup = remove_empty_tables(html_soup, metadata, tables)
+        # html_soup = prepare_alt_texts(html_soup, metadata, images_with_alttxt)
+        # html_soup = count_targets_for_substitutions(html_soup, metadata)
+        # ########################
 
         logger.info("====================================")
         logger.info(f"Looking for {FIELD_DIGITAL_SOURCE}")
@@ -291,6 +293,53 @@ def _download_fileobj(src: str, key: KeyPath) -> None:
             "Error upon internal download.",
         )
         raise
+
+
+def prepare_docx(
+    html_str: str, metadata: DocumentMetadata
+) -> tuple[bs4.BeautifulSoup, DocumentMetadata, list[bs4.element.Tag]]:
+    images_with_alttxt = []
+    tables = []
+    headers = []
+    captions = []
+    citations = []
+    footnotes = []
+    references = []
+    paper_only = []
+    # html_str = _convert_to_html(key.efs_filepath)
+    html_soup = bs4.BeautifulSoup(html_str, "html.parser")
+    metadata.char_count, metadata.word_count = _get_char_and_word_count(html_soup)
+    classifiers = [
+        (is_img_with_alt_text, images_with_alttxt),
+        (is_citation, citations),
+        (is_table, tables),
+        (is_header, headers),
+        (is_caption, captions),
+        (is_footnote, footnotes),
+        (is_reference, references),
+        (is_paper_only, paper_only),
+    ]
+    """
+    Before applying the processing, this subprocedure traverses the tree
+    recursively and puts relevant bs4 objects (html elements) inside 
+    respective lists. Processing is then applied on the marked elements.
+    """
+    for node in html_soup.descendants:
+        for check_if_meets_criteria, container in classifiers:
+            if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
+                container.append(node)
+    html_soup, bibliography = prepare_citations(html_soup, metadata, citations)
+    html_soup = add_bibliography(html_soup, bibliography)
+    html_soup = prepare_ref_targets_in_headers(html_soup, metadata, headers)
+    html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
+    html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, footnotes)
+    html_soup = prepare_references(html_soup, metadata, references)
+    html_soup = prepare_metadata_tables(html_soup, metadata, tables)
+    html_soup = remove_paper_only(html_soup, metadata, paper_only)
+    html_soup = remove_empty_tables(html_soup, metadata, tables)
+    html_soup = prepare_alt_texts(html_soup, metadata, images_with_alttxt)
+    html_soup = count_targets_for_substitutions(html_soup, metadata)
+    return html_soup, metadata, tables
 
 
 def _get_char_and_word_count(html_soup: bs4.BeautifulSoup) -> tuple[int, int]:

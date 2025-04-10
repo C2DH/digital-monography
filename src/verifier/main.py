@@ -190,14 +190,14 @@ def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:
     logger.info(f"Audit event logged: {event}")
 
 
-def _get_character_and_word_count(soup: bs4.BeautifulSoup) -> tuple[int, int]:
-    soup_contents_list = []
-    for elem in soup.find_all(text=True):
-        soup_contents_list.append(elem.text.strip())
-    soup_contents = "".join(soup_contents_list).replace(" ", "")  # minimize spaces
-    words = []
-    for line in soup_contents_list:
-        for word in line.split(" "):
-            if word and not word.isspace():
-                words.append(word)
-    return len(soup_contents), len(words)
+# def _get_character_and_word_count(soup: bs4.BeautifulSoup) -> tuple[int, int]:
+#     soup_contents_list = []
+#     for elem in soup.find_all(text=True):
+#         soup_contents_list.append(elem.text.strip())
+#     soup_contents = "".join(soup_contents_list).replace(" ", "")  # minimize spaces
+#     words = []
+#     for line in soup_contents_list:
+#         for word in line.split(" "):
+#             if word and not word.isspace():
+#                 words.append(word)
+#     return len(soup_contents), len(words)
