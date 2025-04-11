@@ -64,8 +64,23 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
         """Adds '_html' in slug, /mnt/efs/my-slug/_html/path/to/file.txt"""
         return self.add_to_efs_slug_dir("_html")
 
+    @cached_property
+    def efs_slug_metadata_path(self) -> "KeyPath":
+        # TODO: not used, make stuff use it
+        """Adds '_metadata' in slug, /mnt/efs/my-slug/_metadata/path/to/file.txt"""
+        return self.add_to_efs_slug_dir("_metadata")
+
+    @cached_property
+    def efs_slug_paper_path(self) -> "KeyPath":
+        """Adds '_paper' in slug, /mnt/efs/my-slug/_paper/path/to/file.txt"""
+        return self.add_to_efs_slug_dir("_paper")
+
     def add_to_efs_slug_dir(self, fldr: str) -> "KeyPath":
         """Adds <fldr> folder to slug dir, /mnt/efs/my-slug/<fldr>/path/to/file.txt"""
         if not (self.efs_slug_dir / fldr).exists():
             (self.efs_slug_dir / fldr).mkdir()
         return self.efs_slug_dir / fldr / self.github_path
+
+    def __truediv__(self, new_part: str) -> "KeyPath":
+        """Overriding the '/' operator to return a KeyPath object"""
+        return KeyPath(super().__truediv__(new_part))
