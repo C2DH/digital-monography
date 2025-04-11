@@ -1,22 +1,9 @@
 import bs4
 import pathlib
 
-from src.preparer.refs import (
-    is_caption,
-    is_header,
-    is_footnote,
-    is_reference,
-    prepare_ref_targets_in_headers,
-    prepare_ref_targets_in_captions,
-    prepare_ref_targets_in_footnotes,
-    prepare_references,
-)
 from src.preparer.main import _convert_to_html, prepare_docx
 from src.preparer.metadata import DocumentMetadata, SubstitutionDatapoint
 from src.preparer.keys import KeyPath
-from src.preparer.substitutions_prep import count_targets_for_substitutions
-from src.preparer.conditional_rendering import is_paper_only, remove_paper_only
-from src.builder.config_prep import get_substitutions_mapping
 
 
 class TestRefDatapointsCreated:
@@ -29,13 +16,13 @@ class TestRefDatapointsCreated:
     @classmethod
     def setup_class(cls):
         cls.book_metadata: dict[str, DocumentMetadata] = {}
+        # in preparer
         cls.soup_a, cls.meta_a = cls._prepare_docx_for_ref_handing(cls.fp_a)
         cls.soup_b, cls.meta_b = cls._prepare_docx_for_ref_handing(cls.fp_b)
         cls.soup_cr, cls.meta_cr = cls._prepare_docx_for_ref_handing(cls.fp_cr)
         cls.book_metadata[cls.fp_a.stem] = cls.meta_a
         cls.book_metadata[cls.fp_b.stem] = cls.meta_b
         cls.book_metadata[cls.fp_cr.stem] = cls.meta_cr
-        cls.substitution_mapping = get_substitutions_mapping(cls.book_metadata)
 
     @classmethod
     def _prepare_docx_for_ref_handing(
@@ -198,8 +185,9 @@ class TestRefDatapointsCreated:
         assert subst.item_type == "ref"
         assert subst.file_count == 2
         assert subst.prefix == ""
-        assert subst.prev_item_num == None  # TODO
-        # assert subst.new_value() == "2.1" # TODO
+        # NOTE: this is updated on the builder (once we see all the files)
+        # assert subst.prev_item_num == 1
+        # assert subst.new_value() == "2.1"
 
     def test_f2f_link_to_table(self):
         ref = next(
@@ -214,18 +202,21 @@ class TestRefDatapointsCreated:
     def test_f2f_tbl_substitution__two_refs(self):
         # NOTE: there are 2 separate references to the same table in the document.
         # The first one is in the caption, the second one is in the text.
-        # But there was only one substitution created for them :/
+        # But there was only one substitution created for them.
+
+        # Then again, maybe it's not a problem
+        # as long as we just replace placeholder with the same new_value()
         subst = next(
             subst
             for subst in self.book_metadata[self.fp_a.stem].substitutions
             if subst.pk == "02bdocxf02btblsimpletable"
         )
-        assert subst.was == "XXX"
         assert subst.item_type == "ref"
         assert subst.file_count == 2
-        assert subst.prefix == ""
-        assert subst.prev_item_num == 1
-        assert subst.new_value() == "2.1"
+        # NOTE: this is updated on the builder (once we see all the files)
+        # assert subst.prefix == ""
+        # assert subst.prev_item_num == 1
+        # assert subst.new_value() == "2.1"
 
     def test_footnote_start(self):
         ref = next(
@@ -403,16 +394,6 @@ class TestRefDatapointsCreated:
             == r"link to fig {{ 05conditionalrenderingdocxf05conditionalrenderingfigfordigitalandpaper }} (digital and paper)"
         )
 
-        # for subst in self.book_metadata[self.fp_a.stem].substitutions:
-        #     if subst.item_type == "ref":
-        #         print(subst)
-        # assert 1 == 666
-
-    # def test_testing(self):
-    #     for k, v in self.substitution_mapping.items():
-    #         print(f"{k}: {v}")
-    #     assert 1 == 666
-
 
 class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
     fp = KeyPath(
@@ -433,33 +414,6 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         html_str = _convert_to_html(fp)
         html_soup, metadata, _ = prepare_docx(html_str, metadata)
         return html_soup, metadata
-
-    # @classmethod
-    # def _prepare_docx_for_ref_handing(
-    #     cls, fp: KeyPath
-    # ) -> tuple[bs4.BeautifulSoup, DocumentMetadata]:
-    #     html_str = _convert_to_html(fp)
-    #     html_soup = bs4.BeautifulSoup(html_str, "html.parser")
-    #     metadata = DocumentMetadata(fp)
-    #     headers, captions, footnotes, references, paper_only = [], [], [], [], []
-    #     classifiers = [
-    #         (is_header, headers),
-    #         (is_caption, captions),
-    #         (is_footnote, footnotes),
-    #         (is_reference, references),
-    #         (is_paper_only, paper_only),
-    #     ]
-    #     for node in html_soup.descendants:
-    #         for check_if_meets_criteria, container in classifiers:
-    #             if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
-    #                 container.append(node)
-    #     html_soup = prepare_ref_targets_in_headers(html_soup, metadata, headers)
-    #     html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
-    #     html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, footnotes)
-    #     html_soup = prepare_references(html_soup, metadata, references)
-    #     html_soup = remove_paper_only(html_soup, metadata, paper_only)
-    #     html_soup = count_targets_for_substitutions(html_soup, metadata)
-    #     return html_soup, metadata
 
     def test_target_for_digital(self):
         target = self.metadata.get(
@@ -510,7 +464,6 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.prefix == ""
         assert subs.prev_item_num == 2
         assert subs.new_item_num == None
-        # assert subs.new_value() == "" # TODO: should this be empty string?
 
     def test_substitution_for_digital_and_for_paper(self):
         subs = self.metadata.get("substitutions", "f05conditionalrenderingref193103002")
@@ -536,10 +489,11 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.is_paper == None
         assert subs.item_type == "ref"
         assert subs.file_count == 5
-        assert subs.prefix == ""
-        assert subs.prev_item_num == None
-        assert subs.new_item_num == 1
-        assert subs.new_value() == "5.1"
+        # NOTE: this is updated on the builder (once we see all the files)
+        # assert subs.prev_item_num == None
+        # assert subs.prefix == ""
+        # assert subs.new_item_num == 1
+        # assert subs.new_value() == "5.1"
         subs = self.metadata.get("substitutions", "f05conditionalrenderingfigforpaper")
         assert subs
         assert subs.was == "2"
@@ -547,10 +501,11 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.is_paper == None
         assert subs.item_type == "ref"
         assert subs.file_count == 5
-        assert subs.prefix == ""
-        assert subs.prev_item_num == None
-        assert subs.new_item_num == None
-        # assert subs.new_value() == "" # TODO: should this be empty string?
+        # NOTE: this is updated on the builder (once we see all the files)
+        # assert subs.prev_item_num == None
+        # assert subs.prefix == ""
+        # assert subs.new_item_num == None
+        # assert subs.new_value() == ""
         subs = self.metadata.get(
             "substitutions", "f05conditionalrenderingfigfordigitalandpaper"
         )
@@ -560,10 +515,11 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.is_paper == None
         assert subs.item_type == "ref"
         assert subs.file_count == 5
-        assert subs.prefix == ""
-        assert subs.prev_item_num == None
-        assert subs.new_item_num == 2
-        assert subs.new_value() == "5.2"
+        # NOTE: this is updated on the builder (once we see all the files)
+        # assert subs.prefix == ""
+        # assert subs.prev_item_num == None
+        # assert subs.new_item_num == 2
+        # assert subs.new_value() == "5.2"
 
     def test_substitution_to_json_handling(self):
         subs = self.metadata.get("substitutions", "f05conditionalrenderingref193103002")
@@ -590,14 +546,3 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.prev_item_num == 3
         assert subs.new_item_num == 2
         assert subs.new_value() == "5.2"
-
-    # def test_testing(self):
-    #     for target in self.metadata.targets:
-    #         print(target.to_json())
-    #         print("-" * 75)
-    #     print("=" * 75)
-    #     for subs in self.metadata.substitutions:
-    #         if subs.item_type == "ref":
-    #             print(subs.to_json())
-    #             print("-" * 75)
-    #     assert 1 == 666

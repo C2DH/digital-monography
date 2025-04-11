@@ -380,6 +380,7 @@ class SubstitutionDatapoint(DatapointBase):
     is_digital: bool | None
     is_paper: bool | None
     item_type: t.Literal["heading", "equation", "figure", "table", "graph", "ref", ""]
+    target_fn: str | None
     file_count: int | None
     prefix: str
     prev_item_num: int | None
@@ -390,19 +391,13 @@ class SubstitutionDatapoint(DatapointBase):
         """
         Returns the value that will replace placeholder.
         """
-        if self.new_item_num and not self.file_count:
-            return f"{self.prefix}{self.new_item_num}"
-        elif self.new_item_num:
-            return f"{self.file_count}.{self.prefix}{self.new_item_num}"
+        if (self.is_digital is False and self.is_paper is True) or self.was == "XXX":
+            return ""
+        elif self.new_item_num is not None:
+            file_count = self.file_count if self.file_count is not None else ""
+            return f"{file_count}.{self.prefix}{self.new_item_num}"
         else:
             return self.was
-
-    # if dp.new_item_num and not dp.file_count:
-    #     substitutions[dp.pk] = f"{dp.prefix}{dp.new_item_num}"
-    # elif dp.new_item_num:
-    #     substitutions[dp.pk] = f"{dp.file_count}.{dp.prefix}{dp.new_item_num}"
-    # else:
-    #     substitutions[dp.pk] = dp.was
 
 
 class CitationGroupDatapoint(DatapointBase):

@@ -94,6 +94,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     _copy_assets(key)
     book_metadata = _read_book_metadata(key)
     _prepare_config(key, book_metadata)
+    _make_substitutions(key, book_metadata)
     _build_book(key)
     _distribute_book(key)
     _log_audit_event(key, AuditStatus.SUCCESS.value, "Digital version was created.")
@@ -234,6 +235,36 @@ def _prepare_config(key: KeyPath, book_metadata: dict[str, DocumentMetadata]) ->
     config = update_with_substitutions(config, book_metadata)
     with open(key.efs_slug_dir / "_config.yml", "w") as f:
         yaml.dump(config, f)
+
+
+def _make_substitutions(
+    key: KeyPath, book_metadata: dict[str, DocumentMetadata]
+) -> None:
+    """
+    Replace substitution placeholders in markdown files with new values.
+
+    I don't like this implementation because it should be done for .md and .ipynb
+    by JupyterBook. Also, I don't like having too many slow IO operations.
+    However, I needed some solution fast and I didn't have time to fight with JupyterBook.
+    I couldn't make JupyterBook to do the substitutions for f2f refs.
+    """
+    for md in key.efs_slug_dir.glob("*.md"):
+        try:
+            if md.stem not in book_metadata:
+                continue
+            with open(md, "r") as f:
+                mdstr = f.read()
+                for subs in book_metadata[md.stem].substitutions:
+                    mdstr = mdstr.replace(r"{{ " + subs.pk + r" }}", subs.new_value())
+            with open(md, "w") as f:
+                f.write(mdstr)
+        except Exception as e:
+            logger.exception(f"Replacing placeholders in {md} failed. Error: {repr(e)}")
+            _log_audit_event(
+                key,
+                AuditStatus.FAILED.value,
+                "Error upon updating automatic numbering.",
+            )
 
 
 def _build_book(key: KeyPath) -> None:

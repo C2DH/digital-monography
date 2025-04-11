@@ -11,7 +11,6 @@ def count_targets_for_substitutions(
 ) -> bs4.BeautifulSoup:
     update_datapoints_for_targets(soup, metadata.substitutions)
     update_datapoints_for_targets(soup, metadata.targets)
-    update_substitutions_for_refs(soup, metadata)
     return soup
 
 
@@ -46,23 +45,4 @@ def update_datapoints_for_targets(
         else:
             dp.new_item_num = dp.prev_item_num - ommited_count[dp.item_type]
         prev_item_num[dp.item_type] = dp.prev_item_num
-    return soup
-
-
-def update_substitutions_for_refs(
-    soup: bs4.BeautifulSoup, metadata: DocumentMetadata
-) -> bs4.BeautifulSoup:
-    for subs in metadata.substitutions:
-        if subs.item_type == "ref":
-            target: TargetDatapoint | None = metadata.get_target(subs.placeholder)
-            if target is not None:
-                subs.file_count = target.file_count
-                subs.prefix = target.prefix
-                subs.new_item_num = target.new_item_num
-
-            print("subs", subs)
-            print("\n")
-            print("target", target)
-            print("-" * 50)
-
     return soup
