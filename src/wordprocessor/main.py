@@ -1,9 +1,10 @@
 import argparse
 import datetime
-import logging
-import pathlib
 import docx.document
 import json
+import logging
+import pathlib
+import typing as t
 
 try:
     from constants import IS_DEBUG
@@ -41,37 +42,28 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-def lambda_handler() -> tuple[docx.document.Document, dict[str, DocumentMetadata]]:
-    key: KeyPath = KeyPath("/tmp/efs/a_book/")
-    # book_metadata: dict[str, DocumentMetadata] = {}
-    # for meta_file in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
-    # for meta_file in (key / "_metadata").glob("**/*.json"):
-    #     meta_file: KeyPath
-    #     with meta_file.open("r") as f:
-    #         metadata = DocumentMetadata(meta_file)
-    #         metadata.from_json(json.load(f))
-    #         book_metadata[meta_file.stem] = metadata
-
+def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
+    logger.info("Event: " + json.dumps(event, default=str))
+    logger.info("Context: " + json.dumps(context, default=str))
+    key = _get_key(event)
     book_metadata = _read_book_metadata(key)
-    # per each doc
-    metadata = book_metadata["05_conditional_rendering"]
-    doc = docx.Document("/tmp/efs/a_book/05_conditional_rendering.docx")
-    # doc = docx.Document("/tmp/efs/a_book/05_conditional_rendering.docx")
-    # doc = docx.Document("/tmp/efs/a_book/ref-n-target.docx")
-    remove_parts_and_highlights_due_to_conditional_rendering(doc)
-    # prepare_ref_targets_in_headers(doc, book_metadata)
-    add_chapter_number_to_captions(doc, metadata)
-    # prepare_ref_targets_in_footnotes(doc, book_metadata)
-    # prepare_references(doc, book_metadata)
-    # refs = doc.element.xpath("//w:instrText[contains(text(), 'REF ')]")
-    # substitute(doc, book_metadata)
+    for fp in key.efs_slug_dir.glob("*.docx"):
+        doc: docx.document.Document = docx.Document(fp)
+        metadata = book_metadata[fp.stem]
+        remove_parts_and_highlights_due_to_conditional_rendering(doc)
+        add_chapter_number_to_captions(doc, metadata)
+        remove_images(doc, metadata)
+        doc.save(fp.efs_slug_paper_path)
 
-    # add_chapter_number(doc, book_metadata)
-    # _merge_docs(key, book_metadata)
 
-    remove_images(doc, metadata)
-
-    return doc, book_metadata
+def _get_key(event) -> KeyPath:
+    try:
+        slug = event["Records"][0]["body"]
+        pth = pathlib.Path(slug) / "_config.yml"
+        return KeyPath(pth)
+    except Exception as e:
+        logging.exception(f"Unable to retrieve object key. Error: {repr(e)}")
+        raise
 
 
 # def prepare_references(
@@ -172,7 +164,7 @@ def _read_book_metadata(key: KeyPath) -> dict[str, DocumentMetadata]:
     return book_metadata
 
 
-doc = None
-if __name__ == "__main__":
-    doc, book_metadata = lambda_handler()
-    doc.save("/tmp/efs/a_book/test.docx")
+# doc = None
+# if __name__ == "__main__":
+#     doc, book_metadata = lambda_handler()
+#     doc.save("/tmp/efs/a_book/test.docx")
