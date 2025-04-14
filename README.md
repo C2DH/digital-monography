@@ -306,6 +306,19 @@ When adding a new Lambda function (a new microservice), please follow these step
 
 To run type check use `make typecheck` function. You can also run `mypy src/<microservice>/` to run the type checker directly on a given microservice.
 
+At the beginning of the project every microservice was type checked and linted. However, the beginning of the project was also packed with tight deadlines and so type checking and linting ceased to be a priority. Below is the table with the type check implementation status. Note that a support for type check could be easily implemented for microservices marked with a star "*".
+
+| Name          | Implemented? | 
+| ------------- | ------------ | 
+| entrypoint    | true         | 
+| dropbox       | false*       | 
+| preparer      | false        | 
+| verifier      | false        | 
+| github        | false*       | 
+| builder       | false        | 
+| gpu           | true         | 
+| wordprocessor | true         | 
+
 ### Linting
 
 We use flake8 for linting. Run `flake8 src/<microservice>/` to run the linting script. 
