@@ -40,6 +40,8 @@ class TestRefDatapointsCreated:
         assert target.text == "Heading"
         assert target.is_digital == True
         assert target.is_paper == True
+        assert target.filename == "01_a.docx"
+        assert target.fragment == "a_heading"
         assert target.item_type == "heading"
         assert target.prefix == ""
         assert target.prev_item_num == None
@@ -50,6 +52,8 @@ class TestRefDatapointsCreated:
         assert target.text == "1"
         assert target.is_digital == True
         assert target.is_paper == True
+        assert target.filename == "01_a.docx"
+        assert target.fragment == "_Ref177042490"
         assert target.item_type == "figure"
         assert target.prefix == ""
         assert target.prev_item_num == 1
@@ -62,6 +66,8 @@ class TestRefDatapointsCreated:
         assert target1.text == "1"
         assert target1.is_digital == True
         assert target1.is_paper == True
+        assert target1.filename == "01_a.docx"
+        assert target1.fragment == "_Ref177044323"
         assert target1.item_type == "table"
         assert target1.prefix == ""
         assert target1.prev_item_num == 1
@@ -71,6 +77,9 @@ class TestRefDatapointsCreated:
         assert target1.text == target2.text
         assert target1.is_digital == target2.is_digital
         assert target1.is_paper == target2.is_paper
+        assert target1.filename == target2.filename
+        assert target1.fragment != target2.fragment
+        assert target2.fragment == "_Ref177044319"
         assert target1.item_type == target2.item_type
         assert target1.prefix == target2.prefix
         assert target1.prev_item_num == target2.prev_item_num
@@ -81,6 +90,8 @@ class TestRefDatapointsCreated:
         assert target.text == "I.A"
         assert target.is_digital == True
         assert target.is_paper == True
+        assert target.filename == "01_a.docx"
+        assert target.fragment == "equationWithComplexNumbering"
         assert target.item_type == "equation"
         assert target.prefix == "I."
         assert target.prev_item_num == 1
@@ -423,6 +434,8 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert target.text == "1"
         assert target.is_digital == True
         assert target.is_paper == False
+        assert target.filename == self.fp.name
+        assert target.fragment == "figForDigital"
 
     def test_target_for_paper(self):
         target = self.metadata.get("targets", "f-05-conditional-rendering-figforpaper")
@@ -430,6 +443,8 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert target.text == "2"
         assert target.is_digital == False
         assert target.is_paper == True
+        assert target.filename == self.fp.name
+        assert target.fragment == "figForPaper"
 
     def test_target_for_digital_and_for_paper(self):
         target = self.metadata.get(
@@ -439,6 +454,8 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert target.text == "3"
         assert target.is_digital == True
         assert target.is_paper == True
+        assert target.filename == self.fp.name
+        assert target.fragment == "figForDigitalAndPaper"
 
     def test_substitution_for_digital(self):
         subs = self.metadata.get("substitutions", "f05conditionalrenderingref193102947")

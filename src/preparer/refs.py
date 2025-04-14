@@ -86,6 +86,11 @@ def prepare_ref_targets_in_headers(
                 tag.insert_before(target_tag)
                 anchors.append(child)
                 is_digital, is_paper = _get_isdigital_and_ispaper(tag, "")
+
+                # print("metadata.filepath", metadata.filepath)
+                # print("link.FRAGMENT????", link)
+                # print("-" * 50)
+
                 target = TargetDatapoint(
                     pk=link.id,
                     html=str(tag),
@@ -95,6 +100,8 @@ def prepare_ref_targets_in_headers(
                     item_type="heading",
                     is_digital=is_digital,
                     is_paper=is_paper,
+                    filename=metadata.filepath.name if metadata.filepath else None,
+                    fragment=child["id"],
                     prefix="",
                     file_count=metadata.get_chapter_number(),
                     prev_item_num=None,
@@ -182,6 +189,13 @@ def prepare_ref_targets_in_captions(
             identifier = link.id.replace("-", "") if not unique_id else unique_id[0]
             is_digital, is_paper = _get_isdigital_and_ispaper(caption, identifier)
             # plain_text_num = _get_plain_text_numbering(ref_stack)
+
+            # print("metadata.filepath", metadata.filepath)
+            # print('a["id"]', a["id"])
+            # print("caption", caption)
+            # # print("link.FRAGMENT????", link)
+            # print("-" * 50)
+
             seq = TargetDatapoint.parse_ref_stack(ref_stack)
             target = TargetDatapoint(
                 # html="".join(str(elem) for elem in ref_stack),
@@ -192,6 +206,8 @@ def prepare_ref_targets_in_captions(
                 item_type=seq["item_type"],
                 is_digital=is_digital,  # calc from caption and identifier
                 is_paper=is_paper,  # calc from caption and identifier
+                filename=metadata.filepath.name if metadata.filepath else None,
+                fragment=a["id"],
                 file_count=metadata.get_chapter_number(),
                 prefix=seq["prefix"],  # calc from ref_stack
                 prev_item_num=seq["prev_item_num"],  # calc from ref_stack

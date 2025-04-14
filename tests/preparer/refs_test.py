@@ -406,6 +406,8 @@ def test_markownify_anchor_if_is_inner_reference__complex_a_tag():
         prev_item_num=1,
         is_digital=None,
         is_paper=None,
+        filename="",
+        fragment="_Ref177042490",
     )
     assert link.make_text(bs.a.text, target) == r"Figure {{ fref177042490 }}"
     # assert link.make_text(bs.a.text, target) == r"Figure {{ f-ref177042490 }}"
@@ -431,6 +433,8 @@ def test_markownify_anchor_if_is_inner_reference__simple_a_tag():
         prev_item_num=2,
         is_digital=None,
         is_paper=None,
+        filename="",
+        fragment="_Ref177042491",
     )
     assert link.make_text(bs.a.text, target) == r"Figure {{ fref177042491 }}"
     # assert link.make_text(bs.a.text, target) == r"Figure {{ f-ref177042491 }}"

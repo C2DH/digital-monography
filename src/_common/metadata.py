@@ -284,6 +284,8 @@ class TargetDatapoint(DatapointBase):
     is_paper: bool | None
     is_digital: bool | None
     # no "ref"
+    filename: str | None
+    fragment: str | None
     item_type: t.Literal["heading", "equation", "figure", "table", "graph", ""]
     file_count: int | None
     prefix: str
