@@ -80,6 +80,53 @@ Deployment of each microservice should be done in order:
 
 `make <microservice>/push` is a useful alias for builing, tagging and pushing a particular microservice. Note that there is a **race condition** - docker container has to be built, tagged and pushed before the apply stage pulls the image from registry. If CI/CD pipeline job fails with error `Source image <registry>/<image>:<tag> does not exist. Provide a valid source image.` re-run that job. Make sure that you had built, tagged and pushed the image in question.
 
+### Details of each microservice architecture
+
+Every microservice consists of:
+* Dockerfile
+* requirements.txt
+* main.py
+and optionally other files with implementation details.
+
+`lambda_handler()` function in each `src/<microservice>/main.py` file is an entrypoint to this microservice. Data about the event that triggered this microservice and context in which this microservice is being run are passed as arguments to `lambda_handler(event, context)`.
+
+The `lambda_handler()` should call abstract wrapper subprocedures, which call concrete subprocedures with the actual logic.
+
+#### Wrapper subprocedures
+
+The main role of wrapper subprocedures is to add logging and audit trails to each call of concrete subprocedures.
+
+```py
+try:
+    from actual_business_logic import concrete_subprocedure
+except (ImportError, ModuleNotFoundError):
+    from .actual_business_logic import concrete_subprocedure  # type: ignore
+
+def _wrapper_subprocedure(*args, **kwargs) -> t.Any:
+    try:
+        res = concrete_subprocedure(*args, **kwargs)
+        logger.info(
+            f"Response from concrete_subprocedure: {json.dumps(res, default=str)}"
+        )
+        return res
+    except Exception as e:
+        logger.exception(
+            f"Log message. Error: {repr(e)}"
+        )
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            "Audit trail message.",
+        )
+        raise
+```
+
+#### Concrete subprocedures
+
+Concrete subprocedures hide implementation details. Those subprocedures should be located in separate files and not in the main file.
+
+Code common to more than one microservice should be written in the `src/_common/<module_name.py>` and copied from there to the microservices using `make copy/<module_name>` command.
+
 ## Local development
 
 You can check the basic workflow of the platform by running local scripts. To do that, follow these steps:
@@ -287,10 +334,8 @@ git config --add --local core.sshCommand 'ssh -i ~/.ssh/filename'
 
 * limit permissions linked to the AWS Role connected to the CI/CD pipeline
 * API gateway is outside of IaC config
-* more unit tests
-* add integration testing
+* more and better integration testing
 * add e2e cloud testing on actual Lambdas
 * mypy type checking
 * flake8 linting
 * refactor link management (refs.py)
-* preserve bs4.element.Tag elem attributes in metadata records, stringify on to_json() method
