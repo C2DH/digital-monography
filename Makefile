@@ -63,6 +63,7 @@ copy/audit:
 	cp src/_common/audit.py src/builder/audit.py
 	cp src/_common/audit.py src/github/audit.py
 	cp src/_common/audit.py src/verifier/audit.py
+	cp src/_common/audit.py src/wordprocessor/audit.py
 
 copy/constants:
 	cp src/_common/constants.py scripts/constants.py

@@ -1,4 +1,5 @@
 import argparse
+import boto3
 import datetime
 import docx.document
 import json
@@ -6,8 +7,11 @@ import logging
 import pathlib
 import typing as t
 
+from mypy_boto3_dynamodb.client import DynamoDBClient as boto3_DynamoDBClient
+
 try:
-    from constants import IS_DEBUG
+    from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
+    from constants import IS_DEBUG, ModuleEnum
     from conditional_rendering import (
         remove_parts_and_highlights_due_to_conditional_rendering,
     )
@@ -16,7 +20,8 @@ try:
     from keys import KeyPath
     from remove_images import remove_images
 except (ImportError, ModuleNotFoundError):
-    from .constants import IS_DEBUG  # type: ignore
+    from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus  # type: ignore
+    from .constants import IS_DEBUG, ModuleEnum  # type: ignore
     from .conditional_rendering import remove_parts_and_highlights_due_to_conditional_rendering  # type: ignore
     from .captions_numbering import add_chapter_number_to_captions  # type: ignore
     from .metadata import DocumentMetadata  # type: ignore
@@ -30,7 +35,7 @@ parser.add_argument("book_path", type=str)
 
 if IS_DEBUG:
     today = datetime.date.today().isoformat()
-    log_target = pathlib.Path(f"/tmp/efs/_LOGS/{today}_preparer.log")
+    log_target = pathlib.Path(f"/tmp/efs/_LOGS/{today}_wordprocessor.log")
     log_target.parent.mkdir(parents=True, exist_ok=True)
     logging.basicConfig(
         filename=log_target,
@@ -42,21 +47,27 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
+if IS_DEBUG:
+    dynamodb = None  # TODO: add fakers
+else:
+    dynamodb: boto3_DynamoDBClient = boto3.resource("dynamodb")
+
+
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info("Event: " + json.dumps(event, default=str))
     logger.info("Context: " + json.dumps(context, default=str))
-    key = _get_key(event)
-    book_metadata = _read_book_metadata(key)
-    for fp in key.efs_slug_dir.glob("*.docx"):
-        doc: docx.document.Document = docx.Document(fp)
-        metadata = book_metadata[fp.stem]
-        remove_parts_and_highlights_due_to_conditional_rendering(doc)
-        add_chapter_number_to_captions(doc, metadata)
-        remove_images(doc, metadata)
-        doc.save(fp.efs_slug_paper_path)
+    config_key = _get_config_key(event)
+    book_metadata = _read_book_metadata(config_key)
+    for key in config_key.efs_slug_dir.glob("*.docx"):
+        doc = _read_document(key)
+        metadata = book_metadata[key.stem]
+        _remove_parts_and_highlights_due_to_conditional_rendering(key, doc)
+        _add_chapter_number_to_captions(key, doc, metadata)
+        _remove_images(key, doc, metadata)
+        doc.save(key.efs_slug_paper_path)
 
 
-def _get_key(event) -> KeyPath:
+def _get_config_key(event) -> KeyPath:
     try:
         slug = event["Records"][0]["body"]
         pth = pathlib.Path(slug) / "_config.yml"
@@ -162,6 +173,85 @@ def _read_book_metadata(key: KeyPath) -> dict[str, DocumentMetadata]:
                     f"metadata file {meta_file}. KeyError: {repr(e)}"
                 )
     return book_metadata
+
+
+def _read_document(key: KeyPath) -> docx.document.Document:
+    try:
+        return docx.Document(key)
+    except Exception as e:
+        logger.exception(f"Unable to read document {key}. Error: {repr(e)}")
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            f"Error upon reading {key.name} document.",
+        )
+        raise
+
+
+def _remove_parts_and_highlights_due_to_conditional_rendering(
+    key: KeyPath,
+    doc: docx.document.Document,
+) -> None:
+    try:
+        return remove_parts_and_highlights_due_to_conditional_rendering(doc)
+    except Exception as e:
+        logger.exception(
+            f"Removing parts and highlights for conditional rendering failed. "
+            f"Error: {repr(e)}"
+        )
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            f"Error in removing content meant for digital version.",
+        )
+        raise
+
+
+def _add_chapter_number_to_captions(
+    key: KeyPath, doc: docx.document.Document, metadata: DocumentMetadata
+) -> None:
+    try:
+        return add_chapter_number_to_captions(doc, metadata)
+    except Exception as e:
+        logger.exception(
+            f"Adding chapter number to captions failed. " f"Error: {repr(e)}"
+        )
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            f"Error in adding chapter numbers.",
+        )
+        raise
+
+
+def _remove_images(
+    key: KeyPath, doc: docx.document.Document, metadata: DocumentMetadata
+) -> None:
+    try:
+        return remove_images(doc, metadata)
+    except Exception as e:
+        logger.exception(f"Removing images from .docx failed. " f"Error: {repr(e)}")
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            f"Error in removing images for paper version.",
+        )
+        raise
+
+
+def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:
+    event = AuditEvent(
+        slug=key.slug,
+        module=ModuleEnum.PREPARER.value,
+        filename=key.name,
+        status=status,
+        msg=msg,
+    )
+    event.send(dynamodb)
+    if status == AuditStatus.FAILED.value:
+        alert = AlertLog(slug=key.slug, status=AlertStatus.FAIL.value)
+        alert.send(dynamodb)
+    logger.info(f"Audit event logged: {event}")
 
 
 # doc = None
