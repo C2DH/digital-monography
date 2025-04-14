@@ -331,64 +331,64 @@ def _build_book(key: KeyPath) -> None:
         raise
 
 
-def _build_verification_report(key: KeyPath) -> None:
-    return
-    if not (key.efs_slug_dir / "_config.yml").exists():
-        logging.info(
-            f"{key.efs_slug_dir / '_config.yml'} was not found. Skipping build."
-        )
-        return
-    if not (key.efs_slug_dir / "_toc.yml").exists():
-        logging.info(f"{key.efs_slug_dir / '_toc.yml'} was not found. Skipping build.")
-        return
-    src = key.efs_slug_dir
-    dst = key.efs_slug_dir / "_warnings"
-    shutil.copyfile(src / "_config.yml", dst / "_config.yml")
-    shutil.copyfile(src / "_toc.yml", dst / "_toc.yml")
-    #####################
-    with open(key.efs_slug_dir / "_toc.yml") as f:
-        config = yaml.safe_load(f)
-    chapters = config.get("chapters", [])
-    for i, chapter in enumerate(chapters):
-        if chapter.get("file"):
-            # rewriting "file" key causes infinite loop
-            chapters.insert(i + 1, {"newFile": "refs_" + chapter["file"]})
-    for chapter in chapters:
-        if chapter.get("newFile"):
-            chapter.update({"file": chapter["newFile"]})
-            del chapter["newFile"]
-    with open(key.efs_slug_dir / "_toc.yml", "w") as f:
-        yaml.dump(config, f)
-    #####################
-    try:
-        params = {
-            "path_source": dst,
-            "path_output": dst,
-            "config": dst / "_config.yml",
-            "toc": dst / "_toc.yml",
-            "warningiserror": False,
-            "nitpick": False,
-            "keep_going": False,
-            "freshenv": False,
-            "builder": "html",
-            "custom_builder": None,
-            "verbose": 0,
-            "quiet": 0,
-            "individualpages": False,
-        }
-        if IS_DEBUG:
-            # params["nitpick"] = True
-            params["keep_going"] = True
-            # not sure, but it seems verbose can have levels ranging from 0 to 2
-            # https://github.com/sphinx-doc/sphinx/blob/4fbd3682d5cdf606159630f7daf6f818d58de05e/tests/test_util/test_util_logging.py#L56
-            # params["verbose"] = 2
-        build.callback(**params)
-        logging.info(f"Builder finished building the verification report at {dst}.")
-    except RuntimeError as e:
-        logging.exception(f"Unable to build verification report. Error: {repr(e)}")
-    except Exception as e:
-        logging.exception(f"Unable to build verification report. Error: {repr(e)}")
-        raise
+# def _build_verification_report(key: KeyPath) -> None:
+#     return
+#     if not (key.efs_slug_dir / "_config.yml").exists():
+#         logging.info(
+#             f"{key.efs_slug_dir / '_config.yml'} was not found. Skipping build."
+#         )
+#         return
+#     if not (key.efs_slug_dir / "_toc.yml").exists():
+#         logging.info(f"{key.efs_slug_dir / '_toc.yml'} was not found. Skipping build.")
+#         return
+#     src = key.efs_slug_dir
+#     dst = key.efs_slug_dir / "_warnings"
+#     shutil.copyfile(src / "_config.yml", dst / "_config.yml")
+#     shutil.copyfile(src / "_toc.yml", dst / "_toc.yml")
+#     #####################
+#     with open(key.efs_slug_dir / "_toc.yml") as f:
+#         config = yaml.safe_load(f)
+#     chapters = config.get("chapters", [])
+#     for i, chapter in enumerate(chapters):
+#         if chapter.get("file"):
+#             # rewriting "file" key causes infinite loop
+#             chapters.insert(i + 1, {"newFile": "refs_" + chapter["file"]})
+#     for chapter in chapters:
+#         if chapter.get("newFile"):
+#             chapter.update({"file": chapter["newFile"]})
+#             del chapter["newFile"]
+#     with open(key.efs_slug_dir / "_toc.yml", "w") as f:
+#         yaml.dump(config, f)
+#     #####################
+#     try:
+#         params = {
+#             "path_source": dst,
+#             "path_output": dst,
+#             "config": dst / "_config.yml",
+#             "toc": dst / "_toc.yml",
+#             "warningiserror": False,
+#             "nitpick": False,
+#             "keep_going": False,
+#             "freshenv": False,
+#             "builder": "html",
+#             "custom_builder": None,
+#             "verbose": 0,
+#             "quiet": 0,
+#             "individualpages": False,
+#         }
+#         if IS_DEBUG:
+#             # params["nitpick"] = True
+#             params["keep_going"] = True
+#             # not sure, but it seems verbose can have levels ranging from 0 to 2
+#             # https://github.com/sphinx-doc/sphinx/blob/4fbd3682d5cdf606159630f7daf6f818d58de05e/tests/test_util/test_util_logging.py#L56
+#             # params["verbose"] = 2
+#         build.callback(**params)
+#         logging.info(f"Builder finished building the verification report at {dst}.")
+#     except RuntimeError as e:
+#         logging.exception(f"Unable to build verification report. Error: {repr(e)}")
+#     except Exception as e:
+#         logging.exception(f"Unable to build verification report. Error: {repr(e)}")
+#         raise
 
 
 def _distribute_book(key: KeyPath) -> None:
@@ -407,17 +407,17 @@ def _distribute_book(key: KeyPath) -> None:
         raise
 
 
-def _distribute_report(key: KeyPath) -> None:
-    try:
-        src = key.efs_slug_dir / "_warnings" / "_build" / "html"
-        if IS_DEBUG:
-            _cp_efs_to_data_dir(src, "warnings", key.slug)
-        else:
-            _sync_efs_to_staticws(src, "check", key.slug)
-    except Exception as e:
-        msg = f"Failed to copy post-build warnings report. Error: {repr(e)}"
-        logging.exception(msg)
-        raise
+# def _distribute_report(key: KeyPath) -> None:
+#     try:
+#         src = key.efs_slug_dir / "_warnings" / "_build" / "html"
+#         if IS_DEBUG:
+#             _cp_efs_to_data_dir(src, "warnings", key.slug)
+#         else:
+#             _sync_efs_to_staticws(src, "check", key.slug)
+#     except Exception as e:
+#         msg = f"Failed to copy post-build warnings report. Error: {repr(e)}"
+#         logging.exception(msg)
+#         raise
 
 
 def _cp_efs_to_data_dir(src: pathlib.Path, dstdir: str, slug: str) -> None:
