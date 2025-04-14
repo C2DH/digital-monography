@@ -44,7 +44,7 @@ from src.wordprocessor.conditional_rendering import (
 from src.wordprocessor.constants import MAMMOTH_STYLE_MAP
 from src.wordprocessor.main import _read_book_metadata
 from src.wordprocessor.keys import KeyPath
-from src.wordprocessor.captions_numbering import add_chapter_number_to_captions
+from src.wordprocessor.numbering_captions import add_chapter_number_to_captions
 from src.wordprocessor.remove_images import remove_images
 from src.preparer.html2md import convert_to_md
 

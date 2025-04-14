@@ -292,6 +292,17 @@ class TargetDatapoint(DatapointBase):
     prev_item_num: int | None
     new_item_num: int | None = None
 
+    def new_value(self) -> str:
+        """
+        Returns the value that will replace placeholder.
+        Used for substituting values in wordprocessor (for paper version).
+        """
+        if self.new_item_num is not None:
+            file_count = self.file_count if self.file_count is not None else ""
+            return f"{file_count}.{self.prefix}{self.new_item_num}"
+        else:
+            return ""
+
     @staticmethod
     def parse_ref_stack(
         ref_stack: list[bs4.PageElement],
@@ -392,6 +403,7 @@ class SubstitutionDatapoint(DatapointBase):
     def new_value(self) -> str:
         """
         Returns the value that will replace placeholder.
+        Used for substituting values in builder (for digital version).
         """
         if (self.is_digital is False and self.is_paper is True) or self.was == "XXX":
             return ""

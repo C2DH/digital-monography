@@ -17,9 +17,13 @@ def count_targets_for_substitutions(
 def update_datapoints_for_targets(
     soup: bs4.BeautifulSoup,
     # metadata: DocumentMetadata,
-    datapoints: list[SubstitutionDatapoint, TargetDatapoint],
+    datapoints: list[SubstitutionDatapoint | TargetDatapoint],
 ) -> bs4.BeautifulSoup:
-    # NOTE: maybe instead of targets, we should use substitutions
+    """
+    This function is similar (but not identic) to
+    "wordprocessor/numbering_refs/_update_datapoints_for_targets()".
+    Especially note that we omit when dp.is_digital == False.
+    """
     prev_item_num = {
         "heading": 0,
         "equation": 0,

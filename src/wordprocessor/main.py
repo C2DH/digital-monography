@@ -15,7 +15,8 @@ try:
     from conditional_rendering import (
         remove_parts_and_highlights_due_to_conditional_rendering,
     )
-    from captions_numbering import add_chapter_number_to_captions
+    from numbering_captions import add_chapter_number_to_captions
+    from numbering_refs import prepare_refs
     from metadata import DocumentMetadata
     from keys import KeyPath
     from remove_images import remove_images
@@ -23,7 +24,8 @@ except (ImportError, ModuleNotFoundError):
     from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus  # type: ignore
     from .constants import IS_DEBUG, ModuleEnum  # type: ignore
     from .conditional_rendering import remove_parts_and_highlights_due_to_conditional_rendering  # type: ignore
-    from .captions_numbering import add_chapter_number_to_captions  # type: ignore
+    from .numbering_captions import add_chapter_number_to_captions  # type: ignore
+    from .numbering_refs import prepare_refs  # type: ignore
     from .metadata import DocumentMetadata  # type: ignore
     from .keys import KeyPath  # type: ignore
     from .remove_images import remove_images  # type: ignore
@@ -63,6 +65,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         metadata = book_metadata[key.stem]
         _remove_parts_and_highlights_due_to_conditional_rendering(key, doc)
         _add_chapter_number_to_captions(key, doc, metadata)
+        _prepare_refs(key, doc, book_metadata)
         _remove_images(key, doc, metadata)
         doc.save(key.efs_slug_paper_path)
 
@@ -220,6 +223,23 @@ def _add_chapter_number_to_captions(
             key,
             AuditStatus.FAILED.value,
             f"Error in adding chapter numbers.",
+        )
+        raise
+
+
+def _prepare_refs(
+    key: KeyPath,
+    doc: docx.document.Document,
+    book_metadata: dict[str, DocumentMetadata],
+) -> None:
+    try:
+        return prepare_refs(doc, book_metadata)
+    except Exception as e:
+        logger.exception(f"Preparing references failed. " f"Error: {repr(e)}")
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            f"Error upon updating references with automatic numbering.",
         )
         raise
 
