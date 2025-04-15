@@ -398,15 +398,18 @@ class SubstitutionDatapoint(DatapointBase):
     prefix: str
     prev_item_num: int | None
     new_item_num: int | None = None
+    fprefix: str | None = None
     # make sure that literal options are equal to constants.CAPTION_ITEM_TYPE_*
 
-    def new_value(self) -> str:
+    def new_value(self, file_prefix=None) -> str:
         """
         Returns the value that will replace placeholder.
         Used for substituting values in builder (for digital version).
         """
         if (self.is_digital is False and self.is_paper is True) or self.was == "XXX":
             return ""
+        elif self.new_item_num and file_prefix:
+            return f"{file_prefix}.{self.prefix}{self.new_item_num}"
         elif self.new_item_num is not None:
             file_count = self.file_count if self.file_count is not None else ""
             return f"{file_count}.{self.prefix}{self.new_item_num}"
@@ -432,6 +435,16 @@ class CitationItemDatapoint(DatapointBase):
     itemData: dict[str, t.Any]
 
 
+class FileDatapoint(DatapointBase):
+    pk: str
+    stem: str
+    prefix: str
+
+    def __init__(self, **data) -> None:
+        data["pk"] = data["stem"]
+        super().__init__(**data)
+
+
 type DatapointUnion = t.Union[
     AssetDatapoint,
     HeadingDatapoint,
@@ -440,6 +453,7 @@ type DatapointUnion = t.Union[
     SubstitutionDatapoint,
     CitationGroupDatapoint,
     CitationItemDatapoint,
+    FileDatapoint,
     MetadataTableDatapoint,
 ]
 
@@ -453,6 +467,7 @@ class DocumentMetadataAsDict(t.TypedDict):
     substitutions: list[SubstitutionDatapoint]
     citation_groups: list[CitationGroupDatapoint]
     citation_items: list[CitationItemDatapoint]
+    files: list[FileDatapoint]
 
 
 type DocumentMetadataSerialized = dict[str, list[dict[str, PrimitiveValues]]]
@@ -467,6 +482,7 @@ class DocumentMetadata:
         substitutions: used to replace text with other text
         citation_groups: groupings of one or more citation
         citation_items: citations of a single source
+        files: files (main parts of the book) in the book
     """
 
     def __init__(self, fp: t.Optional[KeyPath] = None) -> None:
@@ -482,6 +498,8 @@ class DocumentMetadata:
         self.substitutions: list[SubstitutionDatapoint] = []
         self.citation_groups: list[CitationGroupDatapoint] = []
         self.citation_items: list[CitationItemDatapoint] = []
+        # maybe this should be at the book level?
+        self.files: list[FileDatapoint] = []
 
     def get_chapter_number(self, s: str | None = None) -> int | None:
         """Extract `int(1)` from file name '01_book_chapter'."""
@@ -493,8 +511,6 @@ class DocumentMetadata:
         for ch in s:
             if number and not ch.isdigit():
                 return int(number)
-            elif number == "" and ch == "0":
-                pass
             elif ch.isdigit():
                 number += ch
         try:
@@ -546,6 +562,9 @@ class DocumentMetadata:
     add_citation_item = functools.partialmethod(add, "citation_items")
     get_citation_item = functools.partialmethod(get, "citation_items")
 
+    add_file = functools.partialmethod(add, "files")
+    get_file = functools.partialmethod(get, "files")
+
     def to_dict(self) -> DocumentMetadataAsDict:
         return {
             "assets": self.assets,
@@ -556,6 +575,7 @@ class DocumentMetadata:
             "substitutions": self.substitutions,
             "citation_groups": self.citation_groups,
             "citation_items": self.citation_items,
+            "files": self.files,
         }
 
     # def to_json(self) -> dict[str, list[dict[str, PrimitiveValues]]]:
@@ -578,6 +598,7 @@ class DocumentMetadata:
             "citation_items": [
                 rec.model_dump(mode="json") for rec in self.citation_items
             ],
+            "files": [rec.model_dump(mode="json") for rec in self.files],
         }
 
     # def to_json(self) -> DocumentMetadataSerialized:
@@ -618,10 +639,11 @@ class DocumentMetadata:
             CitationItemDatapoint.from_json(rec)
             for rec in jsml.get("citation_items", [])
         ]
+        self.files = [FileDatapoint.from_json(rec) for rec in jsml.get("files", [])]
 
     def __str__(self) -> str:
         return (
-            "%s(assets=[%s], metadata_tables=[%s], headings=[%s], refs=[%s], targets=[%s], substitutions=[%s], citation_groups=[%s], citation_items=[%s])"
+            "%s(assets=[%s], metadata_tables=[%s], headings=[%s], refs=[%s], targets=[%s], substitutions=[%s], citation_groups=[%s], citation_items=[%s], files=[%s])"
             % (
                 self.__class__.__name__,
                 ", ".join(str(rec) for rec in self.assets),
@@ -632,5 +654,6 @@ class DocumentMetadata:
                 ", ".join(str(rec) for rec in self.substitutions),
                 ", ".join(str(rec) for rec in self.citation_groups),
                 ", ".join(str(rec) for rec in self.citation_items),
+                ", ".join(str(rec) for rec in self.files),
             )
         )

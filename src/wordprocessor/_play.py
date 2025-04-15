@@ -5,6 +5,7 @@ import json
 from metadata import DocumentMetadata
 from keys import KeyPath
 from numbering_refs import prepare_refs
+from main import _prepare_config, _update_file_count
 
 
 def _read_book_metadata(key: KeyPath) -> dict[str, DocumentMetadata]:
@@ -31,10 +32,14 @@ def _read_book_metadata(key: KeyPath) -> dict[str, DocumentMetadata]:
 
 
 doc = None
+config = None
 if __name__ == "__main__":
     # doc = docx.Document("/tmp/efs/a_book/01_a.docx")
     key = KeyPath("/tmp/efs/a_book/01_a.docx")
+    config_key = KeyPath("/tmp/efs/a_book/_config.yml")
     doc = docx.Document(key)
     book_metadata = _read_book_metadata(key)
-    prepare_refs(doc, book_metadata)
-    doc.save("/tmp/efs/a_book/_paper/test_01_a.docx")
+    config = _prepare_config(config_key)
+    _update_file_count(config, book_metadata={})
+    # prepare_refs(doc, book_metadata)
+    # doc.save("/tmp/efs/a_book/_paper/test_01_a.docx")

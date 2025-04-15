@@ -32,5 +32,13 @@ sphinx:
         slugwithouthyphens: 444444444
         02_b.docx\#f02btblsimpletable: uuuuuuuuuuuuuuuuu
 
+dgtmon:
+  prefixes:
+    00_index: I
+    01_a: 1
+    02_b: 2
+    03_c: 3
+    04_d: 4
+    05_conditional_rendering: 5
 
 

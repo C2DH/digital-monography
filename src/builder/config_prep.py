@@ -2,14 +2,15 @@ import pathlib
 import typing as t
 
 try:
-    from metadata import DocumentMetadata, TargetDatapoint
+    from metadata import DocumentMetadata, FileDatapoint, TargetDatapoint
 except (ImportError, ModuleNotFoundError):
-    from .metadata import DocumentMetadata, TargetDatapoint
+    from .metadata import DocumentMetadata, FileDatapoint, TargetDatapoint
 
 
 def update_with_substitutions(
     config: dict[str, t.Any], book_metadata: dict[str, DocumentMetadata]
 ) -> dict[str, t.Any]:
+    _update_file_count(config, book_metadata)
     update_substitutions_in_refs(book_metadata)
     substitutions = get_substitutions_mapping(book_metadata)
     """
@@ -27,6 +28,22 @@ def update_with_substitutions(
     return config
 
 
+def _update_file_count(
+    config: dict[str : t.Any], book_metadata: dict[str, DocumentMetadata]
+) -> None:
+    if "dgtmon" not in config or "prefixes" not in config["dgtmon"]:
+        return
+    prefixes = config["dgtmon"]["prefixes"]
+    if type(prefixes) == list and type(prefixes[0]) == dict:
+        prefixes = {k: v for kv in prefixes for k, v in kv.items()}
+    if type(prefixes) != dict or len(prefixes) == 0:
+        return
+    ###
+    for metadata in book_metadata.values():
+        for stem, prefix in prefixes.items():
+            metadata.add_file(FileDatapoint(stem=stem, prefix=str(prefix)))
+
+
 def update_substitutions_in_refs(book_metadata: dict[str, DocumentMetadata]) -> None:
     """
     Update values of substitutions in the references based on targets
@@ -39,6 +56,7 @@ def update_substitutions_in_refs(book_metadata: dict[str, DocumentMetadata]) -> 
             if dp.item_type == "ref":
                 if dp.target_fn:
                     fn = pathlib.Path(dp.target_fn).stem
+                    # fn = dp.target_fn.stem
                     if fn not in book_metadata:
                         continue
                     target_metadata = book_metadata[fn]
@@ -75,6 +93,10 @@ def get_substitutions_mapping(
         assert len([subs.pk for subs in metadata.substitutions]) == len(
             set([subs.pk for subs in metadata.substitutions])
         )
+        file_prefix = None
+        for file in metadata.files:
+            if file.stem == metadata.filepath.stem:
+                file_prefix = str(file.prefix)
         for dp in metadata.substitutions:
-            substitutions[dp.pk] = dp.new_value()
+            substitutions[dp.pk] = dp.new_value(file_prefix)
     return substitutions

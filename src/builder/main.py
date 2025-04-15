@@ -164,74 +164,8 @@ def _prepare_config(key: KeyPath, book_metadata: dict[str, DocumentMetadata]) ->
         return
     with open(key.efs_slug_dir / "_config.yml") as f:
         config = yaml.safe_load(f)
-
-    # book_metadata = {}
-    # for meta_file in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
-    #     meta_file = KeyPath(meta_file)
-    #     with meta_file.open("r") as f:
-    #         metadata = DocumentMetadata(meta_file)
-    #         try:
-    #             json_data = json.load(f)
-    #             metadata.from_json(json_data)
-    #             book_metadata[meta_file.stem] = metadata
-    #         except KeyError as e:
-    #             logger.info(
-    #                 f"Invalid or obsolete DataPoint structure. Skipping "
-    #                 f"metadata file {meta_file}. KeyError: {repr(e)}"
-    #             )
-    # THIS_IS_HOW_WE_CAN_ACHIEVE_COUNTING_FIGURES_ETC = """
-    # # ROMAN_NUMS = {
-    # #     "1": "I",
-    # #     "2": "II",
-    # # }
-    # # IS_ROMAN_NUM = False
-    # # IS_SEQUENTIAL_NUM = True
-    # # SEP = "."
-    # # _substitutions = {
-    # #     "f01aref177042490": ("1", "1", "fig"),
-    # #     "f01aref177044323": ("1", "1", "tbl"),
-    # #     "f02bref177053481": ("2", "1", "fig"),
-    # #     "f02bref177053494": ("2", "1", "tbl"),
-    # #     "02bdocxf02btblsimpletable": ("2", "", "tbl"),
-    # # }
-    # # _items_count = {"fig": 0, "tbl": 0}
-    # # substitutions = {}
-    # # i = 1
-    # # for k, v in _substitutions.items():
-    # #     chapter_no, item_no, item_type = v
-    # #     if IS_SEQUENTIAL_NUM:
-    # #         # substitutions[k] = str(i)
-    # #         _items_count[item_type] += 1
-    # #         substitutions[k] = _items_count[item_type]
-    # #     elif item_no and not IS_SEQUENTIAL_NUM:
-    # #         if IS_ROMAN_NUM:
-    # #             substitutions[k] = ROMAN_NUMS[chapter_no] + SEP + item_no
-    # #         else:
-    # #             substitutions[k] = chapter_no + SEP + item_no
-    # #     else:
-    # #         substitutions[k] = ""
-    # #     i += 1
-    # """
-    # substitutions = {}
-    # for metadata in book_metadata.values():
-    #     metadata: DocumentMetadata
-    #     for dp in metadata.substitutions:
-    #         if dp.new_item_num and not dp.file_count:
-    #             substitutions[dp.pk] = f"{dp.prefix}{dp.new_item_num}"
-    #         elif dp.was:
-    #             substitutions[dp.pk] = f"{dp.file_count}.{dp.prefix}{dp.new_item_num}"
-    #         else:
-    #             substitutions[dp.pk] = dp.was
-    # substitutions = map_substitutions(book_metadata)
-    # try:
-    #     config["sphinx"]["config"]["myst_substitutions"] = substitutions
-    # except KeyError:
-    #     if "sphinx" not in config:
-    #         config["sphinx"] = {}
-    #     if "config" not in config["sphinx"]:
-    #         config["sphinx"]["config"] = {}
-    #     config["sphinx"]["config"]["myst_substitutions"] = substitutions
-
+    print("config", config)
+    # TODO: update file_count from values in _config
     config = update_with_substitutions(config, book_metadata)
     with open(key.efs_slug_dir / "_config.yml", "w") as f:
         yaml.dump(config, f)
@@ -254,8 +188,14 @@ def _make_substitutions(
                 continue
             with open(md, "r") as f:
                 mdstr = f.read()
+                file_prefix = None
+                for file in book_metadata[md.stem].files:
+                    if file.stem == book_metadata[md.stem].filepath.stem:
+                        file_prefix = str(file.prefix)
                 for subs in book_metadata[md.stem].substitutions:
-                    mdstr = mdstr.replace(r"{{ " + subs.pk + r" }}", subs.new_value())
+                    mdstr = mdstr.replace(
+                        r"{{ " + subs.pk + r" }}", subs.new_value(file_prefix)
+                    )
             with open(md, "w") as f:
                 f.write(mdstr)
         except Exception as e:

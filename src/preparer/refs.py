@@ -214,6 +214,9 @@ def prepare_ref_targets_in_captions(
             )
             metadata.add_target(target)
             if unique_id and metadata.get_substitution(unique_id[0]) is None:
+                target_fn = metadata.filepath.name if metadata.filepath else None
+                # print("target_fn", target_fn, type(target_fn))
+                # assert isinstance(target_fn, str)
                 metadata.add_substitution(
                     SubstitutionDatapoint(
                         pk=unique_id[0],
@@ -226,7 +229,7 @@ def prepare_ref_targets_in_captions(
                         is_paper=is_paper,
                         file_count=metadata.get_chapter_number(),
                         # new
-                        target_fn=None,
+                        target_fn=target_fn,
                         prefix=target.prefix,
                         prev_item_num=target.prev_item_num,
                     )
@@ -380,9 +383,16 @@ def prepare_references(
                     if link.path and link.is_cross_file_reference()
                     else metadata.get_chapter_number()
                 )
-                target_fn = (
-                    link.path if link.path and link.is_cross_file_reference() else None
-                )
+
+                if link.path and link.is_cross_file_reference():
+                    target_fn = KeyPath(link.path).name
+                elif metadata.filepath and link.is_inner_reference():
+                    target_fn = metadata.filepath.name
+                else:
+                    target_fn = None
+                # target_fn = (
+                #     link.path if link.path and link.is_cross_file_reference() else None
+                # )
                 metadata.add_substitution(
                     SubstitutionDatapoint(
                         pk=link.unique_id,

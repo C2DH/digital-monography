@@ -7,6 +7,7 @@ from src.preparer.keys import KeyPath
 
 
 class TestRefDatapointsCreated:
+    fp_i = KeyPath(pathlib.Path("tests") / "_fixtures" / "a_book" / "00_index.docx")
     fp_a = KeyPath(pathlib.Path("tests") / "_fixtures" / "a_book" / "01_a.docx")
     fp_b = KeyPath(pathlib.Path("tests") / "_fixtures" / "a_book" / "02_b.docx")
     fp_cr = KeyPath(
@@ -17,9 +18,11 @@ class TestRefDatapointsCreated:
     def setup_class(cls):
         cls.book_metadata: dict[str, DocumentMetadata] = {}
         # in preparer
+        cls.soup_i, cls.meta_i = cls._prepare_docx_for_ref_handing(cls.fp_i)
         cls.soup_a, cls.meta_a = cls._prepare_docx_for_ref_handing(cls.fp_a)
         cls.soup_b, cls.meta_b = cls._prepare_docx_for_ref_handing(cls.fp_b)
         cls.soup_cr, cls.meta_cr = cls._prepare_docx_for_ref_handing(cls.fp_cr)
+        cls.book_metadata[cls.fp_i.stem] = cls.meta_i
         cls.book_metadata[cls.fp_a.stem] = cls.meta_a
         cls.book_metadata[cls.fp_b.stem] = cls.meta_b
         cls.book_metadata[cls.fp_cr.stem] = cls.meta_cr
@@ -563,3 +566,4 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.prev_item_num == 3
         assert subs.new_item_num == 2
         assert subs.new_value() == "5.2"
+        assert subs.new_value("V") == "V.2"

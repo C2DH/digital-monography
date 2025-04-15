@@ -72,7 +72,15 @@ def add_chapter_number_to_captions(
             prev: docx.oxml.text.run.CT_R = field.getprevious()
             if _is_caption_item(prev):
                 assert isinstance(prev, docx.oxml.text.run.CT_R)
-                prev.text = f"{prev.text}{metadata.get_chapter_number()}."
+                try:
+                    file_dp = next(
+                        f for f in metadata.files if f.stem == metadata.filepath.stem
+                    )
+                    prev.text = f"{prev.text}{file_dp.prefix}."
+                except StopIteration:
+                    num = metadata.get_chapter_number()
+                    if num is not None:
+                        prev.text = f"{prev.text}{num}."
 
 
 def _is_caption_item(node: str) -> bool:

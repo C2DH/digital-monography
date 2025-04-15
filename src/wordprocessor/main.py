@@ -6,6 +6,7 @@ import json
 import logging
 import pathlib
 import typing as t
+import yaml
 
 from mypy_boto3_dynamodb.client import DynamoDBClient as boto3_DynamoDBClient
 
@@ -17,7 +18,7 @@ try:
     )
     from numbering_captions import add_chapter_number_to_captions
     from numbering_refs import prepare_refs
-    from metadata import DocumentMetadata
+    from metadata import DocumentMetadata, FileDatapoint
     from keys import KeyPath
     from remove_images import remove_images
 except (ImportError, ModuleNotFoundError):
@@ -26,7 +27,7 @@ except (ImportError, ModuleNotFoundError):
     from .conditional_rendering import remove_parts_and_highlights_due_to_conditional_rendering  # type: ignore
     from .numbering_captions import add_chapter_number_to_captions  # type: ignore
     from .numbering_refs import prepare_refs  # type: ignore
-    from .metadata import DocumentMetadata  # type: ignore
+    from .metadata import DocumentMetadata, FileDatapoint  # type: ignore
     from .keys import KeyPath  # type: ignore
     from .remove_images import remove_images  # type: ignore
 
@@ -60,6 +61,10 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info("Context: " + json.dumps(context, default=str))
     config_key = _get_config_key(event)
     book_metadata = _read_book_metadata(config_key)
+    config = _prepare_config(config_key)
+    _update_file_count(config, book_metadata)
+    # TODO: read config file
+    # TODO: update file_count from values in _config
     for key in config_key.efs_slug_dir.glob("*.docx"):
         doc = _read_document(key)
         metadata = book_metadata[key.stem]
@@ -73,11 +78,48 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
 def _get_config_key(event) -> KeyPath:
     try:
         slug = event["Records"][0]["body"]
-        pth = pathlib.Path(slug) / "_config.yml"
+        pth = KeyPath(slug).efs_slug_dir / "_config.yml"
+        if not pth.exists():
+            pth = KeyPath(slug).efs_slug_dir / "_config.yaml"
+        if not pth.exists():
+            raise FileNotFoundError(f"Config file not found. File: {pth}")
         return KeyPath(pth)
+    except FileNotFoundError as e:
+        logging.exception(f"Configuration file was not found. Error: {repr(e)}")
+        raise
     except Exception as e:
         logging.exception(f"Unable to retrieve object key. Error: {repr(e)}")
         raise
+
+
+def _prepare_config(key: KeyPath) -> None:
+    with open(key) as f:
+        config = yaml.safe_load(f)
+    return config
+
+
+def _update_file_count(
+    config: dict[str : t.Any], book_metadata: dict[str, DocumentMetadata]
+) -> None:
+    if "dgtmon" not in config or "prefixes" not in config["dgtmon"]:
+        return
+    prefixes = config["dgtmon"]["prefixes"]
+    if type(prefixes) == list and type(prefixes[0]) == dict:
+        prefixes = {k: v for kv in prefixes for k, v in kv.items()}
+    if type(prefixes) != dict or len(prefixes) == 0:
+        return
+    ###
+    for metadata in book_metadata.values():
+        for stem, prefix in prefixes.items():
+            metadata.add_file(FileDatapoint(stem=stem, prefix=str(prefix)))
+
+    # for metadata in book_metadata.values():
+    #     for dp in metadata.substitutions:
+    #         if dp.target_fn is None:
+    #             continue
+    #         stem = KeyPath(dp.target_fn).stem
+    #         if stem in prefixes:
+    #             dp.fprefix = prefixes[stem]
 
 
 # def prepare_references(
