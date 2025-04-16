@@ -352,3 +352,12 @@ git config --add --local core.sshCommand 'ssh -i ~/.ssh/filename'
 * mypy type checking
 * flake8 linting
 * refactor link management (refs.py)
+* migrate JupyterBook v1 to v2
+
+#### Requirements for migrating Jupyter Book v1 to v2
+
+1. install node.js v 20
+1. npm install mystmd
+1. myst build --html
+1. create myst.yml config file (different from v1)
+1. copy _build/html to s3 bucket
