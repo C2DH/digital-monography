@@ -38,52 +38,77 @@ DEFAULT_S3_EVENT = {
 }
 
 
-from src.wordprocessor.conditional_rendering import (
-    remove_parts_and_highlights_due_to_conditional_rendering,
-)
+# from src.wordprocessor.conditional_rendering import (
+#     remove_parts_and_highlights_due_to_conditional_rendering,
+# )
+from src.preparer.main import prepare_docx
 from src.wordprocessor.constants import MAMMOTH_STYLE_MAP
-from src.wordprocessor.main import _read_book_metadata
+from src.wordprocessor.main import wordprocess_docx
 from src.wordprocessor.keys import KeyPath
-from src.wordprocessor.numbering_captions import add_chapter_number_to_captions
-from src.wordprocessor.remove_images import remove_images
+from src.wordprocessor.metadata import DocumentMetadata
+
+# from src.wordprocessor.numbering_captions import add_chapter_number_to_captions
+# from src.wordprocessor.remove_images import remove_images
 from src.preparer.html2md import convert_to_md
 
 
 class TestWordprocessor:
-    key = KeyPath(
-        pathlib.Path("/tmp") / "efs" / "a_book" / "05_conditional_rendering.docx"
+    # key = KeyPath(
+    #     pathlib.Path("/tmp") / "efs" / "a_book" / "05_conditional_rendering.docx"
+    # )
+    # fp_i = KeyPath(pathlib.Path("tests") / "_fixtures" / "a_book" / "00_index.docx")
+    key_a = KeyPath(pathlib.Path("tests") / "_fixtures" / "a_book" / "01_a.docx")
+    key_b = KeyPath(pathlib.Path("tests") / "_fixtures" / "a_book" / "02_b.docx")
+    key_cr = KeyPath(
+        pathlib.Path("tests") / "_fixtures" / "a_book" / "05_conditional_rendering.docx"
     )
 
     @classmethod
     def setup_class(cls):
-        assert (
-            cls.key.exists()
-        ), "Make sure to run `make test/prep` to prepare the tests before running `make test`."
+        cls.book_metadata = {}
+        cls.before_soup, cls.before_md, cls.after_soup, cls.after_md = {}, {}, {}, {}
+        cls._prepare_docx(cls.key_a)
+        cls._prepare_docx(cls.key_b)
+        cls._prepare_docx(cls.key_cr)
+        cls._wordprocess_docx(cls.key_a)
+        cls._wordprocess_docx(cls.key_b)
+        cls._wordprocess_docx(cls.key_cr)
+
+    @classmethod
+    def _prepare_docx(cls, key: KeyPath) -> None:
         # before wordprocessor
-        cls.book_metadata = _read_book_metadata(cls.key)
-        with open(cls.key, "rb") as f:
-            cls.before_html = mammoth.convert_to_html(f, style_map=MAMMOTH_STYLE_MAP)
-            cls.before_soup = bs4.BeautifulSoup(cls.before_html.value, "html.parser")
-            cls.before_md = convert_to_md(cls.before_soup)
+        with open(key, "rb") as f:
+            before_html = mammoth.convert_to_html(f, style_map=MAMMOTH_STYLE_MAP)
+            before_soup = bs4.BeautifulSoup(before_html.value, "html.parser")
+        # preparer
+        metadata = DocumentMetadata(key)
+        _, metadata, _ = prepare_docx(before_html.value, metadata)
+        cls.book_metadata[key.stem] = metadata
+        cls.before_soup[key.stem] = before_soup
+        cls.before_md[key.stem] = convert_to_md(before_soup)
+        # cls.before_md[key.stem] = before_md
+
+    @classmethod
+    def _wordprocess_docx(cls, key: KeyPath) -> None:
         # wordprocessor
-        cls.doc = docx.Document(cls.key)
-        cls.metadata = cls.book_metadata["05_conditional_rendering"]
-        remove_parts_and_highlights_due_to_conditional_rendering(cls.doc)
-        add_chapter_number_to_captions(cls.doc, cls.metadata)
-        remove_images(cls.doc, cls.metadata)
-        file_stream = io.BytesIO()
-        cls.doc.save(file_stream)
-        file_stream.seek(0)
+        doc = wordprocess_docx(key, cls.book_metadata)
         # after wordprocessor
-        cls.after_html = mammoth.convert_to_html(
-            file_stream, style_map=MAMMOTH_STYLE_MAP
-        )
-        cls.after_soup = bs4.BeautifulSoup(cls.after_html.value, "html.parser")
-        cls.after_md = convert_to_md(cls.after_soup)
+        file_stream = io.BytesIO()
+        doc.save(file_stream)
+        file_stream.seek(0)
+        after_html = mammoth.convert_to_html(file_stream, style_map=MAMMOTH_STYLE_MAP)
+        after_soup = bs4.BeautifulSoup(after_html.value, "html.parser")
+        after_md = convert_to_md(after_soup)
+        cls.after_soup[key.stem] = after_soup
+        cls.after_md[key.stem] = after_md
 
     def test_removal_of_whole_highlighted_paragraph(self):
-        before_headings = [tag.text for tag in self.before_soup.find_all("h3")]
-        after_headings = [tag.text for tag in self.after_soup.find_all("h3")]
+        before_headings = [
+            tag.text for tag in self.before_soup[self.key_cr.stem].find_all("h3")
+        ]
+        after_headings = [
+            tag.text for tag in self.after_soup[self.key_cr.stem].find_all("h3")
+        ]
         assert "Asset for digital" in before_headings
         assert "Asset for digital" not in after_headings
 
@@ -104,14 +129,14 @@ class TestWordprocessor:
     def test_clearance_of_highlighted_hyperlink(self):
         before_txt = "hyperlinks to e.g. [ebook](https://en.wikipedia.org/wiki/Ebook)[book](https://en.wikipedia.org/wiki/Book)."
         after_text = "hyperlinks to e.g. [book](https://en.wikipedia.org/wiki/Book)."
-        assert before_txt in self.before_md
-        assert before_txt not in self.after_md
-        assert after_text in self.after_md
-        assert after_text not in self.before_md
+        assert before_txt in self.before_md[self.key_cr.stem]
+        assert before_txt not in self.after_md[self.key_cr.stem]
+        assert after_text in self.after_md[self.key_cr.stem]
+        assert after_text not in self.before_md[self.key_cr.stem]
 
     def test_removal_of_highlight_from_run(self):
-        before_soup_str = str(self.before_soup)
-        after_soup_str = str(self.after_soup)
+        before_soup_str = str(self.before_soup[self.key_cr.stem])
+        after_soup_str = str(self.after_soup[self.key_cr.stem])
         before_txt = (
             "is only visible in the "
             '<span class="dgt-mon-digital-only">digital</span>'
@@ -126,10 +151,14 @@ class TestWordprocessor:
 
     def test_removal_of_highlight_from_hyperlink(self):
         before_link = next(
-            a for a in self.before_soup.find_all("a", href=True) if a.text == "book"
+            a
+            for a in self.before_soup[self.key_cr.stem].find_all("a", href=True)
+            if a.text == "book"
         )
         after_link = next(
-            a for a in self.after_soup.find_all("a", href=True) if a.text == "book"
+            a
+            for a in self.after_soup[self.key_cr.stem].find_all("a", href=True)
+            if a.text == "book"
         )
         assert len(before_link.span.get("class")) == 1
         assert before_link.span.get("class")[0] == "dgt-mon-paper-only"
@@ -137,27 +166,36 @@ class TestWordprocessor:
 
     def test_targets_in_captions_with_added_chapter_numbers(self):
         # Figure 1 removed during conditional rendering
-        assert "**Figure 5.1:** Drawing" not in self.before_md
-        assert "**Figure 5.1:** Drawing" not in self.after_md
-        assert "**Figure 1:** Drawing" not in self.after_md
+        assert "**Figure 5.1:** Drawing" not in self.before_md[self.key_cr.stem]
+        assert "**Figure 5.1:** Drawing" not in self.after_md[self.key_cr.stem]
+        assert "**Figure 1:** Drawing" not in self.after_md[self.key_cr.stem]
 
-        assert "**Figure 2:** Image" in self.before_md
-        assert "**Figure 5.2:** Image" not in self.before_md
-        assert "**Figure 5.2:** Image" in self.after_md
-        assert "**Figure 2:** Image" not in self.after_md
+        assert "**Figure 2:** Image" in self.before_md[self.key_cr.stem]
+        assert "**Figure 5.2:** Image" not in self.before_md[self.key_cr.stem]
+        assert "**Figure 5.2:** Image" in self.after_md[self.key_cr.stem]
+        assert "**Figure 2:** Image" not in self.after_md[self.key_cr.stem]
 
-        assert "**Figure 3:** An example" in self.before_md
-        assert "**Figure 5.3:** An example" not in self.before_md
-        assert "**Figure 5.3:** An example" in self.after_md
-        assert "**Figure 3:** An example" not in self.after_md
+        assert "**Figure 3:** An example" in self.before_md[self.key_cr.stem]
+        assert "**Figure 5.3:** An example" not in self.before_md[self.key_cr.stem]
+        assert "**Figure 5.3:** An example" in self.after_md[self.key_cr.stem]
+        assert "**Figure 3:** An example" not in self.after_md[self.key_cr.stem]
 
-        assert "**Figure 4:** Target" in self.before_md
-        assert "**Figure 5.4:** Target" not in self.before_md
-        assert "**Figure 5.4:** Target" in self.after_md
-        assert "**Figure 4:** Target" not in self.after_md
+        assert "**Figure 4:** Target" in self.before_md[self.key_cr.stem]
+        assert "**Figure 5.4:** Target" not in self.before_md[self.key_cr.stem]
+        assert "**Figure 5.4:** Target" in self.after_md[self.key_cr.stem]
+        assert "**Figure 4:** Target" not in self.after_md[self.key_cr.stem]
+
+    # def test_prepare_refs(self):
+    #     # print(self.before_md)
+    #     # print("--------------")
+    #     # print(self.after_md)
+    #     print("self.book_metadata", self.book_metadata)
+    #     assert 1 == 2
 
     def test_remove_images(self):
-        imgs = self.before_soup.find_all("img")
+        imgs = self.before_soup[self.key_cr.stem].find_all("img")
+        for img in imgs:
+            print(img.get("alt"))
         assert len(imgs) == 4
-        imgs = self.after_soup.find_all("img")
+        imgs = self.after_soup[self.key_cr.stem].find_all("img")
         assert len(imgs) == 0

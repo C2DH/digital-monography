@@ -66,13 +66,20 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     # TODO: read config file
     # TODO: update file_count from values in _config
     for key in config_key.efs_slug_dir.glob("*.docx"):
-        doc = _read_document(key)
-        metadata = book_metadata[key.stem]
-        _remove_parts_and_highlights_due_to_conditional_rendering(key, doc)
-        _add_chapter_number_to_captions(key, doc, metadata)
-        _prepare_refs(key, doc, book_metadata)
-        _remove_images(key, doc, metadata)
+        doc = wordprocess_docx(key, book_metadata)
         doc.save(key.efs_slug_paper_path)
+
+
+def wordprocess_docx(
+    key: KeyPath, book_metadata: dict[str, DocumentMetadata]
+) -> docx.document.Document:
+    doc = _read_document(key)
+    metadata = book_metadata[key.stem]
+    _remove_parts_and_highlights_due_to_conditional_rendering(key, doc)
+    _add_chapter_number_to_captions(key, doc, metadata)
+    _prepare_refs(key, doc, book_metadata)
+    _remove_images(key, doc, metadata)
+    return doc
 
 
 def _get_config_key(event) -> KeyPath:
