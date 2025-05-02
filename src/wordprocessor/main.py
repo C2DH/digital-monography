@@ -275,7 +275,7 @@ def _prepare_refs(
     book_metadata: dict[str, DocumentMetadata],
 ) -> None:
     try:
-        return prepare_refs(doc, book_metadata)
+        return prepare_refs(key, doc, book_metadata)
     except Exception as e:
         logger.exception(f"Preparing references failed. " f"Error: {repr(e)}")
         _log_audit_event(

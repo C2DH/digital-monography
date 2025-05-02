@@ -6,13 +6,17 @@ import docx.text.paragraph
 try:
     # from constants import CAPTION_ALLOWED_ITEMS
     from metadata import DocumentMetadata, TargetDatapoint
+    from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
     # from .constants import CAPTION_ALLOWED_ITEMS  # type: ignore
     from .metadata import DocumentMetadata, TargetDatapoint  # type: ignore
+    from .keys import KeyPath
 
 
 def prepare_refs(
-    doc: docx.document.Document, book_metadata: dict[str, DocumentMetadata]
+    key: KeyPath,
+    doc: docx.document.Document,
+    book_metadata: dict[str, DocumentMetadata],
 ) -> None:
     """
     In a reference, replace placeholder "XXX" with the updated number of the target.
@@ -29,7 +33,7 @@ def prepare_refs(
     """
     for metadata in book_metadata.values():
         _update_datapoints_for_targets(metadata.targets)
-    _update_hyperlink_texts(doc, book_metadata)
+    _update_hyperlink_texts(key, doc, book_metadata)
 
 
 def _update_datapoints_for_targets(
@@ -64,35 +68,42 @@ def _update_datapoints_for_targets(
 
 
 def _update_hyperlink_texts(
-    doc: docx.document.Document, book_metadata: dict[str, DocumentMetadata]
+    key: KeyPath,
+    doc: docx.document.Document,
+    book_metadata: dict[str, DocumentMetadata],
 ) -> None:
     for p in doc.paragraphs:
-        _update_hyperlink_texts_in_paragraph(p, book_metadata)
+        _update_hyperlink_texts_in_paragraph(key, p, book_metadata)
     for tbl in doc.tables:
         for row in tbl.rows:
             for cell in row.cells:
                 for p in cell.paragraphs:
-                    _update_hyperlink_texts_in_paragraph(p, book_metadata)
+                    _update_hyperlink_texts_in_paragraph(key, p, book_metadata)
 
 
 def _update_hyperlink_texts_in_paragraph(
-    p: docx.text.paragraph.Paragraph, book_metadata: dict[str, DocumentMetadata]
+    key: KeyPath,
+    p: docx.text.paragraph.Paragraph,
+    book_metadata: dict[str, DocumentMetadata],
 ) -> None:
     for link in p.hyperlinks:
         if "XXX" in link.text and link.address:
-            target = _find_target(link, book_metadata)
+            target_file_stem = link.address.split(".")[0]
+            target = _find_target(link, target_file_stem, book_metadata)
+            _replace_link_text(link, target)
+        elif "XXX" in link.text and link.fragment:
+            target = _find_target(link, key.stem, book_metadata)
             _replace_link_text(link, target)
 
 
 def _find_target(
-    link: docx.text.hyperlink.Hyperlink, book_metadata: dict[str, DocumentMetadata]
+    link: docx.text.hyperlink.Hyperlink,
+    stem: str,
+    book_metadata: dict[str, DocumentMetadata],
 ) -> TargetDatapoint | None:
-    target_file_stem = link.address.split(".")[0]
     try:
         return next(
-            t
-            for t in book_metadata[target_file_stem].targets
-            if t.fragment == link.fragment
+            t for t in book_metadata[stem].targets if t.fragment == link.fragment
         )
     except StopIteration:
         return None
