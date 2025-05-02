@@ -185,12 +185,52 @@ class TestWordprocessor:
         assert "**Figure 5.4:** Target" in self.after_md[self.key_cr.stem]
         assert "**Figure 4:** Target" not in self.after_md[self.key_cr.stem]
 
-    # def test_prepare_refs(self):
-    #     # print(self.before_md)
-    #     # print("--------------")
-    #     # print(self.after_md)
-    #     print("self.book_metadata", self.book_metadata)
-    #     assert 1 == 2
+    def test_prepare_refs__XXX_f2f(self):
+        before = (
+            "In a separate file: Links to "
+            "[Heading](02_b.docx#h2Subheading), "
+            "[Figure XXX](02_b.docx#figRedSquare), and to "
+            "[Table XXX](02_b.docx#tblSimpleTable)."
+        )
+        after = (
+            "In a separate file: Links to "
+            "[Heading](02_b.docx#h2Subheading), "
+            "[Figure 2.1](02_b.docx#figRedSquare), and to "
+            "[Table 2.1](02_b.docx#tblSimpleTable)."
+        )
+        assert before in self.before_md[self.key_a.stem]
+        assert before not in self.after_md[self.key_a.stem]
+        assert after in self.after_md[self.key_a.stem]
+        assert after not in self.before_md[self.key_a.stem]
+        # assert 1 == 3
+
+    def test_prepare_refs__XXX_infile(self):
+        before = "Complex numbering: [see equation XXX](#equationWithComplexNumbering)."
+        after = (
+            "Complex numbering: [see equation 1.I.1](#equationWithComplexNumbering)."
+        )
+        assert before in self.before_md[self.key_a.stem]
+        assert before not in self.after_md[self.key_a.stem]
+        assert after in self.after_md[self.key_a.stem]
+        assert after not in self.before_md[self.key_a.stem]
+
+    def test_prepare_refs__XXX_with_conditional_rendering(self):
+        before = (
+            "Conditional rendering: "
+            "[link to fig XXX (digital only)](05_conditional_rendering.docx#figForDigital), "
+            "[link to fig XXX (paper only)](05_conditional_rendering.docx#figForPaper), "
+            "[link to fig XXX (digital and paper)](05_conditional_rendering.docx#figForDigitalAndPaper)."
+        )
+        after = (
+            "Conditional rendering: "
+            "[link to fig (figure 5.1 in the digital version) (digital only)](05_conditional_rendering.docx#figForDigital), "
+            "[link to fig 5.1 (paper only)](05_conditional_rendering.docx#figForPaper), "
+            "[link to fig 5.2 (digital and paper)](05_conditional_rendering.docx#figForDigitalAndPaper)."
+        )
+        assert before in self.before_md[self.key_a.stem]
+        assert before not in self.after_md[self.key_a.stem]
+        assert after in self.after_md[self.key_a.stem]
+        assert after not in self.before_md[self.key_a.stem]
 
     def test_remove_images(self):
         imgs = self.before_soup[self.key_cr.stem].find_all("img")
