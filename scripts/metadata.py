@@ -406,13 +406,15 @@ class SubstitutionDatapoint(DatapointBase):
         Returns the value that will replace placeholder.
         Used for substituting values in builder (for digital version).
         """
-        if (self.is_digital is False and self.is_paper is True) or self.was == "XXX":
+        if self.is_digital is False and self.is_paper is True:
             return ""
         elif self.new_item_num and file_prefix:
             return f"{file_prefix}.{self.prefix}{self.new_item_num}"
         elif self.new_item_num is not None:
             file_count = self.file_count if self.file_count is not None else ""
             return f"{file_count}.{self.prefix}{self.new_item_num}"
+        elif self.was == "XXX":
+            return ""
         else:
             return self.was
 

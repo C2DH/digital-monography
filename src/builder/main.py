@@ -188,13 +188,23 @@ def _make_substitutions(
                 continue
             with open(md, "r") as f:
                 mdstr = f.read()
-                file_prefix = None
+                # Make mapping of file_count to file prefix.
+                # This is suboptimal, but FileDatapoint only knows file stem and prefix.
+                # I could add more data to it, but since user has to correctly
+                # write this data in yaml file by hand, the less data the better :/
+                file_prefices = {}
                 for file in book_metadata[md.stem].files:
-                    if file.stem == book_metadata[md.stem].filepath.stem:
-                        file_prefix = str(file.prefix)
+                    file_count = book_metadata[md.stem].get_chapter_number(file.stem)
+                    file_prefices[file_count] = file.prefix
+                # Replace placeholders with new values, incl. file prefix
                 for subs in book_metadata[md.stem].substitutions:
+                    if subs.file_count in file_prefices:
+                        file_prefix = file_prefices[subs.file_count]
+                    else:
+                        file_prefix = None
                     mdstr = mdstr.replace(
-                        r"{{ " + subs.pk + r" }}", subs.new_value(file_prefix)
+                        r"{{ " + subs.pk + r" }}",
+                        subs.new_value(file_prefix),
                     )
             with open(md, "w") as f:
                 f.write(mdstr)
