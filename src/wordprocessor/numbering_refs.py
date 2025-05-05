@@ -4,11 +4,11 @@ import docx.text.hyperlink
 import docx.text.paragraph
 
 try:
-    # from constants import CAPTION_ALLOWED_ITEMS
+    from constants import AUTONUMBER_PLACEHOLDER
     from metadata import DocumentMetadata, TargetDatapoint
     from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
-    # from .constants import CAPTION_ALLOWED_ITEMS  # type: ignore
+    from .constants import AUTONUMBER_PLACEHOLDER  # type: ignore
     from .metadata import DocumentMetadata, TargetDatapoint  # type: ignore
     from .keys import KeyPath
 
@@ -19,7 +19,8 @@ def prepare_refs(
     book_metadata: dict[str, DocumentMetadata],
 ) -> None:
     """
-    In a reference, replace placeholder "XXX" with the updated number of the target.
+    In a reference, replace placeholder {{AUTONUMBER_PLACEHOLDER}}
+    with the updated number of the target.
 
     For example,
     <w:hyperlink r:id="rId12" w:anchor="figRedSquare" w:history="1">
@@ -27,7 +28,7 @@ def prepare_refs(
             <w:rPr>
                 <w:rStyle w:val="Hyperlink"/>
             </w:rPr>
-            <w:t>Figure XXX</w:t>
+            <w:t>Figure {{AUTONUMBER_PLACEHOLDER}}</w:t>
         </w:r>
     </w:hyperlink>
     """
@@ -87,11 +88,11 @@ def _update_hyperlink_texts_in_paragraph(
     book_metadata: dict[str, DocumentMetadata],
 ) -> None:
     for link in p.hyperlinks:
-        if "XXX" in link.text and link.address:
+        if AUTONUMBER_PLACEHOLDER in link.text and link.address:
             target_file_stem = link.address.split(".")[0]
             target = _find_target(link, target_file_stem, book_metadata)
             _replace_link_text(link, target)
-        elif "XXX" in link.text and link.fragment:
+        elif AUTONUMBER_PLACEHOLDER in link.text and link.fragment:
             target = _find_target(link, key.stem, book_metadata)
             _replace_link_text(link, target)
 
@@ -113,7 +114,11 @@ def _replace_link_text(
     link: docx.text.hyperlink.Hyperlink, target: TargetDatapoint
 ) -> None:
     for run in link.runs:
-        if "XXX" in run.text and target.is_paper == False and target.is_digital == True:
-            run.text = run.text.replace("XXX", "")
-        elif "XXX" in run.text:
-            run.text = run.text.replace("XXX", target.new_value())
+        if (
+            AUTONUMBER_PLACEHOLDER in run.text
+            and target.is_paper == False
+            and target.is_digital == True
+        ):
+            run.text = run.text.replace(AUTONUMBER_PLACEHOLDER, "")
+        elif AUTONUMBER_PLACEHOLDER in run.text:
+            run.text = run.text.replace(AUTONUMBER_PLACEHOLDER, target.new_value())

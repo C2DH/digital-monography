@@ -1,6 +1,7 @@
 import bs4
 import pathlib
 
+from src.preparer.constants import AUTONUMBER_PLACEHOLDER
 from src.preparer.main import _convert_to_html, prepare_docx
 from src.preparer.metadata import DocumentMetadata, SubstitutionDatapoint
 from src.preparer.keys import KeyPath
@@ -183,7 +184,7 @@ class TestRefDatapointsCreated:
         ref = next(
             ref
             for ref in self.book_metadata[self.fp_a.stem].refs
-            if ref.prev_string == "Figure XXX"
+            if ref.prev_string == f"Figure {AUTONUMBER_PLACEHOLDER}"
         )
         assert ref.text == r"Figure {{ 02bdocxf02bfigredsquare }}"
         assert ref.href == "./02_b.md#f-02-b-figredsquare"
@@ -195,7 +196,7 @@ class TestRefDatapointsCreated:
             for subst in self.book_metadata[self.fp_a.stem].substitutions
             if subst.pk == "02bdocxf02bfigredsquare"
         )
-        assert subst.was == "XXX"
+        assert subst.was == AUTONUMBER_PLACEHOLDER
         assert subst.item_type == "ref"
         assert subst.file_count == 2
         assert subst.prefix == ""
@@ -207,7 +208,7 @@ class TestRefDatapointsCreated:
         ref = next(
             ref
             for ref in self.book_metadata[self.fp_a.stem].refs
-            if ref.prev_string == "Table XXX"
+            if ref.prev_string == f"Table {AUTONUMBER_PLACEHOLDER}"
         )
         assert ref.text == r"Table {{ 02bdocxf02btblsimpletable }}"
         assert ref.href == "./02_b.md#f-02-b-tblsimpletable"
@@ -343,7 +344,7 @@ class TestRefDatapointsCreated:
             if subst.pk
             == "05conditionalrenderingdocxf05conditionalrenderingfigfordigital"
         )
-        assert subst.was == "XXX"
+        assert subst.was == AUTONUMBER_PLACEHOLDER
         assert subst.item_type == "ref"
         assert subst.file_count == 5
         assert subst.prefix == ""
@@ -367,7 +368,7 @@ class TestRefDatapointsCreated:
             if subst.pk
             == "05conditionalrenderingdocxf05conditionalrenderingfigforpaper"
         )
-        assert subst.was == "XXX"
+        assert subst.was == AUTONUMBER_PLACEHOLDER
         assert subst.item_type == "ref"
         assert subst.file_count == 5
         assert subst.prefix == ""
@@ -391,7 +392,7 @@ class TestRefDatapointsCreated:
             if subst.pk
             == "05conditionalrenderingdocxf05conditionalrenderingfigfordigitalandpaper"
         )
-        assert subst.was == "XXX"
+        assert subst.was == AUTONUMBER_PLACEHOLDER
         assert subst.item_type == "ref"
         assert subst.file_count == 5
         assert subst.prefix == ""

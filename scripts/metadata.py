@@ -26,10 +26,10 @@ else:
 
 try:
     from keys import KeyPath
-    from constants import MediumEnum
+    from constants import MediumEnum, AUTONUMBER_PLACEHOLDER
 except (ImportError, ModuleNotFoundError):
     from .keys import KeyPath  # type: ignore
-    from .constants import MediumEnum  # type: ignore
+    from .constants import MediumEnum, AUTONUMBER_PLACEHOLDER  # type: ignore
 
 
 # TODO: elem attributes should be left as bs4.element.PageElement,
@@ -413,7 +413,7 @@ class SubstitutionDatapoint(DatapointBase):
         elif self.new_item_num is not None:
             file_count = self.file_count if self.file_count is not None else ""
             return f"{file_count}.{self.prefix}{self.new_item_num}"
-        elif self.was == "XXX":
+        elif self.was == AUTONUMBER_PLACEHOLDER:
             return ""
         else:
             return self.was

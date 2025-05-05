@@ -42,7 +42,7 @@ DEFAULT_S3_EVENT = {
 #     remove_parts_and_highlights_due_to_conditional_rendering,
 # )
 from src.preparer.main import prepare_docx
-from src.wordprocessor.constants import MAMMOTH_STYLE_MAP
+from src.wordprocessor.constants import AUTONUMBER_PLACEHOLDER, MAMMOTH_STYLE_MAP
 from src.wordprocessor.main import wordprocess_docx
 from src.wordprocessor.keys import KeyPath
 from src.wordprocessor.metadata import DocumentMetadata
@@ -185,12 +185,12 @@ class TestWordprocessor:
         assert "**Figure 5.4:** Target" in self.after_md[self.key_cr.stem]
         assert "**Figure 4:** Target" not in self.after_md[self.key_cr.stem]
 
-    def test_prepare_refs__XXX_f2f(self):
+    def test_prepare_refs__placeholder_f2f(self):
         before = (
             "In a separate file: Links to "
             "[Heading](02_b.docx#h2Subheading), "
-            "[Figure XXX](02_b.docx#figRedSquare), and to "
-            "[Table XXX](02_b.docx#tblSimpleTable)."
+            f"[Figure {AUTONUMBER_PLACEHOLDER}](02_b.docx#figRedSquare), and to "
+            f"[Table {AUTONUMBER_PLACEHOLDER}](02_b.docx#tblSimpleTable)."
         )
         after = (
             "In a separate file: Links to "
@@ -204,8 +204,8 @@ class TestWordprocessor:
         assert after not in self.before_md[self.key_a.stem]
         # assert 1 == 3
 
-    def test_prepare_refs__XXX_infile(self):
-        before = "Complex numbering: [see equation XXX](#equationWithComplexNumbering)."
+    def test_prepare_refs__placeholder_infile(self):
+        before = f"Complex numbering: [see equation {AUTONUMBER_PLACEHOLDER}](#equationWithComplexNumbering)."
         after = (
             "Complex numbering: [see equation 1.I.1](#equationWithComplexNumbering)."
         )
@@ -214,12 +214,12 @@ class TestWordprocessor:
         assert after in self.after_md[self.key_a.stem]
         assert after not in self.before_md[self.key_a.stem]
 
-    def test_prepare_refs__XXX_with_conditional_rendering(self):
+    def test_prepare_refs__placeholder_with_conditional_rendering(self):
         before = (
             "Conditional rendering: "
-            "[link to fig XXX (digital only)](05_conditional_rendering.docx#figForDigital), "
-            "[link to fig XXX (paper only)](05_conditional_rendering.docx#figForPaper), "
-            "[link to fig XXX (digital and paper)](05_conditional_rendering.docx#figForDigitalAndPaper)."
+            f"[link to fig {AUTONUMBER_PLACEHOLDER} (digital only)](05_conditional_rendering.docx#figForDigital), "
+            f"[link to fig {AUTONUMBER_PLACEHOLDER} (paper only)](05_conditional_rendering.docx#figForPaper), "
+            f"[link to fig {AUTONUMBER_PLACEHOLDER} (digital and paper)](05_conditional_rendering.docx#figForDigitalAndPaper)."
         )
         after = (
             "Conditional rendering: "

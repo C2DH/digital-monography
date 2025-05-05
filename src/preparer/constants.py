@@ -86,6 +86,8 @@ highlight[color='{COLOR_PAPER_ONLY}'] => span.{CLS_PAPER_ONLY}
 CLS_METADATA_TABLE = "dgt-mon-metadata-table"
 CLS_METADATA_TABLE_JSONDATA = "dgt-mon-hidden-metadata"
 ATTRIB_METADATA_UUID = "dgt-mon-metadata-uuid"
+# docx constants
+AUTONUMBER_PLACEHOLDER = "XXX"
 # caption types
 CAPTION_ITEM_TYPE_FIGURE = "fig"
 CAPTION_ITEM_TYPE_TABLE = "tbl"

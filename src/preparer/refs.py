@@ -17,6 +17,7 @@ try:
     )
     from keys import KeyPath
     from constants import (
+        AUTONUMBER_PLACEHOLDER,
         CAPTION_ITEM_TYPE_FIGURE,
         CAPTION_ITEM_TYPE_TABLE,
         CAPTION_ITEM_TYPE_GRAPH,
@@ -35,6 +36,7 @@ except (ImportError, ModuleNotFoundError):
     )
     from .keys import KeyPath
     from .constants import (
+        AUTONUMBER_PLACEHOLDER,
         CAPTION_ITEM_TYPE_FIGURE,
         CAPTION_ITEM_TYPE_TABLE,
         CAPTION_ITEM_TYPE_GRAPH,
@@ -620,8 +622,8 @@ class LinkMystifier:
         """
         Markdown link text to be placed in `[text](...)` syntax.
         """
-        if "XXX" in tag_text:
-            self.text_to_replace = "XXX"
+        if AUTONUMBER_PLACEHOLDER in tag_text:
+            self.text_to_replace = AUTONUMBER_PLACEHOLDER
             replace_with = r"{{ " + self.unique_id + r" }}"
             tag_text = tag_text.replace(self.text_to_replace, replace_with)
             return tag_text
