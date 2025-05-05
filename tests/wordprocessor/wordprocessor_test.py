@@ -223,10 +223,12 @@ class TestWordprocessor:
         )
         after = (
             "Conditional rendering: "
-            "[link to fig (figure 5.1 in the digital version) (digital only)](05_conditional_rendering.docx#figForDigital), "
+            "[link to fig (digital only)](05_conditional_rendering.docx#figForDigital), "
             "[link to fig 5.1 (paper only)](05_conditional_rendering.docx#figForPaper), "
             "[link to fig 5.2 (digital and paper)](05_conditional_rendering.docx#figForDigitalAndPaper)."
         )
+
+        print(self.after_md[self.key_a.stem])
         assert before in self.before_md[self.key_a.stem]
         assert before not in self.after_md[self.key_a.stem]
         assert after in self.after_md[self.key_a.stem]

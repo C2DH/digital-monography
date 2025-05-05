@@ -114,9 +114,6 @@ def _replace_link_text(
 ) -> None:
     for run in link.runs:
         if "XXX" in run.text and target.is_paper == False and target.is_digital == True:
-            run.text = run.text.replace(
-                "XXX",
-                f"({target.item_type} {target.new_value()} in the digital version)",
-            )
+            run.text = run.text.replace("XXX", "")
         elif "XXX" in run.text:
             run.text = run.text.replace("XXX", target.new_value())
