@@ -1,12 +1,13 @@
 import dataclasses
 import datetime
 import enum
+import os
 import typing as t
 
-try:
-    from constants import DYNAMODB_LOGINS_TBL
-except (ImportError, ModuleNotFoundError):
-    from .constants import DYNAMODB_LOGINS_TBL
+# try:
+#     from constants import DYNAMODB_LOGINS_TBL
+# except (ImportError, ModuleNotFoundError):
+#     from .constants import DYNAMODB_LOGINS_TBL
 
 
 class LoginStatus(enum.Enum):
@@ -26,7 +27,7 @@ class LoginEvent:
     def send(self, dynamodb: t.Any) -> t.Any:
         if dynamodb is None:
             return
-        table = dynamodb.Table(DYNAMODB_LOGINS_TBL)
+        table = dynamodb.Table(os.environ.get("DYNAMODB_LOGINS_TBL", ""))
         expire_at = int(
             (
                 datetime.datetime.now(datetime.timezone.utc)

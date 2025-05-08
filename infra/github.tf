@@ -194,6 +194,15 @@ resource "aws_lambda_function" "github_func" {
     log_group  = data.aws_cloudwatch_log_group.general_purpose_logs.name
     log_format = "JSON"
   }
+  environment {
+    variables = {
+      DYNAMODB_AUDIT_TBL      = aws_dynamodb_table.audit_tbl.name
+      DYNAMODB_ALERTS_TBL     = aws_dynamodb_table.alerts_tbl.name
+      IR_APKG_MD_BUCKET_NAME  = aws_s3_bucket.ir_apkg_md.bucket
+      APKG_UPLOAD_BUCKET_NAME = aws_s3_bucket.upload_apkg.bucket
+      GITHUB_SECRET_ID        = data.aws_secretsmanager_secret.github_api_token.id
+    }
+  }
 }
 
 # resource "aws_s3_bucket_notification" "archive_apkg_all_notification" {

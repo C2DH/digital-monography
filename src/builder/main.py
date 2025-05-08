@@ -25,14 +25,10 @@ try:
         ModuleEnum,
         IS_DEBUG,
         DEFAULT_SFS_DIR,
-        DYNAMODB_ASSETS_TBL,
-        DYNAMODB_CITATIONS_TBL,
-        DYNAMODB_HEADINGS_TBL,
-        DYNAMODB_WARNINGS_TBL,
-        DYNAMODB_REFS_TBL,
-        STATICWS_WIP_BUCKET_NAME,
-        METADATA_REFS_BUCKET_NAME,
-        VERIFIER_MSGS,
+        # DYNAMODB_REFS_TBL,
+        # STATICWS_WIP_BUCKET_NAME,
+        # METADATA_REFS_BUCKET_NAME,
+        # VERIFIER_MSGS,
     )
     from config_prep import update_with_substitutions
     from metadata import DocumentMetadata, RefDatapoint
@@ -46,14 +42,10 @@ except (ImportError, ModuleNotFoundError):
         ModuleEnum,
         IS_DEBUG,
         DEFAULT_SFS_DIR,
-        DYNAMODB_ASSETS_TBL,
-        DYNAMODB_CITATIONS_TBL,
-        DYNAMODB_HEADINGS_TBL,
-        DYNAMODB_WARNINGS_TBL,
-        DYNAMODB_REFS_TBL,
-        STATICWS_WIP_BUCKET_NAME,
-        METADATA_REFS_BUCKET_NAME,
-        VERIFIER_MSGS,
+        # DYNAMODB_REFS_TBL,
+        # STATICWS_WIP_BUCKET_NAME,
+        # METADATA_REFS_BUCKET_NAME,
+        # VERIFIER_MSGS,
     )
     from .config_prep import update_with_substitutions
     from .metadata import DocumentMetadata, RefDatapoint
@@ -164,7 +156,6 @@ def _prepare_config(key: KeyPath, book_metadata: dict[str, DocumentMetadata]) ->
         return
     with open(key.efs_slug_dir / "_config.yml") as f:
         config = yaml.safe_load(f)
-    print("config", config)
     # TODO: update file_count from values in _config
     config = update_with_substitutions(config, book_metadata)
     with open(key.efs_slug_dir / "_config.yml", "w") as f:
@@ -384,7 +375,8 @@ def _cp_efs_to_data_dir(src: pathlib.Path, dstdir: str, slug: str) -> None:
 
 def _sync_efs_to_staticws(src: pathlib.Path, dstdir: str, slug: str) -> None:
     src = str(src)
-    dst = f"s3://{STATICWS_WIP_BUCKET_NAME}/{dstdir}/{slug}"
+    bucket = os.environ.get("STATICWS_WIP_BUCKET_NAME", "")
+    dst = f"s3://{bucket}/{dstdir}/{slug}"
     cmd = ["aws", "s3", "sync", "--quiet", src, dst]
     logging.info(f"Syncing files from {src} to {dst}.")
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -455,7 +447,8 @@ def _write_metadata_to_db(
         return
     try:
         tables = {
-            "refs": DYNAMODB_REFS_TBL,
+            "refs": os.environ.get("DYNAMODB_REFS_TBL", ""),
+            # "refs": DYNAMODB_REFS_TBL,
         }
         for domain, tbl in tables.items():
             table = dynamodb.Table(tbl)
@@ -488,7 +481,7 @@ def _write_assets_info_to_s3(
         fn: str
         try:
             s3_key = RefDatapoint.get_s3_key(key.slug, fn)
-            bucket = METADATA_REFS_BUCKET_NAME
+            bucket = os.environ.get("METADATA_REFS_BUCKET_NAME", "")
             body = json.dumps([ref.to_json() for ref in metadata.refs], default=str)
             resp = s3.put_object(Body=body, Bucket=bucket, Key=s3_key)
             logger.info(
@@ -547,9 +540,10 @@ def _put_json_to_s3(key: KeyPath, warnings: list[dict[str, str]]) -> None:
         for fn, warnings in warnings_grouped.items():
             s3_key = key.slug + "/" + fn.split(".")[0] + ".json"
             body = json.dumps(warnings, default=str)
-            resp = s3.put_object(Body=body, Bucket=VERIFIER_MSGS, Key=str(s3_key))
+            bucket = os.environ.get("VERIFIER_MSGS", "")
+            resp = s3.put_object(Body=body, Bucket=bucket, Key=str(s3_key))
             logger.info(
-                f"Response from s3.put_object(Bucket={VERIFIER_MSGS}, Key={str(s3_key)}): "
+                f"Response from s3.put_object(Bucket={bucket}, Key={str(s3_key)}): "
                 + json.dumps(resp, default=str)
             )
     except Exception as e:

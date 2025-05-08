@@ -4,6 +4,11 @@ variable "project_name" {
   default     = "Another AWSome Project"
 }
 
+variable "aws_account_id" {
+  type        = string
+  description = "Identifier of the AWS account"
+}
+
 variable "region" {
   type        = string
   description = "AWS Region of the project"
@@ -190,4 +195,9 @@ variable "dgtmon_dev_dyndb_refs_tbl" {
 variable "dgtmon_dev_dyndb_warnings_tbl" {
   type        = string
   description = "Name of the table for editors to list publication's warnings"
+}
+
+variable "secretsmanager_github_api_secrets" {
+  type        = string
+  description = "Identifier of a secret object in AWS Secrets Manager storing secret api keys"
 }

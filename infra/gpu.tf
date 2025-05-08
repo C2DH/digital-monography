@@ -84,6 +84,14 @@ resource "aws_lambda_function" "gpu_func" {
     log_group  = data.aws_cloudwatch_log_group.general_purpose_logs.name
     log_format = "JSON"
   }
+  environment {
+    variables = {
+      APKG_UPLOAD_BUCKET_NAME     = aws_s3_bucket.upload_apkg.bucket
+      METADATA_ASSETS_BUCKET_NAME = aws_s3_bucket.metadata_assets_s3.bucket
+      METADATA_REFS_BUCKET_NAME   = aws_s3_bucket.metadata_refs_s3.bucket
+      VERIFIER_MSGS               = aws_s3_bucket.verification_msg.bucket
+    }
+  }
 }
 
 resource "aws_ecr_repository" "gpu_repo" {

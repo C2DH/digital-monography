@@ -220,6 +220,21 @@ resource "aws_lambda_function" "preparer_func" {
     subnet_ids         = [aws_subnet.efs_public.id]
     security_group_ids = [aws_security_group.efs_access_sg.id]
   }
+  environment {
+    variables = {
+      DYNAMODB_ASSETS_TBL          = aws_dynamodb_table.assets_tbl.name
+      DYNAMODB_AUDIT_TBL           = aws_dynamodb_table.audit_tbl.name
+      DYNAMODB_ALERTS_TBL          = aws_dynamodb_table.alerts_tbl.name
+      DYNAMODB_CITATIONS_TBL       = aws_dynamodb_table.citations_tbl.name
+      DYNAMODB_HEADINGS_TBL        = aws_dynamodb_table.headings_tbl.name
+      IR_APKG_HTML_BUCKET_NAME     = aws_s3_bucket.ir_apkg_html.bucket
+      IR_APKG_MD_BUCKET_NAME       = aws_s3_bucket.ir_apkg_md.bucket
+      METADATA_ASSETS_BUCKET_NAME  = aws_s3_bucket.metadata_assets_s3.bucket
+      SQS_GITHUB_FIFO_TRIGGER_NAME = aws_sqs_queue.pre_github_queue.name
+      AWS_ACCOUNT_REGION           = var.region
+      AWS_ACCOUNT_ID               = var.aws_account_id
+    }
+  }
 }
 
 resource "aws_s3_bucket_notification" "upload_apkg_notification" {

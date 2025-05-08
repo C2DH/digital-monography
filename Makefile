@@ -18,7 +18,12 @@ test/copy:
 test/prep:
 	# echo 'maybe book-content-examples dir can be better utilized'
 	cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/book-content-examples/' tests/_fixtures/
-	DGTMON_NO_WAIT=1 python scripts/prepare_and_build.py book_path="tests/_fixtures/a_book/"
+	DGTMON_NO_WAIT=1 \
+		IR_APKG_HTML_BUCKET_NAME=_HTML \
+		IR_APKG_MD_BUCKET_NAME=_MARKDOWN \
+		METADATA_ASSETS_BUCKET_NAME=_METDATA \
+		VERIFIER_MSGS=_WARNINGS \
+		python scripts/prepare_and_build.py book_path="tests/_fixtures/a_book/"
 
 test/run:
 	DGTMON_DEBUG=1 python -m pytest tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/

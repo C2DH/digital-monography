@@ -42,7 +42,7 @@ class S3Faker:
         In boto3, put_object adds an object to a bucket. Here it copies
         the file to /tmp/efs/<bucket_name> and returns a fake response.
         """
-        target_fp = pathlib.Path("/tmp") / "efs" / f"_{Bucket}"
+        target_fp = pathlib.Path("/tmp") / "efs" / Bucket
         for key_part in pathlib.Path(Key).parts:
             target_fp = target_fp / key_part
         target_fp.parent.mkdir(parents=True, exist_ok=True)
