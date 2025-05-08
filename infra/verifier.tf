@@ -182,6 +182,16 @@ resource "aws_lambda_function" "verifier_func" {
     subnet_ids         = [aws_subnet.efs_public.id]
     security_group_ids = [aws_security_group.efs_access_sg.id]
   }
+  environment {
+    variables = {
+      DYNAMODB_AUDIT_TBL            = aws_dynamodb_table.audit_tbl.name
+      DYNAMODB_ALERTS_TBL           = aws_dynamodb_table.alerts_tbl.name
+      VERIFIER_MSGS                 = aws_s3_bucket.verification_msg.bucket
+      AWS_ACCOUNT_ID                = var.aws_account_id
+      AWS_ACCOUNT_REGION            = var.region
+      SQS_BUILDER_FIFO_TRIGGER_NAME = aws_sqs_queue.pre_builder_queue.name
+    }
+  }
 }
 
 resource "aws_s3_bucket_notification" "ir_apkg_html_notification" {

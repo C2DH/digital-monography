@@ -7,6 +7,7 @@ import json
 import logging
 import mammoth
 import nbformat
+import os
 import typing as t
 import urllib.parse
 
@@ -410,7 +411,7 @@ def _put_html_to_s3(contents: str, key: KeyPath) -> None:
         s3_key = key.s3_key.with_suffix(".html")
         _put_object(
             contents.encode("utf-8"),
-            IR_APKG_HTML_BUCKET_NAME,
+            os.environ.get("IR_APKG_HTML_BUCKET_NAME", ""),
             s3_key,
         )
     except Exception as e:
@@ -427,7 +428,7 @@ def _put_md_to_s3(contents: str, key: KeyPath) -> None:
     try:
         _put_object(
             contents.encode("utf-8"),
-            IR_APKG_MD_BUCKET_NAME,
+            os.environ.get("IR_APKG_MD_BUCKET_NAME", ""),
             key,
         )
     except Exception as e:
@@ -444,7 +445,10 @@ def _enqueue_to_github(key: KeyPath) -> None:
     try:
         key_str = str(key)
         logger.info(f"_queue_to_trigger_github(key={key_str})")
-        QueueUrl = f"https://sqs.{AWS_ACCOUNT_REGION}.amazonaws.com/{AWS_ACCOUNT_ID}/{SQS_GITHUB_FIFO_TRIGGER_NAME}"
+        aws_account_region = os.environ.get("AWS_ACCOUNT_REGION", "")
+        aws_account_id = os.environ.get("AWS_ACCOUNT_ID", "")
+        sqs_github_trigger = os.environ.get("SQS_GITHUB_FIFO_TRIGGER_NAME", "")
+        QueueUrl = f"https://sqs.{aws_account_region}.amazonaws.com/{aws_account_id}/{sqs_github_trigger}"
         MessageBody = key_str
         MessageDeduplicationId = key_str
         MessageGroupId = key.slug
@@ -516,7 +520,7 @@ def _write_processed_md_to_efs(md: str, key: KeyPath) -> None:
 def _write_assets_info_to_s3(metadata: DocumentMetadata, key: KeyPath) -> None:
     try:
         s3_key = AssetDatapoint.get_s3_key(key)
-        bucket = METADATA_ASSETS_BUCKET_NAME
+        bucket = os.environ.get("METADATA_ASSETS_BUCKET_NAME", "")
         body = json.dumps([ass.to_json() for ass in metadata.assets], default=str)
         resp = s3.put_object(Body=body, Bucket=bucket, Key=s3_key)
         logger.info(
@@ -538,9 +542,9 @@ def _write_metadata_to_db(metadata: DocumentMetadata, key: KeyPath) -> None:
         return
     try:
         tables = {
-            "assets": DYNAMODB_ASSETS_TBL,
-            "citation_groups": DYNAMODB_CITATIONS_TBL,
-            "headings": DYNAMODB_HEADINGS_TBL,
+            "assets": os.environ.get("DYNAMODB_ASSETS_TBL", ""),
+            "citation_groups": os.environ.get("DYNAMODB_CITATIONS_TBL", ""),
+            "headings": os.environ.get("DYNAMODB_HEADINGS_TBL", ""),
             # "warnings": DYNAMODB_WARNINGS_TBL,
         }
         for domain, tbl in tables.items():

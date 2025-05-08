@@ -2,6 +2,7 @@ import base64
 import boto3
 import json
 import logging
+import os
 from mypy_boto3_s3.client import S3Client as boto3_S3Client
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from aws_lambda_powertools.utilities.data_classes import (
@@ -66,10 +67,10 @@ def lambda_handler(event: APIGatewayProxyEventV2, context: LambdaContext):
 
 def _get_s3_bucket_name(keyword: str) -> str:
     return {
-        "asset": APKG_UPLOAD_BUCKET_NAME,
-        "assets": METADATA_ASSETS_BUCKET_NAME,
-        BE_PATH_ASSET_METADATA: METADATA_ASSETS_BUCKET_NAME,
-        BE_PATH_ASSET_RETRIEVE: APKG_UPLOAD_BUCKET_NAME,
-        BE_PATH_REF_METADATA: METADATA_REFS_BUCKET_NAME,
-        "warnings": VERIFIER_MSGS,
+        "asset": os.environ.get("APKG_UPLOAD_BUCKET_NAME", ""),
+        "assets": os.environ.get("METADATA_ASSETS_BUCKET_NAME", ""),
+        BE_PATH_ASSET_METADATA: os.environ.get("METADATA_ASSETS_BUCKET_NAME", ""),
+        BE_PATH_ASSET_RETRIEVE: os.environ.get("APKG_UPLOAD_BUCKET_NAME", ""),
+        BE_PATH_REF_METADATA: os.environ.get("METADATA_REFS_BUCKET_NAME", ""),
+        "warnings": os.environ.get("VERIFIER_MSGS", ""),
     }[keyword]

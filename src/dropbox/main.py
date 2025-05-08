@@ -6,6 +6,7 @@ import json
 import pathlib
 import dropbox.exceptions
 import dropbox.users
+import os
 import requests
 import logging
 import typing as t
@@ -15,9 +16,9 @@ try:
     from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
     from constants import (
         ModuleEnum,
-        APKG_UPLOAD_BUCKET_NAME,
-        DYNAMODB_TOKENS_TBL,
-        DYNAMODB_CURSORS_TBL,
+        # APKG_UPLOAD_BUCKET_NAME,
+        # DYNAMODB_TOKENS_TBL,
+        # DYNAMODB_CURSORS_TBL,
         IS_DEBUG,
     )
     from keys import KeyPath
@@ -26,9 +27,9 @@ except (ImportError, ModuleNotFoundError):
     from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
     from .constants import (
         ModuleEnum,
-        APKG_UPLOAD_BUCKET_NAME,
-        DYNAMODB_TOKENS_TBL,
-        DYNAMODB_CURSORS_TBL,
+        # APKG_UPLOAD_BUCKET_NAME,
+        # DYNAMODB_TOKENS_TBL,
+        # DYNAMODB_CURSORS_TBL,
         IS_DEBUG,
     )
     from .keys import KeyPath
@@ -83,14 +84,16 @@ def process_user(account: str, trace_id: str):
     """Call /files/list_folder for the given user ID and process any changes."""
     logger.info("process_user function was invoked with account " + str(account))
     # OAuth token for the user
-    tokens_resp = dynamodb_get(DYNAMODB_TOKENS_TBL, {"account": account})
+    table = os.environ.get("DYNAMODB_TOKENS_TBL", "")
+    tokens_resp = dynamodb_get(table, {"account": account})
     logger.info("tokens_resp == " + json.dumps(tokens_resp, default=str))
     token = tokens_resp.get("Item", {}).get("access_token")
     logger.info(f"token == {token}")
     # token = TOKEN
 
     # cursor for the user (None the first time)
-    cursors_resp = dynamodb_get(DYNAMODB_CURSORS_TBL, {"account": account})
+    table = os.environ.get("DYNAMODB_CURSORS_TBL", "")
+    cursors_resp = dynamodb_get(table, {"account": account})
     cursor = cursors_resp.get("Item", {}).get("cursor")
     logger.info(f"cursor == {cursor}")
     msg, slug = "", ""
@@ -136,7 +139,8 @@ def process_user(account: str, trace_id: str):
 
             # Update cursor
             cursor = result.cursor
-            dynamodb_set(DYNAMODB_CURSORS_TBL, **{"account": account, "cursor": cursor})
+            table = os.environ.get("DYNAMODB_CURSORS_TBL", "")
+            dynamodb_set(table, **{"account": account, "cursor": cursor})
 
             # Repeat only if there's more to do
             has_more = result.has_more
@@ -213,7 +217,7 @@ def _put_file_from_dbx_to_s3(body: bytes, key: KeyPath) -> None:
     # To remedy that, I write to S3 and the next Lambda in the pipeline
     # downloads it from there.
     try:
-        dst = APKG_UPLOAD_BUCKET_NAME
+        dst = os.environ.get("APKG_UPLOAD_BUCKET_NAME", "")
         resp = s3.put_object(Body=body, Bucket=dst, Key=str(key))
         logger.info(
             f"Response from s3.put_object(Bucket={dst}, Key={key}): "

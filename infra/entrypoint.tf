@@ -208,7 +208,17 @@ resource "aws_lambda_function" "entrypoint_func" {
   }
   environment {
     variables = {
-      SQS_URL = aws_sqs_queue.entrypoint_to_dropbox.url
+      DYNAMODB_ALERTS_TBL     = aws_dynamodb_table.alerts_tbl.name
+      DYNAMODB_ASSETS_TBL     = aws_dynamodb_table.assets_tbl.name
+      DYNAMODB_AUDIT_TBL      = aws_dynamodb_table.audit_tbl.name
+      DYNAMODB_CITATIONS_TBL  = aws_dynamodb_table.citations_tbl.name
+      DYNAMODB_HEADINGS_TBL   = aws_dynamodb_table.headings_tbl.name
+      DYNAMODB_REFS_TBL       = aws_dynamodb_table.refs_tbl.name
+      DYNAMODB_TOKENS_TBL     = aws_dynamodb_table.tokens_tbl.name
+      SQS_URL                 = aws_sqs_queue.entrypoint_to_dropbox.url
+      APKG_UPLOAD_BUCKET_NAME = aws_s3_bucket.upload_apkg.bucket
+      VERIFIER_MSGS           = aws_s3_bucket.verification_msg.bucket
+      DROPBOX_SECRET_ID       = data.aws_secretsmanager_secret.github_api_token.id
     }
   }
   #   file_system_config {

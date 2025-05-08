@@ -1,6 +1,7 @@
 import dataclasses
 import datetime
 import enum
+import os
 import typing as t
 
 try:
@@ -32,7 +33,7 @@ class AuditEvent:
     def send(self, dynamodb: t.Any) -> t.Any:
         if dynamodb is None:
             return
-        table = dynamodb.Table(DYNAMODB_AUDIT_TBL)
+        table = dynamodb.Table(os.environ.get("DYNAMODB_AUDIT_TBL", ""))
         expire_at = int(
             (
                 datetime.datetime.now(datetime.timezone.utc)
@@ -88,7 +89,7 @@ class AlertLog:
     def send(self, dynamodb: t.Any) -> t.Any:
         if not self.slug or dynamodb is None:
             return
-        table = dynamodb.Table(DYNAMODB_ALERTS_TBL)
+        table = dynamodb.Table(os.environ.get("DYNAMODB_ALERTS_TBL", ""))
         table.put_item(
             Item={
                 "slug": self.slug,

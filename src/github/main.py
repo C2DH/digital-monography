@@ -3,6 +3,7 @@ import boto3
 import datetime
 import json
 import logging
+import os
 import requests
 import typing as t
 import urllib.parse
@@ -51,7 +52,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     # if key.suffix not in [".md", ".MD", ".ipynb", ".IPYNB"]:
     #     return {"statusCode": 200, "body": ""}
 
-    secret = _get_api_key(key, GITHUB_SECRET_ID)
+    secret = _get_api_key(key, os.environ.get("GITHUB_SECRET_ID", ""))
 
     # naively try to create repo without checking if it exists
     _create_github_repo(key, secret)
@@ -166,9 +167,9 @@ def _create_github_repo(key: KeyPath, secret: GitHubSecret) -> requests.Response
 def _get_obj_from_s3(key: KeyPath) -> bytes:
     try:
         if len(key.parts) == 2 and key.suffix.lower() == ".md":
-            bucket_name = IR_APKG_MD_BUCKET_NAME
+            bucket_name = os.environ.get("IR_APKG_MD_BUCKET_NAME", "")
         else:
-            bucket_name = APKG_UPLOAD_BUCKET_NAME
+            bucket_name = os.environ.get("APKG_UPLOAD_BUCKET_NAME", "")
         resp = s3.get_object(
             Bucket=bucket_name,
             Key=str(key.s3_key),

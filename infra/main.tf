@@ -13,7 +13,9 @@ provider "aws" {
   region  = var.region
   default_tags {
     tags = {
-      project = "dgt-mon"
+      org     = "c2dh"
+      project = "dgtmon"
+      environ = "${var.environment}"
     }
   }
 }

@@ -171,6 +171,16 @@ resource "aws_lambda_function" "dropbox_func" {
     log_group  = data.aws_cloudwatch_log_group.general_purpose_logs.name
     log_format = "JSON"
   }
+  environment {
+    variables = {
+      DYNAMODB_AUDIT_TBL      = aws_dynamodb_table.audit_tbl.name
+      DYNAMODB_ALERTS_TBL     = aws_dynamodb_table.alerts_tbl.name
+      DYNAMODB_CURSORS_TBL    = aws_dynamodb_table.cursors_tbl.name
+      DYNAMODB_LOGINS_TBL     = aws_dynamodb_table.logins_tbl.name
+      DYNAMODB_TOKENS_TBL     = aws_dynamodb_table.tokens_tbl.name
+      APKG_UPLOAD_BUCKET_NAME = aws_s3_bucket.upload_apkg.bucket
+    }
+  }
   #   file_system_config {
   #     arn              = aws_efs_access_point.efs_access_point.arn
   #     local_mount_path = "/mnt/efs"

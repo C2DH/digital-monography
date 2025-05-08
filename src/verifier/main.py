@@ -3,6 +3,7 @@ import boto3
 import datetime
 import json
 import logging
+import os
 import pathlib
 import typing as t
 import urllib.parse
@@ -137,9 +138,10 @@ def _write_json_to_efs(json_data: t.Any, key: KeyPath) -> None:
 def _put_json_to_s3(body: str, key: KeyPath) -> None:
     try:
         s3_key = key.s3_key.with_suffix(".json")
-        resp = s3.put_object(Body=body, Bucket=VERIFIER_MSGS, Key=str(s3_key))
+        bucket = os.environ.get("VERIFIER_MSGS", "")
+        resp = s3.put_object(Body=body, Bucket=bucket, Key=str(s3_key))
         logger.info(
-            f"Response from s3.put_object(Bucket={VERIFIER_MSGS}, Key={str(s3_key)}): "
+            f"Response from s3.put_object(Bucket={bucket}, Key={str(s3_key)}): "
             + json.dumps(resp, default=str)
         )
     except Exception as e:
@@ -153,7 +155,10 @@ def _put_json_to_s3(body: str, key: KeyPath) -> None:
 def _send_msg_to_sqs(key: KeyPath) -> None:
     logger.info(f"Preparing to send a message to the sqs queue.")
     try:
-        QueueUrl = f"https://sqs.{AWS_ACCOUNT_REGION}.amazonaws.com/{AWS_ACCOUNT_ID}/{SQS_BUILDER_FIFO_TRIGGER_NAME}"
+        aws_account_id = os.environ.get("AWS_ACCOUNT_ID", "")
+        aws_account_region = os.environ.get("AWS_ACCOUNT_REGION", "")
+        sqs_builder_trigger = os.environ.get("SQS_BUILDER_FIFO_TRIGGER_NAME", "")
+        QueueUrl = f"https://sqs.{aws_account_region}.amazonaws.com/{aws_account_id}/{sqs_builder_trigger}"
         MessageBody = key.slug
         MessageDeduplicationId = key.slug
         MessageGroupId = "0"
