@@ -143,7 +143,7 @@ make dev/start
 make dev/test
 ```
 
-1. Build a Jupyter Book out of a manuscript stored in a `data/input` directory. Replace `slug-of-your-manuscript` with the name of this directory.
+0. Build a Jupyter Book out of a manuscript stored in a `data/input` directory. Replace `slug-of-your-manuscript` with the name of this directory.
 
 ```sh
 make dev/draft SLUG="slug-of-your-manuscript"
@@ -342,6 +342,21 @@ One way to upload changes to the guidelines repository is to clone the github re
 ```sh
 git config --add --local core.sshCommand 'ssh -i ~/.ssh/filename'
 ```
+
+### Updating PGP keys with GPG
+
+If the gpg library fails with a message `gpg: signing failed: No secret key`, the likely reason is expiration of the pgp key. To update pgp key used in CI/CD pipeline, use gpg library following these steps:
+
+```
+gpg --list-keys
+gpg --edit-key [keyId]
+> expire
+> save
+> quit
+gpg --armor --export-secret-keys [keyId] > sth.txt
+```
+
+In GitLab, update "CI/CD Settings" > "Variables" > "PGP_KEY" with the new private pgp key.
 
 ### Minor development todos
 
