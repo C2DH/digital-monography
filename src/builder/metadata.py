@@ -6,12 +6,13 @@
 # as the copy command is already included.
 # ======================
 import abc
-import json
 import bs4
+import json
 import dataclasses
 import datetime
 import enum
 import functools
+import logging
 import pathlib
 import pydantic
 import string
@@ -23,13 +24,16 @@ if t.TYPE_CHECKING:
 else:
     DataclassInstance = None
 
-
 try:
     from keys import KeyPath
     from constants import MediumEnum, AUTONUMBER_PLACEHOLDER
 except (ImportError, ModuleNotFoundError):
     from .keys import KeyPath  # type: ignore
     from .constants import MediumEnum, AUTONUMBER_PLACEHOLDER  # type: ignore
+
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
 # TODO: elem attributes should be left as bs4.element.PageElement,
@@ -86,6 +90,22 @@ class DatapointBase(pydantic.BaseModel, abc.ABC):
         "Constructs a dataclass instance from a JSON-like dictionary."
         # from_json() should be `return cls(**json.loads(data))`
         return cls(**json_data)
+
+    @classmethod
+    def unpack_records(
+        cls: t.Type[T],
+        json_data: list[dict[str, PrimitiveValues]],
+    ) -> list[T]:
+        result = []
+        for rec in json_data:
+            cls: DatapointBase
+            try:
+                result.append(cls.from_json(rec))
+            except pydantic.ValidationError as e:
+                logger.error(
+                    f"{cls.__name__} could not be created from {rec}. Error: {e}."
+                )
+        return result
 
     # # # TODO: rename, because it's not really json...
     # @classmethod
@@ -617,31 +637,48 @@ class DocumentMetadata:
 
     # def from_json(self, jsml: dict[str, list[dict[str, PrimitiveValues]]]) -> None:
     def from_json(self, jsml: DocumentMetadataSerialized) -> None:
-        self.assets = [AssetDatapoint.from_json(rec) for rec in jsml.get("assets", [])]
-        self.metadata_tables = [
-            MetadataTableDatapoint.from_json(rec)
-            for rec in jsml.get("metadata_tables", [])
-        ]
-        self.headings = [
-            HeadingDatapoint.from_json(rec) for rec in jsml.get("headings", [])
-        ]
-        self.refs = [RefDatapoint.from_json(rec) for rec in jsml.get("refs", [])]
-        self.targets = [
-            TargetDatapoint.from_json(rec) for rec in jsml.get("targets", [])
-        ]
-        self.substitutions = [
-            SubstitutionDatapoint.from_json(rec)
-            for rec in jsml.get("substitutions", [])
-        ]
-        self.citation_groups = [
-            CitationGroupDatapoint.from_json(rec)
-            for rec in jsml.get("citation_groups", [])
-        ]
-        self.citation_items = [
-            CitationItemDatapoint.from_json(rec)
-            for rec in jsml.get("citation_items", [])
-        ]
-        self.files = [FileDatapoint.from_json(rec) for rec in jsml.get("files", [])]
+        self.assets = AssetDatapoint.unpack_records(jsml.get("assets", []))
+        self.metadata_tables = MetadataTableDatapoint.unpack_records(
+            jsml.get("metadata_tables", [])
+        )
+        self.headings = HeadingDatapoint.unpack_records(jsml.get("headings", []))
+        self.refs = RefDatapoint.unpack_records(jsml.get("refs", []))
+        self.targets = TargetDatapoint.unpack_records(jsml.get("targets", []))
+        self.substitutions = SubstitutionDatapoint.unpack_records(
+            jsml.get("substitutions", [])
+        )
+        self.citation_groups = CitationGroupDatapoint.unpack_records(
+            jsml.get("citation_groups", [])
+        )
+        self.citation_items = CitationItemDatapoint.unpack_records(
+            jsml.get("citation_items", [])
+        )
+        self.files = FileDatapoint.unpack_records(jsml.get("files", []))
+        # self.assets = [AssetDatapoint.from_json(rec) for rec in jsml.get("assets", [])]
+        # self.metadata_tables = [
+        #     MetadataTableDatapoint.from_json(rec)
+        #     for rec in jsml.get("metadata_tables", [])
+        # ]
+        # self.headings = [
+        #     HeadingDatapoint.from_json(rec) for rec in jsml.get("headings", [])
+        # ]
+        # self.refs = [RefDatapoint.from_json(rec) for rec in jsml.get("refs", [])]
+        # self.targets = [
+        #     TargetDatapoint.from_json(rec) for rec in jsml.get("targets", [])
+        # ]
+        # self.substitutions = [
+        #     SubstitutionDatapoint.from_json(rec)
+        #     for rec in jsml.get("substitutions", [])
+        # ]
+        # self.citation_groups = [
+        #     CitationGroupDatapoint.from_json(rec)
+        #     for rec in jsml.get("citation_groups", [])
+        # ]
+        # self.citation_items = [
+        #     CitationItemDatapoint.from_json(rec)
+        #     for rec in jsml.get("citation_items", [])
+        # ]
+        # self.files = [FileDatapoint.from_json(rec) for rec in jsml.get("files", [])]
 
     def __str__(self) -> str:
         return (

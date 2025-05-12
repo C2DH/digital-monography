@@ -582,7 +582,7 @@ def _write_metadata_to_efs(metadata: DocumentMetadata, key: KeyPath) -> None:
             ".json"
         )
         logger.info(f"File: {fp}")
-        logger.info(f"Meta: {json.dumps(json_data)}")
+        # logger.info(f"Meta: {json.dumps(json_data)}")
         # logger.info(f"Meta: {json.dumps(json_data, default=str)}")
         with open(fp, "w") as f:
             json.dump(json_data, f)
