@@ -553,7 +553,9 @@ def _write_metadata_to_db(metadata: DocumentMetadata, key: KeyPath) -> None:
                 Item={
                     "slug": key.slug,
                     "fn": key.name,
-                    "records": [rec.to_json() for rec in getattr(metadata, domain)],
+                    "records": [
+                        rec.model_dump_json() for rec in getattr(metadata, domain)
+                    ],
                 }
             )
             logger.info(

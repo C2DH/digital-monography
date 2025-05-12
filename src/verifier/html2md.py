@@ -116,7 +116,6 @@ class MystMdConverter(markdownify.MarkdownConverter):
     def convert_span(self, el, text, convert_as_inline):
         if text.startswith("% :::{") and text.endswith(":::"):
             return "\n%s\n\n" % text
-        # elif el.get("class") == "dgt-mon-digital-only":
         elif CLS_DIGITAL_ONLY in el.get("class", []):
             return text
         return super().convert_p(el, text, convert_as_inline)
