@@ -75,8 +75,8 @@ deploy:
     - mkdir ~/.aws
     - echo -e "[profile oidc]\nrole_arn=${ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
   script:
-    - terraform init -var-file=secrets/dev.tfvars.json
-    - terraform apply -auto-approve -var-file=secrets/dev.tfvars.json
+    - terraform init -var-file=secrets/dev.tfvars.json -var="env=$CI_COMMIT_BRANCH"
+    - terraform apply -auto-approve -var-file=secrets/dev.tfvars.json -var="env=$CI_COMMIT_BRANCH"
     - terraform output -json > tf_output.json
   artifacts:
     expire_in: 1 day
@@ -127,6 +127,6 @@ destroy:
     - mkdir ~/.aws
     - echo -e "[profile oidc]\nrole_arn=${ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
   script:
-    - terraform init -var-file=secrets/dev.tfvars.json -reconfigure
-    - terraform destroy -auto-approve -var-file=secrets/dev.tfvars.json
+    - terraform init -var-file=secrets/dev.tfvars.json -var="env=$CI_COMMIT_BRANCH" -reconfigure
+    - terraform destroy -auto-approve -var-file=secrets/dev.tfvars.json -var="env=$CI_COMMIT_BRANCH"
   when: manual
