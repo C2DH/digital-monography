@@ -17,7 +17,7 @@ init:
     - cat $PGP_KEY | gpg --batch --import
     - echo $PGP_PASSPHRASE | gpg --batch --always-trust --yes --passphrase-fd 0 --pinentry-mode=loopback -s $(mktemp)
   script:
-    - sops -d secrets/dev.tfvars.enc.json | jq '.data' > secrets/dev.tfvars.json
+    - sops -d secrets/dev.tfvars.enc.json | jq '.data += {env: $CI_COMMIT_BRANCH}' > secrets/dev.tfvars.json
   artifacts:
     # expire_in: 1 day # TODO: consider TTL
     paths:

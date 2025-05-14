@@ -20,6 +20,12 @@ variable "environment" {
   description = "Environment/Branch of the Project"
 }
 
+variable "env" {
+  type        = string
+  description = "Name of the environment of the project read from git branch in CI/CD pipeline"
+  default     = var.environment
+}
+
 ## Set by the Dev team
 
 variable "staticws_wip_bucket_name" {
