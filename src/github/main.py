@@ -10,21 +10,11 @@ import urllib.parse
 
 try:
     from audit import AuditEvent, AuditStatus
-    from constants import (
-        ModuleEnum,
-        APKG_UPLOAD_BUCKET_NAME,
-        IR_APKG_MD_BUCKET_NAME,
-        GITHUB_SECRET_ID,
-    )
+    from constants import ModuleEnum
     from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
     from .audit import AuditEvent, AuditStatus
-    from .constants import (
-        ModuleEnum,
-        APKG_UPLOAD_BUCKET_NAME,
-        IR_APKG_MD_BUCKET_NAME,
-        GITHUB_SECRET_ID,
-    )
+    from .constants import ModuleEnum
     from .keys import KeyPath
 
 

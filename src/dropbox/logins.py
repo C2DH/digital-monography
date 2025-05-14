@@ -4,11 +4,6 @@ import enum
 import os
 import typing as t
 
-# try:
-#     from constants import DYNAMODB_LOGINS_TBL
-# except (ImportError, ModuleNotFoundError):
-#     from .constants import DYNAMODB_LOGINS_TBL
-
 
 class LoginStatus(enum.Enum):
     FAILED = 0

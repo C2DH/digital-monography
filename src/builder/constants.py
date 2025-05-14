@@ -32,39 +32,6 @@ if IS_DEBUG:
     DEFAULT_SFS_DIR = "/tmp/efs"  # local execution
 else:
     DEFAULT_SFS_DIR = "/mnt/efs"  # AWS EFS
-AWS_ACCOUNT_ID = "367031255351"
-AWS_ACCOUNT_REGION = "eu-west-1"
-GITHUB_SECRET_ID = "dgtmon-dev-github-api-secrets"
-DROPBOX_SECRET_ID = "dgtmon-dev-github-api-secrets"
-DYNAMODB_TOKENS_TBL = "dgtmon-dev-dyndb-tokens-tbl"
-DYNAMODB_CURSORS_TBL = "dgtmon-dev-dyndb-cursors-tbl"
-# dynamodb table for publisher to manage content
-DYNAMODB_AUDIT_TBL = "dgtmon-dev-dyndb-audit-tbl"
-DYNAMODB_ALERTS_TBL = "dgtmon-dev-dyndb-alerts-tbl"
-DYNAMODB_LOGINS_TBL = "dgtmon-dev-dyndb-logins-tbl"
-DYNAMODB_ASSETS_TBL = "dgtmon-dev-dyndb-assets-tbl"  # migrate from and stop using
-DYNAMODB_CITATIONS_TBL = "dgtmon-dev-dyndb-citations-tbl"
-DYNAMODB_HEADINGS_TBL = "dgtmon-dev-dyndb-headings-tbl"
-DYNAMODB_REFS_TBL = "dgtmon-dev-dyndb-refs-tbl"
-DYNAMODB_WARNINGS_TBL = "dgtmon-dev-dyndb-warnings-tbl"
-DYNAMODB_ASSETS_DOC_INFO_TBL = "dgtmon-dev-dyndb-assets-doc-info-tbl"
-DYNAMODB_ASSETS_UPLOAD_INFO_TBL = "dgtmon-dev-dyndb-assets-upload-info-tbl"
-DYNAMODB_ASSETS_BOOK_INFO_TBL = "dgtmon-dev-dyndb-assets-book-info-tbl"
-# SQS queues
-SQS_GITHUB_TRIGGER_NAME = "cpy-dgtmon-dev-github-trigger"
-SQS_GITHUB_FIFO_TRIGGER_NAME = "cpy-dgtmon-dev-github-trigger.fifo"
-SQS_BUILDER_TRIGGER_NAME = "cpy-dgtmon-dev-builder-trigger"
-SQS_BUILDER_FIFO_TRIGGER_NAME = "cpy-dgtmon-dev-builder-trigger.fifo"
-# S3 bucket names
-# ARCHIVE_APKG_ALL = "cpy-dgtmon-dev-archive-apkg-all"
-APKG_UPLOAD_BUCKET_NAME = "cpy-dgtmon-dev-apkg-upload"
-IR_APKG_HTML_BUCKET_NAME = "cpy-dgtmon-dev-ir-apkg-html"
-IR_APKG_MD_BUCKET_NAME = "cpy-dgtmon-dev-ir-apkg-md"
-STATICWS_WIP_BUCKET_NAME = "cpy-dgtmon-dev-staticws-wip"
-STATICWS_DASHBOARD_BUCKET_NAME = "cpy-dgtmon-dev-staticws-dashboard"
-METADATA_ASSETS_BUCKET_NAME = "cpy-dgtmon-dev-metadata-assets"
-METADATA_REFS_BUCKET_NAME = "cpy-dgtmon-dev-metadata-refs"
-VERIFIER_MSGS = "cpy-dgtmon-dev-verifier-msgs"
 # API endpoints
 BE_PATH_ASSET_METADATA = "assets-metadata"
 BE_PATH_ASSET_UPLOAD = "assets-s3-list"

@@ -16,9 +16,6 @@ try:
     from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
     from constants import (
         ModuleEnum,
-        # APKG_UPLOAD_BUCKET_NAME,
-        # DYNAMODB_TOKENS_TBL,
-        # DYNAMODB_CURSORS_TBL,
         IS_DEBUG,
     )
     from keys import KeyPath
@@ -27,9 +24,6 @@ except (ImportError, ModuleNotFoundError):
     from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
     from .constants import (
         ModuleEnum,
-        # APKG_UPLOAD_BUCKET_NAME,
-        # DYNAMODB_TOKENS_TBL,
-        # DYNAMODB_CURSORS_TBL,
         IS_DEBUG,
     )
     from .keys import KeyPath

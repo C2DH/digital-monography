@@ -19,21 +19,9 @@ try:
     from conditional_rendering import is_paper_only, remove_paper_only
     from constants import (
         ModuleEnum,
-        # ARCHIVE_APKG_ALL,
-        AWS_ACCOUNT_REGION,
-        AWS_ACCOUNT_ID,
-        DYNAMODB_ASSETS_TBL,
-        DYNAMODB_CITATIONS_TBL,
-        DYNAMODB_HEADINGS_TBL,
-        IR_APKG_HTML_BUCKET_NAME,
-        IR_APKG_MD_BUCKET_NAME,
         MAMMOTH_STYLE_MAP,
-        METADATA_ASSETS_BUCKET_NAME,
-        SQS_GITHUB_FIFO_TRIGGER_NAME,
         IS_DEBUG,
-        #
         FIELD_DIGITAL_SOURCE,
-        DEFAULT_SFS_DIR,
     )
     from citations import add_bibliography, is_citation, prepare_citations
     from digital_prep import insert_digital_objects, remove_metadata_tables
@@ -62,21 +50,9 @@ except (ImportError, ModuleNotFoundError):
     from .conditional_rendering import is_paper_only, remove_paper_only
     from .constants import (
         ModuleEnum,
-        # ARCHIVE_APKG_ALL,
-        AWS_ACCOUNT_REGION,
-        AWS_ACCOUNT_ID,
-        DYNAMODB_ASSETS_TBL,
-        DYNAMODB_CITATIONS_TBL,
-        DYNAMODB_HEADINGS_TBL,
-        IR_APKG_HTML_BUCKET_NAME,
-        IR_APKG_MD_BUCKET_NAME,
         MAMMOTH_STYLE_MAP,
-        METADATA_ASSETS_BUCKET_NAME,
-        SQS_GITHUB_FIFO_TRIGGER_NAME,
         IS_DEBUG,
-        #
         FIELD_DIGITAL_SOURCE,
-        DEFAULT_SFS_DIR,
     )
     from .citations import add_bibliography, is_citation, prepare_citations
     from .digital_prep import insert_digital_objects, remove_metadata_tables
@@ -545,7 +521,7 @@ def _write_metadata_to_db(metadata: DocumentMetadata, key: KeyPath) -> None:
             "assets": os.environ.get("DYNAMODB_ASSETS_TBL", ""),
             "citation_groups": os.environ.get("DYNAMODB_CITATIONS_TBL", ""),
             "headings": os.environ.get("DYNAMODB_HEADINGS_TBL", ""),
-            # "warnings": DYNAMODB_WARNINGS_TBL,
+            # "warnings": os.environ.get("DYNAMODB_WARNINGS_TBL", ""),
         }
         for domain, tbl in tables.items():
             table = dynamodb.Table(tbl)

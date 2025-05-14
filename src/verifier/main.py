@@ -11,27 +11,13 @@ import urllib.parse
 
 try:
     from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
-    from constants import (
-        ModuleEnum,
-        AWS_ACCOUNT_ID,
-        AWS_ACCOUNT_REGION,
-        IS_DEBUG,
-        SQS_BUILDER_FIFO_TRIGGER_NAME,
-        VERIFIER_MSGS,
-    )
+    from constants import ModuleEnum, IS_DEBUG
     from fakers import Faker
     from rules_v1 import HtmlVerifier
     from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
     from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
-    from .constants import (
-        ModuleEnum,
-        AWS_ACCOUNT_ID,
-        AWS_ACCOUNT_REGION,
-        IS_DEBUG,
-        SQS_BUILDER_FIFO_TRIGGER_NAME,
-        VERIFIER_MSGS,
-    )
+    from .constants import ModuleEnum, IS_DEBUG
     from .fakers import Faker
     from .rules_v1 import HtmlVerifier
     from .keys import KeyPath

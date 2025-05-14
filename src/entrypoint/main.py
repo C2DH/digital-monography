@@ -18,36 +18,11 @@ from aws_lambda_powertools.utilities.data_classes import (
     APIGatewayProxyEventV2,
 )
 
-
 try:
-    from constants import (
-        IS_DEBUG,
-        APKG_UPLOAD_BUCKET_NAME,
-        DROPBOX_SECRET_ID,
-        DYNAMODB_AUDIT_TBL,
-        DYNAMODB_ALERTS_TBL,
-        DYNAMODB_ASSETS_TBL,
-        DYNAMODB_CITATIONS_TBL,
-        DYNAMODB_HEADINGS_TBL,
-        DYNAMODB_REFS_TBL,
-        DYNAMODB_TOKENS_TBL,
-        VERIFIER_MSGS,
-    )
+    from constants import IS_DEBUG
     from lambda_wsgi import response as lambda_wsgi_response
 except (ImportError, ModuleNotFoundError):
-    from .constants import (  # type: ignore
-        IS_DEBUG,
-        APKG_UPLOAD_BUCKET_NAME,
-        DROPBOX_SECRET_ID,
-        DYNAMODB_AUDIT_TBL,
-        DYNAMODB_ALERTS_TBL,
-        DYNAMODB_ASSETS_TBL,
-        DYNAMODB_CITATIONS_TBL,
-        DYNAMODB_HEADINGS_TBL,
-        DYNAMODB_REFS_TBL,
-        DYNAMODB_TOKENS_TBL,
-        VERIFIER_MSGS,
-    )
+    from .constants import IS_DEBUG  # type: ignore
     from .lambda_wsgi import response as lambda_wsgi_response  # type: ignore
 
 from mypy_boto3_dynamodb.client import DynamoDBClient as boto3_DynamoDBClient

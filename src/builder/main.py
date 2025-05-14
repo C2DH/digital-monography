@@ -25,10 +25,6 @@ try:
         ModuleEnum,
         IS_DEBUG,
         DEFAULT_SFS_DIR,
-        # DYNAMODB_REFS_TBL,
-        # STATICWS_WIP_BUCKET_NAME,
-        # METADATA_REFS_BUCKET_NAME,
-        # VERIFIER_MSGS,
     )
     from config_prep import update_with_substitutions
     from metadata import DocumentMetadata, RefDatapoint
@@ -42,10 +38,6 @@ except (ImportError, ModuleNotFoundError):
         ModuleEnum,
         IS_DEBUG,
         DEFAULT_SFS_DIR,
-        # DYNAMODB_REFS_TBL,
-        # STATICWS_WIP_BUCKET_NAME,
-        # METADATA_REFS_BUCKET_NAME,
-        # VERIFIER_MSGS,
     )
     from .config_prep import update_with_substitutions
     from .metadata import DocumentMetadata, RefDatapoint
@@ -448,7 +440,6 @@ def _write_metadata_to_db(
     try:
         tables = {
             "refs": os.environ.get("DYNAMODB_REFS_TBL", ""),
-            # "refs": DYNAMODB_REFS_TBL,
         }
         for domain, tbl in tables.items():
             table = dynamodb.Table(tbl)

@@ -13,25 +13,15 @@ from aws_lambda_powertools.utilities.data_classes import (
 
 try:
     from constants import (
-        APKG_UPLOAD_BUCKET_NAME,
         BE_PATH_ASSET_METADATA,
-        # BE_PATH_ASSET_UPLOAD, # NOTE: for upload let "entrypoint" just send ListObjects req
         BE_PATH_ASSET_RETRIEVE,
         BE_PATH_REF_METADATA,
-        METADATA_ASSETS_BUCKET_NAME,
-        METADATA_REFS_BUCKET_NAME,
-        VERIFIER_MSGS,
     )
 except (ImportError, ModuleNotFoundError):
     from .constants import (  # type: ignore
-        APKG_UPLOAD_BUCKET_NAME,
         BE_PATH_ASSET_METADATA,
-        # BE_PATH_ASSET_UPLOAD,
         BE_PATH_ASSET_RETRIEVE,
         BE_PATH_REF_METADATA,
-        METADATA_ASSETS_BUCKET_NAME,
-        METADATA_REFS_BUCKET_NAME,
-        VERIFIER_MSGS,
     )
 
 logger = logging.getLogger()
