@@ -19,8 +19,7 @@ init:
   script:
     - >
       sops -d secrets/dev.tfvars.enc.json | 
-      jq -r --arg CI_COMMIT_BRANCH "$CI_COMMIT_BRANCH" 
-       '.data += {env: $CI_COMMIT_BRANCH}' > secrets/dev.tfvars.json
+      jq -r --arg CI_COMMIT_BRANCH "$CI_COMMIT_BRANCH" '.data += {env: $CI_COMMIT_BRANCH}' > secrets/dev.tfvars.json
   artifacts:
     # expire_in: 1 day # TODO: consider TTL
     paths:
