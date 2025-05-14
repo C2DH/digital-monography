@@ -71,7 +71,7 @@ deploy:
     - mkdir ~/.aws
     - echo -e "[profile oidc]\nrole_arn=${ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
   script:
-    - terraform init -var-file=secrets/dev.tfvars.json
+    - terraform init -var-file=secrets/dev.tfvars.json -backend-config="key=statefile.tfstate"
     - terraform apply -auto-approve -var-file=secrets/dev.tfvars.json
     - terraform output -json > tf_output.json
   artifacts:
@@ -123,6 +123,6 @@ destroy:
     - mkdir ~/.aws
     - echo -e "[profile oidc]\nrole_arn=${ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
   script:
-    - terraform init -var-file=secrets/dev.tfvars.json -reconfigure
+    - terraform init -var-file=secrets/dev.tfvars.json -backend-config="key=statefile.tfstate" -reconfigure
     - terraform destroy -auto-approve -var-file=secrets/dev.tfvars.json
   when: manual
