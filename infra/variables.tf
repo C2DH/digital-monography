@@ -23,7 +23,6 @@ variable "environment" {
 variable "env" {
   type        = string
   description = "Name of the environment of the project read from git branch in CI/CD pipeline"
-  default     = var.environment
 }
 
 ## Set by the Dev team
