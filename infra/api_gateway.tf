@@ -1,5 +1,5 @@
 resource "aws_api_gateway_rest_api" "general_api" {
-  name = "test-develop-rest-api"
+  name = var.general_rest_api_gateway
   endpoint_configuration {
     types = ["REGIONAL"]
   }
@@ -19,7 +19,7 @@ resource "aws_api_gateway_resource" "gpu" {
 
 # Lambda permissions
 resource "aws_lambda_permission" "entrypoint" {
-  statement_id  = "AllowAPIGatewayInvoke"
+  statement_id  = "AllowAPIGatewayInvokeEntrypoint"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.entrypoint_func.function_name
   principal     = "apigateway.amazonaws.com"
