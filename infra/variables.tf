@@ -206,3 +206,8 @@ variable "secretsmanager_github_api_secrets" {
   type        = string
   description = "Identifier of a secret object in AWS Secrets Manager storing secret api keys"
 }
+
+variable "general_rest_api_gateway" {
+  type        = string
+  description = "Name of the REST API that handles flask app, as well as integrations with entrypoint and gpu Lambda functions"
+}

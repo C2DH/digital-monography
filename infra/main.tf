@@ -1,7 +1,6 @@
 terraform {
   backend "s3" {
-    bucket = "dgtmon-tfstate-backend"
-    # key            = "statefile.tfstate"
+    bucket         = "dgtmon-tfstate-backend"
     dynamodb_table = "dgtmon-state-lock-table"
     encrypt        = true
     profile        = "oidc"
