@@ -14,7 +14,6 @@ provider "aws" {
     tags = {
       org     = "c2dh"
       project = "dgtmon"
-      environ = "${var.env}"
     }
   }
 }

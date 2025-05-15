@@ -57,12 +57,6 @@ variable "upload_apkg_bucket_name" {
   description = "Name of the bucket for uploading authors' packages (apkg) to AWS cloud."
 }
 
-variable "upload_apkg_temp_bucket_name" {
-  type        = string
-  description = "Temp"
-  default     = "upload-apkg-temp"
-}
-
 variable "metadata_assets_bucket_name" {
   type        = string
   description = "Name of the bucket for storing metadata of assets."
