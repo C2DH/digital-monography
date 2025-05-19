@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import TnbBookCard from "./_components/TnbBookCard";
+import { env } from 'process';
 
 type IBook = {
   authors: string,
@@ -10,8 +11,24 @@ type IBook = {
   alert: string,
 }
 
+function getGitBranch(): string | undefined {
+  console.log("process.env.NEXT_PUBLIC_GIT_BRANCH", process.env.NEXT_PUBLIC_GIT_BRANCH);
+  console.log("process.env.GIT_BRANCH", process.env.GIT_BRANCH);
+  return process.env.NEXT_PUBLIC_GIT_BRANCH;
+}
+
+function getEnvNameFromHostname(hostname: string): string {
+  // return url.split(".")[0].split("//")[1];
+  console.log("hostname", hostname);
+  return hostname;
+}
+
 export default function Home() {
   const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
+  const a = getGitBranch();
+  const b = getEnvNameFromHostname(window.location.hostname);
+  console.log("a", a);
+  console.log("b", b);
   const [books, setBooks] = useState<IBook[]>([
     {
       authors: "Pawel Kaminski",
