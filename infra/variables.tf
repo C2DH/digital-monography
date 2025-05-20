@@ -1,9 +1,3 @@
-variable "project_name" {
-  type        = string
-  description = "Global Name of the project"
-  default     = "Another AWSome Project"
-}
-
 variable "aws_account_id" {
   type        = string
   description = "Identifier of the AWS account"
@@ -18,6 +12,11 @@ variable "region" {
 variable "environment" {
   type        = string
   description = "Environment/Branch of the Project"
+}
+
+variable "project" {
+  type        = string
+  description = "Global name of the project, which acts as a prefix to all resources"
 }
 
 variable "env" {
