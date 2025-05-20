@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import TnbMarkdown from "./TnbMarkdown";
+import { endpoint, getGitBranch } from "./../constants";
 
 type IWarning = {
     id: string
@@ -18,11 +19,12 @@ export default function DynamicComponent() {
     const [warnings, setWarnings] = useState<IWarning[]>([]);
     const searchParams = useSearchParams();
     const key = searchParams?.get("key");
-    const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
+    const stage = getGitBranch();
+    // const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
     useEffect(() => {
         async function fetchObjectFromS3(inputKey: string) {
             try {
-                const getPreSignedUrlResp = await fetch(`${endpoint}/test/gpu?type=warnings&key=${inputKey}`);
+                const getPreSignedUrlResp = await fetch(`${endpoint}/${stage}/gpu?type=warnings&key=${inputKey}`);
                 const preSignedUrljson = await getPreSignedUrlResp.json();
                 const preSignedUrl = preSignedUrljson["presigned_url"];
                 const resp = await fetch(preSignedUrl);

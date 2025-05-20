@@ -4,6 +4,7 @@ import "./../_styles/treeView.css";
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import TnbBookNav from "./../_components/TnbBookNav";
+import { endpoint, getGitBranch } from "./../constants";
 
 type ICountMap = {
     [fileName: string]: number;
@@ -36,7 +37,7 @@ function getNestedNum(rec: any, attr: string): number {
 }
 
 export default function DynamicListGroup(): React.JSX.Element {
-    const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
+    // const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
     const [data, setData] = useState<IHeadings>({});
     const [loading, setLoading] = useState<boolean>(true);
     const [wordCount, setWordCount] = useState<ICountMap>({});
@@ -44,15 +45,15 @@ export default function DynamicListGroup(): React.JSX.Element {
 
     const searchParams = useSearchParams();
     const slug = searchParams?.get("slug");
-    const dbTable = "dgtmon-dev-dyndb-headings-tbl";
-
+    // const dbTable = "dgtmon-dev-dyndb-headings-tbl";
+    const stage = getGitBranch();
     useEffect(() => {
         const wCount = {};
         const cCount = {};
         const fetchRecords = async (pk: string) => {
             try {
                 setLoading(true);
-                const resp = await fetch(`${endpoint}/test/headings?slug=${pk}`);
+                const resp = await fetch(`${endpoint}/${stage}/headings?slug=${pk}`);
                 const respJson = await resp.json();
                 const headings: IHeadings = {};
                 const items = respJson.Items || [];
@@ -87,7 +88,7 @@ export default function DynamicListGroup(): React.JSX.Element {
         const fetchObjectFromS3 = async (aSlug: string) => {
             try {
                 const configKey = btoa(`${aSlug}/_config.yml`)
-                const getPreSignedUrlResp = await fetch(`${endpoint}/test/gpu?type=asset&key=${configKey}`);
+                const getPreSignedUrlResp = await fetch(`${endpoint}/${stage}/gpu?type=asset&key=${configKey}`);
                 const preSignedUrljson = await getPreSignedUrlResp.json();
                 const preSignedUrl = preSignedUrljson["presigned_url"];
                 const resp = await fetch(preSignedUrl);

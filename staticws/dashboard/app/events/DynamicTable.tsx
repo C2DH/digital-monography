@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import TnbBookNav from "./../_components/TnbBookNav";
+import { endpoint, getGitBranch } from "./../constants";
 
 const StageName = {
     // make sure the values are consistent with src/_common/constants.py
@@ -35,13 +36,13 @@ export default function DynamicTable() {
     const [loading, setLoading] = useState<boolean>(true);
     const searchParams = useSearchParams();
     const slug = searchParams?.get("slug");
-    const dbTable = "dgtmon-dev-dyndb-audit-tbl";
-
+    // const dbTable = "dgtmon-dev-dyndb-audit-tbl";
+    const stage = getGitBranch();
     const fetchRecords = async (pk: string) => {
         try {
             setLoading(true);
-            const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
-            const resp = await fetch(`${endpoint}/test/events?slug=${pk}`);
+            // const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
+            const resp = await fetch(`${endpoint}/${stage}/events?slug=${pk}`);
             const respJson = await resp.json();
             const records = (respJson.Items || []).map((rec) => {
                 const timestamp = rec.timestamp.S ? new Date(rec.timestamp.S) : new Date(1970);

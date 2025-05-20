@@ -12,6 +12,7 @@ import { Table } from './AssetsTable';
 import { AssetDetails } from "./AssetDetails";
 import { IAsset, ITableRow, IRef, IS3Object } from "./types";
 import TnbBookNav from "./../_components/TnbBookNav";
+import { endpoint, getGitBranch } from "./../constants";
 
 const columns: ColumnDef<ITableRow>[] = [
     {
@@ -126,14 +127,15 @@ function getTruncatedCaption(caption: string): string {
     }
 }
 
-const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
-const stage = "test";
+// const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
+// const stage = "test";
 // the paths must be consistent with backend
 const pathAssetMetadata = "assets";
 const pathAssetS3List = "list-assets";
 const pathRefMetadata = "refs";
 
 export default function AssetsComponent(): React.JSX.Element {
+    const stage = getGitBranch();
     const searchParams = useSearchParams();
     const slug = searchParams?.get("slug");
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -155,7 +157,7 @@ export default function AssetsComponent(): React.JSX.Element {
         try {
             const [assetsResp, s3objectsResp] = await Promise.all([
                 fetch(`${endpoint}/${stage}/${pathAssetMetadata}?slug=${inputSlug}`),
-                fetch(`${endpoint}/test/${pathAssetS3List}?slug=${inputSlug}`),
+                fetch(`${endpoint}/${stage}/${pathAssetS3List}?slug=${inputSlug}`),
             ]);
             const assetsJson = await assetsResp.json();
             const s3objectsJson = await s3objectsResp.json();

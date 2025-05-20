@@ -2,11 +2,12 @@ import {
     Row,
 } from '@tanstack/react-table';
 import { IAsset, ITableRow, IRef, IS3Object } from "./types";
+import { endpoint, getGitBranch } from "./../constants";
 import React from 'react';
 
-const READ_BUCKET = "https://cpy-dgtmon-dev-staticws-wip.s3.eu-west-1.amazonaws.com";
-const API_GATEWAY = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
-const STAGE = "test";
+// const READ_BUCKET = "https://cpy-dgtmon-dev-staticws-wip.s3.eu-west-1.amazonaws.com";
+// const API_GATEWAY = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
+// const STAGE = "test";
 
 function isImage(key: string): boolean {
     const imgExtensions = ["jpg", "jpeg", "png", "gif", "bmp", "tiff"];
@@ -19,6 +20,7 @@ function isImage(key: string): boolean {
 
 export const AssetDetails = (props: { row: Row<ITableRow>, assetMetadata: IAsset[], assetS3List: IS3Object[], refMetadata: IRef[] }) => {
     const { row, assetMetadata, assetS3List, refMetadata } = props;
+    const stage = getGitBranch();
     let imgSrc = "";
     const pk = row.original.pk;
     const asset = assetMetadata.find((asset) => asset.pk == pk);
@@ -34,7 +36,7 @@ export const AssetDetails = (props: { row: Row<ITableRow>, assetMetadata: IAsset
     const refsFound = refs && (refs?.length || 0) > 0;
     try {
         if (s3object && s3object.Key && isImage(s3object.Key)) {
-            let url = s3object ? `${API_GATEWAY}/${STAGE}/gpu?type=asset&key=${btoa(s3object.Key)}` : "";
+            let url = s3object ? `${endpoint}/${stage}/gpu?type=asset&key=${btoa(s3object.Key)}` : "";
             const request = new XMLHttpRequest();
             request.open("GET", url, false); // `false` === synchronous request
             request.send(null);

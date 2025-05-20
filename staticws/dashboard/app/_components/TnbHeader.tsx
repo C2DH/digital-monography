@@ -1,6 +1,8 @@
 import Link from 'next/link'; // otherwise error https://nextjs.org/docs/messages/no-html-link-for-pages
+import { endpoint, getGitBranch } from "./../constants";
 
 export default function TnbHeader() {
+    const stage = getGitBranch();
     return (
         <header>
             <nav className="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
@@ -24,7 +26,8 @@ export default function TnbHeader() {
                             </li>
                             <li className="nav-item">
                                 <a className="nav-link"
-                                    href="https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com/test/login"
+                                    href={`${endpoint}/${stage}/login`}
+                                // href="https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com/test/login"
                                 >Login</a>
                             </li>
                         </ul>
