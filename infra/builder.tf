@@ -3,7 +3,8 @@
 resource "aws_s3_bucket" "upload_apkg" {
   bucket = var.upload_apkg_bucket_name
   lifecycle {
-    prevent_destroy = true
+    prevent_destroy = false
+    # prevent_destroy = true # 2025-05-21 temp disabled for migration
   }
 }
 
