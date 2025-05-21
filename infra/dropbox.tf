@@ -203,6 +203,7 @@ resource "aws_lambda_function" "dropbox_func" {
 resource "aws_ecr_repository" "dropbox_repo" {
   name                 = var.dropbox_repo_name
   image_tag_mutability = "IMMUTABLE"
+  force_delete         = true
 }
 
 locals {

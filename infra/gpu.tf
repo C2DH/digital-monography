@@ -97,6 +97,7 @@ resource "aws_lambda_function" "gpu_func" {
 resource "aws_ecr_repository" "gpu_repo" {
   name                 = var.gpu_repo_name
   image_tag_mutability = "IMMUTABLE"
+  force_delete         = true
 }
 
 locals {

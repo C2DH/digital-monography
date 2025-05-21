@@ -206,6 +206,7 @@ resource "aws_s3_bucket_notification" "ir_apkg_html_notification" {
 resource "aws_ecr_repository" "verifier_repo" {
   name                 = var.verifier_repo_name
   image_tag_mutability = "IMMUTABLE"
+  force_delete         = true
 }
 
 locals {

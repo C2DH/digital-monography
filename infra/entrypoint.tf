@@ -243,6 +243,7 @@ resource "aws_lambda_function" "entrypoint_func" {
 resource "aws_ecr_repository" "entrypoint_repo" {
   name                 = var.entrypoint_repo_name
   image_tag_mutability = "IMMUTABLE"
+  force_delete         = true
 }
 
 locals {

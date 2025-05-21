@@ -217,6 +217,7 @@ resource "aws_lambda_function" "github_func" {
 resource "aws_ecr_repository" "github_repo" {
   name                 = var.github_repo_name
   image_tag_mutability = "IMMUTABLE"
+  force_delete         = true
 }
 
 locals {

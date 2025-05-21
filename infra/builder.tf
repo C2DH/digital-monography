@@ -1,7 +1,8 @@
 ## Upload author's package S3
 
 resource "aws_s3_bucket" "upload_apkg" {
-  bucket = var.upload_apkg_bucket_name
+  bucket        = var.upload_apkg_bucket_name
+  force_destroy = true # 2025-05-21 temp enabled for migration
   lifecycle {
     prevent_destroy = false
     # prevent_destroy = true # 2025-05-21 temp disabled for migration
@@ -332,6 +333,7 @@ resource "aws_lambda_function" "builder_func" {
 resource "aws_ecr_repository" "builder_repo" {
   name                 = var.builder_repo_name
   image_tag_mutability = "IMMUTABLE"
+  force_delete         = true
 }
 
 locals {

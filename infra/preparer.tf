@@ -249,6 +249,7 @@ resource "aws_s3_bucket_notification" "upload_apkg_notification" {
 resource "aws_ecr_repository" "preparer_repo" {
   name                 = var.preparer_repo_name
   image_tag_mutability = "IMMUTABLE"
+  force_delete         = true
 }
 
 locals {
