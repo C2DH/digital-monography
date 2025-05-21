@@ -127,6 +127,19 @@ Concrete subprocedures hide implementation details. Those subprocedures should b
 
 Code common to more than one microservice should be written in the `src/_common/<module_name.py>` and copied from there to the microservices using `make copy/<module_name>` command.
 
+### Naming convention
+
+#### Infrastructure
+
+Each resource deployed should follow the same naming convention: `<project>-<env>-<resource>`. 
+For common resources, i.e. resources shared between different environments ("main", "develop"), `env` should equal to __"shared"__.
+The `<resource>` should be defined as Terraform variable in `infra/variables.tf` file. Its value has to be filled in `secrets/encrypted.tfvars.json`.
+
+`<resource>` should follow stucture: `<project-env-awsservice-microservice-details>`. `<awsservice>` is the abbreviation of the resource and `<microservice>` is the related service, like "builder" or "preparer". `<microservice>` can also be "general" or "gen" if the resource is for general use. You can also leave it empty.
+
+For example, the full name of a resource could be
+`dgtmon-main-s3-verifier-msgs`.
+
 ## Local development
 
 You can check the basic workflow of the platform by running local scripts. To do that, follow these steps:
