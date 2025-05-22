@@ -111,6 +111,28 @@ build-dashboard:
     - aws s3 sync staticws/dashboard/out s3://$STATICWS_DASHBOARD_S3 --delete --profile oidc
   when: on_success
 
+test-dashboard:
+  stage: e2e-tests
+  dependencies:
+    - deploy
+    - post-deploy
+  only:
+    - main
+    - develop
+  # image: node:20
+  image: cypress/browsers:22.15.0
+  before_script:
+    - export STATICWS_DASHBOARD_S3=$(jq -r '.staticws_dashboard_bucket_name.value' tf_output.json)
+    - cd tests/dashboard/
+    # - touch .env
+    # - echo "STATICWS_DASHBOARD_S3=${STATICWS_DASHBOARD_S3}" >> .env
+    # - echo .env
+    # - echo "STATICWS_DASHBOARD_S3=${STATICWS_DASHBOARD_S3}"
+    - npm ci
+  script:
+    - npm start &
+    - CYPRESS_BASE_URL=https://${STATICWS_DASHBOARD_S3} npx cypress run --browser chrome --headless
+
 destroy:
   stage: destroy
   only:

@@ -72,8 +72,8 @@ Deployment of each microservice should be done in order:
 
 | Order | Stage name  | Command | Description |
 | ----- | ----------- | ------- | ----------- |
-| 1     | **version** | `vim .versions.json`        | In `.versions.json` appropriately increment a _stable_ version number of a microservice you've made changes to in the `src/<microservice>` dir |
-| 2     | **apply**   | `git push`                  | As you push your changes to GitLab, the CI/CD pipeline is run, including deployment of changes to the infrastructure; if the _stable_ version changed in the `.versions.json`, the Docker container will be updated on the cloud |
+| 1     | **version** | `vim .versions.json`        | In `.versions.json` appropriately increment _latest_ and _stable_ version numbers of a microservice you've made changes to in the `src/<microservice>` dir |
+| 2     | **apply**   | `git push`                  | As you push your changes to GitLab, the CI/CD pipeline is run, including deployment of changes to the infrastructure; if the image version has changed in the `.versions.json`, the Docker container will be updated on the cloud |
 | 3     | **build**   | `make <microservice>/build` | Builds Docker image |
 | 4     | **tag**     | `make <microservice>/tag`   | Tags the image with a tag specified in `.versions.json` |
 | 5     | **push**    | `make <microservice>/push`  | Pushes the image to docker registry (remember to login to the registry with `make login`) |
@@ -127,12 +127,16 @@ Concrete subprocedures hide implementation details. Those subprocedures should b
 
 Code common to more than one microservice should be written in the `src/_common/<module_name.py>` and copied from there to the microservices using `make copy/<module_name>` command.
 
+### Multiple environments
+
+The project has two cloud environments: main and develop. Each time you run `git push` on the "develop" branch, you  trigger the CI/CD for the "develop" environment. Similarly, when you accept the merge request to the "main" branch, the CI/CD for the "main" branch will be invoked.
+
 ### Naming convention
 
 #### Infrastructure
 
 Each resource deployed should follow the same naming convention: `<project>-<env>-<resource>`. 
-For common resources, i.e. resources shared between different environments ("main", "develop"), `env` should equal to __"shared"__.
+For common resources, i.e. resources shared between different environments ("main", "develop"), `env` should equal to __"shared"__. The only exception to this rule are the docker images which due to continuacy reasons are named `<project>-dev-<resource>`.
 The `<resource>` should be defined as Terraform variable in `infra/variables.tf` file. Its value has to be filled in `secrets/encrypted.tfvars.json`.
 
 `<resource>` should follow stucture: `<project-env-awsservice-microservice-details>`. `<awsservice>` is the abbreviation of the resource and `<microservice>` is the related service, like "builder" or "preparer". `<microservice>` can also be "general" or "gen" if the resource is for general use. You can also leave it empty.
@@ -182,18 +186,18 @@ Python version is defined in `.python-version`. Python dependencies are describe
 
 ## Updating code
 
-Images are hosted in the Docker Hub registry. When applying changes in the terraform configuration, AWS will pull images from Docker Hub, build and deploy them using the tags specified in the `.versions.json` file. Note that only the stable tags will be used.
+Images are hosted in the Docker Hub registry as well as in the Amazon Elastic Container Registry (ECR). When applying changes in the terraform configuration, AWS will pull images from ECR, build and deploy them using the tags specified in the `.versions.json` file. Note that the main environment will use stable version as the container tag whereas other environments will use the latest version number.
 
-In order to push images to the Docker Hub, you first have to login to the registry. Note that the `Makefile` exposes common commands for building, tagging and pushing important docker images. We strongly advise using the `Makefile` commands. For example when you made some stable changes to the Preparer Lambda code, you can push your changes using the following commands.
+In order to push images to the Docker Hub and to ECR, you first have to login to the registry. Note that the `Makefile` exposes common commands for building, tagging and pushing important docker images. We strongly advise using the `Makefile` commands. For example when you made some changes to the Preparer Lambda code, you can push them using the following commands.
 
 ```sh
-# Update the stable version of the preparer image
+# Update the lastest version of the preparer image
 vim .versions.json
 # Login to Docker Hub
 make login
 # Build the preparer image
 make preparer/build
-# Tag the preparer image with the tag specified as stable in the .versions.json file
+# Tag the preparer image with the tag specified as lastest in the .versions.json file
 make preparer/tag
 # Push docker image to the docker registry
 make preparer/push
@@ -221,8 +225,7 @@ To set up sops, you can follow the [official instructions](https://github.com/ge
 
 ## AWS setup for development
 
-Steps to configure the platform __for development__ on your own AWS account.
-Note that this setup is different than the configuration for "test" and "live" environments on the AWS account of De Gruyter.
+Steps to configure the platform on your own AWS account.
 
 ### Configure an Identity Provider in AWS IAM
 
@@ -233,7 +236,7 @@ Make sure that the option for OpenID Connect is selected on the top, this is bec
 
 ### Create an IAM Role for GitLab CI
 
-Click on "Roles" under "Access Management" in the IAM page and then click on the "Create role" button on the top right of the page to create IAM Role that the CI/CD pipeline can assume to make deployments.
+Click on "Roles" under "Access Management" in the IAM page and then click on the "Create role" button on the top right of the page to create IAM Role that the CI/CD pipeline can assume to make deployments. The trusted entity type should be "web identity".
 
 See the `secrets/` dir to find IAM Policy to attach to that IAM Role.
 
@@ -281,8 +284,7 @@ The `main.tf` can look something like:
 terraform {
   backend "s3" {
     bucket         = "[NAME_OF_STATE_BACKEND_BUCKET]"
-    key            = "statefile.tfstate"
-    dynamodb_table = "[NAME_OF_LOCL_DB_TABLE]"
+    dynamodb_table = "[NAME_OF_STATE_LOCK_TABLE]"
     encrypt        = true
     profile        = "oidc"
   }
@@ -305,10 +307,10 @@ Also, add the "AWS_DEFAULT_REGION" variable with value equal to the AWS region s
 When adding a new Lambda function (a new microservice), please follow these steps:
 1. Add the microservice code to the `src/ ` directory.
 1. Add the test code to the `tests/ ` directory.
-1. Copy and modify one of the `.tf` files that define a Lambda function. Usually you can reuse all of the IaC code changing only the `<old-function-name>` to `<new-function-name>`.
+1. Copy and modify one of the `.tf` files to define a Lambda function. Usually you can reuse all of the IaC code changing only the `<old-function-name>` to `<new-function-name>`.
 1. Update the `Makefile`.
 1. Update the `.versions.json`.
-1. Update the `secrets/dev.tfvars.enc.json` (remember to use the `sops` tool) and `variables.tf`.
+1. Update the `secrets/encrypted.tfvars.json` (remember to use the `sops` tool) and `variables.tf`.
 1. Push the git repository to remote
 1. Build, tag and push the new image to the container registry (see `Makefile`).
 1. Retry the GitLab job.
@@ -373,9 +375,7 @@ In GitLab, update "CI/CD Settings" > "Variables" > "PGP_KEY" with the new privat
 
 ### Minor development todos
 
-* limit permissions linked to the AWS Role connected to the CI/CD pipeline
-* API gateway is outside of IaC config
-* more and better integration testing
+* limit permissions infra resources have
 * add e2e cloud testing on actual Lambdas
 * mypy type checking
 * flake8 linting

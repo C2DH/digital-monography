@@ -1,7 +1,7 @@
 # Intermediate MD S3
 
 resource "aws_s3_bucket" "ir_apkg_md" {
-  bucket        = var.ir_apkg_md_bucket_name
+  bucket        = "${var.project}-${var.env}-${var.ir_apkg_md_bucket_name}"
   force_destroy = true
 }
 
@@ -29,7 +29,8 @@ resource "aws_s3_bucket_policy" "ir_apkg_policy" {
 # Uploader
 
 resource "aws_iam_user" "ir_apkg_md_uploader" {
-  name = "ir-apkg-md-uploader"
+  name = "${var.project}-${var.env}-${var.usr_ir_apkg_md_uploader}"
+  # name = "ir-apkg-md-uploader"
 }
 
 resource "aws_iam_access_key" "ir_apkg_md_uploader" {
@@ -197,9 +198,10 @@ resource "aws_lambda_permission" "allow_preparer_access_sqs_via_vpc_endpoint" {
 }
 
 resource "aws_lambda_function" "preparer_func" {
-  function_name = "preparer"
+  # function_name = "preparer"
+  function_name = "${var.project}-${var.env}-${var.lambda_preparer_func}"
   package_type  = "Image"
-  image_uri     = "${aws_ecr_repository.preparer_repo.repository_url}:${local.preparer_stable_v}"
+  image_uri     = "${aws_ecr_repository.preparer_repo.repository_url}:${local.preparer_tag}"
   role          = aws_iam_role.preparer_iam.arn
   depends_on = [
     data.aws_cloudwatch_log_group.general_purpose_logs,
@@ -247,11 +249,11 @@ resource "aws_s3_bucket_notification" "upload_apkg_notification" {
 }
 
 resource "aws_ecr_repository" "preparer_repo" {
-  name                 = var.preparer_repo_name
+  name                 = "${var.project}-dev-${var.microservice_preparer}"
   image_tag_mutability = "IMMUTABLE"
   force_delete         = true
 }
 
 locals {
-  preparer_stable_v = local.versions_data.PREPARER_STABLE_V
+  preparer_tag = var.env == "main" ? local.versions_data.PREPARER.STABLE : local.versions_data.PREPARER.LATEST
 }

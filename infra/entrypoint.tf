@@ -1,7 +1,7 @@
 ## DynamoDB (tokens)
 
 resource "aws_dynamodb_table" "tokens_tbl" {
-  name         = var.dgtmon_dev_dyndb_tokens_tbl
+  name         = "${var.project}-${var.env}-${var.dgtmon_dev_dyndb_tokens_tbl}"
   hash_key     = "account"
   billing_mode = "PAY_PER_REQUEST"
 
@@ -19,7 +19,7 @@ resource "aws_dynamodb_table" "tokens_tbl" {
 ## DynamoDB (cursors)
 
 resource "aws_dynamodb_table" "cursors_tbl" {
-  name         = var.dgtmon_dev_dyndb_cursors_tbl
+  name         = "${var.project}-${var.env}-${var.dgtmon_dev_dyndb_cursors_tbl}"
   hash_key     = "account"
   billing_mode = "PAY_PER_REQUEST"
 
@@ -37,7 +37,7 @@ resource "aws_dynamodb_table" "cursors_tbl" {
 ## SQS (pass messages between entrypoint and dropbox functions)
 
 resource "aws_sqs_queue" "entrypoint_to_dropbox" {
-  name                       = var.sqs_entrypoint_to_dropbox
+  name                       = "${var.project}-${var.env}-${var.sqs_entrypoint_to_dropbox}"
   message_retention_seconds  = 1800 # 0.5 h
   visibility_timeout_seconds = 900
 }
@@ -56,7 +56,8 @@ data "aws_iam_policy_document" "assume_entrypoint_role" {
 }
 
 resource "aws_iam_role" "entrypoint_iam" {
-  name               = "entrypoint_iam"
+  # name               = "entrypoint_iam"
+  name               = "${var.project}-${var.env}-${role_entrypoint}"
   assume_role_policy = data.aws_iam_policy_document.assume_entrypoint_role.json
 }
 
@@ -85,7 +86,8 @@ data "aws_iam_policy_document" "entrypoint" {
   statement {
     sid       = "AllowSecretsFetching"
     effect    = "Allow"
-    resources = ["arn:aws:secretsmanager:${var.region}:*:secret:dgtmon-${var.environment}-github-api-secrets*"]
+    resources = [data.aws_secretsmanager_secret.github_api_token.arn]
+    # resources = ["arn:aws:secretsmanager:${var.region}:*:secret:dgtmon-${var.environment}-github-api-secrets*"]
     actions = [
       "secretsmanager:DescribeSecret",
       "secretsmanager:GetResourcePolicy",
@@ -191,9 +193,9 @@ resource "aws_iam_role_policy_attachment" "entrypoint" {
 # }
 
 resource "aws_lambda_function" "entrypoint_func" {
-  function_name = "entrypoint"
+  function_name = "${var.project}-${var.env}-${var.lambda_entrypoint_func}"
   package_type  = "Image"
-  image_uri     = "${aws_ecr_repository.entrypoint_repo.repository_url}:${local.entrypoint_stable_v}"
+  image_uri     = "${aws_ecr_repository.entrypoint_repo.repository_url}:${local.entrypoint_tag}"
   role          = aws_iam_role.entrypoint_iam.arn
   depends_on = [
     data.aws_cloudwatch_log_group.general_purpose_logs,
@@ -241,11 +243,11 @@ resource "aws_lambda_function" "entrypoint_func" {
 # }
 
 resource "aws_ecr_repository" "entrypoint_repo" {
-  name                 = var.entrypoint_repo_name
+  name                 = "${var.project}-dev-${var.microservice_entrypoint}"
   image_tag_mutability = "IMMUTABLE"
   force_delete         = true
 }
 
 locals {
-  entrypoint_stable_v = local.versions_data.ENTRYPOINT_STABLE_V
+  entrypoint_tag = var.env == "main" ? local.versions_data.ENTRYPOINT.STABLE : local.versions_data.ENTRYPOINT.LATEST
 }

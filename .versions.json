@@ -1,11 +1,38 @@
 {
-    "ENTRYPOINT_STABLE_V": "0.0.67",
-    "DROPBOX_STABLE_V": "0.0.40",
-    "BUILDER_STABLE_V": "0.1.38",
-    "GITHUB_STABLE_V": "0.0.29",
-    "PREPARER_STABLE_V": "0.1.41",
-    "VERIFIER_STABLE_V": "0.1.21",
-    "GPU_STABLE_V": "0.0.10",
-    "WORDPROCESSOR_STABLE_V": "0.0.4",
-    "LOCAL_STABLE_V": "0.1.2"
+    "ENTRYPOINT": {
+        "LATEST": "0.0.67",
+        "STABLE": "0.0.67"
+    },
+    "DROPBOX": {
+        "LATEST": "0.0.40",
+        "STABLE": "0.0.40"
+    },
+    "BUILDER": {
+        "LATEST": "0.1.38",
+        "STABLE": "0.1.38"
+    },
+    "GITHUB": {
+        "LATEST": "0.0.29",
+        "STABLE": "0.0.29"
+    },
+    "PREPARER": {
+        "LATEST": "0.1.41",
+        "STABLE": "0.1.41"
+    },
+    "VERIFIER": {
+        "LATEST": "0.1.21",
+        "STABLE": "0.1.21"
+    },
+    "GPU": {
+        "LATEST": "0.0.10",
+        "STABLE": "0.0.10"
+    },
+    "WORDPROCESSOR": {
+        "LATEST": "0.0.4",
+        "STABLE": "0.0.4"
+    },
+    "LOCAL": {
+        "LATEST": "0.1.2",
+        "STABLE": "0.1.2"
+    }
 }

@@ -10,7 +10,7 @@ data "aws_cloudwatch_log_group" "general_purpose_logs" {
 }
 
 resource "aws_dynamodb_table" "alerts_tbl" {
-  name         = var.dgtmon_dev_dyndb_alerts_tbl
+  name         = "${var.project}-${var.env}-${var.dgtmon_dev_dyndb_alerts_tbl}"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "slug"
 
@@ -21,7 +21,7 @@ resource "aws_dynamodb_table" "alerts_tbl" {
 }
 
 resource "aws_dynamodb_table" "audit_tbl" {
-  name         = var.dgtmon_dev_dyndb_audit_tbl
+  name         = "${var.project}-${var.env}-${var.dgtmon_dev_dyndb_audit_tbl}"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "slug"
   range_key    = "timestamp"
@@ -41,7 +41,7 @@ resource "aws_dynamodb_table" "audit_tbl" {
 }
 
 resource "aws_dynamodb_table" "logins_tbl" {
-  name         = var.dgtmon_dev_dyndb_logins_tbl
+  name         = "${var.project}-${var.env}-${var.dgtmon_dev_dyndb_logins_tbl}"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "timestamp"
 

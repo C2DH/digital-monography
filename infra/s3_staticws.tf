@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "staticws_wip" {
-  bucket        = var.staticws_wip_bucket_name
+  bucket        = "${var.project}-${var.env}-${var.staticws_wip_bucket_name}"
   force_destroy = true # TODO: don't destroy when in production
 }
 

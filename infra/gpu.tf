@@ -12,7 +12,8 @@ data "aws_iam_policy_document" "assume_gpu_role" {
 }
 
 resource "aws_iam_role" "gpu_iam" {
-  name               = "gpu_iam"
+  # name               = "gpu_iam"
+  name               = "${var.project}-${var.env}-${role_gpu}"
   assume_role_policy = data.aws_iam_policy_document.assume_gpu_role.json
 }
 
@@ -60,7 +61,8 @@ data "aws_iam_policy_document" "gpu" {
 }
 
 resource "aws_iam_policy" "gpu" {
-  name   = "gpu_policy"
+  # name   = "gpu_policy"
+  name   = "${var.project}-${var.env}-${var.policy_gpu}"
   policy = data.aws_iam_policy_document.gpu.json
 }
 
@@ -70,9 +72,10 @@ resource "aws_iam_role_policy_attachment" "gpu" {
 }
 
 resource "aws_lambda_function" "gpu_func" {
-  function_name = "gpu"
+  # function_name = "gpu"
+  function_name = "${var.project}-${var.env}-${var.lambda_gpu_func}"
   package_type  = "Image"
-  image_uri     = "${aws_ecr_repository.gpu_repo.repository_url}:${local.gpu_stable_v}"
+  image_uri     = "${aws_ecr_repository.gpu_repo.repository_url}:${local.gpu_tag}"
   role          = aws_iam_role.gpu_iam.arn
   depends_on = [
     data.aws_cloudwatch_log_group.general_purpose_logs,
@@ -95,11 +98,11 @@ resource "aws_lambda_function" "gpu_func" {
 }
 
 resource "aws_ecr_repository" "gpu_repo" {
-  name                 = var.gpu_repo_name
+  name                 = "${var.project}-dev-${var.microservice_gpu}"
   image_tag_mutability = "IMMUTABLE"
   force_delete         = true
 }
 
 locals {
-  gpu_stable_v = local.versions_data.GPU_STABLE_V
+  gpu_tag = var.env == "main" ? local.versions_data.GPU.STABLE : local.versions_data.GPU.LATEST
 }

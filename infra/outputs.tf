@@ -2,10 +2,6 @@ output "website_url" {
   value = "http://${aws_s3_bucket.staticws_wip.bucket}.s3-website.${var.region}.amazonaws.com"
 }
 
-output "env_output" {
-  value = var.env
-}
-
 output "gp_log_group_arn" {
   value = data.aws_cloudwatch_log_group.general_purpose_logs.arn
 }

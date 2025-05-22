@@ -1,7 +1,7 @@
 # S3 for outputting verifier messages
 
 resource "aws_s3_bucket" "verification_msg" {
-  bucket        = var.verification_msgs_bucket_name
+  bucket        = "${var.project}-${var.env}-${var.verification_msgs_bucket_name}"
   force_destroy = true
 }
 
@@ -50,7 +50,8 @@ data "aws_iam_policy_document" "assume_verifier_role" {
 }
 
 resource "aws_iam_role" "verifier_iam" {
-  name               = "verifier_iam"
+  # name               = "verifier_iam"
+  name               = "${var.project}-${var.env}-${var.role_verifier}"
   assume_role_policy = data.aws_iam_policy_document.assume_verifier_role.json
 }
 
@@ -133,7 +134,8 @@ data "aws_iam_policy_document" "verifier" {
 }
 
 resource "aws_iam_policy" "verifier" {
-  name   = "verifier_policy"
+  # name   = "verifier_policy"
+  name   = "${var.project}-${var.env}-${var.policy_verifier}"
   policy = data.aws_iam_policy_document.verifier.json
 }
 
@@ -159,9 +161,10 @@ resource "aws_lambda_permission" "allow_verifier_access_s3_via_vpc_endpoint" {
 }
 
 resource "aws_lambda_function" "verifier_func" {
-  function_name = "verifier"
+  # function_name = "verifier"
+  function_name = "${var.project}-${var.env}-${var.lambda_verifier_func}"
   package_type  = "Image"
-  image_uri     = "${aws_ecr_repository.verifier_repo.repository_url}:${local.verifier_stable_v}"
+  image_uri     = "${aws_ecr_repository.verifier_repo.repository_url}:${local.verifier_tag}"
   role          = aws_iam_role.verifier_iam.arn
   depends_on = [
     data.aws_cloudwatch_log_group.general_purpose_logs,
@@ -204,11 +207,11 @@ resource "aws_s3_bucket_notification" "ir_apkg_html_notification" {
 }
 
 resource "aws_ecr_repository" "verifier_repo" {
-  name                 = var.verifier_repo_name
+  name                 = "${var.project}-dev-${var.microservice_verifier}"
   image_tag_mutability = "IMMUTABLE"
   force_delete         = true
 }
 
 locals {
-  verifier_stable_v = local.versions_data.VERIFIER_STABLE_V
+  verifier_tag = var.env == "main" ? local.versions_data.VERIFIER.STABLE : local.versions_data.VERIFIER.LATEST
 }

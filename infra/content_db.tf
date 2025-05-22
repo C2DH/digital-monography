@@ -1,7 +1,7 @@
 # TODO: rename content_db to metadata
 
 resource "aws_dynamodb_table" "assets_tbl" {
-  name         = var.dgtmon_dev_dyndb_assets_tbl
+  name         = "${var.project}-${var.env}-${var.dgtmon_dev_dyndb_assets_tbl}"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "slug"
   range_key    = "fn"
@@ -17,7 +17,7 @@ resource "aws_dynamodb_table" "assets_tbl" {
 }
 
 resource "aws_dynamodb_table" "headings_tbl" {
-  name         = var.dgtmon_dev_dyndb_headings_tbl
+  name         = "${var.project}-${var.env}-${var.dgtmon_dev_dyndb_headings_tbl}"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "slug"
   range_key    = "fn"
@@ -33,7 +33,7 @@ resource "aws_dynamodb_table" "headings_tbl" {
 }
 
 resource "aws_dynamodb_table" "citations_tbl" {
-  name         = var.dgtmon_dev_dyndb_citations_tbl
+  name         = "${var.project}-${var.env}-${var.dgtmon_dev_dyndb_citations_tbl}"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "slug"
   range_key    = "fn"
@@ -49,7 +49,7 @@ resource "aws_dynamodb_table" "citations_tbl" {
 }
 
 resource "aws_dynamodb_table" "warnings_tbl" {
-  name         = var.dgtmon_dev_dyndb_warnings_tbl
+  name         = "${var.project}-${var.env}-${var.dgtmon_dev_dyndb_warnings_tbl}"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "slug"
   range_key    = "fn"
@@ -65,7 +65,7 @@ resource "aws_dynamodb_table" "warnings_tbl" {
 }
 
 resource "aws_dynamodb_table" "refs_tbl" {
-  name         = var.dgtmon_dev_dyndb_refs_tbl
+  name         = "${var.project}-${var.env}-${var.dgtmon_dev_dyndb_refs_tbl}"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "slug"
   range_key    = "fn"
@@ -81,7 +81,7 @@ resource "aws_dynamodb_table" "refs_tbl" {
 }
 
 resource "aws_s3_bucket" "metadata_assets_s3" {
-  bucket        = var.metadata_assets_bucket_name
+  bucket        = "${var.project}-${var.env}-${var.metadata_assets_bucket_name}"
   force_destroy = true
 }
 
@@ -96,7 +96,7 @@ resource "aws_s3_bucket_cors_configuration" "metadata_assets_s3_config" {
 }
 
 resource "aws_s3_bucket" "metadata_refs_s3" {
-  bucket        = var.metadata_refs_bucket_name
+  bucket        = "${var.project}-${var.env}-${var.metadata_refs_bucket_name}"
   force_destroy = true
 }
 
