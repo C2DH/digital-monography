@@ -236,11 +236,11 @@ Make sure that the option for OpenID Connect is selected on the top, this is bec
 
 ### Create an IAM Role for GitLab CI
 
-Click on "Roles" under "Access Management" in the IAM page and then click on the "Create role" button on the top right of the page to create IAM Role that the CI/CD pipeline can assume to make deployments. The trusted entity type should be "web identity".
+Click on "Roles" under "Access Management" in the IAM page and then click on the "Create role" button on the top right of the page to create IAM Role that the CI/CD pipeline can assume. The following IAM Roles are needed:
+* for deployment
+* for post-deployment (e.g. for publishing static websites to deployed resources)
 
-See the `secrets/` dir to find IAM Policy to attach to that IAM Role.
-
-Once the role is created, navigate to it in the console under "Roles" by searching for the role name before clicking on the role itself. Once you are on the role's page, select the "Trust relationships" tab and click on "Edit trust policy" on the right side of the page. Edit the condition in the trust policy to something like this:
+The trusted entity type should be "web identity". In the "Trust relationships" settings, edit the condition in the trust policy to something like this:
 
 ```json
 {
@@ -265,6 +265,8 @@ Once the role is created, navigate to it in the console under "Roles" by searchi
     ]
 }
 ```
+
+See the `secrets/` dir to find policies examples to attach to that IAM Role.
 
 ### Create terraform state backend
 
@@ -298,7 +300,7 @@ provider "aws" {
 
 ### Add variables to GitLab repository
 
-Go to the home page of the GitLab repository, and click on "CI/CD" under the "Settings" dropdown menu on the very bottom of the sidebar. Then click "Expand" on the "Variables" section and click on "Add variable". Have the Key be "ROLE_ARN" and the value be the ARN of the Role created in the step above. Remember to select the option "Protect variable".
+Go to the home page of the GitLab repository, and click on "CI/CD" under the "Settings" dropdown menu on the very bottom of the sidebar. Then click "Expand" on the "Variables" section and click on "Add variable". Have the Key equal DGTMON_ROLE_*_ARN as defined in `.gitlab-ci.yml` and the value be the ARN of the Role created in the step above. Remember to select the option "Protect variable".
 
 Also, add the "AWS_DEFAULT_REGION" variable with value equal to the AWS region selected for the above mentioned resources.
 
