@@ -298,6 +298,10 @@ provider "aws" {
 }
 ```
 
+### Store secrets
+
+Some secrets used in the project require extra level of protection. To manage them, create AWS Secrets Manager and store an "other type of secret". Make sure that the tfvar matches the name of the infrastructure resource.
+
 ### Add variables to GitLab repository
 
 Go to the home page of the GitLab repository, and click on "CI/CD" under the "Settings" dropdown menu on the very bottom of the sidebar. Then click "Expand" on the "Variables" section and click on "Add variable". Have the Key equal DGTMON_ROLE_*_ARN as defined in `.gitlab-ci.yml` and the value be the ARN of the Role created in the step above. Remember to select the option "Protect variable".
