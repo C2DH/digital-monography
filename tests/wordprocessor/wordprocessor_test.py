@@ -9,7 +9,7 @@ DEFAULT_S3_EVENT = {
         {
             "eventVersion": "2.1",
             "eventSource": "aws:s3",
-            "awsRegion": "eu-west-1",
+            "awsRegion": "eu-central-1",
             "eventTime": "2024-06-01T10:01:01.100Z",
             "eventName": "ObjectCreated:Put",
             "userIdentity": {"principalId": "AWS:AROAVK5GEQE3275W6UTUO:preparer"},

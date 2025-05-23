@@ -7,7 +7,7 @@ VERIFIER_LATEST_V  := $(shell jq -r '.VERIFIER.LATEST' < .versions.json)
 GPU_LATEST_V  := $(shell jq -r '.GPU.LATEST' < .versions.json)
 WORDPROCESSOR_LATEST_V  := $(shell jq -r '.WORDPROCESSOR.LATEST' < .versions.json)
 LOCAL_LATEST_V := $(shell jq -r '.LOCAL_LATEST_V' < .versions.json)
-DOCKER_ECR = 825580929289.dkr.ecr.eu-west-1.amazonaws.com
+DOCKER_ECR = 825580929289.dkr.ecr.eu-central-1.amazonaws.com
 DOCKER_HUB = c2dhunilu
 
 test/copy:
@@ -38,7 +38,7 @@ typecheck:
 	mypy src/wordprocessor/ --check-untyped-defs
 
 login:
-	aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin ${DOCKER_ECR}
+	aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin ${DOCKER_ECR}
 	docker login --username c2dhadmin
 
 dev/build:

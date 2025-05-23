@@ -8,7 +8,7 @@ variable "aws_account_id" {
 variable "region" {
   type        = string
   description = "AWS Region of the project"
-  default     = "eu-west-1"
+  default     = "eu-central-1"
 }
 
 variable "project" {
