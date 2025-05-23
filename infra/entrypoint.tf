@@ -57,7 +57,7 @@ data "aws_iam_policy_document" "assume_entrypoint_role" {
 
 resource "aws_iam_role" "entrypoint_iam" {
   # name               = "entrypoint_iam"
-  name               = "${var.project}-${var.env}-${role_entrypoint}"
+  name               = "${var.project}-${var.env}-${var.role_entrypoint}"
   assume_role_policy = data.aws_iam_policy_document.assume_entrypoint_role.json
 }
 

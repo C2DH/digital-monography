@@ -31,7 +31,7 @@ data "aws_iam_policy_document" "assume_dropbox_role" {
 
 resource "aws_iam_role" "dropbox_iam" {
   # name               = "dropbox_iam"
-  name               = "${var.project}-${var.env}-${role_dropbox}"
+  name               = "${var.project}-${var.env}-${var.role_dropbox}"
   assume_role_policy = data.aws_iam_policy_document.assume_dropbox_role.json
 }
 
@@ -120,7 +120,7 @@ data "aws_iam_policy_document" "dropbox" {
 
 resource "aws_iam_policy" "dropbox" {
   # name   = "dropbox_policy"
-  name   = "${var.project}-${var.env}-${policy_dropbox}"
+  name   = "${var.project}-${var.env}-${var.policy_dropbox}"
   policy = data.aws_iam_policy_document.dropbox.json
 }
 

@@ -13,7 +13,7 @@ data "aws_iam_policy_document" "assume_gpu_role" {
 
 resource "aws_iam_role" "gpu_iam" {
   # name               = "gpu_iam"
-  name               = "${var.project}-${var.env}-${role_gpu}"
+  name               = "${var.project}-${var.env}-${var.role_gpu}"
   assume_role_policy = data.aws_iam_policy_document.assume_gpu_role.json
 }
 

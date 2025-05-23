@@ -94,7 +94,7 @@ data "aws_iam_policy_document" "assume_github_role" {
 
 resource "aws_iam_role" "github_iam" {
   # name               = "github_iam"
-  name               = "${var.project}-${var.env}-${role_github}"
+  name               = "${var.project}-${var.env}-${var.role_github}"
   assume_role_policy = data.aws_iam_policy_document.assume_github_role.json
 }
 
@@ -166,7 +166,7 @@ data "aws_iam_policy_document" "github" {
 
 resource "aws_iam_policy" "github" {
   # name   = "github_policy"
-  name   = "${var.project}-${var.env}-${policy_github}"
+  name   = "${var.project}-${var.env}-${var.policy_github}"
   policy = data.aws_iam_policy_document.github.json
 }
 
