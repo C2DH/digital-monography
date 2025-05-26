@@ -366,3 +366,8 @@ variable "usr_ir_apkg_md_uploader" {
   type        = string
   description = "Name of the IAM User that uploads intermediate representation of authors' packages"
 }
+
+variable "usr_cli_PAK" {
+  type        = string
+  description = "Name of the IAM User behind the CLI for the SSO user 'PAK'"
+}
