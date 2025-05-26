@@ -136,7 +136,7 @@ The project has two cloud environments: main and develop. Each time you run `git
 #### Infrastructure
 
 Each resource deployed should follow the same naming convention: `<project>-<env>-<resource>`. 
-For common resources, i.e. resources shared between different environments ("main", "develop"), `env` should equal to __"shared"__. The only exception to this rule are the docker images which due to continuacy reasons are named `<project>-dev-<resource>`.
+For common resources, i.e. resources shared between different environments ("main", "develop"), `env` should equal to __"shared"__. As an exception, due to continuacy some reasources can be named `<project>-dev-<resource>`.
 The `<resource>` should be defined as Terraform variable in `infra/variables.tf` file. Its value has to be filled in `secrets/encrypted.tfvars.json`.
 
 `<resource>` should follow stucture: `<project-env-awsservice-microservice-details>`. `<awsservice>` is the abbreviation of the resource and `<microservice>` is the related service, like "builder" or "preparer". `<microservice>` can also be "general" or "gen" if the resource is for general use. You can also leave it empty.
@@ -223,7 +223,7 @@ sops -e secrets/dev.tfvars.json > secrets/dev.tfvars.enc.json
 
 To set up sops, you can follow the [official instructions](https://github.com/getsops/sops) or [unofficials guides](https://dev.to/stack-labs/manage-your-secrets-in-git-with-sops-g0a).
 
-## AWS setup for development
+## Setup the infrastructure
 
 Steps to configure the platform on your own AWS account.
 
@@ -307,6 +307,39 @@ Some secrets used in the project require extra level of protection. To manage th
 Go to the home page of the GitLab repository, and click on "CI/CD" under the "Settings" dropdown menu on the very bottom of the sidebar. Then click "Expand" on the "Variables" section and click on "Add variable". Have the Key equal DGTMON_ROLE_*_ARN as defined in `.gitlab-ci.yml` and the value be the ARN of the Role created in the step above. Remember to select the option "Protect variable".
 
 Also, add the "AWS_DEFAULT_REGION" variable with value equal to the AWS region selected for the above mentioned resources.
+
+## Adding access to the infrastructure to a new user
+
+### Create a IAM User for terminal access
+
+Remember, the platform makes updates by pulling docker images from the ECR container repository. In order to update the source code, users should push their modifications to the repository using docker (preferably via commands defined in the `Makefile` file).
+
+To add a CLI client for a specific user the admin should add a IAM User directly in `infra/users.tf` and attach it to a group with ECR permissions. Push changes via git to "main" or "develop" branch.
+
+Every user pushing to the ECR must have installed on their machines:
+* docker (tested on Docker v24.0.6)
+* aws-cli (tested on 2.15.25)
+The user should also have login and password to the Docker Hub.
+When installing or configuring aws-cli, the user should add AWS access key and secret access key of the IAM User created in the previous step. The `~/.aws/credentials` and `~/.aws/config` files should now include those keys (not necessarily as "default"):
+
+```
+[default]
+aws_access_key_id = <YOUR_AWS_ACCESS_KEY>
+aws_secret_access_key = <YOUR_AWS_SECRET_ACCESS_KEY>
+```
+
+```
+[default]
+region = eu-central-1
+output = json
+```
+
+### Create a user to access the AWS console
+
+The root profile has to navigate to the IAM Identity Center (it has to be enabled first with "Identity Center directory" as its identity source) and select "Add user". Username has to be "Lastname_Firstname". Attach the new user to the "Developers" IAM Group. 
+Make sure that the "Developers" IAM Group has "ReadOnlyAccess" or "ViewOnlyAccess" permission set assigned to it.
+
+At this point the new user should be prompted to add a new password. The user should be able to finalize the creation by following the steps provided by the AWS. Particularly, the user should register a MFA device.
 
 ## Adding a new Lambda function
 
