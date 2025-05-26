@@ -123,6 +123,11 @@ variable "gpu_repo_name" {
   description = "Name of the ECR repository for the gpu (generate pre-signed url) image"
 }
 
+variable "group_devs" {
+  type        = string
+  description = "Name of the IAM group for developers working on the source code"
+}
+
 variable "lambda_entrypoint_func" {
   type        = string
   description = "Name of the entrypoint Lambda function"
@@ -226,6 +231,16 @@ variable "policy_gpu" {
 variable "policy_verifier" {
   type        = string
   description = "Name of the IAM policy to be assumed by the verifier IAM role"
+}
+
+variable "policy_general_dev_ecr" {
+  type        = string
+  description = "Name of the IAM policy to be assumed by the devs IAM group for ECR access"
+}
+
+variable "policy_general_dev_apkg_upload" {
+  type        = string
+  description = "Name of the IAM policy to be assumed by the devs IAM group for uploading authors' packages (apkg) to S3"
 }
 
 variable "role_entrypoint" {
