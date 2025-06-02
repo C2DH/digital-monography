@@ -135,14 +135,24 @@ The project has two cloud environments: main and develop. Each time you run `git
 
 #### Infrastructure
 
-Each resource deployed should follow the same naming convention: `<project>-<env>-<resource>`. 
-For common resources, i.e. resources shared between different environments ("main", "develop"), `env` should equal to __"shared"__. As an exception, due to continuacy some reasources can be named `<project>-dev-<resource>`.
-The `<resource>` should be defined as Terraform variable in `infra/variables.tf` file. Its value has to be filled in `secrets/encrypted.tfvars.json`.
+Each resource deployed should follow the same naming convention: `<project>-<env>-<awsservice>-<microservice>-<details>`
 
-`<resource>` should follow stucture: `<project-env-awsservice-microservice-details>`. `<awsservice>` is the abbreviation of the resource and `<microservice>` is the related service, like "builder" or "preparer". `<microservice>` can also be "general" or "gen" if the resource is for general use. You can also leave it empty.
+* `project` should be always "dgtmon". Helpful e.g. when you look for a IAM Policy related to the project - just start typing the name of the project and you'll filter only relavant items.
+* `env` is generally the name of the environment ("main" or "develop"). For resources shared between different environments (e.g. security groups) it should be either "shared" or (especially for legacy resources) "dev".
+* `awsservice` is the abbreviation of a infrastructure resource. It should anwser the question: "what is it".
+* `microservice` is the related service, like "builder" or "preparer". `microservice` can also be "general" or "gen" if the resource is for general use. You can also leave it empty.
 
 For example, the full name of a resource could be
-`dgtmon-main-s3-verifier-msgs`.
+`dgtmon-main-s3-verifier-logs-warning`.
+
+It is highly recommended to define `<awsservice>-<microservice>-<details>` as Terraform variable in `infra/variables.tf` file. The value has to be then filled in the `secrets/encrypted.tfvars.json` using the "sops" tool.
+
+Then, when defining resources in the `.tf` files use variables:
+```tf
+resource "aws_awsservice_awsresource" "some_name" {
+  name = "${var.project}-${var.env}-${var.some_name_set_in_variables}"
+}
+```
 
 ## Local development
 
