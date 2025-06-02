@@ -69,7 +69,7 @@ resource "aws_iam_group_policy_attachment" "dev_apkg_upload" {
 }
 
 resource "aws_iam_user" "cli_PAK" {
-  name = "${var.project}-dev-${var.usr_cli_PAK}"
+  name = "${var.project}-shared-${var.usr_cli_PAK}"
 }
 
 resource "aws_iam_user_group_membership" "cli_PAK" {
