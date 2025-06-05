@@ -55,7 +55,8 @@ data "aws_iam_policy_document" "assume_preparer_role" {
 }
 
 resource "aws_iam_role" "preparer_iam" {
-  name               = "preparer_iam"
+  # name               = "preparer_iam"
+  name               = "${var.project}-${var.env}-${var.role_preparer}"
   assume_role_policy = data.aws_iam_policy_document.assume_preparer_role.json
 }
 
