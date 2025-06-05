@@ -56,7 +56,7 @@ build-dashboard:
       - staticws/dashboard/.next
       - staticws/dashboard/out
 
-.deploy:
+deploy:
   stage: deploy
   dependencies:
     - init
@@ -84,7 +84,7 @@ build-dashboard:
     paths:
       - tf_output.json
 
-.upload-dashboard:
+upload-dashboard:
   stage: post-deploy
   dependencies:
     - build-dashboard
