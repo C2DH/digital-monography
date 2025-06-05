@@ -69,6 +69,8 @@ resource "aws_iam_group_policy_attachment" "dev_apkg_upload" {
 }
 
 resource "aws_iam_user" "cli_PAK" {
+  # For every user remember to create access keys via the console (admin)
+  # and then add them to the AWS CLI config file (user).
   name = "${var.project}-shared-${var.usr_cli_PAK}"
 }
 
@@ -77,13 +79,4 @@ resource "aws_iam_user_group_membership" "cli_PAK" {
   groups = [
     aws_iam_group.devs.name,
   ]
-}
-
-resource "aws_iam_access_key" "cli_PAK" {
-  user = aws_iam_user.cli_PAK.name
-}
-
-output "cli_PAK_access_key_id" {
-  value       = aws_iam_access_key.cli_PAK.id
-  description = "The access key ID for the CLI PAK user. Add the access key and secret access key retrieved by an admin to your AWS CLI config file."
 }
