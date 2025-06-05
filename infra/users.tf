@@ -78,3 +78,12 @@ resource "aws_iam_user_group_membership" "cli_PAK" {
     aws_iam_group.devs.name,
   ]
 }
+
+resource "aws_iam_access_key" "cli_PAK" {
+  user = aws_iam_user.cli_PAK.name
+}
+
+output "cli_PAK_access_key_id" {
+  value       = aws_iam_access_key.cli_PAK.id
+  description = "The access key ID for the CLI PAK user. Add the access key and secret access key retrieved by an admin to your AWS CLI config file."
+}
