@@ -344,6 +344,8 @@ region = eu-central-1
 output = json
 ```
 
+In the future, consider replacing access keys with AWS CLI v2 to enable authentication through a user in IAM Identity Center. See [docs](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html) for more details.
+
 ### Create a user to access the AWS console
 
 The root profile has to navigate to the IAM Identity Center (it has to be enabled first with "Identity Center directory" as its identity source) and select "Add user". Username has to be "Lastname_Firstname". Attach the new user to the "Developers" IAM Group. 
