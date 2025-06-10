@@ -389,6 +389,41 @@ At the beginning of the project every microservice was type checked and linted. 
 
 We use flake8 for linting. Run `flake8 src/<microservice>/` to run the linting script. 
 
+## Further developments
+
+### Schema-based database vs. schema-less database
+
+Currently, the architecture stores data important for the dashboard in a DynamoDB. DynamoDB is a serverless, noSQL, key-value database. Most importantly, we treat it as a schema-less database. This is both a strengh and a weakness. This approach was chosen instead of a schema-based database (like PostgreSQL, MySQL or SQLite) because of specificity of handling manuscripts. Commonly, web applications use schema-based databases for storing their state. When someone changes content of a web app, the state is written to a database and displayed from the database to users.
+
+Contrarily, the state in a document transformation software is stored in documents themselves. It is the documents that are being processed that are the source of the truth. We don't control what users do in a separate document processing software like Microsoft Word or Jupyter Lab. We see the changes only when the document is uploaded to our software. We cannot use any of common "diff" algorithms to track changes, because the diffing solutions are usually based on longest common subsequence algorithms (e.g. on Myers' diffing algorithm). Those work great on a source code, markdown or even json, but they are not meant for a complex XML files underlying even the simplest MS Word file. Therefore it is non-trivial task to maintain consistency between different versions of the same document (what if part of a document is moved to another document? what if a document is renamed and modified?). For this reasons I decided to use the uploaded manuscripts as a single source of truth. When a user uploads a document, all database records relating to this document are emptied and the software creates from scratch new db records.
+
+I see this as a controversial choice and I encourage to keep looking for a better alternative.
+
+#### Strengths
+
+* Serverless solutions are super cheap. Databases like PostgreSQL require servers, which makes them more costly.
+* DynamoDB is fully managed, there is no need for maintenance. Even with managed database solutions there is usually a need for managing backups, making updates, etc. This is not the case with DynamoDB.
+
+#### Weaknesses
+
+* When the software changes (e.g. the dashboard or the preparation of db records) the schema in which the data is stored changes as well. It is up to the client of this data to parse it correctly. With schema-based sql databases there is usually some migration mechanism to synchronize the changes in the schema. With the current solution, the changes apply only to the documents uploaded after the change. In case of db records written before the change and after the change you will have to write logic to remodel the data after those items are retrieved. This logic has to be written in the client that receives the data (e.g. in the dashboard).
+
+### Additional change suggestions
+
+* add e2e cloud testing on actual Lambdas
+* mypy type checking
+* flake8 linting
+* refactor link management (refs.py)
+* migrate JupyterBook v1 to v2
+
+#### Requirements for migrating Jupyter Book v1 to v2
+
+1. install node.js v 20
+1. npm install mystmd
+1. myst build --html
+1. create myst.yml config file (different from v1)
+1. copy _build/html to s3 bucket
+
 ## Sundry
 
 ### Generating infrastrucutre visualisation
@@ -423,20 +458,3 @@ gpg --armor --export-secret-keys [keyId] > sth.txt
 ```
 
 In GitLab, update "CI/CD Settings" > "Variables" > "PGP_KEY" with the new private pgp key.
-
-### Minor development todos
-
-* limit permissions infra resources have
-* add e2e cloud testing on actual Lambdas
-* mypy type checking
-* flake8 linting
-* refactor link management (refs.py)
-* migrate JupyterBook v1 to v2
-
-#### Requirements for migrating Jupyter Book v1 to v2
-
-1. install node.js v 20
-1. npm install mystmd
-1. myst build --html
-1. create myst.yml config file (different from v1)
-1. copy _build/html to s3 bucket
