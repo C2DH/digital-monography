@@ -155,6 +155,8 @@ class MetadataTableDatapoint(DatapointBase):
     Unprocessed data from a Metadata table that describes an asset.
     """
 
+    schema_v: int = 1  # if multiple v in the db, the client might have to differentiate
+    ###
     kwargs: dict[str, t.Any]
 
     def to_json(self) -> dict[str, PrimitiveValues]:
@@ -186,6 +188,8 @@ class AssetDatapoint(DatapointBase):
     * book level information
     """
 
+    schema_v: int = 1  # if multiple v in the db, the client might have to differentiate
+    ###
     fp: pathlib.Path
     metadata_table: str
     medium: MediumEnum
@@ -248,6 +252,8 @@ class AssetDatapoint(DatapointBase):
 
 
 class HeadingDatapoint(DatapointBase):
+    schema_v: int = 1  # if multiple v in the db, the client might have to differentiate
+    ###
     file_name: str
     elem: str
     level: str
@@ -258,6 +264,8 @@ class HeadingDatapoint(DatapointBase):
 
 
 class RefDatapoint(DatapointBase):
+    schema_v: int = 1  # if multiple v in the db, the client might have to differentiate
+    ###
     fn: str
     target_id: str
     text: str
@@ -298,6 +306,8 @@ class IRefStack(t.TypedDict):
 
 
 class TargetDatapoint(DatapointBase):
+    schema_v: int = 1  # if multiple v in the db, the client might have to differentiate
+    ###
     html: str
     text: str
     elem: str
@@ -408,6 +418,8 @@ def _roman_to_int(text: str) -> int:
 
 
 class SubstitutionDatapoint(DatapointBase):
+    schema_v: int = 1  # if multiple v in the db, the client might have to differentiate
+    ###
     was: str
     placeholder: str
     is_digital: bool | None
@@ -440,6 +452,8 @@ class SubstitutionDatapoint(DatapointBase):
 
 
 class CitationGroupDatapoint(DatapointBase):
+    schema_v: int = 1  # if multiple v in the db, the client might have to differentiate
+    ###
     # id: int
     file_name: str
     citation_schema: str
@@ -450,6 +464,8 @@ class CitationGroupDatapoint(DatapointBase):
 
 
 class CitationItemDatapoint(DatapointBase):
+    schema_v: int = 1  # if multiple v in the db, the client might have to differentiate
+    ###
     id: int
     file_name: str
     citationId: str
@@ -458,6 +474,8 @@ class CitationItemDatapoint(DatapointBase):
 
 
 class FileDatapoint(DatapointBase):
+    schema_v: int = 1  # if multiple v in the db, the client might have to differentiate
+    ###
     pk: str
     stem: str
     prefix: str
