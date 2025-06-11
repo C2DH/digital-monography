@@ -202,7 +202,7 @@ resource "aws_lambda_function" "preparer_func" {
   # function_name = "preparer"
   function_name = "${var.project}-${var.env}-${var.lambda_preparer_func}"
   package_type  = "Image"
-  image_uri     = "${aws_ecr_repository.preparer_repo.repository_url}:${local.preparer_tag}"
+  image_uri     = "${data.preparer_repo.repository_url}:${local.preparer_tag}"
   role          = aws_iam_role.preparer_iam.arn
   depends_on = [
     data.aws_cloudwatch_log_group.general_purpose_logs,
@@ -251,8 +251,14 @@ resource "aws_s3_bucket_notification" "upload_apkg_notification" {
 
 resource "aws_ecr_repository" "preparer_repo" {
   name                 = "${var.project}-dev-${var.microservice_preparer}"
+  count                = var.env == "develop" ? 1 : 0 # create only in develop environment
   image_tag_mutability = "IMMUTABLE"
   force_delete         = true
+}
+
+data "aws_ecr_repository" "preparer_repo" {
+  name                 = aws_ecr_repository.preparer_repo[0].name
+  image_tag_mutability = "IMMUTABLE"
 }
 
 locals {

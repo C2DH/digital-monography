@@ -162,7 +162,7 @@ resource "aws_lambda_function" "dropbox_func" {
   # function_name = "dropbox"
   function_name = "${var.project}-${var.env}-${var.lambda_dropbox_func}"
   package_type  = "Image"
-  image_uri     = "${aws_ecr_repository.dropbox_repo.repository_url}:${local.dropbox_tag}"
+  image_uri     = "${data.dropbox_repo.repository_url}:${local.dropbox_tag}"
   role          = aws_iam_role.dropbox_iam.arn
   depends_on = [
     data.aws_cloudwatch_log_group.general_purpose_logs,
@@ -206,8 +206,14 @@ resource "aws_lambda_function" "dropbox_func" {
 
 resource "aws_ecr_repository" "dropbox_repo" {
   name                 = "${var.project}-dev-${var.microservice_dropbox}"
+  count                = var.env == "develop" ? 1 : 0 # create only in develop environment
   image_tag_mutability = "IMMUTABLE"
   force_delete         = true
+}
+
+resource "data" "dropbox_repo" {
+  name                 = aws_ecr_repository.dropbox_repo[0].name
+  image_tag_mutability = "IMMUTABLE"
 }
 
 locals {

@@ -164,7 +164,7 @@ resource "aws_lambda_function" "verifier_func" {
   # function_name = "verifier"
   function_name = "${var.project}-${var.env}-${var.lambda_verifier_func}"
   package_type  = "Image"
-  image_uri     = "${aws_ecr_repository.verifier_repo.repository_url}:${local.verifier_tag}"
+  image_uri     = "${data.verifier_repo.repository_url}:${local.verifier_tag}"
   role          = aws_iam_role.verifier_iam.arn
   depends_on = [
     data.aws_cloudwatch_log_group.general_purpose_logs,
@@ -208,8 +208,14 @@ resource "aws_s3_bucket_notification" "ir_apkg_html_notification" {
 
 resource "aws_ecr_repository" "verifier_repo" {
   name                 = "${var.project}-dev-${var.microservice_verifier}"
+  count                = var.env == "develop" ? 1 : 0 # create only in develop environment
   image_tag_mutability = "IMMUTABLE"
   force_delete         = true
+}
+
+data "aws_ecr_repository" "verifier_repo" {
+  name                 = aws_ecr_repository.verifier_repo[0].name
+  image_tag_mutability = "IMMUTABLE"
 }
 
 locals {

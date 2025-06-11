@@ -221,8 +221,14 @@ resource "aws_lambda_function" "github_func" {
 
 resource "aws_ecr_repository" "github_repo" {
   name                 = "${var.project}-dev-${var.microservice_github}"
+  count                = var.env == "develop" ? 1 : 0 # create only in develop environment
   image_tag_mutability = "IMMUTABLE"
   force_delete         = true
+}
+
+data "aws_ecr_repository" "github_repo" {
+  name                 = aws_ecr_repository.github_repo[0].name
+  image_tag_mutability = "IMMUTABLE"
 }
 
 locals {

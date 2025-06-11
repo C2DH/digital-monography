@@ -292,7 +292,7 @@ resource "aws_lambda_function" "builder_func" {
   # function_name = "builder"
   function_name = "${var.project}-${var.env}-${var.lambda_builder_func}"
   package_type  = "Image"
-  image_uri     = "${aws_ecr_repository.builder_repo.repository_url}:${local.builder_tag}"
+  image_uri     = "${data.builder_repo.repository_url}:${local.builder_tag}"
   role          = aws_iam_role.builder_iam.arn
   depends_on = [
     data.aws_cloudwatch_log_group.general_purpose_logs,
@@ -336,8 +336,14 @@ resource "aws_lambda_function" "builder_func" {
 
 resource "aws_ecr_repository" "builder_repo" {
   name                 = "${var.project}-dev-${var.microservice_builder}"
+  count                = var.env == "develop" ? 1 : 0 # create only in develop environment
   image_tag_mutability = "IMMUTABLE"
   force_delete         = true
+}
+
+data "aws_ecr_repository" "builder_repo" {
+  name                 = aws_ecr_repository.builder_repo[0].name
+  image_tag_mutability = "IMMUTABLE"
 }
 
 locals {
