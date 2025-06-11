@@ -76,7 +76,7 @@ deploy:
     - mkdir ~/.aws
     - echo -e "[profile oidc]\nrole_arn=${DGTMON_ROLE_DEPL_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
   script:
-    - terraform init -backend-config="key=${CI_COMMIT_BRANCH}.tfstate" -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH"
+    - terraform init -backend-config="key=${CI_COMMIT_BRANCH}.tfstate" -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH" -reconfigure
     - terraform apply -auto-approve -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH"
     - terraform output -json > tf_output.json
   artifacts:
