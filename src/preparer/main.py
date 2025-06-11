@@ -1,40 +1,33 @@
 import datetime
 import pathlib
+import sys
 import bs4
 import boto3
 import json
 import logging
 import mammoth
 import nbformat
+import os
 import typing as t
 import urllib.parse
 
+from mypy_boto3_s3.client import S3Client as boto3_S3Client
+from mypy_boto3_dynamodb.client import DynamoDBClient as boto3_DynamoDBClient
+
 try:
-    from audit import AuditEvent, AuditStatus
+    from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
+    from conditional_rendering import is_paper_only, remove_paper_only
     from constants import (
         ModuleEnum,
-        # ARCHIVE_APKG_ALL,
-        AWS_ACCOUNT_REGION,
-        AWS_ACCOUNT_ID,
-        DYNAMODB_ASSETS_TBL,
-        DYNAMODB_CITATIONS_TBL,
-        DYNAMODB_HEADINGS_TBL,
-        IR_APKG_HTML_BUCKET_NAME,
-        IR_APKG_MD_BUCKET_NAME,
         MAMMOTH_STYLE_MAP,
-        METADATA_ASSETS_BUCKET_NAME,
-        SQS_GITHUB_FIFO_TRIGGER_NAME,
         IS_DEBUG,
-        #
         FIELD_DIGITAL_SOURCE,
-        DEFAULT_SFS_DIR,
     )
     from citations import add_bibliography, is_citation, prepare_citations
     from digital_prep import insert_digital_objects, remove_metadata_tables
     from hide_metadata_in_html import hide_metadata_in_html
-    from metadata import DocumentMetadata
+    from metadata import DocumentMetadata, AssetDatapoint
     from metadata_extraction import prepare_metadata_tables
-    from metadata_computation import compute_additional_metadata_fields
     from remove_empty_tables import remove_empty_tables
     from replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
     from refs import (
@@ -47,37 +40,25 @@ try:
         is_footnote,
         is_reference,
     )
+    from substitutions_prep import count_targets_for_substitutions
     from html2md import convert_to_md
     from ipynb_prep import tags_to_myst_crossref_targets
     from keys import KeyPath
     from fakers import Faker
-    from make_metadata_report import make_metadata_report
 except (ImportError, ModuleNotFoundError):
-    from .audit import AuditEvent, AuditStatus
+    from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
+    from .conditional_rendering import is_paper_only, remove_paper_only
     from .constants import (
         ModuleEnum,
-        # ARCHIVE_APKG_ALL,
-        AWS_ACCOUNT_REGION,
-        AWS_ACCOUNT_ID,
-        DYNAMODB_ASSETS_TBL,
-        DYNAMODB_CITATIONS_TBL,
-        DYNAMODB_HEADINGS_TBL,
-        IR_APKG_HTML_BUCKET_NAME,
-        IR_APKG_MD_BUCKET_NAME,
         MAMMOTH_STYLE_MAP,
-        METADATA_ASSETS_BUCKET_NAME,
-        SQS_GITHUB_FIFO_TRIGGER_NAME,
         IS_DEBUG,
-        #
         FIELD_DIGITAL_SOURCE,
-        DEFAULT_SFS_DIR,
     )
     from .citations import add_bibliography, is_citation, prepare_citations
     from .digital_prep import insert_digital_objects, remove_metadata_tables
     from .hide_metadata_in_html import hide_metadata_in_html
-    from .metadata import DocumentMetadata
+    from .metadata import DocumentMetadata, AssetDatapoint
     from .metadata_extraction import prepare_metadata_tables
-    from .metadata_computation import compute_additional_metadata_fields
     from .remove_empty_tables import remove_empty_tables
     from .replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
     from .refs import (
@@ -90,12 +71,11 @@ except (ImportError, ModuleNotFoundError):
         is_footnote,
         is_reference,
     )
+    from .substitutions_prep import count_targets_for_substitutions
     from .html2md import convert_to_md
     from .ipynb_prep import tags_to_myst_crossref_targets
     from .keys import KeyPath
     from .fakers import Faker
-    from .make_metadata_report import make_metadata_report
-
 
 if IS_DEBUG:
     today = datetime.date.today().isoformat()
@@ -124,8 +104,8 @@ if IS_DEBUG:
     s3 = Faker("s3")
     sqs = Faker("sqs")
 else:
-    dynamodb = boto3.resource("dynamodb")
-    s3 = boto3.client("s3")
+    dynamodb: boto3_DynamoDBClient = boto3.resource("dynamodb")
+    s3: boto3_S3Client = boto3.client("s3")
     sqs = boto3.client("sqs")
 
 
@@ -135,14 +115,8 @@ def is_table(tag: bs4.element.Tag) -> bool:
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info(f"lambda_handler. Event: {json.dumps(event, default=str)}")
-    images_with_alttxt = []
-    tables = []
-    headers = []
-    captions = []
-    citations = []
-    footnotes = []
-    references = []
     key = _get_key(event)
+    metadata = DocumentMetadata(key)
     src = _get_source_bucket(event)
     _download_fileobj(src, key)
     if key.suffix.lower() == ".ipynb":
@@ -154,49 +128,55 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         return {"statusCode": 200, "body": ""}
     if key.suffix.lower() == ".docx":
         html_str = _convert_to_html(key.efs_filepath)
-        metadata = DocumentMetadata(key)
-        html_soup = bs4.BeautifulSoup(html_str, "html.parser")
-        metadata.char_count, metadata.word_count = _get_char_and_word_count(html_soup)
-        classifiers = [
-            (is_img_with_alt_text, images_with_alttxt),
-            (is_citation, citations),
-            (is_table, tables),
-            (is_header, headers),
-            (is_caption, captions),
-            (is_footnote, footnotes),
-            (is_reference, references),
-        ]
-        """
-        Before applying the processing, this subprocedure traverses the tree
-        recursively and puts relevant bs4 objects (html elements) inside 
-        respective lists. Processing is then applied on the marked elements.
-        """
-        for node in html_soup.descendants:
-            for check_if_meets_criteria, container in classifiers:
-                if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
-                    container.append(node)
-        html_soup, bibliography = prepare_citations(html_soup, metadata, citations)
-        html_soup = add_bibliography(html_soup, bibliography)
-        html_soup = prepare_metadata_tables(html_soup, metadata, tables)
-        html_soup = prepare_ref_targets_in_headers(html_soup, metadata, headers)
-        html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
-        html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, footnotes)
-        html_soup = prepare_references(html_soup, metadata, references)
-        html_soup = remove_empty_tables(html_soup, metadata, tables)
-        html_soup = prepare_alt_texts(html_soup, metadata, images_with_alttxt)
+        html_soup, metadata, tables = prepare_docx(html_str, metadata)
+        # images_with_alttxt = []
+        # tables = []
+        # headers = []
+        # captions = []
+        # citations = []
+        # footnotes = []
+        # references = []
+        # paper_only = []
+        # html_str = _convert_to_html(key.efs_filepath)
+        # html_soup = bs4.BeautifulSoup(html_str, "html.parser")
+        # metadata.char_count, metadata.word_count = _get_char_and_word_count(html_soup)
+        # classifiers = [
+        #     (is_img_with_alt_text, images_with_alttxt),
+        #     (is_citation, citations),
+        #     (is_table, tables),
+        #     (is_header, headers),
+        #     (is_caption, captions),
+        #     (is_footnote, footnotes),
+        #     (is_reference, references),
+        #     (is_paper_only, paper_only),
+        # ]
+        # """
+        # Before applying the processing, this subprocedure traverses the tree
+        # recursively and puts relevant bs4 objects (html elements) inside
+        # respective lists. Processing is then applied on the marked elements.
+        # """
+        # for node in html_soup.descendants:
+        #     for check_if_meets_criteria, container in classifiers:
+        #         if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
+        #             container.append(node)
+        # html_soup, bibliography = prepare_citations(html_soup, metadata, citations)
+        # html_soup = add_bibliography(html_soup, bibliography)
+        # html_soup = prepare_ref_targets_in_headers(html_soup, metadata, headers)
+        # html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
+        # html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, footnotes)
+        # html_soup = prepare_references(html_soup, metadata, references)
+        # html_soup = prepare_metadata_tables(html_soup, metadata, tables)
+        # html_soup = remove_paper_only(html_soup, metadata, paper_only)
+        # html_soup = remove_empty_tables(html_soup, metadata, tables)
+        # html_soup = prepare_alt_texts(html_soup, metadata, images_with_alttxt)
+        # html_soup = count_targets_for_substitutions(html_soup, metadata)
+        # ########################
 
         logger.info("====================================")
         logger.info(f"Looking for {FIELD_DIGITAL_SOURCE}")
         logger.info(f"metadata.filepath.parent: ({metadata.filepath.parent})")
-        root = pathlib.Path(DEFAULT_SFS_DIR) / metadata.filepath.parent
-        for asset in metadata.assets:
-            logger.info(f"asset.kwargs.keys(), {asset.kwargs.keys()}")
-            if asset.kwargs.get(FIELD_DIGITAL_SOURCE) is not None:
-                digitalsource = root / asset.kwargs.get(
-                    FIELD_DIGITAL_SOURCE
-                )
-                logger.info(f"Digital source: {digitalsource}")
-        metadata = compute_additional_metadata_fields(metadata)
+        # root = pathlib.Path(DEFAULT_SFS_DIR) / metadata.filepath.parent
+        # metadata = compute_additional_metadata_fields(metadata)
         html_soup = hide_metadata_in_html(html_soup, metadata)  # last step
         html_soup_str = str(html_soup)
         # IMPORTANT NOTE: other services depend on html produced at this stage, make sure that:
@@ -207,7 +187,6 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_soup = remove_metadata_tables(html_soup, metadata, tables)
         _write_config_to_efs(metadata, key)
 
-
         # for rec in getattr(metadata, "assets"):
         #     for k, v in rec.to_json().items():
         #         print(">", k, v, type(v))
@@ -215,7 +194,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         #     f"==Metadata: "
         #     + json.dumps([rec.to_json() for rec in getattr(metadata, "assets")], default=str)
         # )
-        _write_metadata_to_s3(metadata, key)
+        _write_assets_info_to_s3(metadata, key)
         _write_metadata_to_db(metadata, key)
         _write_metadata_to_efs(metadata, key)
         _write_processed_html_to_efs(html_soup_str, key)
@@ -233,6 +212,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         )
         return {"statusCode": 200, "body": ""}
     else:
+
+        # _write_to_efs(key) # <=============
         _enqueue_to_github(key)
         return {"statusCode": 200, "body": ""}
 
@@ -261,14 +242,24 @@ def _get_source_bucket(event) -> str:
 def _download_fileobj(src: str, key: KeyPath) -> None:
     try:
         key = key.efs_filepath
+        # temp to remove the "assets" file
+        assets_dir = pathlib.Path("/mnt/efs/{key.slug}/assets")
+        if assets_dir.exists() and not assets_dir.is_dir() and assets_dir.is_file():
+            assets_dir.unlink()
+        # end temp
         key.parent.mkdir(parents=True, exist_ok=True)
         with open(key, "wb") as fileobj:
+            logger.info(f"sys.getsizeof(fileobj): {str(sys.getsizeof(fileobj))}")
             s3_key = str(key.s3_key)
+            logger.info(f"IS_DEBUG={IS_DEBUG}")
+            logger.info(f"type(s3)={type(s3)}")
             resp = s3.download_fileobj(src, s3_key, fileobj)
             logger.info(
                 f"Response from s3.download_fileobj(Bucket={src}, Key={s3_key}): "
                 + json.dumps(resp, default=str)
             )
+            for child in key.parent.iterdir():
+                logger.info(f"File {str(child)} was found in {str(key.parent)}.")
     except Exception as e:
         logger.exception(
             f"Downloading fileobj {str(key)} from {src} failed. Error: {repr(e)}"
@@ -279,6 +270,53 @@ def _download_fileobj(src: str, key: KeyPath) -> None:
             "Error upon internal download.",
         )
         raise
+
+
+def prepare_docx(
+    html_str: str, metadata: DocumentMetadata
+) -> tuple[bs4.BeautifulSoup, DocumentMetadata, list[bs4.element.Tag]]:
+    images_with_alttxt = []
+    tables = []
+    headers = []
+    captions = []
+    citations = []
+    footnotes = []
+    references = []
+    paper_only = []
+    # html_str = _convert_to_html(key.efs_filepath)
+    html_soup = bs4.BeautifulSoup(html_str, "html.parser")
+    metadata.char_count, metadata.word_count = _get_char_and_word_count(html_soup)
+    classifiers = [
+        (is_img_with_alt_text, images_with_alttxt),
+        (is_citation, citations),
+        (is_table, tables),
+        (is_header, headers),
+        (is_caption, captions),
+        (is_footnote, footnotes),
+        (is_reference, references),
+        (is_paper_only, paper_only),
+    ]
+    """
+    Before applying the processing, this subprocedure traverses the tree
+    recursively and puts relevant bs4 objects (html elements) inside 
+    respective lists. Processing is then applied on the marked elements.
+    """
+    for node in html_soup.descendants:
+        for check_if_meets_criteria, container in classifiers:
+            if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
+                container.append(node)
+    html_soup, bibliography = prepare_citations(html_soup, metadata, citations)
+    html_soup = add_bibliography(html_soup, bibliography)
+    html_soup = prepare_ref_targets_in_headers(html_soup, metadata, headers)
+    html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
+    html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, footnotes)
+    html_soup = prepare_references(html_soup, metadata, references)
+    html_soup = prepare_metadata_tables(html_soup, metadata, tables)
+    html_soup = remove_paper_only(html_soup, metadata, paper_only)
+    html_soup = remove_empty_tables(html_soup, metadata, tables)
+    html_soup = prepare_alt_texts(html_soup, metadata, images_with_alttxt)
+    html_soup = count_targets_for_substitutions(html_soup, metadata)
+    return html_soup, metadata, tables
 
 
 def _get_char_and_word_count(html_soup: bs4.BeautifulSoup) -> tuple[int, int]:
@@ -349,7 +387,7 @@ def _put_html_to_s3(contents: str, key: KeyPath) -> None:
         s3_key = key.s3_key.with_suffix(".html")
         _put_object(
             contents.encode("utf-8"),
-            IR_APKG_HTML_BUCKET_NAME,
+            os.environ.get("IR_APKG_HTML_BUCKET_NAME", ""),
             s3_key,
         )
     except Exception as e:
@@ -366,7 +404,7 @@ def _put_md_to_s3(contents: str, key: KeyPath) -> None:
     try:
         _put_object(
             contents.encode("utf-8"),
-            IR_APKG_MD_BUCKET_NAME,
+            os.environ.get("IR_APKG_MD_BUCKET_NAME", ""),
             key,
         )
     except Exception as e:
@@ -383,7 +421,10 @@ def _enqueue_to_github(key: KeyPath) -> None:
     try:
         key_str = str(key)
         logger.info(f"_queue_to_trigger_github(key={key_str})")
-        QueueUrl = f"https://sqs.{AWS_ACCOUNT_REGION}.amazonaws.com/{AWS_ACCOUNT_ID}/{SQS_GITHUB_FIFO_TRIGGER_NAME}"
+        aws_account_region = os.environ.get("AWS_ACCOUNT_REGION", "")
+        aws_account_id = os.environ.get("AWS_ACCOUNT_ID", "")
+        sqs_github_trigger = os.environ.get("SQS_GITHUB_FIFO_TRIGGER_NAME", "")
+        QueueUrl = f"https://sqs.{aws_account_region}.amazonaws.com/{aws_account_id}/{sqs_github_trigger}"
         MessageBody = key_str
         MessageDeduplicationId = key_str
         MessageGroupId = key.slug
@@ -452,27 +493,22 @@ def _write_processed_md_to_efs(md: str, key: KeyPath) -> None:
         f.write(md)
 
 
-def _write_metadata_to_s3(metadata: DocumentMetadata, key: KeyPath) -> None:
+def _write_assets_info_to_s3(metadata: DocumentMetadata, key: KeyPath) -> None:
     try:
-        logger.info(f"_write_metadata_to_s3(key={key}")
-        s3_key = key.s3_key.with_suffix(".json")
-        meta = metadata.to_json()
-        buckets = {
-            "assets": METADATA_ASSETS_BUCKET_NAME,
-        }
-        for domain, bucket in buckets.items():
-            body = json.dumps(meta[domain], default=str)
-            resp = s3.put_object(Body=body, Bucket=bucket, Key=str(s3_key))
-            logger.info(
-                f"Response from s3.put_object(Bucket={bucket}, Key={str(s3_key)}): "
-                + json.dumps(resp, default=str)
-            )
+        s3_key = AssetDatapoint.get_s3_key(key)
+        bucket = os.environ.get("METADATA_ASSETS_BUCKET_NAME", "")
+        body = json.dumps([ass.to_json() for ass in metadata.assets], default=str)
+        resp = s3.put_object(Body=body, Bucket=bucket, Key=s3_key)
+        logger.info(
+            f"Response from s3.put_object(Bucket={bucket}, Key={s3_key}): "
+            + json.dumps(resp, default=str)
+        )
     except Exception as e:
-        logger.exception(f"Putting metadata to s3 bucket failed. Error: {repr(e)}")
+        logger.exception(f"Putting assets info to s3 bucket failed. Error: {repr(e)}")
         _log_audit_event(
             key,
             AuditStatus.FAILED.value,
-            "Error upon writing metadata.",
+            "Error upon writing assets info from docs.",
         )
         raise
 
@@ -482,10 +518,10 @@ def _write_metadata_to_db(metadata: DocumentMetadata, key: KeyPath) -> None:
         return
     try:
         tables = {
-            "assets": DYNAMODB_ASSETS_TBL,
-            "citation_groups": DYNAMODB_CITATIONS_TBL,
-            "headings": DYNAMODB_HEADINGS_TBL,
-            # "warnings": DYNAMODB_WARNINGS_TBL,
+            "assets": os.environ.get("DYNAMODB_ASSETS_TBL", ""),
+            "citation_groups": os.environ.get("DYNAMODB_CITATIONS_TBL", ""),
+            "headings": os.environ.get("DYNAMODB_HEADINGS_TBL", ""),
+            # "warnings": os.environ.get("DYNAMODB_WARNINGS_TBL", ""),
         }
         for domain, tbl in tables.items():
             table = dynamodb.Table(tbl)
@@ -493,24 +529,14 @@ def _write_metadata_to_db(metadata: DocumentMetadata, key: KeyPath) -> None:
                 Item={
                     "slug": key.slug,
                     "fn": key.name,
-                    "records": [rec.to_json() for rec in getattr(metadata, domain)],
+                    "records": [
+                        rec.model_dump_json() for rec in getattr(metadata, domain)
+                    ],
                 }
             )
             logger.info(
                 f"Response from dynamodb.Table({tbl}).put_item: {json.dumps(resp, default=str)}"
             )
-
-        # assets = [rec.to_json() for rec in metadata.assets]
-        # citation_groups = [rec.to_json() for rec in metadata.citation_groups]
-        # headings = [rec.to_json() for rec in metadata.headings]
-
-        # self.assets: list[AssetDatapoint] = []
-        # self.headings: list[HeadingDatapoint] = []
-        # self.refs: list[RefDatapoint] = []
-        # self.targets: list[TargetDatapoint] = []
-        # self.substitutions: list[SubstitutionDatapoint] = []
-        # self.citation_groups: list[CitationGroupDatapoint] = []
-        # self.citation_items: list[CitationItemDatapoint] = []
 
         return
     except Exception as e:
@@ -532,7 +558,8 @@ def _write_metadata_to_efs(metadata: DocumentMetadata, key: KeyPath) -> None:
             ".json"
         )
         logger.info(f"File: {fp}")
-        logger.info(f"Meta: {json.dumps(json_data)}")
+        # logger.info(f"Meta: {json.dumps(json_data)}")
+        # logger.info(f"Meta: {json.dumps(json_data, default=str)}")
         with open(fp, "w") as f:
             json.dump(json_data, f)
         logger.info(f"Metadata was saved to {str(fp)}")
@@ -567,24 +594,7 @@ def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:
         msg=msg,
     )
     event.send(dynamodb)
+    if status == AuditStatus.FAILED.value:
+        alert = AlertLog(slug=key.slug, status=AlertStatus.FAIL.value)
+        alert.send(dynamodb)
     logger.info(f"Audit event logged: {event}")
-
-
-# def _make_metadata_report(
-#     metadata: DocumentMetadata,
-#     key: KeyPath,
-# ) -> None:
-#     try:
-#         fp = key.add_to_efs_slug_dir("_warnings").parent / key.github_path.with_suffix(
-#             ".md"
-#         )
-#         fp = fp.with_name("refs_" + fp.name)
-#         file_name = str(key.with_suffix(".docx").name)
-#         with open(fp, "w") as f:
-#             f.write(make_metadata_report(metadata, file_name))
-#         logger.info(f"Metadata markdown report was saved to {str(fp)}")
-#     except Exception as e:
-#         logger.exception(
-#             f"Writing DocumentMetadata to /efs directory failed. Error: {repr(e)}"
-#         )
-#         raise

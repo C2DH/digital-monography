@@ -4,6 +4,11 @@ import typing as t
 import uuid
 
 
+type MessagesJson = list[
+    t.Union[FileVerificationMessageJson, GeneralVerificationMessageJson]
+]
+
+
 class FileVerificationMessageJson(t.TypedDict):
     id: str
     problem: str
@@ -76,7 +81,7 @@ class FileVerificationMessage:
                 break
         return next
 
-    def to_json(self) -> FileVerificationMessageJson:
+    def to_json(self, md: bool = False) -> FileVerificationMessageJson:
         return {
             "id": self.id,
             "problem": self.problem,
@@ -106,7 +111,7 @@ class GeneralVerificationMessage:
         self.timestamp = timestamp
         self.tags = tags
 
-    def to_json(self) -> GeneralVerificationMessageJson:
+    def to_json(self, md: bool = False) -> GeneralVerificationMessageJson:
         return {
             "id": self.id,
             "problem": self.problem,
@@ -154,7 +159,11 @@ class VerifierMessages:
                 )
             )
 
-    def to_json(
-        self,
-    ) -> list[t.Union[FileVerificationMessageJson, GeneralVerificationMessageJson]]:
-        return [msg.to_json() for msg in self._messages]
+    def to_json(self, md: bool = False) -> MessagesJson:
+        return [msg.to_json(md) for msg in self._messages]
+
+    def sort(self, *args, **kwargs) -> None:
+        self._messages.sort(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return str(self.to_json())

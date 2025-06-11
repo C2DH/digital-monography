@@ -11,7 +11,7 @@ except (ImportError, ModuleNotFoundError):
 
 def hide_metadata_in_html(
     html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata
-) -> None:
+) -> bs4.BeautifulSoup:
     """
     Hide all metadata records in a hidden <script> tag at the end of
     a html file.

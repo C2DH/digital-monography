@@ -18,12 +18,14 @@ sys.path.append(parent_dir)
 from src.preparer.main import lambda_handler as preparer_handler
 from src.builder.main import lambda_handler as builder_handler
 from src.verifier.main import lambda_handler as verifier_handler
+from src.wordprocessor.main import lambda_handler as wordprocessor_handler
 from src.verifier.keys import KeyPath
 from scripts.sync import listen_for_updates
 
 parser = argparse.ArgumentParser(description="...")
 parser.add_argument("book_path")
 parser.add_argument("--skip-build", action="store_true")
+# parser.add_argument("--wait", action="store_true")
 
 
 DEFAULT_S3_EVENT = {
@@ -117,6 +119,7 @@ def build_after_loop(book_path: pathlib.Path) -> dict[str, float]:
     sqs_event = copy.deepcopy(DEFAULT_SQS_EVENT)
     sqs_event["Records"][0]["body"] = slug
     sqs_event["Records"][0]["attributes"]["MessageDeduplicationId"] = slug
+    wordprocessor_handler(sqs_event, context)
     builder_handler(sqs_event, context)
     end = time.time()
     return {"builder": end - start}

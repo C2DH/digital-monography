@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "staticws_dashboard" {
-  bucket        = var.staticws_dashboard_bucket_name
+  bucket        = "${var.project}-${var.env}-${var.staticws_dashboard_bucket_name}"
   force_destroy = true # TODO: maybe don't destroy when in production, I don't know
 }
 

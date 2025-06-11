@@ -22,11 +22,12 @@ try:
         CAPTION_ITEM_TYPE_TABLE,
         CAPTION_ITEM_TYPE_GRAPH,
         CAPTION_ITEM_TYPE_OTHER,
+        CLS_CAPTION,
     )
     from local_constants import RECOGNIZED_LICENSE_NAMES
     from path_handler import PathHandler, SUPPORTED_SUFFIXES
     from verif_warnings import VerifierMessages
-    from metadata import AssetDatapoint, DocumentMetadata
+    from metadata import DocumentMetadata, MetadataTableDatapoint
 except (ImportError, ModuleNotFoundError):
     from .constants import (
         IS_DEBUG,
@@ -41,11 +42,12 @@ except (ImportError, ModuleNotFoundError):
         CAPTION_ITEM_TYPE_TABLE,
         CAPTION_ITEM_TYPE_GRAPH,
         CAPTION_ITEM_TYPE_OTHER,
+        CLS_CAPTION,
     )
     from .local_constants import RECOGNIZED_LICENSE_NAMES
     from .path_handler import PathHandler, SUPPORTED_SUFFIXES
     from .verif_warnings import VerifierMessages
-    from .metadata import AssetDatapoint, DocumentMetadata
+    from .metadata import DocumentMetadata, MetadataTableDatapoint
 
 CAPTION_TYPES = ["Figure", "Table", "Graph"]
 IS_HEADING_TITLE_CASED_REQUIRED = True
@@ -145,7 +147,7 @@ class HtmlVerifier:
     def to_json(self, md: bool = False):
         return self._messages.to_json(md)
 
-    def sort(self) -> VerifierMessages:
+    def sort(self) -> None:
         self._messages.sort(key=lambda msg: (msg["line"], msg["pos"]))
 
     def verify(
@@ -186,7 +188,8 @@ class HtmlVerifier:
                     self._headings_lvls.append(int(re.findall(r"\d+", child.name)[0]))
                 elif child.name == "a":
                     self._links.append(child)
-                elif "dgt-mon-caption" in child.attrs.get("class", []):
+                # elif "dgt-mon-caption" in child.attrs.get("class", []):
+                elif CLS_CAPTION in child.attrs.get("class", []):
                     self._captions.append(child)
                 elif child.name == "table" and CLS_METADATA_TABLE in child.attrs.get(
                     "class", []
@@ -324,6 +327,7 @@ class HtmlVerifier:
         <h1>No Footnotes In Headings<sup><a href="#footnote-1" id="footnote-ref-1">[1]</a></sup></h1>
         """
         for sup in tag.find_all("sup"):
+            sup: bs4.element.Tag
             for a in sup.find_all("a"):
                 if "footnote" in str(a):
                     return True
@@ -524,8 +528,11 @@ class HtmlVerifier:
         if item == "Figure":
             uuid = tag.get("dgt-mon-metadata-uuid", "")
             if uuid:
-                asset = self._metadata.get_asset(uuid)
-                licensename = asset.kwargs.get("licensename", "").lower()
+                # asset = self._metadata.get_asset(uuid)
+                metadata_tbl: MetadataTableDatapoint = (
+                    self._metadata.get_metadata_table(uuid)
+                )
+                licensename = metadata_tbl.kwargs.get("licensename", "").lower()
                 if licensename in tag.text.lower():
                     return False
             return True
@@ -533,7 +540,8 @@ class HtmlVerifier:
 
     def _check_cap_many_bookmarks(self, tag: bs4.element.Tag) -> list[str]:
         ref_nums = []
-        if "dgt-mon-caption" in tag.get("class", []):
+        # if "dgt-mon-caption" in tag.get("class", []):
+        if CLS_CAPTION in tag.get("class", []):
             for child in tag.children:
                 if child.name == "a" and child.get("id", "").startswith("_Ref"):
                     ref_nums.append(child.get("id", ""))
@@ -599,7 +607,8 @@ class HtmlVerifier:
                 prev = prev.previous_sibling
             else:
                 break
-        if prev and "dgt-mon-caption" in prev.get("class", []):
+        # if prev and "dgt-mon-caption" in prev.get("class", []):
+        if prev and CLS_CAPTION in prev.get("class", []):
             return False
         return True
 
@@ -614,10 +623,11 @@ class HtmlVerifier:
             logger.info(f"Current html element: {elem}")
             uuid = elem.get("id")
             logger.info(f"UUID of current metadata table: {uuid}")
-            asset_datapoint = self._metadata.get_asset(uuid)
-            logger.info(f"Asset datapoint: {asset_datapoint}")
+            # asset_datapoint = self._metadata.get_asset(uuid)
+            metadata_tbl_dp = self._metadata.get_metadata_table(uuid)
+            logger.info(f"Asset datapoint: {metadata_tbl_dp}")
             # whole metadata table verification
-            missing_req_fields = self._check_tbl_missing_fields(asset_datapoint)
+            missing_req_fields = self._check_tbl_missing_fields(metadata_tbl_dp)
             logger.info(f"if missing_req_fields")
             if missing_req_fields:
                 logger.info(f"missing_req_fields == True")
@@ -642,7 +652,7 @@ class HtmlVerifier:
                     tags=[TABLES, METADATA_TABLES],
                 )
             # single field verification
-            for key, val in asset_datapoint.kwargs.items():
+            for key, val in metadata_tbl_dp.kwargs.items():
                 logger.info(f"key: {key}, val: {val}")
                 if key in (FIELD_DIGITAL_SOURCE, FIELD_PAPER_SOURCE):
                     vpath = PathHandler(val, self._slug)
@@ -741,15 +751,19 @@ class HtmlVerifier:
     def _check_tbl_unrecognized_field(self, key: str) -> bool:
         return key not in METADATA_FIELDS_KEYS
 
-    def _check_tbl_missing_fields(self, asset: AssetDatapoint) -> list[str]:
+    # def _check_tbl_missing_fields(self, asset: AssetDatapoint) -> list[str]:
+    def _check_tbl_missing_fields(
+        self, metadata_tbl: MetadataTableDatapoint
+    ) -> list[str]:
         missing = []
         is_missing = False
         for field in METADATA_FIELDS:
             if field["is_required"]:
-                if field["key"] not in asset.kwargs.keys():
+                # TODO: refactor
+                if field["key"] not in metadata_tbl.kwargs.keys():
                     is_missing = True
                     for alias in field["aliases"]:
-                        if alias in asset.kwargs.keys():
+                        if alias in metadata_tbl.kwargs.keys():
                             is_missing = False
                 if is_missing:
                     missing.append(field["key"])

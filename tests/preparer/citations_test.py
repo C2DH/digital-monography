@@ -33,7 +33,7 @@ class TestCitationsFromFields:
         assert group.plainCitation == "(see Ce 2010, Abb. 13 for examples)"
 
     def test_citation_items_extracted(self):
-        item = self.metadata.get_citation_item(43)
+        item = self.metadata.get("citation_items", 43, "id")
         assert item.itemData["title"] == "I disagree"
         assert item.itemData["container-title"] == "We all agree"
         assert item.itemData["publisher"] == "Like Minded Publ"
@@ -96,9 +96,9 @@ class TestCitationsFromFootnotes:
         )
 
     def test_citation_items_extracted(self):
-        joe_schmoe = self.metadata.get_citation_item(42)
-        abe_ce = self.metadata.get_citation_item(43)
-        with_nonascii = self.metadata.get_citation_item(41)
+        joe_schmoe = self.metadata.get("citation_items", 42, "id")
+        abe_ce = self.metadata.get("citation_items", 43, "id")
+        with_nonascii = self.metadata.get("citation_items", 41, "id")
 
         assert joe_schmoe.itemData["type"] == "article-journal"
         assert joe_schmoe.itemData["title"] == "Just no"

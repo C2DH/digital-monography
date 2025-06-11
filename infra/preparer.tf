@@ -1,7 +1,7 @@
 # Intermediate MD S3
 
 resource "aws_s3_bucket" "ir_apkg_md" {
-  bucket        = var.ir_apkg_md_bucket_name
+  bucket        = "${var.project}-${var.env}-${var.ir_apkg_md_bucket_name}"
   force_destroy = true
 }
 
@@ -29,7 +29,8 @@ resource "aws_s3_bucket_policy" "ir_apkg_policy" {
 # Uploader
 
 resource "aws_iam_user" "ir_apkg_md_uploader" {
-  name = "ir-apkg-md-uploader"
+  name = "${var.project}-${var.env}-${var.usr_ir_apkg_md_uploader}"
+  # name = "ir-apkg-md-uploader"
 }
 
 resource "aws_iam_access_key" "ir_apkg_md_uploader" {
@@ -54,7 +55,8 @@ data "aws_iam_policy_document" "assume_preparer_role" {
 }
 
 resource "aws_iam_role" "preparer_iam" {
-  name               = "preparer_iam"
+  # name               = "preparer_iam"
+  name               = "${var.project}-${var.env}-${var.role_preparer}"
   assume_role_policy = data.aws_iam_policy_document.assume_preparer_role.json
 }
 
@@ -72,9 +74,14 @@ data "aws_iam_policy_document" "preparer" {
     ]
   }
   statement {
-    sid       = "AllowMetadataUpload"
-    effect    = "Allow"
-    resources = [aws_s3_bucket.metadata_assets_s3.arn, "${aws_s3_bucket.metadata_assets_s3.arn}/*"]
+    sid    = "AllowMetadataUpload"
+    effect = "Allow"
+    resources = [
+      aws_s3_bucket.metadata_assets_s3.arn,
+      "${aws_s3_bucket.metadata_assets_s3.arn}/*",
+      aws_s3_bucket.metadata_refs_s3.arn,
+      "${aws_s3_bucket.metadata_refs_s3.arn}/*",
+    ]
     actions = [
       "s3:PutObject",
       "s3:PutObjectAcl",
@@ -115,9 +122,12 @@ data "aws_iam_policy_document" "preparer" {
     ]
   }
   statement {
-    sid       = "AllowWritingAuditEvents"
-    effect    = "Allow"
-    resources = [aws_dynamodb_table.audit_tbl.arn]
+    sid    = "AllowWritingAuditEvents"
+    effect = "Allow"
+    resources = [
+      aws_dynamodb_table.alerts_tbl.arn,
+      aws_dynamodb_table.audit_tbl.arn
+    ]
     actions = [
       "dynamodb:PutItem",
     ]
@@ -189,9 +199,10 @@ resource "aws_lambda_permission" "allow_preparer_access_sqs_via_vpc_endpoint" {
 }
 
 resource "aws_lambda_function" "preparer_func" {
-  function_name = "preparer"
+  # function_name = "preparer"
+  function_name = "${var.project}-${var.env}-${var.lambda_preparer_func}"
   package_type  = "Image"
-  image_uri     = "${aws_ecr_repository.preparer_repo.repository_url}:${local.preparer_stable_v}"
+  image_uri     = "${aws_ecr_repository.preparer_repo.repository_url}:${local.preparer_tag}"
   role          = aws_iam_role.preparer_iam.arn
   depends_on = [
     data.aws_cloudwatch_log_group.general_purpose_logs,
@@ -212,6 +223,21 @@ resource "aws_lambda_function" "preparer_func" {
     subnet_ids         = [aws_subnet.efs_public.id]
     security_group_ids = [aws_security_group.efs_access_sg.id]
   }
+  environment {
+    variables = {
+      DYNAMODB_ASSETS_TBL          = aws_dynamodb_table.assets_tbl.name
+      DYNAMODB_AUDIT_TBL           = aws_dynamodb_table.audit_tbl.name
+      DYNAMODB_ALERTS_TBL          = aws_dynamodb_table.alerts_tbl.name
+      DYNAMODB_CITATIONS_TBL       = aws_dynamodb_table.citations_tbl.name
+      DYNAMODB_HEADINGS_TBL        = aws_dynamodb_table.headings_tbl.name
+      IR_APKG_HTML_BUCKET_NAME     = aws_s3_bucket.ir_apkg_html.bucket
+      IR_APKG_MD_BUCKET_NAME       = aws_s3_bucket.ir_apkg_md.bucket
+      METADATA_ASSETS_BUCKET_NAME  = aws_s3_bucket.metadata_assets_s3.bucket
+      SQS_GITHUB_FIFO_TRIGGER_NAME = aws_sqs_queue.pre_github_queue.name
+      AWS_ACCOUNT_REGION           = var.region
+      AWS_ACCOUNT_ID               = var.aws_account_id
+    }
+  }
 }
 
 resource "aws_s3_bucket_notification" "upload_apkg_notification" {
@@ -224,10 +250,11 @@ resource "aws_s3_bucket_notification" "upload_apkg_notification" {
 }
 
 resource "aws_ecr_repository" "preparer_repo" {
-  name                 = var.preparer_repo_name
+  name                 = "${var.project}-dev-${var.microservice_preparer}"
   image_tag_mutability = "IMMUTABLE"
+  force_delete         = true
 }
 
 locals {
-  preparer_stable_v = local.versions_data.PREPARER_STABLE_V
+  preparer_tag = var.env == "main" ? local.versions_data.PREPARER.STABLE : local.versions_data.PREPARER.LATEST
 }

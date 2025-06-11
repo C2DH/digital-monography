@@ -1,8 +1,7 @@
 terraform {
   backend "s3" {
-    bucket         = "dgtmon-tfstate-backend"
-    key            = "statefile.tfstate"
-    dynamodb_table = "dgtmon-state-lock-table"
+    bucket         = "dgtmon-shared-s3-tfstate-backend"
+    dynamodb_table = "dgtmon-shared-dyndb-tfstate-locktbl"
     encrypt        = true
     profile        = "oidc"
   }
@@ -13,7 +12,8 @@ provider "aws" {
   region  = var.region
   default_tags {
     tags = {
-      project = "dgt-mon"
+      org     = "c2dh"
+      project = var.project
     }
   }
 }

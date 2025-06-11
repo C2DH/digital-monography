@@ -49,6 +49,8 @@ def listen_for_updates(
             print("-" * 50)
             print(f"total: {total_t} (100%)")
             break
+        if os.environ.get("DGTMON_NO_WAIT") is not None:
+            break
         else:
             print(".", end="", flush=True)
             time.sleep(0.1)

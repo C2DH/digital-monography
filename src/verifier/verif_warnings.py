@@ -9,6 +9,11 @@ except (ImportError, ModuleNotFoundError):
     from .html2md import convert_to_md
 
 
+type MessagesJson = list[
+    t.Union[FileVerificationMessageJson, GeneralVerificationMessageJson]
+]
+
+
 class FileVerificationMessageJson(t.TypedDict):
     id: str
     problem: str
@@ -211,9 +216,7 @@ class VerifierMessages:
                 )
             )
 
-    def to_json(
-        self, md: bool = False
-    ) -> list[t.Union[FileVerificationMessageJson, GeneralVerificationMessageJson]]:
+    def to_json(self, md: bool = False) -> MessagesJson:
         return [msg.to_json(md) for msg in self._messages]
 
     def sort(self, *args, **kwargs) -> None:

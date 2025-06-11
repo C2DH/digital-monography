@@ -1,9 +1,11 @@
 ## Upload author's package S3
 
 resource "aws_s3_bucket" "upload_apkg" {
-  bucket = var.upload_apkg_bucket_name
+  bucket        = "${var.project}-${var.env}-${var.upload_apkg_bucket_name}"
+  force_destroy = true # 2025-05-21 temp enabled for migration
   lifecycle {
-    prevent_destroy = true
+    prevent_destroy = false
+    # prevent_destroy = true # 2025-05-21 temp disabled for migration
   }
 }
 
@@ -56,7 +58,7 @@ data "aws_iam_policy_document" "public_upload_apkg" {
 ## Intermediate HTML S3
 
 resource "aws_s3_bucket" "ir_apkg_html" {
-  bucket        = var.ir_apkg_html_bucket_name
+  bucket        = "${var.project}-${var.env}-${var.ir_apkg_html_bucket_name}"
   force_destroy = true
 }
 
@@ -89,7 +91,8 @@ resource "aws_s3_bucket_policy" "public_upload_apkg" {
 }
 
 resource "aws_iam_user" "apkg_uploader" {
-  name = "apkg-uploader"
+  name = "${var.project}-${var.env}-${var.usr_apkg_uploader}"
+  # name = "apkg-uploader"
 }
 
 resource "aws_iam_access_key" "apkg_uploader" {
@@ -103,7 +106,7 @@ output "apkg_uploader_id" {
 ## SQS (Lambda trigger)
 
 resource "aws_sqs_queue" "pre_builder_queue" {
-  name                        = "${var.sqs_builder_trigger}.fifo"
+  name                        = "${var.project}-${var.env}-${var.sqs_builder_trigger}"
   fifo_queue                  = true
   receive_wait_time_seconds   = 15 # TODO: once on DGT infra, reduce wait time
   delay_seconds               = 5
@@ -141,7 +144,8 @@ data "aws_iam_policy_document" "assume_builder_role" {
 }
 
 resource "aws_iam_role" "builder_iam" {
-  name               = "builder_iam"
+  # name               = "builder_iam"
+  name               = "${var.project}-${var.env}-${var.role_builder}"
   assume_role_policy = data.aws_iam_policy_document.assume_builder_role.json
 }
 
@@ -179,11 +183,31 @@ data "aws_iam_policy_document" "builder" {
     ]
   }
   statement {
-    sid       = "AllowWritingAuditEvents"
-    effect    = "Allow"
-    resources = [aws_dynamodb_table.audit_tbl.arn]
+    sid    = "AllowWritingAuditEvents"
+    effect = "Allow"
+    resources = [
+      aws_dynamodb_table.alerts_tbl.arn,
+      aws_dynamodb_table.audit_tbl.arn
+    ]
     actions = [
       "dynamodb:PutItem",
+    ]
+  }
+  statement {
+    sid    = "AllowMetadataUpload"
+    effect = "Allow"
+    resources = [
+      aws_s3_bucket.metadata_assets_s3.arn,
+      "${aws_s3_bucket.metadata_assets_s3.arn}/*",
+      aws_s3_bucket.metadata_refs_s3.arn,
+      "${aws_s3_bucket.metadata_refs_s3.arn}/*",
+    ]
+    actions = [
+      "s3:PutObject",
+      "s3:PutObjectAcl",
+      "s3:GetObject",
+      "s3:GetObjectAcl",
+      "s3:ListBucket"
     ]
   }
   statement {
@@ -197,23 +221,24 @@ data "aws_iam_policy_document" "builder" {
       "sqs:GetQueueUrl"
     ]
   }
-  # statement {
-  #   sid    = "AllowReadAndWriteToDynamoDB"
-  #   effect = "Allow"
-  #   resources = [
-  #     aws_dynamodb_table.assets_tbl.arn,
-  #     aws_dynamodb_table.headings_tbl.arn,
-  #     aws_dynamodb_table.citations_tbl.arn
-  #   ]
-  #   actions = [
-  #     "dynamodb:PutItem",
-  #     # "dynamodb:GetItem",
-  #     # "dynamodb:UpdateItem",
-  #     # "dynamodb:DeleteItem",
-  #     # "dynamodb:Scan",
-  #     # "dynamodb:Query"
-  #   ]
-  # }
+  statement {
+    sid    = "AllowReadAndWriteToDynamoDB"
+    effect = "Allow"
+    resources = [
+      aws_dynamodb_table.refs_tbl.arn,
+      # aws_dynamodb_table.assets_tbl.arn,
+      # aws_dynamodb_table.headings_tbl.arn,
+      # aws_dynamodb_table.citations_tbl.arn
+    ]
+    actions = [
+      "dynamodb:PutItem",
+      # "dynamodb:GetItem",
+      # "dynamodb:UpdateItem",
+      # "dynamodb:DeleteItem",
+      # "dynamodb:Scan",
+      # "dynamodb:Query"
+    ]
+  }
   statement {
     sid       = "AllowLambdaVPCNetworking"
     effect    = "Allow"
@@ -229,7 +254,8 @@ data "aws_iam_policy_document" "builder" {
 }
 
 resource "aws_iam_policy" "builder" {
-  name   = "builder_policy"
+  # name   = "builder_policy"
+  name   = "${var.project}-${var.env}-${var.policy_builder}"
   policy = data.aws_iam_policy_document.builder.json
 }
 
@@ -263,9 +289,10 @@ resource "aws_lambda_permission" "allow_builder_access_s3_via_vpc_endpoint" {
 # }
 
 resource "aws_lambda_function" "builder_func" {
-  function_name = "builder"
+  # function_name = "builder"
+  function_name = "${var.project}-${var.env}-${var.lambda_builder_func}"
   package_type  = "Image"
-  image_uri     = "${aws_ecr_repository.builder_repo.repository_url}:${local.builder_stable_v}"
+  image_uri     = "${aws_ecr_repository.builder_repo.repository_url}:${local.builder_tag}"
   role          = aws_iam_role.builder_iam.arn
   depends_on = [
     data.aws_cloudwatch_log_group.general_purpose_logs,
@@ -286,6 +313,16 @@ resource "aws_lambda_function" "builder_func" {
     subnet_ids         = [aws_subnet.efs_public.id]
     security_group_ids = [aws_security_group.efs_access_sg.id]
   }
+  environment {
+    variables = {
+      DYNAMODB_ALERTS_TBL       = aws_dynamodb_table.alerts_tbl.name
+      DYNAMODB_AUDIT_TBL        = aws_dynamodb_table.audit_tbl.name
+      DYNAMODB_REFS_TBL         = aws_dynamodb_table.refs_tbl.name
+      METADATA_REFS_BUCKET_NAME = aws_s3_bucket.metadata_refs_s3.bucket
+      STATICWS_WIP_BUCKET_NAME  = aws_s3_bucket.staticws_wip.bucket
+      VERIFIER_MSGS             = aws_s3_bucket.verification_msg.bucket
+    }
+  }
 }
 
 # resource "aws_s3_bucket_notification" "ir_apkg_md_notification" {
@@ -298,10 +335,11 @@ resource "aws_lambda_function" "builder_func" {
 # }
 
 resource "aws_ecr_repository" "builder_repo" {
-  name                 = var.builder_repo_name
+  name                 = "${var.project}-dev-${var.microservice_builder}"
   image_tag_mutability = "IMMUTABLE"
+  force_delete         = true
 }
 
 locals {
-  builder_stable_v = local.versions_data.BUILDER_STABLE_V
+  builder_tag = var.env == "main" ? local.versions_data.BUILDER.STABLE : local.versions_data.BUILDER.LATEST
 }

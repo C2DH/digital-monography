@@ -3,36 +3,23 @@ import boto3
 import datetime
 import json
 import logging
+import os
 import pathlib
 import typing as t
 import urllib.parse
 
 
 try:
-    from audit import AuditEvent, AuditStatus
-    from constants import (
-        ModuleEnum,
-        AWS_ACCOUNT_ID,
-        AWS_ACCOUNT_REGION,
-        IS_DEBUG,
-        SQS_BUILDER_FIFO_TRIGGER_NAME,
-        VERIFIER_MSGS,
-    )
+    from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
+    from constants import ModuleEnum, IS_DEBUG
     from fakers import Faker
-    from html_verifier import HtmlVerifier
+    from rules_v1 import HtmlVerifier
     from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
-    from .audit import AuditEvent, AuditStatus
-    from .constants import (
-        ModuleEnum,
-        AWS_ACCOUNT_ID,
-        AWS_ACCOUNT_REGION,
-        IS_DEBUG,
-        SQS_BUILDER_FIFO_TRIGGER_NAME,
-        VERIFIER_MSGS,
-    )
+    from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
+    from .constants import ModuleEnum, IS_DEBUG
     from .fakers import Faker
-    from .html_verifier import HtmlVerifier
+    from .rules_v1 import HtmlVerifier
     from .keys import KeyPath
 
 if IS_DEBUG:
@@ -76,9 +63,11 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         )
         verifer.sort()
         warnings_json = verifer.to_json(md=True)
+        TEMP_DISABLED_FOR_BUILDER_WARNINGS = """
         _write_json_to_efs(warnings_json, key)
         # _make_warnings_report(verifer.soup, warnings_json, timestamp, key)
         _put_json_to_s3(json.dumps(warnings_json, default=str), key)
+        """  # TODO: revert
         _send_msg_to_sqs(key)
     logger.info("Handler ended successfully.")
     _log_audit_event(
@@ -135,9 +124,10 @@ def _write_json_to_efs(json_data: t.Any, key: KeyPath) -> None:
 def _put_json_to_s3(body: str, key: KeyPath) -> None:
     try:
         s3_key = key.s3_key.with_suffix(".json")
-        resp = s3.put_object(Body=body, Bucket=VERIFIER_MSGS, Key=str(s3_key))
+        bucket = os.environ.get("VERIFIER_MSGS", "")
+        resp = s3.put_object(Body=body, Bucket=bucket, Key=str(s3_key))
         logger.info(
-            f"Response from s3.put_object(Bucket={VERIFIER_MSGS}, Key={str(s3_key)}): "
+            f"Response from s3.put_object(Bucket={bucket}, Key={str(s3_key)}): "
             + json.dumps(resp, default=str)
         )
     except Exception as e:
@@ -151,7 +141,10 @@ def _put_json_to_s3(body: str, key: KeyPath) -> None:
 def _send_msg_to_sqs(key: KeyPath) -> None:
     logger.info(f"Preparing to send a message to the sqs queue.")
     try:
-        QueueUrl = f"https://sqs.{AWS_ACCOUNT_REGION}.amazonaws.com/{AWS_ACCOUNT_ID}/{SQS_BUILDER_FIFO_TRIGGER_NAME}"
+        aws_account_id = os.environ.get("AWS_ACCOUNT_ID", "")
+        aws_account_region = os.environ.get("AWS_ACCOUNT_REGION", "")
+        sqs_builder_trigger = os.environ.get("SQS_BUILDER_FIFO_TRIGGER_NAME", "")
+        QueueUrl = f"https://sqs.{aws_account_region}.amazonaws.com/{aws_account_id}/{sqs_builder_trigger}"
         MessageBody = key.slug
         MessageDeduplicationId = key.slug
         MessageGroupId = "0"
@@ -182,17 +175,20 @@ def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:
         msg=msg,
     )
     event.send(dynamodb)
+    if status == AuditStatus.FAILED.value:
+        alert = AlertLog(slug=key.slug, status=AlertStatus.FAIL.value)
+        alert.send(dynamodb)
     logger.info(f"Audit event logged: {event}")
 
 
-def _get_character_and_word_count(soup: bs4.BeautifulSoup) -> tuple[int, int]:
-    soup_contents_list = []
-    for elem in soup.find_all(text=True):
-        soup_contents_list.append(elem.text.strip())
-    soup_contents = "".join(soup_contents_list).replace(" ", "")  # minimize spaces
-    words = []
-    for line in soup_contents_list:
-        for word in line.split(" "):
-            if word and not word.isspace():
-                words.append(word)
-    return len(soup_contents), len(words)
+# def _get_character_and_word_count(soup: bs4.BeautifulSoup) -> tuple[int, int]:
+#     soup_contents_list = []
+#     for elem in soup.find_all(text=True):
+#         soup_contents_list.append(elem.text.strip())
+#     soup_contents = "".join(soup_contents_list).replace(" ", "")  # minimize spaces
+#     words = []
+#     for line in soup_contents_list:
+#         for word in line.split(" "):
+#             if word and not word.isspace():
+#                 words.append(word)
+#     return len(soup_contents), len(words)

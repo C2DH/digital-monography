@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import TnbBookNav from "./../_components/TnbBookNav";
+import { endpoint, getGitBranch } from "./../constants";
 
 function getNestedStr(rec: any, attr: string): string {
     const dataType = "S";
@@ -16,19 +16,22 @@ function getNestedStr(rec: any, attr: string): string {
 
 type ICitationGroup = {
     location: string,
-    plainCitation: string,
+    // plainCitation: string,
+    citationInJson: string,
 }
 
 export default function DynamicTable() {
     const [tableData, setTableData] = useState<ICitationGroup[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
     const searchParams = useSearchParams();
     const slug = searchParams?.get("slug");
-    const dbTable = "dgtmon-dev-dyndb-citations-tbl";
-
+    // const dbTable = "dgtmon-dev-dyndb-citations-tbl";
+    const stage = getGitBranch();
     const fetchRecords = async (pk: string) => {
         try {
-            const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
-            const resp = await fetch(`${endpoint}/test/citations?slug=${pk}`);
+            setLoading(true);
+            // const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
+            const resp = await fetch(`${endpoint}/${stage}/citations?slug=${pk}`);
             const respJson = await resp.json();
             const tableItems: ICitationGroup[] = [];
             for (let i = 0; i < (respJson.Items || []).length; i++) {
@@ -36,13 +39,16 @@ export default function DynamicTable() {
                 for (let j = 0; j < records.length; j++) {
                     tableItems.push({
                         location: getNestedStr(records[j], "file_name"),
-                        plainCitation: getNestedStr(records[j], "plainCitation"),
+                        // plainCitation: getNestedStr(records[j], "plainCitation"),
+                        citationInJson: JSON.stringify(records[j], null, 2),
                     })
                 }
             }
             setTableData(tableItems);
+            setLoading(false);
         } catch (err) {
-            console.log("Error", err);
+            console.error(err);
+            setLoading(false);
         }
     };
 
@@ -55,7 +61,7 @@ export default function DynamicTable() {
     return (
         <>
             {slug && <TnbBookNav slug={slug} color="secondary"></TnbBookNav>}
-            <table className="table">
+            {!loading && tableData && <table className="table">
                 <thead>
                     <tr>
                         <th scope="col">Location</th>
@@ -64,16 +70,23 @@ export default function DynamicTable() {
                 </thead>
                 <tbody>
                     {
-                        tableData && tableData.map((val: ICitationGroup, idx: number) => (
+                        tableData.map((val: ICitationGroup, idx: number) => (
                             <tr key={idx}>
                                 <td>{val.location}</td>
-                                <td>{val.plainCitation}</td>
+                                {/* <td>{val.plainCitation}</td> */}
+                                <td>{val.citationInJson}</td>
                             </tr>
                         ))
                     }
 
                 </tbody>
-            </table >
+            </table >}
+            {loading && <div className="d-flex justify-content-center">
+                <h4>Please wait for the items to load...</h4>
+                <div className="spinner-grow text-secondary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                </div>
+            </div>}
         </>
     )
 }

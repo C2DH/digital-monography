@@ -1,8 +1,8 @@
-import aws_lambda_wsgi
+# import aws_lambda_wsgi
 import base64
 import boto3
 import datetime
-import dropbox
+import dropbox  # type: ignore[import-untyped]
 import flask  # TODO: consider replacing flask with something microVM specific (fastapi? bottle?)
 import hashlib
 import hmac
@@ -12,31 +12,26 @@ import logging
 import pathlib
 import typing as t
 import urllib
-
+from aws_lambda_powertools.utilities.typing import LambdaContext
+from aws_lambda_powertools.utilities.data_classes import (
+    event_source,
+    APIGatewayProxyEventV2,
+)
 
 try:
-    from constants import (
-        IS_DEBUG,
-        DROPBOX_SECRET_ID,
-        DYNAMODB_AUDIT_TBL,
-        DYNAMODB_ASSETS_TBL,
-        DYNAMODB_CITATIONS_TBL,
-        DYNAMODB_HEADINGS_TBL,
-        DYNAMODB_TOKENS_TBL,
-        VERIFIER_MSGS,
-    )
+    from constants import IS_DEBUG
+    from lambda_wsgi import response as lambda_wsgi_response
 except (ImportError, ModuleNotFoundError):
-    from .constants import (
-        IS_DEBUG,
-        DROPBOX_SECRET_ID,
-        DYNAMODB_AUDIT_TBL,
-        DYNAMODB_ASSETS_TBL,
-        DYNAMODB_CITATIONS_TBL,
-        DYNAMODB_HEADINGS_TBL,
-        DYNAMODB_TOKENS_TBL,
-        VERIFIER_MSGS,
-    )
+    from .constants import IS_DEBUG  # type: ignore
+    from .lambda_wsgi import response as lambda_wsgi_response  # type: ignore
 
+from mypy_boto3_dynamodb.client import DynamoDBClient as boto3_DynamoDBClient
+from mypy_boto3_dynamodb.type_defs import (
+    GetItemOutputTypeDef as boto3_GetItemOutputTypeDef,
+)
+from mypy_boto3_s3.client import S3Client as boto3_S3Client
+from mypy_boto3_s3.type_defs import ObjectTypeDef as boto3_ObjectTypeDef
+from mypy_boto3_sqs import SQSClient as boto3_SQSClient
 
 if IS_DEBUG:
     today = datetime.date.today().isoformat()
@@ -52,10 +47,10 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-dynamodb = boto3.client("dynamodb")
+dynamodb: boto3_DynamoDBClient = boto3.resource("dynamodb")
 secretsmanager = boto3.client("secretsmanager")
-sqs = boto3.client("sqs")
-s3 = boto3.client("s3")
+sqs: boto3_SQSClient = boto3.client("sqs")
+s3: boto3_S3Client = boto3.client("s3")
 
 
 APP_KEY = "9d9sdu2khx0lboj"
@@ -107,7 +102,8 @@ def get_url(route) -> str:
 
 
 def get_flow():
-    dbx_app_secret = get_dbx_app_secret(DROPBOX_SECRET_ID)
+    secret_id = os.environ.get("DROPBOX_SECRET_ID", "")
+    dbx_app_secret = get_dbx_app_secret(secret_id)
     return dropbox.DropboxOAuth2Flow(
         consumer_key=APP_KEY,
         consumer_secret=dbx_app_secret,
@@ -137,9 +133,8 @@ def oauth_callback(*args, **kwargs):
     account = auth_result.account_id
     # Extract and store the access token for this user
     access_token = auth_result.access_token
-    dynamodb_set(
-        DYNAMODB_TOKENS_TBL, **{"account": account, "access_token": access_token}
-    )
+    table = os.environ.get("DYNAMODB_TOKENS_TBL", "")
+    dynamodb_set(table, **{"account": account, "access_token": access_token})
     return flask.redirect(get_url("done"))
 
 
@@ -149,9 +144,10 @@ def index() -> str:
     return flask.render_template("index.html")
 
 
-def _s3_list_objects(bucket: str, slug: t.Optional[str]):
-    if slug:
-        objects = s3.list_objects_v2(Bucket=bucket, Prefix=f"{slug}/")
+def _s3_list_objects(bucket: str, prefix: t.Optional[str]) -> list[boto3_ObjectTypeDef]:
+    if prefix:
+        # objects = s3.list_objects_v2(Bucket=bucket, Prefix=f"{slug}/")
+        objects = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
     else:
         objects = s3.list_objects_v2(Bucket=bucket)
     if "Contents" in objects:
@@ -165,7 +161,25 @@ def list_warnings() -> flask.Response:
     """List objects in a warnings bucket."""
     logger.info("List warnings REST api endpoint was called with GET.")
     slug = flask.request.args.get("slug")
-    contents = _s3_list_objects(VERIFIER_MSGS, slug)
+    contents = _s3_list_objects(os.environ.get("VERIFIER_MSGS", ""), f"{slug}/")
+    resp = flask.Response(
+        response=flask.json.dumps(contents),
+        status=200,
+        mimetype="application/json",
+    )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
+
+
+@app.route("/list-assets", methods=["GET"])
+def list_assets_from_s3() -> flask.Response:
+    """List objects in a upload slug/assets/* bucket."""
+    logger.info("List assets REST api endpoint was called with GET.")
+    slug = flask.request.args.get("slug")
+    bucket = os.environ.get("APKG_UPLOAD_BUCKET_NAME", "")
+    contents = _s3_list_objects(bucket, prefix=f"{slug}/assets/")
     resp = flask.Response(
         response=flask.json.dumps(contents),
         status=200,
@@ -178,16 +192,37 @@ def list_warnings() -> flask.Response:
 
 
 @app.route("/assets", methods=["GET"])
-def list_assets() -> flask.Response:
+def list_assets_from_dynamodb() -> flask.Response:
     """Retrieve assets from the database and return them to the client."""
     logger.info("Retrieve assets from the database and return them to the client.")
     slug = flask.request.args.get("slug")
+    assert slug is not None, "Error: slug was not provided"
     contents = dynamodb.query(
-        TableName=DYNAMODB_ASSETS_TBL,
+        TableName=os.environ.get("DYNAMODB_ASSETS_TBL", ""),
         KeyConditionExpression="slug = :slug",
-        ExpressionAttributeValues={
-            ":slug": { "S": slug }
-        },
+        ExpressionAttributeValues={":slug": {"S": slug}},
+    )
+    resp = flask.Response(
+        response=flask.json.dumps(contents),
+        status=200,
+        mimetype="application/json",
+    )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
+
+
+@app.route("/refs", methods=["GET"])
+def list_refs_from_dynamodb() -> flask.Response:
+    """Retrieve refs from the database and return them to the client."""
+    logger.info("Retrieve refs from the database and return them to the client.")
+    slug = flask.request.args.get("slug")
+    assert slug is not None, "Error: slug was not provided"
+    contents = dynamodb.query(
+        TableName=os.environ.get("DYNAMODB_REFS_TBL", ""),
+        KeyConditionExpression="slug = :slug",
+        ExpressionAttributeValues={":slug": {"S": slug}},
     )
     resp = flask.Response(
         response=flask.json.dumps(contents),
@@ -205,13 +240,40 @@ def query_events() -> flask.Response:
     """Retrieve events from the database and return them to the client."""
     logger.info("Retrieve events from the database and return them to the client.")
     slug = flask.request.args.get("slug")
+    assert slug is not None, "Error: slug was not provided"
     contents = dynamodb.query(
-        TableName=DYNAMODB_AUDIT_TBL,
+        TableName=os.environ.get("DYNAMODB_AUDIT_TBL", ""),
         KeyConditionExpression="slug = :slug",
-        ExpressionAttributeValues={
-            ":slug": { "S": slug }
-        },
+        ExpressionAttributeValues={":slug": {"S": slug}},
     )
+    resp = flask.Response(
+        response=flask.json.dumps(contents),
+        status=200,
+        mimetype="application/json",
+    )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
+
+
+@app.route("/alerts", methods=["GET"])
+def query_alerts() -> flask.Response:
+    """Retrieve alerts from the database and return them to the client."""
+    logger.info("Retrieve alerts from the database and return them to the client.")
+    resp = dynamodb.scan(
+        TableName=os.environ.get("DYNAMODB_ALERTS_TBL", ""),
+    )
+    contents = resp["Items"]
+    logger.info(f"Resp: {json.dumps(resp, default=str)}")
+    while "LastEvaluatedKey" in resp:
+        resp = dynamodb.scan(
+            TableName=os.environ.get("DYNAMODB_ALERTS_TBL", ""),
+            ExclusiveStartKey=resp["LastEvaluatedKey"],
+        )
+        logger.info(f"Resp: {json.dumps(resp, default=str)}")
+        contents.extend(resp["Items"])
+    logger.info(f"Contents: {json.dumps(contents, default=str)}")
     resp = flask.Response(
         response=flask.json.dumps(contents),
         status=200,
@@ -228,12 +290,11 @@ def query_citations() -> flask.Response:
     """Retrieve citations from the database and return them to the client."""
     logger.info("Retrieve citations from the database and return them to the client.")
     slug = flask.request.args.get("slug")
+    assert slug is not None, "Error: slug was not provided"
     contents = dynamodb.query(
-        TableName=DYNAMODB_CITATIONS_TBL,
+        TableName=os.environ.get("DYNAMODB_CITATIONS_TBL", ""),
         KeyConditionExpression="slug = :slug",
-        ExpressionAttributeValues={
-            ":slug": { "S": slug }
-        },
+        ExpressionAttributeValues={":slug": {"S": slug}},
     )
     resp = flask.Response(
         response=flask.json.dumps(contents),
@@ -251,12 +312,11 @@ def query_headings() -> flask.Response:
     """Retrieve headings from the database and return them to the client."""
     logger.info("Retrieve headings from the database and return them to the client.")
     slug = flask.request.args.get("slug")
+    assert slug is not None, "Error: slug was not provided"
     contents = dynamodb.query(
-        TableName=DYNAMODB_HEADINGS_TBL,
+        TableName=os.environ.get("DYNAMODB_HEADINGS_TBL", ""),
         KeyConditionExpression="slug = :slug",
-        ExpressionAttributeValues={
-            ":slug": { "S": slug }
-        },
+        ExpressionAttributeValues={":slug": {"S": slug}},
     )
     resp = flask.Response(
         response=flask.json.dumps(contents),
@@ -280,8 +340,7 @@ def login(*args, **kwargs):
 def done() -> str:
     logger.info("Done REST api endpoint was called.")
     url = "https://cpy-dgtmon-dev-staticws-dashboard.s3.eu-west-1.amazonaws.com/index.html"
-    return flask.redirect(url)
-    # return flask.render_template("done.html")
+    return flask.render_template("done.html", data={"url": url})
 
 
 @app.route("/webhook", methods=["GET"])
@@ -306,8 +365,9 @@ def webhook() -> t.Union[t.NoReturn | str]:
     """
     logger.info("Webhook REST api endpoint was called with POST.")
     # Make sure this is a valid request from Dropbox
-    dbx_app_secret = get_dbx_app_secret(DROPBOX_SECRET_ID)
-    signature = flask.request.headers.get("X-Dropbox-Signature")
+    secret_id = os.environ.get("DROPBOX_SECRET_ID", "")
+    dbx_app_secret = get_dbx_app_secret(secret_id)
+    signature = flask.request.headers.get("X-Dropbox-Signature", "")
     key = bytes(dbx_app_secret, encoding="ascii")
     computed_signature = hmac.new(key, flask.request.data, hashlib.sha256).hexdigest()
     if not hmac.compare_digest(signature, computed_signature):
@@ -320,9 +380,9 @@ def webhook() -> t.Union[t.NoReturn | str]:
     return ""
 
 
-def _send_msg_to_sqs(request_data: FlaskRequestData) -> None:
+def _send_msg_to_sqs(request_data: bytes) -> None:
     try:
-        QueueUrl = os.environ["SQS_URL"]
+        QueueUrl = os.environ.get("SQS_URL", "")
         MessageBody = base64.b64encode(request_data).decode("utf-8")
         resp = sqs.send_message(
             QueueUrl=QueueUrl,
@@ -339,7 +399,7 @@ def _send_msg_to_sqs(request_data: FlaskRequestData) -> None:
 
 def dynamodb_set(tbl: str, **kwargs) -> None:
     expire_at = int((datetime.datetime.now() + datetime.timedelta(days=3)).timestamp())
-    dyndb = boto3.resource('dynamodb')
+    dyndb = boto3.resource("dynamodb")
     table = dyndb.Table(tbl)
     resp = table.put_item(Item={"expire_at": expire_at, **kwargs})
     logger.info(
@@ -351,7 +411,7 @@ def dynamodb_set(tbl: str, **kwargs) -> None:
     # )
 
 
-def dynamodb_get(tbl: str, pk: dict[str, str]) -> dict[str, t.Any]:
+def dynamodb_get(tbl: str, pk: dict[str, str]) -> boto3_GetItemOutputTypeDef:
     # table = dynamodb.Table(tbl)
     # resp = table.get_item(Key=pk)
     resp = dynamodb.get_item(TableName=tbl, Key=pk)
@@ -361,7 +421,8 @@ def dynamodb_get(tbl: str, pk: dict[str, str]) -> dict[str, t.Any]:
     return resp
 
 
-def lambda_handler(event, context):
+@event_source(data_class=APIGatewayProxyEventV2)
+def lambda_handler(event: APIGatewayProxyEventV2, context: LambdaContext):
     logger.info(f"Event: {json.dumps(event, default=str)}")
     logger.info(f"Context: {json.dumps(context, default=str)}")
-    return aws_lambda_wsgi.response(app, event, context)
+    return lambda_wsgi_response(app, event, context)

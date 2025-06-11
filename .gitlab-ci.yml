@@ -2,6 +2,7 @@ stages:
   - init
   - deploy
   - post-deploy
+  - e2e-tests
   - destroy
 
 init:
@@ -17,11 +18,14 @@ init:
     - cat $PGP_KEY | gpg --batch --import
     - echo $PGP_PASSPHRASE | gpg --batch --always-trust --yes --passphrase-fd 0 --pinentry-mode=loopback -s $(mktemp)
   script:
-    - sops -d secrets/dev.tfvars.enc.json | jq '.data' > secrets/dev.tfvars.json
+    - sops -d secrets/encrypted.tfvars.json | jq '.data' > secrets/decrypted.tfvars.json
+    # - >
+    #   sops -d secrets/encrypted.tfvars.json |
+    #   jq -r --arg CI_COMMIT_BRANCH "$CI_COMMIT_BRANCH" '.data += {env: $CI_COMMIT_BRANCH}'
   artifacts:
     # expire_in: 1 day # TODO: consider TTL
     paths:
-      - secrets/dev.tfvars.json
+      - secrets/decrypted.tfvars.json
 
 build-dashboard:
   stage: init
@@ -33,6 +37,9 @@ build-dashboard:
   image: node:20
   before_script:
     - cd staticws/dashboard/
+    - touch .env
+    - echo "NEXT_PUBLIC_GIT_BRANCH=${CI_COMMIT_BRANCH}" >> .env
+    - cat .env
     - npm install
   script:
     - npm run build
@@ -67,10 +74,10 @@ deploy:
     - cp -a infra/. .
     - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
     - mkdir ~/.aws
-    - echo -e "[profile oidc]\nrole_arn=${ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
+    - echo -e "[profile oidc]\nrole_arn=${DGTMON_ROLE_DEPL_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
   script:
-    - terraform init -var-file=secrets/dev.tfvars.json
-    - terraform apply -auto-approve -var-file=secrets/dev.tfvars.json
+    - terraform init -backend-config="key=${CI_COMMIT_BRANCH}.tfstate" -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH"
+    - terraform apply -auto-approve -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH"
     - terraform output -json > tf_output.json
   artifacts:
     expire_in: 1 day
@@ -97,12 +104,34 @@ upload-dashboard:
     - yum update -y && yum install -y jq
     - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
     - mkdir ~/.aws
-    - echo -e "[profile oidc]\nrole_arn=${POST_DEPL_ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
+    - echo -e "[profile oidc]\nrole_arn=${DGTMON_ROLE_POSTDEPL_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
   script:
     - export STATICWS_DASHBOARD_S3=$(jq -r '.staticws_dashboard_bucket_name.value' tf_output.json)
     - export AWS_CONFIG_FILE=~/.aws/config
     - aws s3 sync staticws/dashboard/out s3://$STATICWS_DASHBOARD_S3 --delete --profile oidc
   when: on_success
+
+# test-dashboard:
+#   stage: e2e-tests
+#   dependencies:
+#     - deploy
+#     - post-deploy
+#   only:
+#     - main
+#     - develop
+#   # image: node:20
+#   image: cypress/browsers:22.15.0
+#   before_script:
+#     - export STATICWS_DASHBOARD_S3=$(jq -r '.staticws_dashboard_bucket_name.value' tf_output.json)
+#     - cd tests/dashboard/
+#     # - touch .env
+#     # - echo "STATICWS_DASHBOARD_S3=${STATICWS_DASHBOARD_S3}" >> .env
+#     # - echo .env
+#     # - echo "STATICWS_DASHBOARD_S3=${STATICWS_DASHBOARD_S3}"
+#     - npm ci
+#   script:
+#     - npm start &
+#     - CYPRESS_BASE_URL=https://${STATICWS_DASHBOARD_S3} npx cypress run --browser chrome --headless
 
 destroy:
   stage: destroy
@@ -119,8 +148,8 @@ destroy:
     - cp -a infra/. .
     - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
     - mkdir ~/.aws
-    - echo -e "[profile oidc]\nrole_arn=${ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
+    - echo -e "[profile oidc]\nrole_arn=${DGTMON_ROLE_DEPL_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
   script:
-    - terraform init -var-file=secrets/dev.tfvars.json -reconfigure
-    - terraform destroy -auto-approve -var-file=secrets/dev.tfvars.json
+    - terraform init -backend-config="key=${CI_COMMIT_BRANCH}.tfstate" -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH" -reconfigure
+    - terraform destroy -auto-approve -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH"
   when: manual

@@ -62,7 +62,8 @@
 ## SQS (Lambda trigger)
 
 resource "aws_sqs_queue" "pre_github_queue" {
-  name                        = "${var.sqs_github_trigger}.fifo"
+  # name                        = "${var.sqs_github_trigger}.fifo"
+  name                        = "${var.project}-${var.env}-${var.sqs_github_trigger}"
   fifo_queue                  = true
   receive_wait_time_seconds   = 15
   delay_seconds               = 5
@@ -92,7 +93,8 @@ data "aws_iam_policy_document" "assume_github_role" {
 }
 
 resource "aws_iam_role" "github_iam" {
-  name               = "github_iam"
+  # name               = "github_iam"
+  name               = "${var.project}-${var.env}-${var.role_github}"
   assume_role_policy = data.aws_iam_policy_document.assume_github_role.json
 }
 
@@ -152,7 +154,8 @@ data "aws_iam_policy_document" "github" {
   statement {
     sid       = "AllowSecretsFetching"
     effect    = "Allow"
-    resources = ["arn:aws:secretsmanager:${var.region}:*:secret:dgtmon-${var.environment}-github-api-secrets*"]
+    resources = [data.aws_secretsmanager_secret.github_api_token.arn]
+    # resources = ["arn:aws:secretsmanager:${var.region}:*:secret:dgtmon-${var.environment}-github-api-secrets*"]
     actions = [
       "secretsmanager:DescribeSecret",
       "secretsmanager:GetResourcePolicy",
@@ -162,7 +165,8 @@ data "aws_iam_policy_document" "github" {
 }
 
 resource "aws_iam_policy" "github" {
-  name   = "github_policy"
+  # name   = "github_policy"
+  name   = "${var.project}-${var.env}-${var.policy_github}"
   policy = data.aws_iam_policy_document.github.json
 }
 
@@ -180,9 +184,10 @@ resource "aws_iam_role_policy_attachment" "github" {
 # }
 
 resource "aws_lambda_function" "github_func" {
-  function_name = "github"
+  # function_name = "github"
+  function_name = "${var.project}-${var.env}-${var.lambda_github_func}"
   package_type  = "Image"
-  image_uri     = "${aws_ecr_repository.github_repo.repository_url}:${local.github_stable_v}"
+  image_uri     = "${aws_ecr_repository.github_repo.repository_url}:${local.github_tag}"
   role          = aws_iam_role.github_iam.arn
   depends_on = [
     data.aws_cloudwatch_log_group.general_purpose_logs,
@@ -193,6 +198,15 @@ resource "aws_lambda_function" "github_func" {
   logging_config {
     log_group  = data.aws_cloudwatch_log_group.general_purpose_logs.name
     log_format = "JSON"
+  }
+  environment {
+    variables = {
+      DYNAMODB_AUDIT_TBL      = aws_dynamodb_table.audit_tbl.name
+      DYNAMODB_ALERTS_TBL     = aws_dynamodb_table.alerts_tbl.name
+      IR_APKG_MD_BUCKET_NAME  = aws_s3_bucket.ir_apkg_md.bucket
+      APKG_UPLOAD_BUCKET_NAME = aws_s3_bucket.upload_apkg.bucket
+      GITHUB_SECRET_ID        = data.aws_secretsmanager_secret.github_api_token.id
+    }
   }
 }
 
@@ -206,10 +220,11 @@ resource "aws_lambda_function" "github_func" {
 # }
 
 resource "aws_ecr_repository" "github_repo" {
-  name                 = var.github_repo_name
+  name                 = "${var.project}-dev-${var.microservice_github}"
   image_tag_mutability = "IMMUTABLE"
+  force_delete         = true
 }
 
 locals {
-  github_stable_v = local.versions_data.GITHUB_STABLE_V
+  github_tag = var.env == "main" ? local.versions_data.GITHUB.STABLE : local.versions_data.GITHUB.LATEST
 }

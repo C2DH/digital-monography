@@ -172,8 +172,9 @@ def test_targets_in_captions__duplicated_target_id():
     target = metadata.get_target("f-file-ref178606188")
     assert target.text == "3"
     assert len(metadata.substitutions) == 1
-    assert metadata.substitutions[0]["was"] == "3"
-    assert metadata.substitutions[0]["placeholder"] == "ffileref178606187"
+    assert metadata.substitutions[0].was == "3"
+    assert metadata.substitutions[0].pk == "ffileref178606187"
+    assert metadata.substitutions[0].placeholder == "f-file-ref178606187"
     # assert metadata.substitutions[0]["placeholder"] == "f-file-ref178606187"
 
 
@@ -200,9 +201,9 @@ def test_targets_in_captions__replace_complex_numbering_in_caption():
     target = metadata.get_target("f-file-ref178606189")
     assert target.text == "5.B"
     assert len(metadata.substitutions) == 1
-    assert metadata.substitutions[0]["was"] == "5.B"
-    assert metadata.substitutions[0]["placeholder"] == "ffileref178606189"
-    # assert metadata.substitutions[0]["placeholder"] == "f-file-ref178606189"
+    assert metadata.substitutions[0].was == "5.B"
+    assert metadata.substitutions[0].pk == "ffileref178606189"
+    assert metadata.substitutions[0].placeholder == "f-file-ref178606189"
 
 
 def test_targets_in_captions__replace_roman_numbering_in_caption():
@@ -221,9 +222,9 @@ def test_targets_in_captions__replace_roman_numbering_in_caption():
     target = metadata.get_target("f-file-ref178606189")
     assert target.text == "IV"
     assert len(metadata.substitutions) == 1
-    assert metadata.substitutions[0]["was"] == "IV"
-    assert metadata.substitutions[0]["placeholder"] == "ffileref178606189"
-    # assert metadata.substitutions[0]["placeholder"] == "f-file-ref178606189"
+    assert metadata.substitutions[0].was == "IV"
+    assert metadata.substitutions[0].pk == "ffileref178606189"
+    assert metadata.substitutions[0].placeholder == "f-file-ref178606189"
 
 
 def test_targets_in_captions__link_in_caption_is_left_not_changed():
@@ -247,9 +248,9 @@ def test_targets_in_captions__link_in_caption_is_left_not_changed():
     target = metadata.get_target("f-file-ref178606190")
     assert target.text == "2"
     assert len(metadata.substitutions) == 1
-    assert metadata.substitutions[0]["was"] == "2"
-    assert metadata.substitutions[0]["placeholder"] == "ffileref178606190"
-    # assert metadata.substitutions[0]["placeholder"] == "f-file-ref178606190"
+    assert metadata.substitutions[0].was == "2"
+    assert metadata.substitutions[0].pk == "ffileref178606190"
+    assert metadata.substitutions[0].placeholder == "f-file-ref178606190"
 
 
 # targets and refs in footnotes
@@ -399,6 +400,14 @@ def test_markownify_anchor_if_is_inner_reference__complex_a_tag():
         html='<data value=" SEQ Figure \\* ARABIC ">1</data>',
         text="1",
         elem=str(bs.a),
+        item_type="figure",
+        file_count=None,
+        prefix="",
+        prev_item_num=1,
+        is_digital=None,
+        is_paper=None,
+        filename="",
+        fragment="_Ref177042490",
     )
     assert link.make_text(bs.a.text, target) == r"Figure {{ fref177042490 }}"
     # assert link.make_text(bs.a.text, target) == r"Figure {{ f-ref177042490 }}"
@@ -418,6 +427,14 @@ def test_markownify_anchor_if_is_inner_reference__simple_a_tag():
         html='<data value=" SEQ Figure \\* ARABIC ">2</data>',
         text="2",
         elem=str(bs.a),
+        item_type="figure",
+        file_count=None,
+        prefix="",
+        prev_item_num=2,
+        is_digital=None,
+        is_paper=None,
+        filename="",
+        fragment="_Ref177042491",
     )
     assert link.make_text(bs.a.text, target) == r"Figure {{ fref177042491 }}"
     # assert link.make_text(bs.a.text, target) == r"Figure {{ f-ref177042491 }}"

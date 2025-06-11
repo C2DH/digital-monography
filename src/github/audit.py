@@ -1,12 +1,8 @@
 import dataclasses
 import datetime
 import enum
+import os
 import typing as t
-
-try:
-    from constants import DYNAMODB_AUDIT_TBL
-except (ImportError, ModuleNotFoundError):
-    from .constants import DYNAMODB_AUDIT_TBL
 
 
 class AuditStatus(enum.Enum):
@@ -32,7 +28,7 @@ class AuditEvent:
     def send(self, dynamodb: t.Any) -> t.Any:
         if dynamodb is None:
             return
-        table = dynamodb.Table(DYNAMODB_AUDIT_TBL)
+        table = dynamodb.Table(os.environ.get("DYNAMODB_AUDIT_TBL", ""))
         expire_at = int(
             (
                 datetime.datetime.now(datetime.timezone.utc)
@@ -62,3 +58,39 @@ class AuditEvent:
             f"msg={self.msg}"
             ")"
         )
+
+
+############################## alerts ##############################
+
+
+class AlertStatus(enum.Enum):
+    START = ("started",)
+    FAIL = (
+        "pipeline-fail"  # pipeline encountered error and a book could not be processed
+    )
+    NOAUTH = ("auth-rejected",)  # rejecting a request from an unauthenticated user
+    NOVERIF = ("verif-warning",)  # very important warning that should be fixed asap
+
+
+@dataclasses.dataclass
+class AlertLog:
+    """
+    Alert logs the last known status of the most important services.
+    """
+
+    slug: str
+    status: str
+
+    def send(self, dynamodb: t.Any) -> t.Any:
+        if not self.slug or dynamodb is None:
+            return
+        table = dynamodb.Table(os.environ.get("DYNAMODB_ALERTS_TBL", ""))
+        table.put_item(
+            Item={
+                "slug": self.slug,
+                "status": self.status,
+            }
+        )
+
+    def __str__(self):
+        return "Alert(slug={self.slug}, status={self.status})"

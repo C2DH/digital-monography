@@ -3,9 +3,7 @@ import bs4
 # import pathlib
 import random
 
-from src.verifier.html_verifier import HtmlVerifier
-
-# from src.verifier.html_verifier import HtmlVerifier, MSG_PROBLEMS, LINKS
+from src.verifier.rules_v1 import HtmlVerifier
 from src.verifier.main import _fromtimestamp
 from src.verifier.verif_warnings import (
     FileVerificationMessage,

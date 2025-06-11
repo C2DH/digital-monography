@@ -17,10 +17,14 @@ try:
     )
     from keys import KeyPath
     from constants import (
+        AUTONUMBER_PLACEHOLDER,
         CAPTION_ITEM_TYPE_FIGURE,
         CAPTION_ITEM_TYPE_TABLE,
         CAPTION_ITEM_TYPE_GRAPH,
         CAPTION_ITEM_TYPE_OTHER,
+        CLS_CAPTION,
+        CLS_DIGITAL_ONLY,
+        CLS_PAPER_ONLY,
     )
 except (ImportError, ModuleNotFoundError):
     from .metadata import (
@@ -32,10 +36,14 @@ except (ImportError, ModuleNotFoundError):
     )
     from .keys import KeyPath
     from .constants import (
+        AUTONUMBER_PLACEHOLDER,
         CAPTION_ITEM_TYPE_FIGURE,
         CAPTION_ITEM_TYPE_TABLE,
         CAPTION_ITEM_TYPE_GRAPH,
         CAPTION_ITEM_TYPE_OTHER,
+        CLS_CAPTION,
+        CLS_DIGITAL_ONLY,
+        CLS_PAPER_ONLY,
     )
 
 
@@ -45,7 +53,8 @@ def is_header(tag: bs4.element.Tag) -> bool:
 
 def is_caption(tag: bs4.element.Tag) -> bool:
     # "p", {"class": "dgt-mon-caption"}
-    return bool(tag.name == "p" and "dgt-mon-caption" in tag.attrs.get("class", []))
+    # return bool(tag.name == "p" and "dgt-mon-caption" in tag.attrs.get("class", []))
+    return bool(tag.name == "p" and CLS_CAPTION in tag.attrs.get("class", []))
 
 
 def is_footnote(tag: bs4.element.Tag) -> bool:
@@ -78,11 +87,26 @@ def prepare_ref_targets_in_headers(
                 target_tag.string = link.mystify_target()
                 tag.insert_before(target_tag)
                 anchors.append(child)
+                is_digital, is_paper = _get_isdigital_and_ispaper(tag, "")
+
+                # print("metadata.filepath", metadata.filepath)
+                # print("link.FRAGMENT????", link)
+                # print("-" * 50)
+
                 target = TargetDatapoint(
                     pk=link.id,
                     html=str(tag),
-                    text=link.id,
+                    # text=link.id,
+                    text=tag.text,
                     elem=str(tag),
+                    item_type="heading",
+                    is_digital=is_digital,
+                    is_paper=is_paper,
+                    filename=metadata.filepath.name if metadata.filepath else None,
+                    fragment=child["id"],
+                    prefix="",
+                    file_count=metadata.get_chapter_number(),
+                    prev_item_num=None,
                 )
                 metadata.add_target(target)
         h_lvl = "".join(ch for ch in tag.name if ch.isdigit())
@@ -159,24 +183,57 @@ def prepare_ref_targets_in_captions(
 
         # TODO: maybe there should be some id for the caption
         # to group bookmarks that relate to the same object
+        # breakpoint()
         for a in anchors:
             link = LinkMystifier()
             link.set_filepath(metadata.filepath)
             link.set_from_id(a["id"])
+            identifier = link.id.replace("-", "") if not unique_id else unique_id[0]
+            is_digital, is_paper = _get_isdigital_and_ispaper(caption, identifier)
+            # plain_text_num = _get_plain_text_numbering(ref_stack)
+
+            # print("metadata.filepath", metadata.filepath)
+            # print('a["id"]', a["id"])
+            # print("caption", caption)
+            # # print("link.FRAGMENT????", link)
+            # print("-" * 50)
+
+            seq = TargetDatapoint.parse_ref_stack(ref_stack)
             target = TargetDatapoint(
+                # html="".join(str(elem) for elem in ref_stack),
                 pk=link.id,
-                html="".join(str(elem) for elem in ref_stack),
-                text=_get_plain_text_numbering(ref_stack),
+                html=seq["html"],
+                text=seq["plain_text_num"],  # calc from ref_stack
                 elem=str(caption),
+                item_type=seq["item_type"],
+                is_digital=is_digital,  # calc from caption and identifier
+                is_paper=is_paper,  # calc from caption and identifier
+                filename=metadata.filepath.name if metadata.filepath else None,
+                fragment=a["id"],
+                file_count=metadata.get_chapter_number(),
+                prefix=seq["prefix"],  # calc from ref_stack
+                prev_item_num=seq["prev_item_num"],  # calc from ref_stack
             )
             metadata.add_target(target)
             if unique_id and metadata.get_substitution(unique_id[0]) is None:
+                target_fn = metadata.filepath.name if metadata.filepath else None
+                # print("target_fn", target_fn, type(target_fn))
+                # assert isinstance(target_fn, str)
                 metadata.add_substitution(
                     SubstitutionDatapoint(
                         pk=unique_id[0],
                         was=target.text,
-                        placeholder=unique_id[0],
-                        item_type=item_type,
+                        placeholder=target.pk,
+                        # placeholder=unique_id[0],
+                        # item_type=item_type,
+                        item_type=target.item_type,
+                        is_digital=is_digital,
+                        is_paper=is_paper,
+                        file_count=metadata.get_chapter_number(),
+                        # new
+                        target_fn=target_fn,
+                        prefix=target.prefix,
+                        prev_item_num=target.prev_item_num,
                     )
                 )
             target_tag = html_soup.new_tag("pre")
@@ -210,15 +267,17 @@ def _extract_anchor_tags(
 
 
 def _get_item_type(caption: bs4.element.Tag) -> str:
-    caption_match = re.match(r"^\s*(\w+) (\d+):\s*", caption.text)
+    caption_match = re.match(r"^\s*(\w+) (\d+)", caption.text)
     if caption_match is not None:
         item = caption_match.group(1)
+        item = item.lower() if item else item
     else:
         return CAPTION_ITEM_TYPE_OTHER
     item_types_mapping = {
         "fig": CAPTION_ITEM_TYPE_FIGURE,
         "figure": CAPTION_ITEM_TYPE_FIGURE,
         "table": CAPTION_ITEM_TYPE_TABLE,
+        "tbl": CAPTION_ITEM_TYPE_TABLE,
         "graph": CAPTION_ITEM_TYPE_GRAPH,
     }
     if item not in item_types_mapping.keys():
@@ -226,14 +285,31 @@ def _get_item_type(caption: bs4.element.Tag) -> str:
     return item_types_mapping[item]
 
 
-def _get_plain_text_numbering(ref_stack: list[bs4.element.PageElement]) -> str:
-    res = ""
-    for el in ref_stack:
-        if hasattr(el, "string"):
-            res += el.string
-        else:
-            res += str(el)
-    return res
+# def _get_plain_text_numbering(ref_stack: list[bs4.element.PageElement]) -> str:
+#     res = ""
+#     for el in ref_stack:
+#         if hasattr(el, "string"):
+#             res += el.string
+#         else:
+#             res += str(el)
+#     return res
+
+
+def _get_isdigital_and_ispaper(caption: bs4.Tag, identifier: str) -> tuple[bool, bool]:
+    css_classes = [
+        tag.get("class", [])
+        for tag in caption.descendants
+        if isinstance(tag, bs4.element.Tag) and (identifier in tag.text)
+    ]
+    css_classes: list[str] = [item for sublist in css_classes for item in sublist]
+    is_digital = is_paper = True
+    if CLS_DIGITAL_ONLY in css_classes and CLS_PAPER_ONLY in css_classes:
+        is_digital = is_paper = None
+    elif CLS_DIGITAL_ONLY in css_classes:
+        is_paper = False
+    elif CLS_PAPER_ONLY in css_classes:
+        is_digital = False
+    return is_digital, is_paper
 
 
 def prepare_ref_targets_in_footnotes(
@@ -276,6 +352,12 @@ def prepare_references(
         elif _is_target_footnote(a_tag):
             pass
         else:
+            if _check_if_link_marked_as_paper_only(a_tag):
+                # a_tag.extract()
+                tag_class = a_tag.get("class", [])
+                tag_class.append(CLS_PAPER_ONLY)
+                a_tag["class"] = tag_class
+
             link = LinkMystifier()
             link.set_filepath(metadata.filepath)
             link.set_from_href(a_tag["href"])
@@ -286,23 +368,46 @@ def prepare_references(
             prev_href = a_tag["href"]
             a_tag.string = link_text
             a_tag["href"] = link_dest
-            metadata.add_ref(
-                RefDatapoint(
-                    target_id=target.pk if target else "",
-                    text=link_text,
-                    href=link_dest,
-                    prev_string=prev_string,
-                    prev_href=prev_href,
-                    elem=str(a_tag.parent),
-                )
+            ref = RefDatapoint(
+                target_id=target.pk if target else "",
+                fn=metadata.filepath.name,
+                text=link_text,
+                href=link_dest,
+                prev_string=prev_string,
+                prev_href=prev_href,
+                elem=str(a_tag.parent),
             )
+            metadata.add_ref(ref)
             if link.unique_id and metadata.get_substitution(link.unique_id) is None:
+                # get chapter number from the href if f2f else number from current file
+                target_chapter_number = (
+                    metadata.get_chapter_number(link.path)
+                    if link.path and link.is_cross_file_reference()
+                    else metadata.get_chapter_number()
+                )
+
+                if link.path and link.is_cross_file_reference():
+                    target_fn = KeyPath(link.path).name
+                elif metadata.filepath and link.is_inner_reference():
+                    target_fn = metadata.filepath.name
+                else:
+                    target_fn = None
+                # target_fn = (
+                #     link.path if link.path and link.is_cross_file_reference() else None
+                # )
                 metadata.add_substitution(
                     SubstitutionDatapoint(
                         pk=link.unique_id,
                         was=link.text_to_replace,
-                        placeholder=link.unique_id,
-                        item_type="",  # item_type,
+                        # placeholder=link.unique_id,
+                        placeholder=link.id,
+                        item_type="ref",
+                        is_digital=None,
+                        is_paper=None,
+                        target_fn=target_fn,
+                        file_count=target_chapter_number,
+                        prefix="",
+                        prev_item_num=None,
                     )
                 )
     return html_soup
@@ -316,6 +421,32 @@ def _is_ref_footnote(a_tag: bs4.element.Tag) -> bool:
 
 def _is_target_footnote(a_tag: bs4.element.Tag) -> bool:
     return bool(a_tag.attrs.get("href", "").startswith("#footnote-ref-"))
+
+
+def _check_if_link_marked_as_paper_only(a_tag: bs4.Tag) -> bool:
+    """
+    The way it is implemented now, "paper-only" css class will mark only
+    descendants of the hyperlink tag and not the hyperlink tag itself.
+    `<a href="https://example.com"><span class="dgt-mon-paper-only">text</span></a>`
+    This is because in OOXML, highlight is a property of runs inside of hyperlink tag,
+    while the hyperlink tag itself is not considered highlited. This enables .docx users
+    to have different highlights in the same hyperlink element, but requires additional
+    processing from the preparer microservice.
+
+    To mitigate that, iterate over descendents and check if all of them are marked
+    as paper-only.
+    """
+    res = set()
+    for tag in a_tag.descendants:
+        if isinstance(tag, bs4.Tag) and tag.get("class", []) == [CLS_PAPER_ONLY]:
+            res.add(True)
+        elif isinstance(tag, bs4.NavigableString):
+            pass
+        else:
+            res.add(False)
+    if not res:
+        return False
+    return all(res)
 
 
 class LinkMystifier:
@@ -491,7 +622,18 @@ class LinkMystifier:
         """
         Markdown link text to be placed in `[text](...)` syntax.
         """
-        if self.is_cross_file_reference():
+        if AUTONUMBER_PLACEHOLDER in tag_text:
+            self.text_to_replace = AUTONUMBER_PLACEHOLDER
+            replace_with = r"{{ " + self.unique_id + r" }}"
+            tag_text = tag_text.replace(self.text_to_replace, replace_with)
+            return tag_text
+        match = self._match_complex_numbering(tag_text)
+        if isinstance(match, re.Match):
+            start, end = match.span(1)
+            self.text_to_replace = tag_text[start:end]
+            replace_with = r"{{ " + self.unique_id + r" }}"
+            return tag_text.replace(self.text_to_replace, replace_with)
+        elif self.is_cross_file_reference():
             to_replace = ""
             for i in range(len(tag_text)):
                 if tag_text[i].isdigit():
@@ -514,6 +656,22 @@ class LinkMystifier:
 
     def __str__(self) -> str:
         return f"LinkMystifier(scheme={self.scheme}, netloc={self.netloc}, path={self.path}, query={self.query}, fragment={self.fragment})"
+
+    def _match_complex_numbering(self, tag_text: str) -> re.Match | None:
+        """
+        Search for complex numbering in the text of the anchor tag.
+        Complex number pattern is either `<roman_num><sep><digit>` (e.g. 'iv.1')
+        or `<letter of the alphabet><sep><digit>` (e.g. 'a.1') or `<digit><sep><digit>`.
+        This solution assumes the alphabetical numbering will not be greater than 'z' (26).
+        Accepted separators match MS Word separators: '.:—-'
+        """
+        before = r"(?:\s)"  # make sure starts with a whitespace
+        heading_number = r"([ivxlcdm]+|[a-z]{1}|\d+)"
+        sep = r"[.:—-]{1}"
+        pattern = rf"{before}({heading_number}{sep}\d)"
+        assert pattern == r"(?:\s)(([ivxlcdm]+|[a-z]{1}|\d+)[.:—-]{1}\d)"
+        return re.search(pattern, tag_text.lower())
+        # r"(?:\s)(([ivxlcdm]+|[a-z]{1}|\d+)[.:—-]{1}\d)", tag_text.lower()
 
 
 class FootnoteMystifier:

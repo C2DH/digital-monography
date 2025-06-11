@@ -1,21 +1,37 @@
-variable "project_name" {
+## Set by the Admin
+
+variable "aws_account_id" {
   type        = string
-  description = "Global Name of the project"
-  default     = "Another AWSome Project"
+  description = "Identifier of the AWS account"
 }
 
 variable "region" {
   type        = string
   description = "AWS Region of the project"
-  default     = "eu-west-1"
+  default     = "eu-central-1"
 }
 
-variable "environment" {
+variable "project" {
   type        = string
-  description = "Environment/Branch of the Project"
+  description = "Global name of the project, which acts as a prefix to all resources"
+}
+
+variable "env" {
+  type        = string
+  description = "Name of the environment of the project read from git branch in CI/CD pipeline (i.e. main or develop)"
 }
 
 ## Set by the Dev team
+
+variable "efs_access_security_group" {
+  type        = string
+  description = "Name of the security group for the shared file system"
+}
+
+variable "efs_creation_token" {
+  type        = string
+  description = "Name of the creation token for the shared file system"
+}
 
 variable "staticws_wip_bucket_name" {
   type        = string
@@ -47,15 +63,14 @@ variable "upload_apkg_bucket_name" {
   description = "Name of the bucket for uploading authors' packages (apkg) to AWS cloud."
 }
 
-variable "upload_apkg_temp_bucket_name" {
-  type        = string
-  description = "Temp"
-  default     = "upload-apkg-temp"
-}
-
 variable "metadata_assets_bucket_name" {
   type        = string
   description = "Name of the bucket for storing metadata of assets."
+}
+
+variable "metadata_refs_bucket_name" {
+  type        = string
+  description = "Name of the bucket for storing metadata of references."
 }
 
 variable "verification_msgs_bucket_name" {
@@ -67,16 +82,6 @@ variable "name" {
   description = "Application Name"
   type        = string
   default     = "sqs-integration"
-}
-
-locals {
-  description = "Aplication Name"
-  app_name    = "${var.name}-${var.environment}"
-}
-
-variable "lambda_name" {
-  description = "Name for lambda function"
-  default     = "lambda"
 }
 
 variable "cidr_block" {
@@ -118,6 +123,161 @@ variable "gpu_repo_name" {
   description = "Name of the ECR repository for the gpu (generate pre-signed url) image"
 }
 
+variable "group_devs" {
+  type        = string
+  description = "Name of the IAM group for developers working on the source code"
+}
+
+variable "lambda_entrypoint_func" {
+  type        = string
+  description = "Name of the entrypoint Lambda function"
+}
+
+variable "lambda_dropbox_func" {
+  type        = string
+  description = "Name of the dropbox Lambda function"
+}
+
+variable "lambda_builder_func" {
+  type        = string
+  description = "Name of the builder Lambda function"
+}
+
+variable "lambda_github_func" {
+  type        = string
+  description = "Name of the github Lambda function"
+}
+
+variable "lambda_preparer_func" {
+  type        = string
+  description = "Name of the preparer Lambda function"
+}
+
+variable "lambda_gpu_func" {
+  type        = string
+  description = "Name of the gpu Lambda function"
+}
+
+variable "lambda_verifier_func" {
+  type        = string
+  description = "Name of the verifier Lambda function"
+}
+
+variable "microservice_entrypoint" {
+  type        = string
+  description = "Name of the entrypoint microservice"
+}
+
+variable "microservice_dropbox" {
+  type        = string
+  description = "Name of the dropbox microservice"
+}
+
+variable "microservice_builder" {
+  type        = string
+  description = "Name of the builder microservice"
+}
+
+variable "microservice_github" {
+  type        = string
+  description = "Name of the github microservice"
+}
+
+variable "microservice_preparer" {
+  type        = string
+  description = "Name of the preparer microservice"
+}
+
+variable "microservice_gpu" {
+  type        = string
+  description = "Name of the gpu microservice"
+}
+
+variable "microservice_verifier" {
+  type        = string
+  description = "Name of the verifier microservice"
+}
+
+variable "policy_entrypoint" {
+  type        = string
+  description = "Name of the IAM policy to be assumed by the entrypoint IAM role"
+}
+
+variable "policy_dropbox" {
+  type        = string
+  description = "Name of the IAM policy to be assumed by the dropbox IAM role"
+}
+
+variable "policy_builder" {
+  type        = string
+  description = "Name of the IAM policy to be assumed by the builder IAM role"
+}
+
+variable "policy_github" {
+  type        = string
+  description = "Name of the IAM policy to be assumed by the github IAM role"
+}
+
+variable "policy_preparer" {
+  type        = string
+  description = "Name of the IAM policy to be assumed by the preparer IAM role"
+}
+
+variable "policy_gpu" {
+  type        = string
+  description = "Name of the IAM policy to be assumed by the gpu IAM role"
+}
+
+variable "policy_verifier" {
+  type        = string
+  description = "Name of the IAM policy to be assumed by the verifier IAM role"
+}
+
+variable "policy_general_dev_ecr" {
+  type        = string
+  description = "Name of the IAM policy to be assumed by the devs IAM group for ECR access"
+}
+
+variable "policy_general_dev_apkg_upload" {
+  type        = string
+  description = "Name of the IAM policy to be assumed by the devs IAM group for uploading authors' packages (apkg) to S3"
+}
+
+variable "role_entrypoint" {
+  type        = string
+  description = "Name of the IAM role for the entrypoint Lambda function"
+}
+
+variable "role_dropbox" {
+  type        = string
+  description = "Name of the IAM role for the dropbox Lambda function"
+}
+
+variable "role_builder" {
+  type        = string
+  description = "Name of the IAM role for the builder Lambda function"
+}
+
+variable "role_github" {
+  type        = string
+  description = "Name of the IAM role for the github Lambda function"
+}
+
+variable "role_preparer" {
+  type        = string
+  description = "Name of the IAM role for the preparer Lambda function"
+}
+
+variable "role_gpu" {
+  type        = string
+  description = "Name of the IAM role for the gpu Lambda function"
+}
+
+variable "role_verifier" {
+  type        = string
+  description = "Name of the IAM role for the verifier Lambda function"
+}
+
 variable "sqs_github_trigger" {
   type        = string
   description = "Name of the SQS unique-id queue with messages to trigger push to github"
@@ -152,6 +312,16 @@ variable "dgtmon_dev_dyndb_audit_tbl" {
   description = "Name of the table to log audit trail of checkpoints reached"
 }
 
+variable "dgtmon_dev_dyndb_alerts_tbl" {
+  type        = string
+  description = "Name of the table to log the last known status of the most crucial services"
+}
+
+variable "dgtmon_dev_dyndb_logins_tbl" {
+  type        = string
+  description = "Name of the table to monitor the logins of the users"
+}
+
 variable "dgtmon_dev_dyndb_assets_tbl" {
   type        = string
   description = "Name of the table for editors managing the status of assets"
@@ -167,7 +337,37 @@ variable "dgtmon_dev_dyndb_citations_tbl" {
   description = "Name of the table for editors to list publication's citations"
 }
 
+variable "dgtmon_dev_dyndb_refs_tbl" {
+  type        = string
+  description = "Name of the table for editors to list references included in a publication"
+}
+
 variable "dgtmon_dev_dyndb_warnings_tbl" {
   type        = string
   description = "Name of the table for editors to list publication's warnings"
+}
+
+variable "secretsmanager_github_api_secrets" {
+  type        = string
+  description = "Identifier of a secret object in AWS Secrets Manager storing secret api keys"
+}
+
+variable "general_rest_api_gateway" {
+  type        = string
+  description = "Name of the REST API that handles flask app, as well as integrations with entrypoint and gpu Lambda functions"
+}
+
+variable "usr_apkg_uploader" {
+  type        = string
+  description = "Name of the IAM User that uploads authors' packages (apkg) to AWS cloud"
+}
+
+variable "usr_ir_apkg_md_uploader" {
+  type        = string
+  description = "Name of the IAM User that uploads intermediate representation of authors' packages"
+}
+
+variable "usr_cli_PAK" {
+  type        = string
+  description = "Name of the IAM User behind the CLI for the SSO user 'PAK'"
 }

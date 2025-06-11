@@ -3,14 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import TnbMarkdown from "./TnbMarkdown";
+import { endpoint, getGitBranch } from "./../constants";
 
 type IWarning = {
     id: string
     problem: string
     recommend: string
-    prev_elem: string
-    curr_elem: string
-    next_elem: string
+    prev_elem?: string
+    curr_elem?: string
+    next_elem?: string
     [key: string]: any
 }
 
@@ -18,15 +19,17 @@ export default function DynamicComponent() {
     const [warnings, setWarnings] = useState<IWarning[]>([]);
     const searchParams = useSearchParams();
     const key = searchParams?.get("key");
-    const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
+    const stage = getGitBranch();
+    // const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
     useEffect(() => {
         async function fetchObjectFromS3(inputKey: string) {
             try {
-                const getPreSignedUrlResp = await fetch(`${endpoint}/test/gpu?type=warnings&key=${inputKey}`);
+                const getPreSignedUrlResp = await fetch(`${endpoint}/${stage}/gpu?type=warnings&key=${inputKey}`);
                 const preSignedUrljson = await getPreSignedUrlResp.json();
                 const preSignedUrl = preSignedUrljson["presigned_url"];
                 const resp = await fetch(preSignedUrl);
                 const json = await resp.json();
+                console.log("warnings", json);
                 setWarnings(json);
             } catch (e) {
                 console.error(e);
@@ -62,28 +65,28 @@ export default function DynamicComponent() {
                                 <div className="accordion-body">
                                     <TnbMarkdown content={`**${warning.problem}** ${warning.recommend}`} />
                                     <hr />
-                                    <div className="row">
+                                    {warning.prev_elem && <div className="row">
                                         <div className="col-1">
                                         </div>
                                         <div className="col-9">
                                             <TnbMarkdown content={warning.prev_elem} />
                                         </div>
-                                    </div>
-                                    <div className="row">
+                                    </div>}
+                                    {warning.curr_elem && <div className="row">
                                         <div className="col-1">
                                             👉
                                         </div>
                                         <div className="col-9">
                                             <TnbMarkdown content={warning.curr_elem} />
                                         </div>
-                                    </div>
-                                    <div className="row">
+                                    </div>}
+                                    {warning.next_elem && <div className="row">
                                         <div className="col-1">
                                         </div>
                                         <div className="col-9">
                                             <TnbMarkdown content={warning.next_elem} />
                                         </div>
-                                    </div>
+                                    </div>}
                                 </div>
                             </div>
                         </div>

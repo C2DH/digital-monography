@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import TnbBookNav from "./../_components/TnbBookNav";
+import { endpoint, getGitBranch } from "./../constants";
 
 const StageName = {
     // make sure the values are consistent with src/_common/constants.py
@@ -32,14 +33,16 @@ type IAuditEvent = {
 
 export default function DynamicTable() {
     const [tableData, setTableData] = useState<IAuditEvent[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
     const searchParams = useSearchParams();
     const slug = searchParams?.get("slug");
-    const dbTable = "dgtmon-dev-dyndb-audit-tbl";
-
+    // const dbTable = "dgtmon-dev-dyndb-audit-tbl";
+    const stage = getGitBranch();
     const fetchRecords = async (pk: string) => {
         try {
-            const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
-            const resp = await fetch(`${endpoint}/test/events?slug=${pk}`);
+            setLoading(true);
+            // const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
+            const resp = await fetch(`${endpoint}/${stage}/events?slug=${pk}`);
             const respJson = await resp.json();
             const records = (respJson.Items || []).map((rec) => {
                 const timestamp = rec.timestamp.S ? new Date(rec.timestamp.S) : new Date(1970);
@@ -52,8 +55,10 @@ export default function DynamicTable() {
                 }
             }).sort((a: IAuditEvent, b: IAuditEvent) => (a.timestamp < b.timestamp ? 1 : -1));
             setTableData(records);
+            setLoading(false);
         } catch (err) {
-            console.log("Error", err);
+            setLoading(false);
+            console.error(err);
         }
     };
 
@@ -66,7 +71,7 @@ export default function DynamicTable() {
     return (
         <>
             {slug && <TnbBookNav slug={slug} color="secondary"></TnbBookNav>}
-            <table className="table">
+            {!loading && tableData && <table className="table">
                 <thead>
                     <tr>
                         <th scope="col">Time</th>
@@ -78,9 +83,9 @@ export default function DynamicTable() {
                 </thead>
                 <tbody>
                     {
-                        tableData && tableData.map((val: IAuditEvent, idx: number) => (
+                        tableData.map((val: IAuditEvent, idx: number) => (
                             <tr key={idx}>
-                                <td>{val.timestamp.toUTCString()}</td>
+                                <td>{val.timestamp.toString()}</td>
                                 <td>{val.filename}</td>
                                 <td>{val.msg}</td>
                                 <td>{StageName[val.module]}</td>
@@ -89,7 +94,13 @@ export default function DynamicTable() {
                         ))
                     }
                 </tbody>
-            </table>
+            </table>}
+            {loading && <div className="d-flex justify-content-center">
+                <h4>Please wait for the items to load...</h4>
+                <div className="spinner-grow text-secondary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                </div>
+            </div>}
         </>
     )
 }

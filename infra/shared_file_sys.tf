@@ -5,7 +5,7 @@
 # # https://github.com/terraform-aws-modules/terraform-aws-lambda/tree/v7.2.2/examples/with-efs
 
 resource "aws_security_group" "efs_access_sg" {
-  name   = "efs_access_sg"
+  name   = "${var.project}-shared-${var.efs_access_security_group}"
   vpc_id = aws_vpc.dgtmon_vpc.id
   ingress {
     from_port   = 2049
@@ -57,7 +57,8 @@ resource "aws_efs_mount_target" "efs_mount" {
 }
 
 resource "aws_efs_file_system" "shared_file_sys" {
-  creation_token   = "dgtmon_shared_file_system"
+  # creation_token   = "dgtmon_shared_file_system"
+  creation_token   = "${var.project}-shared-${var.efs_creation_token}"
   performance_mode = "generalPurpose"
   throughput_mode  = "bursting"
   encrypted        = true

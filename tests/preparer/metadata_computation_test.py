@@ -1,3 +1,4 @@
+REMOVED_AFTER_COMPUTE_FIELDS_WAS_REMOVED = '''
 import bs4
 import datetime
 import mammoth
@@ -89,3 +90,4 @@ class TestHtml2MdMetadataComputation:
             self.red_square_2.kwargs.get("alttext")
             == "Second example of a small red square."
         )
+'''

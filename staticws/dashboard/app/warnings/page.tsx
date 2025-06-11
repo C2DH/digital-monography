@@ -1,7 +1,6 @@
 'use client'
 
-import { Suspense } from 'react';
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import DynamicComponent from "./DynamicComponent";
 
 export default function Page() {
