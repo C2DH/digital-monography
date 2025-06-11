@@ -195,7 +195,7 @@ resource "aws_iam_role_policy_attachment" "entrypoint" {
 resource "aws_lambda_function" "entrypoint_func" {
   function_name = "${var.project}-${var.env}-${var.lambda_entrypoint_func}"
   package_type  = "Image"
-  image_uri     = "${data.entrypoint_repo.repository_url}:${local.entrypoint_tag}"
+  image_uri     = "${aws_ecr_repository.entrypoint_repo.repository_url}:${local.entrypoint_tag}"
   role          = aws_iam_role.entrypoint_iam.arn
   depends_on = [
     data.aws_cloudwatch_log_group.general_purpose_logs,
@@ -244,14 +244,8 @@ resource "aws_lambda_function" "entrypoint_func" {
 
 resource "aws_ecr_repository" "entrypoint_repo" {
   name                 = "${var.project}-dev-${var.microservice_entrypoint}"
-  count                = var.env == "develop" ? 1 : 0 # create only in develop environment
   image_tag_mutability = "IMMUTABLE"
   force_delete         = true
-}
-
-data "aws_ecr_repository" "entrypoint_repo" {
-  name                 = aws_ecr_repository.entrypoint_repo[0].name
-  image_tag_mutability = "IMMUTABLE"
 }
 
 locals {

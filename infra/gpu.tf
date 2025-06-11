@@ -75,7 +75,7 @@ resource "aws_lambda_function" "gpu_func" {
   # function_name = "gpu"
   function_name = "${var.project}-${var.env}-${var.lambda_gpu_func}"
   package_type  = "Image"
-  image_uri     = "${data.gpu_repo.repository_url}:${local.gpu_tag}"
+  image_uri     = "${aws_ecr_repository.gpu_repo.repository_url}:${local.gpu_tag}"
   role          = aws_iam_role.gpu_iam.arn
   depends_on = [
     data.aws_cloudwatch_log_group.general_purpose_logs,
@@ -99,14 +99,8 @@ resource "aws_lambda_function" "gpu_func" {
 
 resource "aws_ecr_repository" "gpu_repo" {
   name                 = "${var.project}-dev-${var.microservice_gpu}"
-  count                = var.env == "develop" ? 1 : 0 # create only in develop environment
   image_tag_mutability = "IMMUTABLE"
   force_delete         = true
-}
-
-data "aws_ecr_repository" "gpu_repo" {
-  name                 = aws_ecr_repository.gpu_repo[0].name
-  image_tag_mutability = "IMMUTABLE"
 }
 
 locals {
