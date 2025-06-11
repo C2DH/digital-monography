@@ -5,8 +5,8 @@ resource "aws_cloudwatch_log_group" "general_purpose_logs" {
 }
 
 data "aws_cloudwatch_log_group" "general_purpose_logs" {
-  name = "/aws/dgt-mon/general/${var.env}"
-  # depends_on = [aws_cloudwatch_log_group.general_purpose_logs]
+  name       = "/aws/dgt-mon/general/${var.env}"
+  depends_on = [aws_cloudwatch_log_group.general_purpose_logs]
 }
 
 resource "aws_dynamodb_table" "alerts_tbl" {
