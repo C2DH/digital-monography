@@ -1,5 +1,5 @@
 resource "aws_api_gateway_rest_api" "general_api" {
-  name = "${var.project}-${var.env}-${var.general_rest_api_gateway}"
+  name = "${var.project}-shared-${var.general_rest_api_gateway}"
   endpoint_configuration {
     types = ["REGIONAL"]
   }
