@@ -2,6 +2,7 @@
 // import { mystToDocx, fetchImagesAsBuffers, DocxResult } from 'myst-to-docx';
 import type { DocxResult } from 'myst-to-docx';
 import { u } from 'unist-builder';
+// import type { IAlert } from "./../page";
 
 
 import TnbBookNav from "./TnbBookNav";
@@ -70,7 +71,7 @@ const mdast = u('root', [
 
 
 export default function TnbBookCard(
-    { authors, slug, title, alert }: { authors: string, slug: string, title: string, alert: string }
+    { authors, slug, title, alert }: { authors: string, slug: string, title: string, alert: IAlert }
 ) {
     let alertHeading = "";
     let alertMessage = "";
