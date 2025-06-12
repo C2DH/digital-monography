@@ -76,7 +76,7 @@ resource "aws_iam_user" "cli_PAK" {
 }
 
 resource "aws_iam_user_group_membership" "cli_PAK" {
-  user = aws_iam_user.cli_PAK.name
+  user = aws_iam_user.cli_PAK[0].name
   groups = [
     aws_iam_group.devs.name,
   ]
