@@ -91,7 +91,8 @@ data "aws_iam_policy_document" "dashboard_assume_role" {
 }
 
 resource "aws_iam_role" "dashboard_role" {
-  name               = "dashboard_role"
+  # name               = "dashboard_role"
+  name               = "${var.project}-${var.env}-${var.role_dashboard}"
   assume_role_policy = data.aws_iam_policy_document.dashboard_assume_role.json
 }
 
