@@ -454,6 +454,12 @@ To work properly, the build output needs to be served with [Vercel's serve repo]
 
 An alternative solution might be to fork myst.md and try to replace all features that require a server with neutral ones.
 
+<!-- 1. install node.js v 20
+1. npm install mystmd
+1. myst build --html
+1. create myst.yml config file (different from v1)
+1. copy _build/html to s3 bucket -->
+
 ### Additional change suggestions
 
 * add e2e cloud testing on actual Lambdas
@@ -461,14 +467,9 @@ An alternative solution might be to fork myst.md and try to replace all features
 * flake8 linting
 * refactor link management (refs.py)
 * migrate JupyterBook v1 to v2
-
-#### Requirements for migrating Jupyter Book v1 to v2
-
-1. install node.js v 20
-1. npm install mystmd
-1. myst build --html
-1. create myst.yml config file (different from v1)
-1. copy _build/html to s3 bucket
+* restore verification rules
+* deploy wordprocessor and connect with others
+* dashboard should fetch book details and alert info from API (now hard coded)
 
 ## Sundry
 
