@@ -2,9 +2,8 @@
 // import { mystToDocx, fetchImagesAsBuffers, DocxResult } from 'myst-to-docx';
 import type { DocxResult } from 'myst-to-docx';
 import { u } from 'unist-builder';
-// import type { IAlert } from "./../page";
 
-
+import { IBook } from "./../../types/books";
 import TnbBookNav from "./TnbBookNav";
 
 function downloadBlob(filename: string, blob: Blob) {
@@ -70,30 +69,7 @@ const mdast = u('root', [
 ]);
 
 
-export default function TnbBookCard(
-    { authors, slug, title, alert }: { authors: string, slug: string, title: string, alert: IAlert }
-) {
-    let alertHeading = "";
-    let alertMessage = "";
-    let alertIcon = "";
-    let alertColor = "";
-    // NOTE: important to keep the 
-    if (alert == "auth-rejected") {
-        alertIcon = "❌";
-        alertColor = "danger";
-        alertHeading = "Access denied. System rejected changes from unauthenticated user.";
-        alertMessage = "The output will not show the latest version of the manuscript. Login in and reupload.";
-    } else if (alert == "verif-warning") {
-        alertIcon = "⚠";
-        alertColor = "warning";
-        alertHeading = "System encountered serious issues with the manuscript.";
-        alertMessage = 'We advise to navigate to the "Warnings" section and to fix them before continuing.';
-    } else if (alert == "pipeline-fail") {
-        alertIcon = "❌";
-        alertColor = "danger";
-        alertHeading = "Processing the manuscript failed.";
-        alertMessage = "The output might not show the latest version of the manuscript due to the error.";
-    }
+export default function TnbBookCard({ authors, slug, title, alert }: IBook) {
     return (
         <>
             <span className="list-group-item list-group-item-action d-flex gap-3 py-2"
@@ -145,9 +121,9 @@ export default function TnbBookCard(
             <strong>{alertIcon} {alertHeading}</strong>
             <p>{alertMessage}</p>
         </span>} */}
-            {alert && <div className={`alert alert-${alertColor} gap-1 py-1`} role="alert">
-                <strong>{alertIcon} {alertHeading}</strong>
-                <p>{alertMessage}</p>
+            {alert.id && <div className={`alert alert-${alert.color} gap-1 py-1`} role="alert">
+                <strong>{alert.icon} {alert.heading}</strong>
+                <p>{alert.message}</p>
             </div>}
         </>
     )
