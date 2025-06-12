@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { DBX_ENDPOINT } from '../constants';
 
 export default function TnbBookNav({ slug, color }: { slug: string, color: string }) {
     return (
@@ -13,7 +14,7 @@ export default function TnbBookNav({ slug, color }: { slug: string, color: strin
                     </svg>
                 </button>
                 <a
-                    href={`https://www.dropbox.com/home/Aplikacje/drpb-upload-alert-test/${slug}`}
+                    href={`${DBX_ENDPOINT}/${slug}`}
                     target="_blank" rel="noopener noreferrer"
                     className={`btn btn-${color}`}
                 >Edit</a>

@@ -4,7 +4,7 @@ import "./../_styles/treeView.css";
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import TnbBookNav from "./../_components/TnbBookNav";
-import { endpoint, getGitBranch } from "./../constants";
+import { API_ENDPOINT, API_STAGE } from "./../constants";
 
 type ICountMap = {
     [fileName: string]: number;
@@ -46,14 +46,13 @@ export default function DynamicListGroup(): React.JSX.Element {
     const searchParams = useSearchParams();
     const slug = searchParams?.get("slug");
     // const dbTable = "dgtmon-dev-dyndb-headings-tbl";
-    const stage = getGitBranch();
     useEffect(() => {
         const wCount = {};
         const cCount = {};
         const fetchRecords = async (pk: string) => {
             try {
                 setLoading(true);
-                const resp = await fetch(`${endpoint}/${stage}/headings?slug=${pk}`);
+                const resp = await fetch(`${API_ENDPOINT}/${API_STAGE}/headings?slug=${pk}`);
                 const respJson = await resp.json();
                 const headings: IHeadings = {};
                 const items = respJson.Items || [];
@@ -88,7 +87,7 @@ export default function DynamicListGroup(): React.JSX.Element {
         const fetchObjectFromS3 = async (aSlug: string) => {
             try {
                 const configKey = btoa(`${aSlug}/_config.yml`)
-                const getPreSignedUrlResp = await fetch(`${endpoint}/${stage}/gpu?type=asset&key=${configKey}`);
+                const getPreSignedUrlResp = await fetch(`${API_ENDPOINT}/${API_STAGE}/gpu?type=asset&key=${configKey}`);
                 const preSignedUrljson = await getPreSignedUrlResp.json();
                 const preSignedUrl = preSignedUrljson["presigned_url"];
                 const resp = await fetch(preSignedUrl);

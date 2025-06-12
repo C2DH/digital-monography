@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import TnbBookNav from "./TnbBookNav";
-import { endpoint, getGitBranch } from "./../constants";
+import { API_ENDPOINT, API_STAGE, GITHUB_ORG } from "./../constants";
 
 function getLastPart(s: string): string {
     let split = s.split("/");
@@ -21,15 +21,13 @@ type IS3Object = {
 export default function DynamicComponent({ backendPath, targetPath }: { backendPath: string, targetPath: string }) {
     const searchParams = useSearchParams();
     const slug = searchParams?.get("slug");
-    const stage = getGitBranch();
-    // const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
     const [tableData, setTableData] = useState<IS3Object[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     useEffect(() => {
         async function fetchData(inputSlug: string) {
             setLoading(true);
             try {
-                const response = await fetch(`${endpoint}/${stage}/${backendPath}?slug=${inputSlug}`);
+                const response = await fetch(`${API_ENDPOINT}/${API_STAGE}/${backendPath}?slug=${inputSlug}`);
                 const json = await response.json();
                 const tempTableData: IS3Object[] = [];
                 for (let i = 0; i < json.length; i++) {

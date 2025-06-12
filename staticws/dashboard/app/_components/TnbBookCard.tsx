@@ -5,6 +5,7 @@ import { u } from 'unist-builder';
 
 import { IBook } from "./../../types/books";
 import TnbBookNav from "./TnbBookNav";
+import { GITHUB_ORG, S3_READER_STATICWS } from '../constants';
 
 function downloadBlob(filename: string, blob: Blob) {
     const a = document.createElement('a');
@@ -96,19 +97,20 @@ export default function TnbBookCard({ authors, slug, title, alert }: IBook) {
                                 </button>
                                 <a
                                     target="_blank" rel="noopener noreferrer"
-                                    href={`https://github.com/digital-monographs/${slug}`}
+                                    href={`https://github.com/${GITHUB_ORG}/${slug}`}
                                     className="btn btn-outline-primary"
                                 >Public source</a>
                                 <a
                                     target="_blank" rel="noopener noreferrer"
-                                    href={`https://github.com/digital-monographs/${slug}/issues`}
+                                    href={`https://github.com/${GITHUB_ORG}/${slug}/issues`}
                                     className="btn btn-outline-primary"
                                 >Discussion</a>
                                 <a
                                     target="_blank" rel="noopener noreferrer"
-                                    href={`https://cpy-dgtmon-dev-staticws-wip.s3.eu-west-1.amazonaws.com/read/${slug}/index.html`}
+                                    href={`${S3_READER_STATICWS}/read/${slug}/index.html`}
                                     className="btn btn-outline-primary"
                                 >Digital</a>
+                                {/* // href={`https://cpy-dgtmon-dev-staticws-wip.s3.eu-west-1.amazonaws.com/read/${slug}/index.html`} */}
                                 <a onClick={() => saveDocxFile('demo.docx', mdast)} className="btn btn-outline-primary">Paper</a>
                                 {/* <a href="" className="btn btn-outline-primary disabled">Paper</a> */}
                                 <a href="" className="btn btn-outline-primary disabled">Zip package</a>

@@ -37,12 +37,12 @@ build-dashboard:
   image: node:20
   before_script:
     - cd staticws/dashboard/
-    - touch .env
-    - echo "NEXT_PUBLIC_GIT_BRANCH=${CI_COMMIT_BRANCH}" >> .env
-    - cat .env
+    # - touch .env
+    # - echo "NEXT_PUBLIC_GIT_BRANCH=${CI_COMMIT_BRANCH}" >> .env
+    # - cat .env
     - npm install
   script:
-    - npm run build
+    - npm run build:${CI_COMMIT_BRANCH}
   after_script:
     - ls -la staticws/dashboard/out
   cache:

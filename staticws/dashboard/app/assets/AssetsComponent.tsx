@@ -12,7 +12,7 @@ import { Table } from './AssetsTable';
 import { AssetDetails } from "./AssetDetails";
 import { IAsset, ITableRow, IRef, IS3Object } from "./types";
 import TnbBookNav from "./../_components/TnbBookNav";
-import { endpoint, getGitBranch } from "./../constants";
+import { API_ENDPOINT, API_STAGE } from "./../constants";
 
 const columns: ColumnDef<ITableRow>[] = [
     {
@@ -135,7 +135,6 @@ const pathAssetS3List = "list-assets";
 const pathRefMetadata = "refs";
 
 export default function AssetsComponent(): React.JSX.Element {
-    const stage = getGitBranch();
     const searchParams = useSearchParams();
     const slug = searchParams?.get("slug");
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -156,8 +155,8 @@ export default function AssetsComponent(): React.JSX.Element {
     const fetchAssetsData = React.useCallback(async (inputSlug: string) => {
         try {
             const [assetsResp, s3objectsResp] = await Promise.all([
-                fetch(`${endpoint}/${stage}/${pathAssetMetadata}?slug=${inputSlug}`),
-                fetch(`${endpoint}/${stage}/${pathAssetS3List}?slug=${inputSlug}`),
+                fetch(`${API_ENDPOINT}/${API_STAGE}/${pathAssetMetadata}?slug=${inputSlug}`),
+                fetch(`${API_ENDPOINT}/${API_STAGE}/${pathAssetS3List}?slug=${inputSlug}`),
             ]);
             const assetsJson = await assetsResp.json();
             const s3objectsJson = await s3objectsResp.json();
@@ -215,7 +214,7 @@ export default function AssetsComponent(): React.JSX.Element {
     }, [])
     const fetchRefMetadata = React.useCallback(async (inputSlug: string) => {
         try {
-            const resp = await fetch(`${endpoint}/${stage}/${pathRefMetadata}?slug=${inputSlug}`);
+            const resp = await fetch(`${API_ENDPOINT}/${API_STAGE}/${pathRefMetadata}?slug=${inputSlug}`);
             const respJson = await resp.json();
             const items = respJson.Items || [];
             const tempRefMetadata: IRef[] = [];
