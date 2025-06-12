@@ -27,7 +27,7 @@ init:
     paths:
       - secrets/decrypted.tfvars.json
 
-build-dashboard:
+.build-dashboard:
   stage: init
   # NOTE: make sure rules are in sync with upload-dashboard job
   rules:
@@ -56,7 +56,7 @@ build-dashboard:
       - staticws/dashboard/.next
       - staticws/dashboard/out
 
-deploy:
+.deploy:
   stage: deploy
   dependencies:
     - init
@@ -76,7 +76,7 @@ deploy:
     - mkdir ~/.aws
     - echo -e "[profile oidc]\nrole_arn=${DGTMON_ROLE_DEPL_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
   script:
-    - terraform init -backend-config="key=${CI_COMMIT_BRANCH}.tfstate" -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH"
+    - terraform init -backend-config="key=${CI_COMMIT_BRANCH}.tfstate" -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH" -reconfigure
     - terraform apply -auto-approve -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH"
     - terraform output -json > tf_output.json
   artifacts:
@@ -84,7 +84,7 @@ deploy:
     paths:
       - tf_output.json
 
-upload-dashboard:
+.upload-dashboard:
   stage: post-deploy
   dependencies:
     - build-dashboard

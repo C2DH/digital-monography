@@ -243,6 +243,11 @@ variable "policy_general_dev_apkg_upload" {
   description = "Name of the IAM policy to be assumed by the devs IAM group for uploading authors' packages (apkg) to S3"
 }
 
+variable "role_dashboard" {
+  type        = string
+  description = "Name of the IAM role for the dashboard in S3 to access the database"
+}
+
 variable "role_entrypoint" {
   type        = string
   description = "Name of the IAM role for the entrypoint Lambda function"

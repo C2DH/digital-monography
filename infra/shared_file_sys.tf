@@ -58,7 +58,8 @@ resource "aws_efs_mount_target" "efs_mount" {
 
 resource "aws_efs_file_system" "shared_file_sys" {
   # creation_token   = "dgtmon_shared_file_system"
-  creation_token   = "${var.project}-shared-${var.efs_creation_token}"
+  # creation_token   = "${var.project}-shared-${var.efs_creation_token}"
+  creation_token   = "${var.project}-${var.env}-${var.efs_creation_token}"
   performance_mode = "generalPurpose"
   throughput_mode  = "bursting"
   encrypted        = true
