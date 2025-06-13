@@ -341,7 +341,7 @@ def login(*args, **kwargs):
 def done() -> str:
     logger.info("Done REST api endpoint was called.")
     # url = "https://cpy-dgtmon-dev-staticws-dashboard.s3.eu-west-1.amazonaws.com/index.html"
-    dashboard_url = os.environ["DASHBOARD_URL"] + "/index.html"
+    dashboard_url = "https://" + os.environ["DASHBOARD_DOMAIN"] + "/index.html"
     dbx_app_dir = os.environ["DROPBOX_APP_DIR"]
     dbx_app_url = f"https://www.dropbox.com/home/Apps/{dbx_app_dir}"
     return flask.render_template(
