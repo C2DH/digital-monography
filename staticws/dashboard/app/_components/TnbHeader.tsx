@@ -1,5 +1,5 @@
 import Link from 'next/link'; // otherwise error https://nextjs.org/docs/messages/no-html-link-for-pages
-import { API_ENDPOINT, API_STAGE, DBX_ENDPOINT } from "./../constants";
+import { API_ENDPOINT, API_STAGE, DBX_ENDPOINT, ENV_DESC } from "./../constants";
 
 export default function TnbHeader() {
     return (
@@ -31,6 +31,7 @@ export default function TnbHeader() {
                             </li>
                         </ul>
                     </div>
+                    <span className="badge bg-light text-dark">{ENV_DESC}</span>
                 </div>
             </nav>
         </header>

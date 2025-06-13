@@ -1,4 +1,5 @@
 export const ENV = process.env.NEXT_PUBLIC_ENV;
+export const ENV_DESC = process.env.NEXT_PUBLIC_ENV_DESC;
 export const API_STAGE = process.env.NEXT_PUBLIC_API_STAGE;
 export const API_ENDPOINT = process.env.NEXT_PUBLIC_API_ENDPOINT;
 export const GITHUB_ORG = process.env.NEXT_PUBLIC_GITHUB_ORG;
