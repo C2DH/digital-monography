@@ -21,9 +21,14 @@ variable "env" {
   description = "Name of the environment of the project read from git branch in CI/CD pipeline (i.e. main or develop)"
 }
 
-variable "dbx_app_dir" {
+variable "dropbox_app_dir" {
   type        = string
-  description = "App folder name matching on of the apps defined in https://www.dropbox.com/developers/apps/"
+  description = "App folder name matching one of the apps defined in https://www.dropbox.com/developers/apps/"
+}
+
+variable "dropbox_app_key" {
+  type        = string
+  description = "App key matching one of the apps defined in https://www.dropbox.com/developers/apps/"
 }
 
 ## Set by the Dev team

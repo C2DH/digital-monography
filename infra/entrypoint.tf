@@ -222,7 +222,8 @@ resource "aws_lambda_function" "entrypoint_func" {
       VERIFIER_MSGS           = aws_s3_bucket.verification_msg.bucket
       DASHBOARD_URL           = aws_s3_bucket_website_configuration.staticws_dashboard.website_endpoint
       DROPBOX_SECRET_ID       = data.aws_secretsmanager_secret.github_api_token.id
-      DROPBOX_APP_DIR         = var.dbx_app_dir
+      DROPBOX_APP_DIR         = var.dropbox_app_dir
+      DROPBOX_APP_KEY         = var.dropbox_app_key
       INFRA_ENV               = var.env
     }
   }

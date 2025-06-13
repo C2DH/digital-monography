@@ -53,13 +53,9 @@ sqs: boto3_SQSClient = boto3.client("sqs")
 s3: boto3_S3Client = boto3.client("s3")
 
 
-APP_KEY = "9d9sdu2khx0lboj"
-FLASK_SECRET_KEY = "FLASK_SECRET_KEY"
-AWS_AGW_STAGE = "test"
-
 app = flask.Flask(__name__)
 app.debug = True
-app.secret_key = FLASK_SECRET_KEY
+app.secret_key = os.environ["FLASK_SECRET_KEY"]
 
 
 class UserData(t.TypedDict):
@@ -97,7 +93,9 @@ def get_url(route) -> str:
     )
     # Include the stage part of the url, e.g https://.../test/...
     url_parts = urllib.parse.urlparse(url)
-    url_parts = url_parts._replace(path=f"/{AWS_AGW_STAGE}" + url_parts.path)
+    agw_stage = os.environ["INFRA_ENV"]
+    # url_parts = url_parts._replace(path=f"/{AWS_AGW_STAGE}" + url_parts.path)
+    url_parts = url_parts._replace(path=f"/{agw_stage}" + url_parts.path)
     return urllib.parse.urlunparse(url_parts)
 
 
@@ -105,7 +103,7 @@ def get_flow():
     secret_id = os.environ.get("DROPBOX_SECRET_ID", "")
     dbx_app_secret = get_dbx_app_secret(secret_id)
     return dropbox.DropboxOAuth2Flow(
-        consumer_key=APP_KEY,
+        consumer_key=os.environ["DROPBOX_APP_KEY"],
         consumer_secret=dbx_app_secret,
         redirect_uri=get_url("oauth_callback"),
         session=flask.session,
@@ -121,7 +119,7 @@ def welcome():
         redirect_url=get_url("oauth_callback"),
         webhook_url=get_url("webhook"),
         home_url=get_url("index"),
-        app_key=APP_KEY,
+        app_key=os.environ["DROPBOX_APP_KEY"],
     )
 
 
