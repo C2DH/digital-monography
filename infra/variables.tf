@@ -31,6 +31,11 @@ variable "dropbox_app_key" {
   description = "App key matching one of the apps defined in https://www.dropbox.com/developers/apps/"
 }
 
+variable "flask_secret_key" {
+  type        = string
+  description = "Flask secret key that will be used for securely signing session cookies"
+}
+
 ## Set by the Dev team
 
 variable "efs_access_security_group" {
