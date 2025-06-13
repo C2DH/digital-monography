@@ -26,6 +26,8 @@ init:
     # expire_in: 1 day # TODO: consider TTL
     paths:
       - secrets/decrypted.tfvars.json
+  tags:
+    - all
 
 build-dashboard:
   stage: init
@@ -55,6 +57,8 @@ build-dashboard:
     paths:
       - staticws/dashboard/.next
       - staticws/dashboard/out
+  tags:
+    - local
 
 deploy:
   stage: deploy
