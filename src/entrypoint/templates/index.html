@@ -1,5 +1,6 @@
 {% extends 'layout.html' %}
 {% block body %}
 <p>Remember to login before you start working on your manuscript.</p>
-<a class="button" href="/test/login">Login</a>
+<a class="button" href="{{ data.login_path }}">Login</a>
+<!-- <a class="button" href="/test/login">Login</a> -->
 {% endblock %}

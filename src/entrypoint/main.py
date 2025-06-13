@@ -141,7 +141,10 @@ def oauth_callback(*args, **kwargs):
 @app.route("/")
 def index() -> str:
     logger.info("Index REST api endpoint was called.")
-    return flask.render_template("index.html")
+    infra_env = os.environ.get("INFRA_ENV")
+    return flask.render_template(
+        "index.html", data={"login_path": f"/{infra_env}/login"}
+    )
 
 
 def _s3_list_objects(bucket: str, prefix: t.Optional[str]) -> list[boto3_ObjectTypeDef]:
@@ -339,8 +342,18 @@ def login(*args, **kwargs):
 @app.route("/done")
 def done() -> str:
     logger.info("Done REST api endpoint was called.")
-    url = "https://cpy-dgtmon-dev-staticws-dashboard.s3.eu-west-1.amazonaws.com/index.html"
-    return flask.render_template("done.html", data={"url": url})
+    # url = "https://cpy-dgtmon-dev-staticws-dashboard.s3.eu-west-1.amazonaws.com/index.html"
+    dashboard_url = os.environ["DASHBOARD_URL"] + "/index.html"
+    dbx_app_dir = os.environ["DROPBOX_APP_DIR"]
+    dbx_app_url = f"https://www.dropbox.com/home/Apps/{dbx_app_dir}"
+    return flask.render_template(
+        "done.html",
+        data={
+            "dashboard_url": dashboard_url,
+            "dbx_app_url": dbx_app_url,
+            "env": os.environ.get("INFRA_ENV", ""),
+        },
+    )
 
 
 @app.route("/webhook", methods=["GET"])

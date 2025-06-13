@@ -109,6 +109,7 @@ def _get_key(event) -> KeyPath:
 # TODO: Check if this is necessary. If not, remove.
 def _mkdir_read():
     new_path = pathlib.Path(DEFAULT_SFS_DIR) / "read"
+    print("new_path created", new_path)
     if not new_path.exists():
         new_path.mkdir(exist_ok=True)
 
