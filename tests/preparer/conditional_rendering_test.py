@@ -21,7 +21,11 @@ from src.preparer.refs import (
 
 class TestConditionalRendering:
     fp = KeyPath(
-        pathlib.Path("/tmp") / "efs" / "a_book" / "05_conditional_rendering.docx"
+        pathlib.Path("/tmp")
+        / "efs"
+        / "_JB"
+        / "a_book"
+        / "05_conditional_rendering.docx"
     )
 
     @classmethod

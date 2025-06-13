@@ -3,7 +3,7 @@ author: Pawel Kaminski
 copyright: "2025"
 
 repository:
-  url: https://github.com/digital-monographs/book-content-examples
+  url: https://github.com/monograph-prototypes/book-content-examples
 html:
   use_repository_button: true
   use_issues_button: true
