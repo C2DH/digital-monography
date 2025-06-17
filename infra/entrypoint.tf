@@ -77,7 +77,7 @@ data "aws_iam_policy_document" "entrypoint" {
   statement {
     sid       = "AllowWritingLogs"
     effect    = "Allow"
-    resources = ["arn:aws:logs:${var.region}:*:log-group:/aws/*:*"]
+    resources = ["arn:aws:logs:${var.region}:*:log-group:*:*"]
     actions = [
       "logs:CreateLogStream",
       "logs:PutLogEvents",
