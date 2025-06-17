@@ -4,32 +4,32 @@
         "STABLE": "0.0.70"
     },
     "DROPBOX": {
-        "LATEST": "0.0.40",
-        "STABLE": "0.0.40"
+        "LATEST": "0.0.41",
+        "STABLE": "0.0.41"
     },
     "BUILDER": {
-        "LATEST": "0.1.38",
-        "STABLE": "0.1.38"
+        "LATEST": "0.1.39",
+        "STABLE": "0.1.39"
     },
     "GITHUB": {
-        "LATEST": "0.0.29",
-        "STABLE": "0.0.29"
+        "LATEST": "0.0.30",
+        "STABLE": "0.0.30"
     },
     "PREPARER": {
-        "LATEST": "0.1.41",
-        "STABLE": "0.1.41"
+        "LATEST": "0.1.42",
+        "STABLE": "0.1.42"
     },
     "VERIFIER": {
-        "LATEST": "0.1.21",
-        "STABLE": "0.1.21"
+        "LATEST": "0.1.22",
+        "STABLE": "0.1.22"
     },
     "GPU": {
         "LATEST": "0.0.10",
         "STABLE": "0.0.10"
     },
     "WORDPROCESSOR": {
-        "LATEST": "0.0.4",
-        "STABLE": "0.0.4"
+        "LATEST": "0.0.5",
+        "STABLE": "0.0.5"
     },
     "LOCAL": {
         "LATEST": "0.1.2",

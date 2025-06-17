@@ -21,6 +21,9 @@ class InvalidKey(Exception):
 
 class KeyPath(type(pathlib.Path())):  # type: ignore
 
+    # def __init__(self):
+    #     self.abs_root = KeyPath(DEFAULT_SFS_DIR)
+
     def __new__(cls, *pathsegments):
         return super().__new__(cls, *pathsegments)
 
@@ -31,7 +34,7 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
     @property
     def abs_root(self) -> "KeyPath":
         """Returns the absolute root directory for the KeyPath."""
-        return KeyPath(DEFAULT_SFS_DIR) / "_JB"
+        return KeyPath(DEFAULT_SFS_DIR)
 
     @property
     def efs_filepath(self) -> "KeyPath":
