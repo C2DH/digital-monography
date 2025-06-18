@@ -29,7 +29,7 @@ init:
   tags:
     - all
 
-build-dashboard:
+.build-dashboard:
   stage: init
   # NOTE: make sure rules are in sync with upload-dashboard job
   rules:
@@ -60,7 +60,38 @@ build-dashboard:
   tags:
     - all
 
-deploy:
+test:
+  stage: deploy
+  dependencies:
+    - init
+  image:
+    name: hashicorp/terraform:light
+    entrypoint: [""]
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://gitlab.com
+  script:
+    # - cp -a infra/. .
+    # - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
+    # - mkdir ~/.aws
+    # - echo -e "[profile oidc]\nrole_arn=${DGTMON_ROLE_DEPL_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
+    # - export AWS_ID_MAIN=$(jq -r '.aws_account_id_main.value' tf_output.json)
+    # - export AWS_ID_DEVELOP=$(jq -r '.aws_account_id_develop.value' tf_output.json)
+    - if [ $CI_COMMIT_BRANCH == "main" ]; then
+      echo "main"
+      elif [ $CI_COMMIT_BRANCH == "develop" ]; then
+      echo "develop"
+      else
+      echo "Unsupported branch $CI_COMMIT_BRANCH"
+      fi
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - tf_output.json
+  tags:
+    - all
+
+.deploy:
   stage: deploy
   dependencies:
     - init
@@ -90,7 +121,7 @@ deploy:
   tags:
     - all
 
-upload-dashboard:
+.upload-dashboard:
   stage: post-deploy
   dependencies:
     - build-dashboard
@@ -141,7 +172,7 @@ upload-dashboard:
 #     - npm start &
 #     - CYPRESS_BASE_URL=https://${STATICWS_DASHBOARD_S3} npx cypress run --browser chrome --headless
 
-destroy:
+.destroy:
   stage: destroy
   only:
     - main
