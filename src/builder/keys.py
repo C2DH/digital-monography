@@ -35,7 +35,6 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
     def abs_root(self) -> "KeyPath":
         """Returns the absolute root directory for the KeyPath."""
         return KeyPath(DEFAULT_SFS_DIR)
-        # / "_JB"
 
     @property
     def efs_filepath(self) -> "KeyPath":

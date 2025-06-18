@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
-    bucket         = "dgtmon-shared-s3-tfstate-backend"
-    dynamodb_table = "dgtmon-shared-dyndb-tfstate-locktbl"
+    bucket         = "dgtmon-develop-s3-tfstate-backend"
+    dynamodb_table = "dgtmon-develop-dyndb-tfstate-locktbl"
     encrypt        = true
     profile        = "oidc"
   }

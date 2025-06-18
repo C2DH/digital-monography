@@ -1,10 +1,10 @@
 resource "aws_iam_group" "devs" {
-  name = "${var.project}-shared-${var.group_devs}"
+  name = "${var.project}-${var.env}-${var.group_devs}"
   path = "/users/"
 }
 
 resource "aws_iam_policy" "dev_ecr" {
-  name = "${var.project}-shared-${var.policy_general_dev_ecr}"
+  name = "${var.project}-${var.env}-${var.policy_general_dev_ecr}"
   path = "/"
   policy = jsonencode({
     "Version" : "2012-10-17",
@@ -37,7 +37,7 @@ resource "aws_iam_policy" "dev_ecr" {
 }
 
 resource "aws_iam_policy" "dev_apkg_upload" {
-  name = "${var.project}-shared-${var.policy_general_dev_apkg_upload}"
+  name = "${var.project}-${var.env}-${var.policy_general_dev_apkg_upload}"
   path = "/"
   policy = jsonencode({
     "Version" : "2012-10-17",
@@ -71,7 +71,7 @@ resource "aws_iam_group_policy_attachment" "dev_apkg_upload" {
 resource "aws_iam_user" "cli_PAK" {
   # For every user remember to create access keys via the console (admin)
   # and then add them to the AWS CLI config file (user).
-  name = "${var.project}-shared-${var.usr_cli_PAK}"
+  name = "${var.project}-${var.env}-${var.usr_cli_PAK}"
 }
 
 resource "aws_iam_user_group_membership" "cli_PAK" {

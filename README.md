@@ -138,7 +138,7 @@ The project has two cloud environments: main and develop. Each time you run `git
 Each resource deployed should follow the same naming convention: `<project>-<env>-<awsservice>-<microservice>-<details>`
 
 * `project` should be always "dgtmon". Helpful e.g. when you look for a IAM Policy related to the project - just start typing the name of the project and you'll filter only relavant items.
-* `env` is generally the name of the environment ("main" or "develop"). For resources shared between different environments (e.g. security groups) it should be either "shared" or (especially for legacy resources) "dev".
+* `env` is generally the name of the environment ("main" or "develop"). For shared resources (e.g. ECR images) and for legacy resources it can be equal to "dev".
 * `awsservice` is the abbreviation of a infrastructure resource. It should anwser the question: "what is it".
 * `microservice` is the related service, like "builder" or "preparer". `microservice` can also be "general" or "gen" if the resource is for general use. You can also leave it empty.
 
