@@ -78,15 +78,15 @@ test:
     # - export AWS_ID_MAIN=$(jq -r '.aws_account_id_main.value' tf_output.json)
     # - export AWS_ID_DEVELOP=$(jq -r '.aws_account_id_develop.value' tf_output.json)
     # - if [ "$CI_COMMIT_BRANCH" = "main" ]; then echo "main" elif [ "$CI_COMMIT_BRANCH" = "develop" ]; then echo "develop" else echo "Unsupported branch $CI_COMMIT_BRANCH" fi
-    -|
-    if [ "$CI_COMMIT_BRANCH" = "main" ]; then
-    echo "hi main"
-    elif [ "$CI_COMMIT_BRANCH" = "develop" ]; then
-    echo "hi dev"
-    else
-    echo "hello"
-    fi
     # - [ "$SOMEVAR" = "main" ] && echo "hi main" || ([ "$SOMEVAR" = "develop" ] && echo "hi dev" || echo "hello")
+    - |
+      if [ "$CI_COMMIT_BRANCH" = "main" ]; then
+        echo "hi main"
+      elif [ "$CI_COMMIT_BRANCH" = "develop" ]; then
+        echo "hi dev"
+      else
+        echo "hello"
+      fi
   artifacts:
     expire_in: 1 day
     paths:
