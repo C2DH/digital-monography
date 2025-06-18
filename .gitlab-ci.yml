@@ -82,8 +82,12 @@ test:
     - |
       if [ "$CI_COMMIT_BRANCH" = "main" ]; then
         echo "hi main"
+        export AWS_ACCOUNT_ID=$(jq -r '.aws_account_id_main.value' tf_output.json)
+        jq '. += {"aws_account_id": '"$AWS_ACCOUNT_ID"'}' secrets/decrypted.tfvars.json
       elif [ "$CI_COMMIT_BRANCH" = "develop" ]; then
         echo "hi dev"
+        export AWS_ACCOUNT_ID=$(jq -r '.aws_account_id_develop.value' tf_output.json)
+        jq '. += {"aws_account_id": '"$AWS_ACCOUNT_ID"'}' secrets/decrypted.tfvars.json
       else
         echo "hello"
       fi
