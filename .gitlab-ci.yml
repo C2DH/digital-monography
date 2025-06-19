@@ -19,19 +19,20 @@ init:
     - cat $PGP_KEY | gpg --batch --import
     - echo $PGP_PASSPHRASE | gpg --batch --always-trust --yes --passphrase-fd 0 --pinentry-mode=loopback -s $(mktemp)
   script:
-    - sops -d secrets/test.tfvars.json | jq '.data' > secrets/decrypted.tfvars.json
-    # - sops -d secrets/encrypted.tfvars.json | jq '.data' > secrets/decrypted.tfvars.json
+    - sops -d secrets/encrypted.tfvars.json | jq '.data' > secrets/decrypted.tfvars.json
     - |
       if [ "$CI_COMMIT_BRANCH" = "main" ]; then
         echo "hi main"
         export AWS_ACCOUNT_ID=$(jq -r '.aws_account_id_main' secrets/decrypted.tfvars.json)
         export DBX_APP_DIR=$(jq -r '.dropbox_app_dir_main' secrets/decrypted.tfvars.json)
         export DBX_APP_KEY=$(jq -r '.dropbox_app_key_main' secrets/decrypted.tfvars.json)
+        export FLASK_SECRETK=$(jq -r '.flask_secret_key_main' secrets/decrypted.tfvars.json)
       elif [ "$CI_COMMIT_BRANCH" = "develop" ]; then
         echo "hi dev"
         export AWS_ACCOUNT_ID=$(jq -r '.aws_account_id_develop' secrets/decrypted.tfvars.json)
         export DBX_APP_DIR=$(jq -r '.dropbox_app_dir_develop' secrets/decrypted.tfvars.json)
         export DBX_APP_KEY=$(jq -r '.dropbox_app_key_develop' secrets/decrypted.tfvars.json)
+        export FLASK_SECRETK=$(jq -r '.flask_secret_key_develop' secrets/decrypted.tfvars.json)
       else
         echo "hello"
       fi
@@ -40,14 +41,9 @@ init:
       --arg AWS_ACCOUNT_ID "$AWS_ACCOUNT_ID" \
       --arg DBX_APP_DIR "$DBX_APP_DIR" \
       --arg DBX_APP_KEY "$DBX_APP_KEY" \
-      '. += { "aws_account_id": $AWS_ACCOUNT_ID, "dropbox_app_dir": $DBX_APP_DIR, "dropbox_app_key": $DBX_APP_KEY }' secrets/decrypted.tfvars.json | ./scripts/sponge.awk secrets/decrypted.tfvars.json
-    # '. += { "aws_account_id": $AWS_ACCOUNT_ID, "dropbox_app_dir": $DBX_APP_DIR, "dropbox_app_key": $DBX_APP_KEY }' secrets/decrypted.tfvars.json | sponge secrets/decrypted.tfvars.json
-    - jq '.' secrets/decrypted.tfvars.json
-    # - >
-    # jq --arg AWS_ACCOUNT_ID "$AWS_ACCOUNT_ID" '. += {"aws_account_id": '"$AWS_ACCOUNT_ID"'}' secrets/decrypted.tfvars.json > secrets/decrypted.tfvars.json
-    # jq '. += {"aws_account_id": "AWS_ACCOUNT_ID"}' secrets/decrypted.tfvars.json | sponge secrets/decrypted.tfvars.json
-    #   sops -d secrets/encrypted.tfvars.json |
-    #   jq -r --arg CI_COMMIT_BRANCH "$CI_COMMIT_BRANCH" '.data += {env: $CI_COMMIT_BRANCH}'
+      --arg FLASK_SECRETK "$FLASK_SECRETK" \
+      '. += { "aws_account_id": $AWS_ACCOUNT_ID, "dropbox_app_dir": $DBX_APP_DIR, "dropbox_app_key": $DBX_APP_KEY, "flask_secret_key": $FLASK_SECRETK }' \
+      secrets/decrypted.tfvars.json | ./scripts/sponge.awk secrets/decrypted.tfvars.json
   artifacts:
     # expire_in: 1 day # TODO: consider TTL
     paths:
