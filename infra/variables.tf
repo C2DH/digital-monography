@@ -16,6 +16,11 @@ variable "project" {
   description = "Global name of the project, which acts as a prefix to all resources"
 }
 
+variable "org" {
+  type        = string
+  description = "Global name of the organization, mostly acts as a tag to all resources in an org"
+}
+
 variable "env" {
   type        = string
   description = "Name of the environment of the project read from git branch in CI/CD pipeline (i.e. main or develop)"

@@ -12,7 +12,7 @@ provider "aws" {
   region  = var.region
   default_tags {
     tags = {
-      org     = "c2dh"
+      org     = var.org
       project = var.project
     }
   }
