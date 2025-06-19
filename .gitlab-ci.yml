@@ -18,8 +18,36 @@ init:
     - cat $PGP_KEY | gpg --batch --import
     - echo $PGP_PASSPHRASE | gpg --batch --always-trust --yes --passphrase-fd 0 --pinentry-mode=loopback -s $(mktemp)
   script:
-    - sops -d secrets/encrypted.tfvars.json | jq '.data' > secrets/decrypted.tfvars.json
+    - sops -d secrets/test.tfvars.json | jq '.data' > secrets/decrypted.tfvars.json
+    # - sops -d secrets/encrypted.tfvars.json | jq '.data' > secrets/decrypted.tfvars.json
+    - |
+      if [ "$CI_COMMIT_BRANCH" = "main" ]; then
+        echo "hi main"
+        export AWS_ACCOUNT_ID=$(jq -r '.aws_account_id_main' secrets/decrypted.tfvars.json)
+        export DBX_APP_DIR=$(jq -r '.dropbox_app_dir_main' secrets/decrypted.tfvars.json)
+        export DBX_APP_KEY=$(jq -r '.dropbox_app_key_main' secrets/decrypted.tfvars.json)
+      elif [ "$CI_COMMIT_BRANCH" = "develop" ]; then
+        echo "hi dev"
+        export AWS_ACCOUNT_ID=$(jq -r '.aws_account_id_develop' secrets/decrypted.tfvars.json)
+        export DBX_APP_DIR=$(jq -r '.dropbox_app_dir_develop' secrets/decrypted.tfvars.json)
+        export DBX_APP_KEY=$(jq -r '.dropbox_app_key_develop' secrets/decrypted.tfvars.json)
+      else
+        echo "hello"
+      fi
+    - |
+      jq \
+      --arg AWS_ACCOUNT_ID "$AWS_ACCOUNT_ID" \
+      --arg DBX_APP_DIR "$DBX_APP_DIR" \
+      --arg DBX_APP_KEY "$DBX_APP_KEY" \
+      '. += {
+        "aws_account_id": $AWS_ACCOUNT_ID
+        "dropbox_app_dir": $DBX_APP_DIR
+        "dropbox_app_key": $DBX_APP_KEY
+      }' secrets/decrypted.tfvars.json | sponge secrets/decrypted.tfvars.json
+    - jq '.' secrets/decrypted.tfvars.json
     # - >
+    # jq --arg AWS_ACCOUNT_ID "$AWS_ACCOUNT_ID" '. += {"aws_account_id": '"$AWS_ACCOUNT_ID"'}' secrets/decrypted.tfvars.json > secrets/decrypted.tfvars.json
+    # jq '. += {"aws_account_id": "AWS_ACCOUNT_ID"}' secrets/decrypted.tfvars.json | sponge secrets/decrypted.tfvars.json
     #   sops -d secrets/encrypted.tfvars.json |
     #   jq -r --arg CI_COMMIT_BRANCH "$CI_COMMIT_BRANCH" '.data += {env: $CI_COMMIT_BRANCH}'
   artifacts:
@@ -57,44 +85,6 @@ init:
     paths:
       - staticws/dashboard/.next
       - staticws/dashboard/out
-  tags:
-    - all
-
-test:
-  stage: deploy
-  dependencies:
-    - init
-  image:
-    name: hashicorp/terraform:light
-    entrypoint: [""]
-  id_tokens:
-    GITLAB_OIDC_TOKEN:
-      aud: https://gitlab.com
-  script:
-    # - cp -a infra/. .
-    # - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
-    # - mkdir ~/.aws
-    # - echo -e "[profile oidc]\nrole_arn=${DGTMON_ROLE_DEPL_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
-    # - export AWS_ID_MAIN=$(jq -r '.aws_account_id_main.value' tf_output.json)
-    # - export AWS_ID_DEVELOP=$(jq -r '.aws_account_id_develop.value' tf_output.json)
-    # - if [ "$CI_COMMIT_BRANCH" = "main" ]; then echo "main" elif [ "$CI_COMMIT_BRANCH" = "develop" ]; then echo "develop" else echo "Unsupported branch $CI_COMMIT_BRANCH" fi
-    # - [ "$SOMEVAR" = "main" ] && echo "hi main" || ([ "$SOMEVAR" = "develop" ] && echo "hi dev" || echo "hello")
-    - |
-      if [ "$CI_COMMIT_BRANCH" = "main" ]; then
-        echo "hi main"
-        export AWS_ACCOUNT_ID=$(jq -r '.aws_account_id_main.value' tf_output.json)
-        jq '. += {"aws_account_id": '"$AWS_ACCOUNT_ID"'}' secrets/decrypted.tfvars.json
-      elif [ "$CI_COMMIT_BRANCH" = "develop" ]; then
-        echo "hi dev"
-        export AWS_ACCOUNT_ID=$(jq -r '.aws_account_id_develop.value' tf_output.json)
-        jq '. += {"aws_account_id": '"$AWS_ACCOUNT_ID"'}' secrets/decrypted.tfvars.json
-      else
-        echo "hello"
-      fi
-  artifacts:
-    expire_in: 1 day
-    paths:
-      - tf_output.json
   tags:
     - all
 
