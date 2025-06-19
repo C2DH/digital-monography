@@ -12,6 +12,8 @@ init:
     - develop
   image: google/cloud-sdk
   before_script:
+    - echo "Step 1. Script preparation"
+    - echo "Step 1.1. Install sops and jq"
     - apt-get update && apt-get install -y curl gnupg jq
     - curl -qsL https://github.com/mozilla/sops/releases/download/v3.5.0/sops-v3.5.0.linux -o /usr/local/bin/sops
     - chmod +x /usr/local/bin/sops
@@ -19,16 +21,17 @@ init:
     - cat $PGP_KEY | gpg --batch --import
     - echo $PGP_PASSPHRASE | gpg --batch --always-trust --yes --passphrase-fd 0 --pinentry-mode=loopback -s $(mktemp)
   script:
+    - echo "Step 2. Script execution"
+    - echo "Step 2.1. Decrypt tfvars"
     - sops -d secrets/encrypted.tfvars.json | jq '.data' > secrets/decrypted.tfvars.json
     - |
+      echo "Step 2.2. Set environment variables based on environment"
       if [ "$CI_COMMIT_BRANCH" = "main" ]; then
-        echo "hi main"
         export AWS_ACCOUNT_ID=$(jq -r '.aws_account_id_main' secrets/decrypted.tfvars.json)
         export DBX_APP_DIR=$(jq -r '.dropbox_app_dir_main' secrets/decrypted.tfvars.json)
         export DBX_APP_KEY=$(jq -r '.dropbox_app_key_main' secrets/decrypted.tfvars.json)
         export FLASK_SECRETK=$(jq -r '.flask_secret_key_main' secrets/decrypted.tfvars.json)
       elif [ "$CI_COMMIT_BRANCH" = "develop" ]; then
-        echo "hi dev"
         export AWS_ACCOUNT_ID=$(jq -r '.aws_account_id_develop' secrets/decrypted.tfvars.json)
         export DBX_APP_DIR=$(jq -r '.dropbox_app_dir_develop' secrets/decrypted.tfvars.json)
         export DBX_APP_KEY=$(jq -r '.dropbox_app_key_develop' secrets/decrypted.tfvars.json)
@@ -37,6 +40,7 @@ init:
         echo "hello"
       fi
     - |
+      echo "Step 2.3. Update tfvars with environment-based variables"
       jq \
       --arg AWS_ACCOUNT_ID "$AWS_ACCOUNT_ID" \
       --arg DBX_APP_DIR "$DBX_APP_DIR" \
@@ -44,6 +48,12 @@ init:
       --arg FLASK_SECRETK "$FLASK_SECRETK" \
       '. += { "aws_account_id": $AWS_ACCOUNT_ID, "dropbox_app_dir": $DBX_APP_DIR, "dropbox_app_key": $DBX_APP_KEY, "flask_secret_key": $FLASK_SECRETK }' \
       secrets/decrypted.tfvars.json | ./scripts/sponge.awk secrets/decrypted.tfvars.json
+    - echo "Step 2.4. Substitute values in infra/main.tf with environment-based variables"
+    - export TFSTATE_LOCKTBL="dgtmon-$CI_COMMIT_BRANCH"'-'"$(jq -r '.tfstate_locktbl' secrets/decrypted.tfvars.json)"
+    - export TFSTATE_BACKEND="dgtmon-$CI_COMMIT_BRANCH"'-'"$(jq -r '.tfstate_backend' secrets/decrypted.tfvars.json)"
+    - sed -e 's@TFSTATE_LOCKTBL@'"$TFSTATE_LOCKTBL"'@' infra/main.tf | scripts/sponge.awk infra/main.tf
+    - sed -e 's@TFSTATE_BACKEND@'"$TFSTATE_BACKEND"'@' infra/main.tf | scripts/sponge.awk infra/main.tf
+    - cat infra/main.tf
   artifacts:
     # expire_in: 1 day # TODO: consider TTL
     paths:
