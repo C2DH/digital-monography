@@ -353,7 +353,11 @@ Make sure that the "Developers" IAM Group has "ReadOnlyAccess" or "ViewOnlyAcces
 
 At this point the new user should be prompted to add a new password. The user should be able to finalize the creation by following the steps provided by the AWS. Particularly, the user should register a MFA device.
 
-## Adding a new Lambda function
+## Adding new Dropbox app
+
+To create an app, set its options and/or see its details, navigate to Dropbox [dashboard](https://www.dropbox.com/developers/apps?_tk=pilot_lp&_ad=topbar4&_camp=myapps).
+
+## Adding new Lambda function
 
 When adding a new Lambda function (a new microservice), please follow these steps:
 1. Add the microservice code to the `src/ ` directory.
