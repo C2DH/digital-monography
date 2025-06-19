@@ -58,8 +58,6 @@ init:
     # expire_in: 1 day # TODO: consider TTL
     paths:
       - secrets/decrypted.tfvars.json
-  tags:
-    - all
 
 .build-dashboard:
   stage: init
@@ -89,8 +87,6 @@ init:
     paths:
       - staticws/dashboard/.next
       - staticws/dashboard/out
-  tags:
-    - all
 
 .deploy:
   stage: deploy
@@ -119,8 +115,6 @@ init:
     expire_in: 1 day
     paths:
       - tf_output.json
-  tags:
-    - all
 
 .upload-dashboard:
   stage: post-deploy
@@ -148,8 +142,6 @@ init:
     - export AWS_CONFIG_FILE=~/.aws/config
     - aws s3 sync staticws/dashboard/out s3://$STATICWS_DASHBOARD_S3 --delete --profile oidc
   when: on_success
-  tags:
-    - all
 
 # test-dashboard:
 #   stage: e2e-tests
@@ -193,5 +185,3 @@ init:
     - terraform init -backend-config="key=${CI_COMMIT_BRANCH}.tfstate" -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH" -reconfigure
     - terraform destroy -auto-approve -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH"
   when: manual
-  tags:
-    - all
