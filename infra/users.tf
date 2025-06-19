@@ -68,9 +68,23 @@ resource "aws_iam_group_policy_attachment" "dev_apkg_upload" {
   policy_arn = aws_iam_policy.dev_apkg_upload.arn
 }
 
+## Specific users
+
+# For every user remember to create access keys via the console (admin)
+# and then add them to the AWS CLI config file (user).
+
+resource "aws_iam_user" "cli_ELG" {
+  name = "${var.project}-${var.env}-${var.usr_cli_ELG}"
+}
+
+resource "aws_iam_user_group_membership" "cli_ELG" {
+  user = aws_iam_user.cli_ELG.name
+  groups = [
+    aws_iam_group.devs.name,
+  ]
+}
+
 resource "aws_iam_user" "cli_PAK" {
-  # For every user remember to create access keys via the console (admin)
-  # and then add them to the AWS CLI config file (user).
   name = "${var.project}-${var.env}-${var.usr_cli_PAK}"
 }
 

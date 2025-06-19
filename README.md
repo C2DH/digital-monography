@@ -324,7 +324,7 @@ Also, add the "AWS_DEFAULT_REGION" variable with value equal to the AWS region s
 
 Remember, the platform makes updates by pulling docker images from the ECR container repository. In order to update the source code, users should push their modifications to the repository using docker (preferably via commands defined in the `Makefile` file).
 
-To add a CLI client for a specific user the admin should add a IAM User directly in `infra/users.tf` and attach it to a group with ECR permissions. Push changes via git to "main" or "develop" branch.
+To add a CLI client for a specific user the admin should add an IAM User directly in `infra/users.tf` and attach it to a group with ECR permissions. Name of the new user should be written in the encrypted `secrets/variables.tf` file. Push changes via git to "main" or "develop" branch.
 
 Every user pushing to the ECR must have installed on their machines:
 * docker (tested on Docker v24.0.6)
