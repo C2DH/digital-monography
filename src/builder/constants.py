@@ -27,6 +27,12 @@ class MediumEnum(enum.StrEnum):
     PAPER_AND_DIGITAL = "P+D"
 
 
+class DgtmonSecrets(t.TypedDict):
+    github_api_token: str
+    github_api_org: str
+    dropbox_app_secret: str
+
+
 IS_DEBUG = bool(int(os.environ.get("DGTMON_DEBUG", 0)))
 if IS_DEBUG:
     DEFAULT_SFS_DIR = "/tmp/efs"  # local execution
