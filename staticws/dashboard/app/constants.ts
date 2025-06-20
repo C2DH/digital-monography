@@ -4,7 +4,7 @@ export const API_STAGE = process.env.NEXT_PUBLIC_API_STAGE;
 export const API_ENDPOINT = process.env.NEXT_PUBLIC_API_ENDPOINT;
 export const GITHUB_ORG = process.env.NEXT_PUBLIC_GITHUB_ORG;
 export const S3_READER_STATICWS = process.env.NEXT_PUBLIC_S3_STATICWS_WIP;
-export const DBX_ENDPOINT = process.env.NEXT_PUBLIC_DBX_ENDPOINT;
+export const DBX_ENDPOINT = `https://www.dropbox.com/home/Apps/${process.env.NEXT_PUBLIC_DBX_DIR}`;
 
 
 // https://www.dropbox.com/home/Aplikacje/drpb-upload-alert-test

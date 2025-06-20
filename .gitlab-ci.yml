@@ -23,6 +23,9 @@ init:
   script:
     - echo "Step 2. Script execution"
     - echo "Step 2.1. Decrypt tfvars"
+    # TODO: This scaled differently than I previously expected.
+    # If the number of env-specific variables or no. of environments keeps growing,
+    # consider splitting .tfvars.json into separate files per each environment.
     - sops -d secrets/encrypted.tfvars.json | jq '.data' > secrets/decrypted.tfvars.json
     - |
       echo "Step 2.2. Set environment variables based on environment"
@@ -53,7 +56,19 @@ init:
     - export TFSTATE_BACKEND="dgtmon-$CI_COMMIT_BRANCH"'-'"$(jq -r '.tfstate_backend' secrets/decrypted.tfvars.json)"
     - sed -e 's@TFSTATE_LOCKTBL@'"$TFSTATE_LOCKTBL"'@' infra/main.tf | scripts/sponge.awk infra/main.tf
     - sed -e 's@TFSTATE_BACKEND@'"$TFSTATE_BACKEND"'@' infra/main.tf | scripts/sponge.awk infra/main.tf
-    - cat infra/main.tf
+    - echo "Step 2.5. Generate .env files for dashboard"
+    - |
+      cat > staticws/dashboard/.env.test << EOF
+      NEXT_PUBLIC_ENV=${CI_COMMIT_BRANCH}
+      NEXT_PUBLIC_ENV_DESC=$(jq -r '.desc_develop' secrets/decrypted.tfvars.json)
+      NEXT_PUBLIC_API_ENDPOINT=$(jq -r '.api_agw_endpoint_develop' secrets/decrypted.tfvars.json)
+      NEXT_PUBLIC_API_STAGE=${CI_COMMIT_BRANCH}
+      NEXT_PUBLIC_GITHUB_ORG=$(jq -r '.github_org_develop' secrets/decrypted.tfvars.json)
+      NEXT_PUBLIC_S3_STATICWS_WIP=$(jq -r '.api_s3_staticws_wip_develop' secrets/decrypted.tfvars.json)
+      NEXT_PUBLIC_DBX_DIR=$(jq -r '.dropbox_app_dir_develop' secrets/decrypted.tfvars.json)
+      EOF
+    - cat staticws/dashboard/.env.test
+
   artifacts:
     # expire_in: 1 day # TODO: consider TTL
     paths:
