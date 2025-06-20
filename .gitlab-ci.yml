@@ -58,7 +58,7 @@ init:
     - sed -e 's@TFSTATE_BACKEND@'"$TFSTATE_BACKEND"'@' infra/main.tf | scripts/sponge.awk infra/main.tf
     - echo "Step 2.5. Generate .env files for dashboard"
     - |
-      cat > staticws/dashboard/.env.test << EOF
+      cat > staticws/dashboard/.env.develop << EOF
       NEXT_PUBLIC_ENV=${CI_COMMIT_BRANCH}
       NEXT_PUBLIC_ENV_DESC=$(jq -r '.desc_develop' secrets/decrypted.tfvars.json)
       NEXT_PUBLIC_API_ENDPOINT=$(jq -r '.api_agw_endpoint_develop' secrets/decrypted.tfvars.json)
@@ -67,8 +67,16 @@ init:
       NEXT_PUBLIC_S3_STATICWS_WIP=$(jq -r '.api_s3_staticws_wip_develop' secrets/decrypted.tfvars.json)
       NEXT_PUBLIC_DBX_DIR=$(jq -r '.dropbox_app_dir_develop' secrets/decrypted.tfvars.json)
       EOF
-    - cat staticws/dashboard/.env.test
-
+    - |
+      cat > staticws/dashboard/.env.main << EOF
+      NEXT_PUBLIC_ENV=${CI_COMMIT_BRANCH}
+      NEXT_PUBLIC_ENV_DESC=$(jq -r '.desc_main' secrets/decrypted.tfvars.json)
+      NEXT_PUBLIC_API_ENDPOINT=$(jq -r '.api_agw_endpoint_main' secrets/decrypted.tfvars.json)
+      NEXT_PUBLIC_API_STAGE=${CI_COMMIT_BRANCH}
+      NEXT_PUBLIC_GITHUB_ORG=$(jq -r '.github_org_main' secrets/decrypted.tfvars.json)
+      NEXT_PUBLIC_S3_STATICWS_WIP=$(jq -r '.api_s3_staticws_wip_main' secrets/decrypted.tfvars.json)
+      NEXT_PUBLIC_DBX_DIR=$(jq -r '.dropbox_app_dir_main' secrets/decrypted.tfvars.json)
+      EOF
   artifacts:
     # expire_in: 1 day # TODO: consider TTL
     paths:
