@@ -43,6 +43,16 @@ data "aws_iam_policy_document" "dropbox" {
     actions   = ["lambda:InvokeFunction"]
   }
   statement {
+    sid       = "AllowSendingSQSMessages"
+    effect    = "Allow"
+    resources = [aws_sqs_queue.pre_github_queue.arn]
+    actions = [
+      "sqs:SendMessage",
+      "sqs:GetQueueAttributes",
+      "sqs:GetQueueUrl"
+    ]
+  }
+  statement {
     sid       = "AllowCreatingLogGroups"
     effect    = "Allow"
     resources = ["arn:aws:logs:${var.region}:*:*"]
@@ -177,12 +187,15 @@ resource "aws_lambda_function" "dropbox_func" {
   }
   environment {
     variables = {
-      DYNAMODB_AUDIT_TBL      = aws_dynamodb_table.audit_tbl.name
-      DYNAMODB_ALERTS_TBL     = aws_dynamodb_table.alerts_tbl.name
-      DYNAMODB_CURSORS_TBL    = aws_dynamodb_table.cursors_tbl.name
-      DYNAMODB_LOGINS_TBL     = aws_dynamodb_table.logins_tbl.name
-      DYNAMODB_TOKENS_TBL     = aws_dynamodb_table.tokens_tbl.name
-      APKG_UPLOAD_BUCKET_NAME = aws_s3_bucket.upload_apkg.bucket
+      AWS_ACCOUNT_REGION           = var.region
+      AWS_ACCOUNT_ID               = var.aws_account_id
+      APKG_UPLOAD_BUCKET_NAME      = aws_s3_bucket.upload_apkg.bucket
+      DYNAMODB_AUDIT_TBL           = aws_dynamodb_table.audit_tbl.name
+      DYNAMODB_ALERTS_TBL          = aws_dynamodb_table.alerts_tbl.name
+      DYNAMODB_CURSORS_TBL         = aws_dynamodb_table.cursors_tbl.name
+      DYNAMODB_LOGINS_TBL          = aws_dynamodb_table.logins_tbl.name
+      DYNAMODB_TOKENS_TBL          = aws_dynamodb_table.tokens_tbl.name
+      SQS_GITHUB_FIFO_TRIGGER_NAME = aws_sqs_queue.pre_github_queue.name
     }
   }
   #   file_system_config {

@@ -13,6 +13,7 @@ import urllib.parse
 
 from mypy_boto3_s3.client import S3Client as boto3_S3Client
 from mypy_boto3_dynamodb.client import DynamoDBClient as boto3_DynamoDBClient
+from mypy_boto3_sqs import SQSClient as boto3_SQSClient
 
 try:
     from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
@@ -25,6 +26,7 @@ try:
     )
     from citations import add_bibliography, is_citation, prepare_citations
     from digital_prep import insert_digital_objects, remove_metadata_tables
+    from github_trigger import GithubTriggerMsg, GithubActionEnum
     from hide_metadata_in_html import hide_metadata_in_html
     from metadata import DocumentMetadata, AssetDatapoint
     from metadata_extraction import prepare_metadata_tables
@@ -56,6 +58,7 @@ except (ImportError, ModuleNotFoundError):
     )
     from .citations import add_bibliography, is_citation, prepare_citations
     from .digital_prep import insert_digital_objects, remove_metadata_tables
+    from .github_trigger import GithubTriggerMsg, GithubActionEnum
     from .hide_metadata_in_html import hide_metadata_in_html
     from .metadata import DocumentMetadata, AssetDatapoint
     from .metadata_extraction import prepare_metadata_tables
@@ -106,7 +109,7 @@ if IS_DEBUG:
 else:
     dynamodb: boto3_DynamoDBClient = boto3.resource("dynamodb")
     s3: boto3_S3Client = boto3.client("s3")
-    sqs = boto3.client("sqs")
+    sqs: boto3_SQSClient = boto3.client("sqs")
 
 
 def is_table(tag: bs4.element.Tag) -> bool:
@@ -419,31 +422,30 @@ def _put_md_to_s3(contents: str, key: KeyPath) -> None:
 
 def _enqueue_to_github(key: KeyPath) -> None:
     try:
-        key_str = str(key)
-        logger.info(f"_queue_to_trigger_github(key={key_str})")
+        msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
+        logger.info(
+            f"_queue_to_trigger_github(key={msg.key}, action={msg.action.value})"
+        )
         aws_account_region = os.environ.get("AWS_ACCOUNT_REGION", "")
         aws_account_id = os.environ.get("AWS_ACCOUNT_ID", "")
         sqs_github_trigger = os.environ.get("SQS_GITHUB_FIFO_TRIGGER_NAME", "")
         QueueUrl = f"https://sqs.{aws_account_region}.amazonaws.com/{aws_account_id}/{sqs_github_trigger}"
-        MessageBody = key_str
-        MessageDeduplicationId = key_str
-        MessageGroupId = key.slug
         resp = sqs.send_message(
             QueueUrl=QueueUrl,
-            MessageBody=MessageBody,
-            MessageDeduplicationId=MessageDeduplicationId,
-            MessageGroupId=MessageGroupId,
+            MessageBody=msg.dumps(),
+            MessageDeduplicationId=msg.deduplication_id(),
+            MessageGroupId=key.slug,
         )
         logger.info(
-            f"Response from sqs.send_message(QueueUrl={QueueUrl}, MessageBody={MessageBody}, MessageDeduplicationId={MessageDeduplicationId}, MessageGroupId={MessageGroupId}): "
+            f"Response from sqs.send_message(QueueUrl={QueueUrl}, MessageBody={msg.dumps()}, MessageDeduplicationId={msg.deduplication_id()}, MessageGroupId={key.slug}): "
             + json.dumps(resp, default=str)
         )
     except Exception as e:
-        logger.exception(f"Putting file to archive s3 bucket failed. Error: {repr(e)}")
+        logger.exception(f"Putting file to Github failed. Error: {repr(e)}")
         _log_audit_event(
             key,
             AuditStatus.FAILED.value,
-            "Error upon archiving.",
+            "Error upon saving to GitHub.",
         )
         raise
 

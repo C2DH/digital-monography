@@ -59,7 +59,7 @@ The architecture attempts to follow the pattern of `... -> s3 upload -> Lambda i
 The platform consists of the following microservices (Lambda functions):
 | Name              | In VPC? | Description                                                                  |
 | ----------------- | ------- | ---------------------------------------------------------------------------- |
-| **entrypoint**    | false   | Opens up REST endpoints, incl. OAuth and webhooks to integrate with Dropbox. |
+| **entrypoint**    | false   | Exposes REST endpoints, incl. OAuth and webhooks to integrate with Dropbox.  |
 | **dropbox**       | false   | Calls Dropbox API to retrieve files from Dropbox and writes them to s3.      |
 | **preparer**      | true    | Does all the transformations of the files in the author package.             |
 | **verifier**      | true    | Checks the author package against the verification rules.                    |

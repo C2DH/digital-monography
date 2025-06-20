@@ -5,11 +5,16 @@ import dropbox
 import json
 import pathlib
 import dropbox.exceptions
+import dropbox.files
 import dropbox.users
 import os
 import requests
 import logging
 import typing as t
+
+from mypy_boto3_dynamodb.client import DynamoDBClient as boto3_DynamoDBClient
+from mypy_boto3_s3.client import S3Client as boto3_S3Client
+from mypy_boto3_sqs import SQSClient as boto3_SQSClient
 
 
 try:
@@ -18,6 +23,7 @@ try:
         ModuleEnum,
         IS_DEBUG,
     )
+    from github_trigger import GithubTriggerMsg, GithubActionEnum
     from keys import KeyPath
     from logins import LoginEvent, LoginStatus
 except (ImportError, ModuleNotFoundError):
@@ -26,6 +32,7 @@ except (ImportError, ModuleNotFoundError):
         ModuleEnum,
         IS_DEBUG,
     )
+    from .github_trigger import GithubTriggerMsg, GithubActionEnum
     from .keys import KeyPath
     from .logins import LoginEvent, LoginStatus
 
@@ -42,14 +49,16 @@ if IS_DEBUG:
     )
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-
-if IS_DEBUG:
-    # TODO: add fakers
-    dynamodb = None
-    s3 = None
-else:
-    dynamodb = boto3.resource("dynamodb")
-    s3 = boto3.client("s3")
+dynamodb: boto3_DynamoDBClient = boto3.resource("dynamodb")
+s3: boto3_S3Client = boto3.client("s3")
+sqs: boto3_SQSClient = boto3.client("sqs")
+# if IS_DEBUG:
+#     # TODO: add fakers
+#     dynamodb = None
+#     s3 = None
+# else:
+#     dynamodb = boto3.resource("dynamodb")
+#     s3 = boto3.client("s3")
 
 
 def lambda_handler(event, context):
@@ -106,6 +115,7 @@ def process_user(account: str, trace_id: str):
                 logger.info(">.> dbx.files_list_folder_continue")
                 result = dbx.files_list_folder_continue(cursor)
             logger.info(f"result.entries {result.entries}")
+            logger.info(f"type(result) {type(result)}")
             if len(result.entries) == 0:
                 logger.info(f"result {result}")
             for entry in result.entries:
@@ -123,6 +133,9 @@ def process_user(account: str, trace_id: str):
                     logger.info(f"{entry}")
                     logger.info("For now we don't handle file deletions.")
                     msg += f"System refuses to delete {entry.name}. "
+                    key = _dbx_entry_to_keypath(entry)
+                    _enqueue_to_github(key)
+
                     # TODO: Call s3.delete_object to remove it.
                     # This will require to implement it across all modules!
                 elif isinstance(entry, dropbox.files.FileMetadata):
@@ -241,6 +254,42 @@ def _download_file(dbx: dropbox.Dropbox, entry: dropbox.files.FileMetadata) -> N
     logger.info(f"keypath: {key}")
     logger.info(f"type(resp.content): {type(resp.content)}")
     _put_file_from_dbx_to_s3(resp.content, key)
+
+
+def _dbx_entry_to_keypath(entry: dropbox.files.DeletedMetadata) -> KeyPath:
+    p = entry.path_lower[1:] if entry.path_lower[0] == "/" else entry.path_lower
+    logger.info(f"_dbx_entry_to_keypath, path: {p}")
+    return KeyPath(p)
+
+
+def _enqueue_to_github(key: KeyPath) -> None:
+    try:
+        msg = GithubTriggerMsg(key=key, action=GithubActionEnum.DELETE_OBJECT)
+        logger.info(
+            f"_queue_to_trigger_github(key={msg.key}, action={msg.action.value})"
+        )
+        aws_account_region = os.environ.get("AWS_ACCOUNT_REGION", "")
+        aws_account_id = os.environ.get("AWS_ACCOUNT_ID", "")
+        sqs_github_trigger = os.environ.get("SQS_GITHUB_FIFO_TRIGGER_NAME", "")
+        QueueUrl = f"https://sqs.{aws_account_region}.amazonaws.com/{aws_account_id}/{sqs_github_trigger}"
+        resp = sqs.send_message(
+            QueueUrl=QueueUrl,
+            MessageBody=msg.dumps(),
+            MessageDeduplicationId=msg.deduplication_id(),
+            MessageGroupId=key.slug,
+        )
+        logger.info(
+            f"Response from sqs.send_message(QueueUrl={QueueUrl}, MessageBody={msg.dumps()}, MessageDeduplicationId={msg.deduplication_id()}, MessageGroupId={key.slug}): "
+            + json.dumps(resp, default=str)
+        )
+    except Exception as e:
+        logger.exception(f"Putting file to Github failed. Error: {repr(e)}")
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            "Error upon deleting from GitHub.",
+        )
+        raise
 
 
 def _log_audit_event(slug: str, status: int, msg: str, fn: str = "") -> None:

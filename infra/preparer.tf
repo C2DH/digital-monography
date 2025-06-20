@@ -225,6 +225,8 @@ resource "aws_lambda_function" "preparer_func" {
   }
   environment {
     variables = {
+      AWS_ACCOUNT_REGION           = var.region
+      AWS_ACCOUNT_ID               = var.aws_account_id
       DYNAMODB_ASSETS_TBL          = aws_dynamodb_table.assets_tbl.name
       DYNAMODB_AUDIT_TBL           = aws_dynamodb_table.audit_tbl.name
       DYNAMODB_ALERTS_TBL          = aws_dynamodb_table.alerts_tbl.name
@@ -234,8 +236,6 @@ resource "aws_lambda_function" "preparer_func" {
       IR_APKG_MD_BUCKET_NAME       = aws_s3_bucket.ir_apkg_md.bucket
       METADATA_ASSETS_BUCKET_NAME  = aws_s3_bucket.metadata_assets_s3.bucket
       SQS_GITHUB_FIFO_TRIGGER_NAME = aws_sqs_queue.pre_github_queue.name
-      AWS_ACCOUNT_REGION           = var.region
-      AWS_ACCOUNT_ID               = var.aws_account_id
     }
   }
 }

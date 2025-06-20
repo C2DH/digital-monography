@@ -12,6 +12,7 @@ import logging
 import pathlib
 import typing as t
 import urllib
+import urllib.parse
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from aws_lambda_powertools.utilities.data_classes import (
     event_source,
@@ -31,6 +32,9 @@ from mypy_boto3_dynamodb.type_defs import (
 )
 from mypy_boto3_s3.client import S3Client as boto3_S3Client
 from mypy_boto3_s3.type_defs import ObjectTypeDef as boto3_ObjectTypeDef
+from mypy_boto3_secretsmanager.client import (
+    SecretsManagerClient as boto3_SecretsManagerClient,
+)
 from mypy_boto3_sqs import SQSClient as boto3_SQSClient
 
 if IS_DEBUG:
@@ -48,7 +52,7 @@ logger.setLevel(logging.INFO)
 
 
 dynamodb: boto3_DynamoDBClient = boto3.resource("dynamodb")
-secretsmanager = boto3.client("secretsmanager")
+secretsmanager: boto3_SecretsManagerClient = boto3.client("secretsmanager")
 sqs: boto3_SQSClient = boto3.client("sqs")
 s3: boto3_S3Client = boto3.client("s3")
 

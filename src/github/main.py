@@ -8,29 +8,29 @@ import requests
 import typing as t
 import urllib.parse
 
+from mypy_boto3_dynamodb.client import DynamoDBClient as boto3_DynamoDBClient
+from mypy_boto3_s3.client import S3Client as boto3_S3Client
+from mypy_boto3_secretsmanager.client import (
+    SecretsManagerClient as boto3_SecretsManagerClient,
+)
+
 try:
     from audit import AuditEvent, AuditStatus
-    from constants import ModuleEnum
+    from constants import ModuleEnum, DgtmonSecrets
     from keys import KeyPath
+    from github_trigger import GithubTriggerMsg, GithubActionEnum
 except (ImportError, ModuleNotFoundError):
     from .audit import AuditEvent, AuditStatus
-    from .constants import ModuleEnum
+    from .constants import ModuleEnum, DgtmonSecrets
     from .keys import KeyPath
+    from .github_trigger import GithubTriggerMsg, GithubActionEnum
 
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-
-
-s3 = boto3.client("s3")
-secretsmanager = boto3.client("secretsmanager")
-dynamodb = boto3.resource("dynamodb")
-
-
-class GitHubSecret(t.TypedDict):
-    github_api_token: str
-    github_api_org: str
-    # as a hack I added third field to be used by another module
+s3: boto3_S3Client = boto3.client("s3")
+secretsmanager: boto3_SecretsManagerClient = boto3.client("secretsmanager")
+dynamodb: boto3_DynamoDBClient = boto3.resource("dynamodb")
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
@@ -38,18 +38,24 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info(json.dumps(event, default=str))
     logger.info(json.dumps(context, default=str))
 
-    key = _get_key(event)
+    trigger_msg = _get_trigger_msg(event)
+    key = trigger_msg.key
+    action = trigger_msg.action
     # if key.suffix not in [".md", ".MD", ".ipynb", ".IPYNB"]:
     #     return {"statusCode": 200, "body": ""}
 
     secret = _get_api_key(key, os.environ.get("GITHUB_SECRET_ID", ""))
 
-    # naively try to create repo without checking if it exists
-    _create_github_repo(key, secret)
-    new_bytes = _get_obj_from_s3(key)
+    if action == GithubActionEnum.UPDATE_OBJECT:
+        # naively try to create repo without checking if it exists
+        _create_github_repo(key, secret)
+        new_bytes = _get_obj_from_s3(key)
     prev_obj = _get_from_github_repo(key, secret)
     prev_v_sha = prev_obj.json().get("sha", None)
-    _put_to_github_repo(key, secret, new_bytes, prev_v_sha, event)
+    if action == GithubActionEnum.UPDATE_OBJECT:
+        _put_to_github_repo(key, secret, new_bytes, prev_v_sha)
+    elif action == GithubActionEnum.DELETE_OBJECT:
+        _delete_from_github_repo(key, secret, prev_v_sha)
     _log_audit_event(
         key,
         AuditStatus.SUCCESS.value,
@@ -58,18 +64,16 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     return {"statusCode": 200, "body": ""}
 
 
-def _get_key(event) -> KeyPath:
+def _get_trigger_msg(event) -> GithubTriggerMsg:
     try:
-        key_str = urllib.parse.unquote_plus(
-            event["Records"][0]["body"], encoding="utf-8"
-        )
-        return KeyPath(key_str)
+        body = urllib.parse.unquote_plus(event["Records"][0]["body"], encoding="utf-8")
+        return GithubTriggerMsg.loads(body)
     except Exception as e:
-        logger.error(f"Unable to retrieve object key. Error: {repr(e)}")
+        logger.error(f"Unable to retrieve key and action. Error: {repr(e)}")
         raise
 
 
-def _get_api_key(key: KeyPath, secret_id: str) -> GitHubSecret:
+def _get_api_key(key: KeyPath, secret_id: str) -> DgtmonSecrets:
     try:
         resp = secretsmanager.get_secret_value(SecretId=secret_id)
         return json.loads(resp["SecretString"])
@@ -85,7 +89,7 @@ def _get_api_key(key: KeyPath, secret_id: str) -> GitHubSecret:
         raise
 
 
-def _create_github_repo(key: KeyPath, secret: GitHubSecret) -> requests.Response:
+def _create_github_repo(key: KeyPath, secret: DgtmonSecrets) -> requests.Response:
     """
     Creates a new repository in the specified organization.
     Note that the GitHub API token must have the write "Administration" repo permissions.
@@ -181,7 +185,7 @@ def _get_obj_from_s3(key: KeyPath) -> bytes:
         raise
 
 
-def _get_from_github_repo(key: KeyPath, secret: GitHubSecret) -> requests.Response:
+def _get_from_github_repo(key: KeyPath, secret: DgtmonSecrets) -> requests.Response:
     """
     Gets the contents of a file in a repository.
     See API docs here:
@@ -208,26 +212,23 @@ def _get_from_github_repo(key: KeyPath, secret: GitHubSecret) -> requests.Respon
 
 def _put_to_github_repo(
     key: KeyPath,
-    secret: GitHubSecret,
+    secret: DgtmonSecrets,
     contents: bytes,
     prev_v_sha: t.Optional[str],
-    event,
 ) -> requests.Response:
     """
     Creates a new file or replaces an existing file in a repository.
     See API docs here:
     https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28#create-or-update-file-contents
     """
+    # eventSource = event["Records"][0]["eventSource"]
+    # eventName = event["Records"][0]["eventName"]
+    # eventTime = event["Records"][0]["eventTime"]
+    # requestId = event["Records"][0]["responseElements"]["x-amz-request-id"]
+    # commit_message = f"{eventTime} [{requestId}] Perform action {eventSource}:{eventName} on '{key.s3_key}'"
     try:
-        eventSource = event["Records"][0]["eventSource"]
-        eventName = event["Records"][0]["eventName"]
-        eventTime = event["Records"][0]["eventTime"]
-        requestId = event["Records"][0]["responseElements"]["x-amz-request-id"]
-        commit_message = f"{eventTime} [{requestId}] Perform action {eventSource}:{eventName} on '{key.s3_key}'"
-    except (KeyError, IndexError):
         t = datetime.datetime.now().strftime("%d %b %Y at %H:%M")
         commit_message = "Update on " + t
-    try:
         b64content = base64.b64encode(contents).decode()
         github_token = secret["github_api_token"]
         github_org = secret["github_api_org"]
@@ -271,6 +272,45 @@ def _put_to_github_repo(
             "Error while sending request to update GitHub repo.",
         )
         raise
+
+
+def _delete_from_github_repo(
+    key: KeyPath,
+    secret: DgtmonSecrets,
+    prev_v_sha: t.Optional[str],
+) -> requests.Response:
+    """
+    Deletes a file in a repository. See API docs here:
+    https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28#delete-a-file
+    """
+    t = datetime.datetime.now().strftime("%d %b %Y at %H:%M")
+    commit_message = f"Delete {key} on {t}"
+    github_token = secret["github_api_token"]
+    github_org = secret["github_api_org"]
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {github_token}",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    data = {
+        "message": commit_message,
+        "sha": prev_v_sha,
+        # "committer": { # TODO: figure out how to extract data of the commiter & author
+        #     "name": "",
+        #     "email": "",
+        # },
+        # "author": {
+        #     "name": "",
+        #     "email": "",
+        # },
+    }
+    res = requests.delete(
+        f"https://api.github.com/repos/{github_org}/{key.slug}/contents/{key.github_path}",
+        json=data,
+        headers=headers,
+    )
+    logger.info(json.dumps(res.json(), default=str))
+    return res
 
 
 def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:
