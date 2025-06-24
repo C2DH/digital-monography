@@ -11,8 +11,10 @@ import os
 import typing as t
 import urllib.parse
 
+from mypy_boto3_dynamodb.service_resource import (
+    DynamoDBServiceResource as boto3_DynamoDBServiceResource,
+)
 from mypy_boto3_s3.client import S3Client as boto3_S3Client
-from mypy_boto3_dynamodb.client import DynamoDBClient as boto3_DynamoDBClient
 from mypy_boto3_sqs import SQSClient as boto3_SQSClient
 
 try:
@@ -94,22 +96,18 @@ if IS_DEBUG:
     )
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-
-
 FIXED_SUBSTITUTIONS = {
     "01_a___Ref177042490": "1",
     "01_a___Ref177044323": "1",
     "02_b.docx#02_b__tblSimpleTable": "2",
     "02_b.docx#02_b__h1HyperlinksB": "1",
 }
-
-
 if IS_DEBUG:
     dynamodb = None
     s3 = Faker("s3")
     sqs = Faker("sqs")
 else:
-    dynamodb: boto3_DynamoDBClient = boto3.resource("dynamodb")
+    dynamodb: boto3_DynamoDBServiceResource = boto3.resource("dynamodb")
     s3: boto3_S3Client = boto3.client("s3")
     sqs: boto3_SQSClient = boto3.client("sqs")
 

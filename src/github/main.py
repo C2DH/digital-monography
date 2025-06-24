@@ -8,7 +8,9 @@ import requests
 import typing as t
 import urllib.parse
 
-from mypy_boto3_dynamodb.client import DynamoDBClient as boto3_DynamoDBClient
+from mypy_boto3_dynamodb.service_resource import (
+    DynamoDBServiceResource as boto3_DynamoDBServiceResource,
+)
 from mypy_boto3_s3.client import S3Client as boto3_S3Client
 from mypy_boto3_secretsmanager.client import (
     SecretsManagerClient as boto3_SecretsManagerClient,
@@ -30,7 +32,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 s3: boto3_S3Client = boto3.client("s3")
 secretsmanager: boto3_SecretsManagerClient = boto3.client("secretsmanager")
-dynamodb: boto3_DynamoDBClient = boto3.resource("dynamodb")
+dynamodb: boto3_DynamoDBServiceResource = boto3.resource("dynamodb")
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:

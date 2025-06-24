@@ -12,7 +12,9 @@ import requests
 import logging
 import typing as t
 
-from mypy_boto3_dynamodb.client import DynamoDBClient as boto3_DynamoDBClient
+from mypy_boto3_dynamodb.service_resource import (
+    DynamoDBServiceResource as boto3_DynamoDBServiceResource,
+)
 from mypy_boto3_s3.client import S3Client as boto3_S3Client
 from mypy_boto3_sqs import SQSClient as boto3_SQSClient
 
@@ -49,7 +51,7 @@ if IS_DEBUG:
     )
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-dynamodb: boto3_DynamoDBClient = boto3.resource("dynamodb")
+dynamodb: boto3_DynamoDBServiceResource = boto3.resource("dynamodb")
 s3: boto3_S3Client = boto3.client("s3")
 sqs: boto3_SQSClient = boto3.client("sqs")
 # if IS_DEBUG:

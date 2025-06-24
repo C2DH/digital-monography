@@ -8,7 +8,9 @@ import pathlib
 import typing as t
 import yaml
 
-from mypy_boto3_dynamodb.client import DynamoDBClient as boto3_DynamoDBClient
+from mypy_boto3_dynamodb.service_resource import (
+    DynamoDBServiceResource as boto3_DynamoDBServiceResource,
+)
 
 try:
     from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
@@ -53,7 +55,7 @@ logger.setLevel(logging.INFO)
 if IS_DEBUG:
     dynamodb = None  # TODO: add fakers
 else:
-    dynamodb: boto3_DynamoDBClient = boto3.resource("dynamodb")
+    dynamodb: boto3_DynamoDBServiceResource = boto3.resource("dynamodb")
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:

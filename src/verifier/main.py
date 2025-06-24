@@ -8,6 +8,11 @@ import pathlib
 import typing as t
 import urllib.parse
 
+from mypy_boto3_dynamodb.service_resource import (
+    DynamoDBServiceResource as boto3_DynamoDBServiceResource,
+)
+from mypy_boto3_s3.client import S3Client as boto3_S3Client
+from mypy_boto3_sqs import SQSClient as boto3_SQSClient
 
 try:
     from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
@@ -34,15 +39,14 @@ if IS_DEBUG:
     )
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-
 if IS_DEBUG:
     dynamodb = None
     s3 = Faker("s3")
     sqs = Faker("sqs")
 else:
-    dynamodb = boto3.resource("dynamodb")
-    s3 = boto3.client("s3")
-    sqs = boto3.client("sqs")
+    dynamodb: boto3_DynamoDBServiceResource = boto3.resource("dynamodb")
+    s3: boto3_S3Client = boto3.client("s3")
+    sqs: boto3_SQSClient = boto3.client("sqs")
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:

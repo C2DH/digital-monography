@@ -26,7 +26,9 @@ except (ImportError, ModuleNotFoundError):
     from .constants import IS_DEBUG  # type: ignore
     from .lambda_wsgi import response as lambda_wsgi_response  # type: ignore
 
-from mypy_boto3_dynamodb.client import DynamoDBClient as boto3_DynamoDBClient
+from mypy_boto3_dynamodb.service_resource import (
+    DynamoDBServiceResource as boto3_DynamoDBServiceResource,
+)
 from mypy_boto3_dynamodb.type_defs import (
     GetItemOutputTypeDef as boto3_GetItemOutputTypeDef,
 )
@@ -49,9 +51,7 @@ if IS_DEBUG:
     )
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-
-
-dynamodb: boto3_DynamoDBClient = boto3.resource("dynamodb")
+dynamodb: boto3_DynamoDBServiceResource = boto3.resource("dynamodb")
 secretsmanager: boto3_SecretsManagerClient = boto3.client("secretsmanager")
 sqs: boto3_SQSClient = boto3.client("sqs")
 s3: boto3_S3Client = boto3.client("s3")
