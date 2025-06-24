@@ -36,3 +36,7 @@ class GithubTriggerMsg:
 
     def deduplication_id(self) -> str:
         return f"{self.action.value}::{self.key}"
+
+    @property
+    def slug(self) -> str:
+        return self.key.slug

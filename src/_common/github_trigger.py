@@ -1,3 +1,6 @@
+# TODO: this file was used by dropbox and preparer microservices,
+# but now it is used only by preparer microservice. Move it to preparer/src.
+
 import dataclasses
 import enum
 import json
@@ -36,3 +39,7 @@ class GithubTriggerMsg:
 
     def deduplication_id(self) -> str:
         return f"{self.action.value}::{self.key}"
+
+    @property
+    def slug(self) -> str:
+        return self.key.slug

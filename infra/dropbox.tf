@@ -42,16 +42,16 @@ data "aws_iam_policy_document" "dropbox" {
     resources = ["arn:aws:lambda:${var.region}:*:function:*"]
     actions   = ["lambda:InvokeFunction"]
   }
-  statement {
-    sid       = "AllowSendingSQSMessages"
-    effect    = "Allow"
-    resources = [aws_sqs_queue.pre_github_queue.arn]
-    actions = [
-      "sqs:SendMessage",
-      "sqs:GetQueueAttributes",
-      "sqs:GetQueueUrl"
-    ]
-  }
+  # statement {
+  #   sid       = "AllowSendingSQSMessages"
+  #   effect    = "Allow"
+  #   resources = [aws_sqs_queue.pre_github_queue.arn]
+  #   actions = [
+  #     "sqs:SendMessage",
+  #     "sqs:GetQueueAttributes",
+  #     "sqs:GetQueueUrl"
+  #   ]
+  # }
   statement {
     sid       = "AllowCreatingLogGroups"
     effect    = "Allow"

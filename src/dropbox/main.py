@@ -131,11 +131,12 @@ def process_user(account: str, trace_id: str):
                 elif isinstance(entry, dropbox.files.DeletedMetadata):
                     logger.info("Object is a deleted file.")
                     logger.info(f"{entry}")
-                    logger.info("For now we don't handle file deletions.")
-                    msg += f"System refuses to delete {entry.name}. "
-                    key = _dbx_entry_to_keypath(entry)
-                    _enqueue_to_github(key)
-
+                    # key = _dbx_entry_to_keypath(entry)
+                    # _enqueue_to_github(key)
+                    logger.info(f"Object path_lower is {entry.path_lower}.")
+                    _remove_file(entry)
+                    filenames.append(entry.name)
+                    msg += f"The file '{entry.name}' successfully removed. "
                     # TODO: Call s3.delete_object to remove it.
                     # This will require to implement it across all modules!
                 elif isinstance(entry, dropbox.files.FileMetadata):
@@ -220,7 +221,7 @@ def dynamodb_get(tbl: str, pk: dict[str, str]) -> dict[str, t.Any]:
 
 
 def _put_file_from_dbx_to_s3(body: bytes, key: KeyPath) -> None:
-    # This lambda cannot save to EFS because it is outside of the VPC
+    # This lambda cannot save to EFS because it is outside of the VPC.
     # To remedy that, I write to S3 and the next Lambda in the pipeline
     # downloads it from there.
     try:
@@ -240,6 +241,35 @@ def _put_file_from_dbx_to_s3(body: bytes, key: KeyPath) -> None:
         alert = AlertLog(slug=key.slug, status=AlertStatus.FAIL.value)
         alert.send(dynamodb)
         raise
+
+
+def _delete_file_from_dbx_to_s3(key: KeyPath) -> None:
+    # This lambda cannot remove from EFS because it is outside of the VPC.
+    # To remedy that, I write to S3 and the next Lambda in the pipeline
+    # downloads it from there.
+    try:
+        dst = os.environ.get("APKG_UPLOAD_BUCKET_NAME", "")
+        resp = s3.delete_object(Bucket=dst, Key=str(key))
+        logger.info(
+            f"Response from s3.delete_object(Bucket={dst}, Key={key}): "
+            + json.dumps(resp, default=str)
+        )
+    except Exception as e:
+        logger.exception(f"Deleting object from {dst} bucket failed. Error: {repr(e)}")
+        _log_audit_event(
+            key.slug, AuditStatus.FAILED.value, "Error upon synchronization.", key.name
+        )
+        alert = AlertLog(slug=key.slug, status=AlertStatus.FAIL.value)
+        alert.send(dynamodb)
+        raise
+
+
+def _remove_file(entry: dropbox.files.DeletedMetadata) -> None:
+    logger.info("_remove_file")
+    p = entry.path_lower[1:] if entry.path_lower[0] == "/" else entry.path_lower
+    logger.info(f"path: {p}")
+    key = KeyPath(p)
+    _delete_file_from_dbx_to_s3(key)
 
 
 def _download_file(dbx: dropbox.Dropbox, entry: dropbox.files.FileMetadata) -> None:

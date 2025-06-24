@@ -124,21 +124,46 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     event_name = _get_event_name(event)
     metadata = DocumentMetadata(key)
 
-    if event_name == S3Event.OBJ_CREATED.value:
-        src = _get_source_bucket(event)
-        _download_fileobj(src, key)
-    elif event_name == S3Event.OBJ_REMOVED.value:
+    if key.suffix.lower() == ".ipynb" and event_name == S3Event.OBJ_REMOVED.value:
         _remove_fileobj(key)
-
+        msg = GithubTriggerMsg(key=key, action=GithubActionEnum.DELETE_OBJECT)
+        _enqueue_to_github(msg)
+    if key.suffix.lower() == ".docx" and event_name == S3Event.OBJ_REMOVED.value:
+        # TODO: split for ipynb and docx and else
+        _remove_fileobj(key)
+        # _remove_assets_info_from_s3(metadata, key)
+        # _remove_metadata_from_db(metadata, key)
+        # _remove_metadata_from_efs(metadata, key)
+        # _remove_processed_html_from_efs(html_soup_str, key)
+        # _remove_html_from_s3(html_soup_str, key)
+        # _remove_processed_md_from_efs(md, key)
+        # _remove_md_from_s3(md, key.s3_key.with_suffix(".md"))
+        # TODO: move enqueueing to pre-github sqs from dropbox to preparer microservice
+        msg = GithubTriggerMsg(key=key, action=GithubActionEnum.DELETE_OBJECT)
+        # msg_md = GithubTriggerMsg(
+        #     key=key.s3_key.with_suffix(".md"), action=GithubActionEnum.DELETE_OBJECT
+        # )
+        _enqueue_to_github(msg)
+        # _enqueue_to_github(msg_md)
+        return {"statusCode": 200, "body": ""}
     # If the object was changed/created, prepare the file
     if key.suffix.lower() == ".ipynb" and event_name == S3Event.OBJ_CREATED.value:
+        src = _get_source_bucket(event)
+        _download_fileobj(src, key)
         ipynb: nbformat.NotebookNode = _unmarshall_json(key.efs_filepath)
         tags_to_myst_crossref_targets(ipynb)
         _write_processed_ipynb_to_efs(ipynb, key)
-        _enqueue_to_github(key)
+        msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
+        _enqueue_to_github(msg)
+
+        # def _enqueue_to_github(msg: GithubTriggerMsg) -> None:
+        # msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
+
         # _put_to_archive_s3(key)
         return {"statusCode": 200, "body": ""}
     if key.suffix.lower() == ".docx" and event_name == S3Event.OBJ_CREATED.value:
+        src = _get_source_bucket(event)
+        _download_fileobj(src, key)
         html_str = _convert_to_html(key.efs_filepath)
         html_soup, metadata, tables = prepare_docx(html_str, metadata)
         # images_with_alttxt = []
@@ -214,8 +239,12 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         md = _convert_to_md(key, html_soup, metadata)
         _write_processed_md_to_efs(md, key)
         _put_md_to_s3(md, key.s3_key.with_suffix(".md"))
-        _enqueue_to_github(key)
-        _enqueue_to_github(key.s3_key.with_suffix(".md"))
+        msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
+        msg_md = GithubTriggerMsg(
+            key=key.s3_key.with_suffix(".md"), action=GithubActionEnum.UPDATE_OBJECT
+        )
+        _enqueue_to_github(msg)
+        _enqueue_to_github(msg_md)
         # _put_to_archive_s3(key.s3_key.with_suffix(".md"), md)
         _log_audit_event(
             key,
@@ -225,7 +254,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         return {"statusCode": 200, "body": ""}
     elif event_name == S3Event.OBJ_CREATED.value:
         # _write_to_efs(key) # <=============
-        _enqueue_to_github(key)
+        msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
+        _enqueue_to_github(msg)
         return {"statusCode": 200, "body": ""}
 
 
@@ -466,9 +496,9 @@ def _put_md_to_s3(contents: str, key: KeyPath) -> None:
         raise
 
 
-def _enqueue_to_github(key: KeyPath) -> None:
+def _enqueue_to_github(msg: GithubTriggerMsg) -> None:
     try:
-        msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
+        # msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
         logger.info(
             f"_queue_to_trigger_github(key={msg.key}, action={msg.action.value})"
         )
@@ -480,16 +510,16 @@ def _enqueue_to_github(key: KeyPath) -> None:
             QueueUrl=QueueUrl,
             MessageBody=msg.dumps(),
             MessageDeduplicationId=msg.deduplication_id(),
-            MessageGroupId=key.slug,
+            MessageGroupId=msg.slug,
         )
         logger.info(
-            f"Response from sqs.send_message(QueueUrl={QueueUrl}, MessageBody={msg.dumps()}, MessageDeduplicationId={msg.deduplication_id()}, MessageGroupId={key.slug}): "
+            f"Response from sqs.send_message(QueueUrl={QueueUrl}, MessageBody={msg.dumps()}, MessageDeduplicationId={msg.deduplication_id()}, MessageGroupId={msg.slug}): "
             + json.dumps(resp, default=str)
         )
     except Exception as e:
         logger.exception(f"Putting file to Github failed. Error: {repr(e)}")
         _log_audit_event(
-            key,
+            msg.key,
             AuditStatus.FAILED.value,
             "Error upon saving to GitHub.",
         )
