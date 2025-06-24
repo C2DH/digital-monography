@@ -48,6 +48,14 @@ The project consists of the following main software components.
 
 _Image repo_ is the docker image repository from where the CI/CD pipeline pulls a specific microservice code.
 
+The main workflow for generating digital monographies can be simplified as an interaction between the dropbox, entrypoint, preparer, verifier and builder microservices.
+
+![simplified_diagram_digital_book](./cartoon-book-digital.png)
+
+The workflow for generating docx for typesetting is not yet implemented. The most work here is made by the wordprocessor triggered by the endpoint microservice.
+
+![simplified_diagram_paper_book](./cartoon-book-paper.png)
+
 ### Details of pipeline architecture
 
 ![aws_architecture_diagram](./arch_details.svg)
