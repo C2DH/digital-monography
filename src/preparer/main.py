@@ -20,6 +20,7 @@ try:
     from conditional_rendering import is_paper_only, remove_paper_only
     from constants import (
         ModuleEnum,
+        S3Event,
         MAMMOTH_STYLE_MAP,
         IS_DEBUG,
         FIELD_DIGITAL_SOURCE,
@@ -52,6 +53,7 @@ except (ImportError, ModuleNotFoundError):
     from .conditional_rendering import is_paper_only, remove_paper_only
     from .constants import (
         ModuleEnum,
+        S3Event,
         MAMMOTH_STYLE_MAP,
         IS_DEBUG,
         FIELD_DIGITAL_SOURCE,
@@ -119,17 +121,24 @@ def is_table(tag: bs4.element.Tag) -> bool:
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info(f"lambda_handler. Event: {json.dumps(event, default=str)}")
     key = _get_key(event)
+    event_name = _get_event_name(event)
     metadata = DocumentMetadata(key)
-    src = _get_source_bucket(event)
-    _download_fileobj(src, key)
-    if key.suffix.lower() == ".ipynb":
+
+    if event_name == S3Event.OBJ_CREATED.value:
+        src = _get_source_bucket(event)
+        _download_fileobj(src, key)
+    elif event_name == S3Event.OBJ_REMOVED.value:
+        _remove_fileobj(key)
+
+    # If the object was changed/created, prepare the file
+    if key.suffix.lower() == ".ipynb" and event_name == S3Event.OBJ_CREATED.value:
         ipynb: nbformat.NotebookNode = _unmarshall_json(key.efs_filepath)
         tags_to_myst_crossref_targets(ipynb)
         _write_processed_ipynb_to_efs(ipynb, key)
         _enqueue_to_github(key)
         # _put_to_archive_s3(key)
         return {"statusCode": 200, "body": ""}
-    if key.suffix.lower() == ".docx":
+    if key.suffix.lower() == ".docx" and event_name == S3Event.OBJ_CREATED.value:
         html_str = _convert_to_html(key.efs_filepath)
         html_soup, metadata, tables = prepare_docx(html_str, metadata)
         # images_with_alttxt = []
@@ -214,8 +223,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
             "Contents of the file prepared for further processing.",
         )
         return {"statusCode": 200, "body": ""}
-    else:
-
+    elif event_name == S3Event.OBJ_CREATED.value:
         # _write_to_efs(key) # <=============
         _enqueue_to_github(key)
         return {"statusCode": 200, "body": ""}
@@ -232,6 +240,23 @@ def _get_key(event) -> KeyPath:
         raise
 
 
+def _get_event_name(event) -> t.Literal["ObjectCreated", "ObjectRemoved"]:
+    try:
+        event_name: str = event["Records"][0]["eventName"]
+        # event_name should match "event:httpMethod" format, e.g. "ObjectCreated:Put"
+        event_name, _ = event_name.split(":")
+        # NOTE: make sure that the event name matches one defined in
+        # `aws_s3_bucket_notification.upload_apkg_notification` in `infra/preparer.tf`
+        assert event_name in (
+            "ObjectCreated",
+            "ObjectRemoved",
+        ), f"Event name {event_name} is not supported."
+        return event_name
+    except Exception as e:
+        logger.error(f"Unable to retrieve event name. Error: {repr(e)}")
+        raise
+
+
 def _get_source_bucket(event) -> str:
     try:
         src = event["Records"][0]["s3"]["bucket"]["name"]
@@ -245,10 +270,11 @@ def _get_source_bucket(event) -> str:
 def _download_fileobj(src: str, key: KeyPath) -> None:
     try:
         key = key.efs_filepath
-        # temp to remove the "assets" file
-        assets_dir = pathlib.Path("/mnt/efs/{key.slug}/assets")
-        if assets_dir.exists() and not assets_dir.is_dir() and assets_dir.is_file():
-            assets_dir.unlink()
+        # NOTE: this commented out code shouldn't be necassary.
+        # It was just a temp to fix my error when I uploaded the "assets" file instead of dir.
+        # assets_dir = pathlib.Path("/mnt/efs/{key.slug}/assets")
+        # if assets_dir.exists() and not assets_dir.is_dir() and assets_dir.is_file():
+        #     assets_dir.unlink()
         # end temp
         key.parent.mkdir(parents=True, exist_ok=True)
         with open(key, "wb") as fileobj:
@@ -261,8 +287,9 @@ def _download_fileobj(src: str, key: KeyPath) -> None:
                 f"Response from s3.download_fileobj(Bucket={src}, Key={s3_key}): "
                 + json.dumps(resp, default=str)
             )
-            for child in key.parent.iterdir():
-                logger.info(f"File {str(child)} was found in {str(key.parent)}.")
+            # NOTE: This logging should be replaced with a snapshot of the directory tree.
+            # for child in key.parent.iterdir():
+            #     logger.info(f"File {str(child)} was found in {str(key.parent)}.")
     except Exception as e:
         logger.exception(
             f"Downloading fileobj {str(key)} from {src} failed. Error: {repr(e)}"
@@ -271,6 +298,25 @@ def _download_fileobj(src: str, key: KeyPath) -> None:
             key,
             AuditStatus.FAILED.value,
             "Error upon internal download.",
+        )
+        raise
+
+
+def _remove_fileobj(key: KeyPath) -> None:
+    try:
+        key = key.efs_filepath
+        logger.info(f"Stat before removal:" + json.dumps(key.stat(), default=str))
+        key.unlink(missing_ok=True)  # remove file if it exists
+        logger.info(f"Stat after removal:" + json.dumps(key.stat(), default=str))
+        logger.info(f"File {str(key)} was removed from EFS.")
+    except Exception as e:
+        logger.exception(
+            f"Removing fileobj {str(key)} from EFS failed. Error: {repr(e)}"
+        )
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            "Error upon internal deletion from a file server.",
         )
         raise
 

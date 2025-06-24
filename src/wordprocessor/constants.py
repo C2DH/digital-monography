@@ -27,6 +27,11 @@ class MediumEnum(enum.StrEnum):
     PAPER_AND_DIGITAL = "P+D"
 
 
+class S3Event(enum.StrEnum):
+    OBJ_CREATED = "ObjectCreated"
+    OBJ_REMOVED = "ObjectRemoved"
+
+
 class DgtmonSecrets(t.TypedDict):
     github_api_token: str
     github_api_org: str
