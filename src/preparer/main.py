@@ -277,9 +277,8 @@ def _get_event_name(event) -> t.Literal["ObjectCreated", "ObjectRemoved"]:
     try:
         event_name: str = event["Records"][0]["eventName"]
         # event_name should match "event:httpMethod" format, e.g. "ObjectCreated:Put"
+        assert ":" in event_name, f"Event name {event_name} is not supported."
         event_name, _ = event_name.split(":")
-        # NOTE: make sure that the event name matches one defined in
-        # `aws_s3_bucket_notification.upload_apkg_notification` in `infra/preparer.tf`
         assert event_name in (
             "ObjectCreated",
             "ObjectRemoved",

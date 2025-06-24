@@ -16,13 +16,13 @@ from mypy_boto3_sqs import SQSClient as boto3_SQSClient
 
 try:
     from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
-    from constants import ModuleEnum, IS_DEBUG
+    from constants import ModuleEnum, S3Event, IS_DEBUG
     from fakers import Faker
     from rules_v1 import HtmlVerifier
     from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
     from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
-    from .constants import ModuleEnum, IS_DEBUG
+    from .constants import ModuleEnum, S3Event, IS_DEBUG
     from .fakers import Faker
     from .rules_v1 import HtmlVerifier
     from .keys import KeyPath
@@ -52,8 +52,11 @@ else:
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info("Handler was invoked successfully.")
     key = _get_key(event)
+    event_name = _get_event_name(event)
     timestamp = _get_timestamp(event)
-    if key.suffix.lower() == ".html":
+    if key.suffix.lower() == ".html" and event_name == S3Event.OBJ_REMOVED.value:
+        pass  # TODO: implement removal of the verification messages
+    if key.suffix.lower() == ".html" and event_name == S3Event.OBJ_CREATED.value:
         if not key.efs_slug_html_path.parent.exists():
             key.efs_slug_html_path.parent.mkdir(parents=True, exist_ok=True)
         with open(key.efs_slug_html_path.with_suffix(".html"), "r") as f:
@@ -72,7 +75,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         # _make_warnings_report(verifer.soup, warnings_json, timestamp, key)
         _put_json_to_s3(json.dumps(warnings_json, default=str), key)
         """  # TODO: revert
-        _send_msg_to_sqs(key)
+    _send_msg_to_sqs(key)
     logger.info("Handler ended successfully.")
     _log_audit_event(
         key, AuditStatus.SUCCESS.value, "Verification of the file is finished."
@@ -88,6 +91,22 @@ def _get_key(event) -> KeyPath:
         return KeyPath(key_str)
     except Exception as e:
         logger.error(f"Unable to retrieve object key. Error: {repr(e)}")
+        raise
+
+
+def _get_event_name(event) -> t.Literal["ObjectCreated", "ObjectRemoved"]:
+    try:
+        event_name: str = event["Records"][0]["eventName"]
+        # event_name should match "event:httpMethod" format, e.g. "ObjectCreated:Put"
+        assert ":" in event_name, f"Event name {event_name} is not supported."
+        event_name, _ = event_name.split(":")
+        assert event_name in (
+            "ObjectCreated",
+            "ObjectRemoved",
+        ), f"Event name {event_name} is not supported."
+        return event_name
+    except Exception as e:
+        logger.error(f"Unable to retrieve event name. Error: {repr(e)}")
         raise
 
 
@@ -145,9 +164,9 @@ def _put_json_to_s3(body: str, key: KeyPath) -> None:
 def _send_msg_to_sqs(key: KeyPath) -> None:
     logger.info(f"Preparing to send a message to the sqs queue.")
     try:
-        aws_account_id = os.environ.get("AWS_ACCOUNT_ID", "")
-        aws_account_region = os.environ.get("AWS_ACCOUNT_REGION", "")
-        sqs_builder_trigger = os.environ.get("SQS_BUILDER_FIFO_TRIGGER_NAME", "")
+        aws_account_id = os.environ["AWS_ACCOUNT_ID"]
+        aws_account_region = os.environ["AWS_ACCOUNT_REGION"]
+        sqs_builder_trigger = os.environ["SQS_BUILDER_FIFO_TRIGGER_NAME"]
         QueueUrl = f"https://sqs.{aws_account_region}.amazonaws.com/{aws_account_id}/{sqs_builder_trigger}"
         MessageBody = key.slug
         MessageDeduplicationId = key.slug
