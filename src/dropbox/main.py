@@ -25,7 +25,6 @@ try:
         ModuleEnum,
         IS_DEBUG,
     )
-    from github_trigger import GithubTriggerMsg, GithubActionEnum
     from keys import KeyPath
     from logins import LoginEvent, LoginStatus
 except (ImportError, ModuleNotFoundError):
@@ -34,7 +33,6 @@ except (ImportError, ModuleNotFoundError):
         ModuleEnum,
         IS_DEBUG,
     )
-    from .github_trigger import GithubTriggerMsg, GithubActionEnum
     from .keys import KeyPath
     from .logins import LoginEvent, LoginStatus
 
@@ -292,36 +290,6 @@ def _dbx_entry_to_keypath(entry: dropbox.files.DeletedMetadata) -> KeyPath:
     p = entry.path_lower[1:] if entry.path_lower[0] == "/" else entry.path_lower
     logger.info(f"_dbx_entry_to_keypath, path: {p}")
     return KeyPath(p)
-
-
-def _enqueue_to_github(key: KeyPath) -> None:
-    try:
-        msg = GithubTriggerMsg(key=key, action=GithubActionEnum.DELETE_OBJECT)
-        logger.info(
-            f"_queue_to_trigger_github(key={msg.key}, action={msg.action.value})"
-        )
-        aws_account_region = os.environ.get("AWS_ACCOUNT_REGION", "")
-        aws_account_id = os.environ.get("AWS_ACCOUNT_ID", "")
-        sqs_github_trigger = os.environ.get("SQS_GITHUB_FIFO_TRIGGER_NAME", "")
-        QueueUrl = f"https://sqs.{aws_account_region}.amazonaws.com/{aws_account_id}/{sqs_github_trigger}"
-        resp = sqs.send_message(
-            QueueUrl=QueueUrl,
-            MessageBody=msg.dumps(),
-            MessageDeduplicationId=msg.deduplication_id(),
-            MessageGroupId=key.slug,
-        )
-        logger.info(
-            f"Response from sqs.send_message(QueueUrl={QueueUrl}, MessageBody={msg.dumps()}, MessageDeduplicationId={msg.deduplication_id()}, MessageGroupId={key.slug}): "
-            + json.dumps(resp, default=str)
-        )
-    except Exception as e:
-        logger.exception(f"Putting file to Github failed. Error: {repr(e)}")
-        _log_audit_event(
-            key,
-            AuditStatus.FAILED.value,
-            "Error upon deleting from GitHub.",
-        )
-        raise
 
 
 def _log_audit_event(slug: str, status: int, msg: str, fn: str = "") -> None:

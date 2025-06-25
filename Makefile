@@ -100,10 +100,9 @@ copy/html2md:
 	cp src/_common/html2md.py src/verifier/html2md.py
 	cp src/_common/html2md.py src/builder/html2md.py
 
-copy/github:
-	cp src/_common/github_trigger.py src/dropbox/github_trigger.py
-	cp src/_common/github_trigger.py src/preparer/github_trigger.py
+copy/misc:
 	cp src/_common/github_trigger.py src/github/github_trigger.py
+	cp src/_common/github_trigger.py src/preparer/github_trigger.py
 
 entrypoint/build:
 	cp src/_common/constants.py src/entrypoint/constants.py

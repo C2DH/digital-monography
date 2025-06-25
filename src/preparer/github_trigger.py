@@ -1,3 +1,9 @@
+# ===== IMPORTANT =====
+# Remember, the only source of truth for github_trigger.py is the one defined in
+# `src/_common/github_trigger.py`. Objects defined in other directories in
+# the src/ folder should be replaced with `src/_common/github_trigger.py` before
+# building the image.
+# ======================
 import dataclasses
 import enum
 import json
@@ -15,6 +21,15 @@ class GithubActionEnum(enum.StrEnum):
 
 @dataclasses.dataclass
 class GithubTriggerMsg:
+    """
+    Represents a body of a SQS message.
+    This message is enqueued from microservices that want to trigger
+    the src/github microservice.
+
+    You can read more about sending and receiving SQS messages in the docs.
+    https://boto3.amazonaws.com/v1/documentation/api/latest/guide/sqs-example-sending-receiving-msgs.html
+    """
+
     key: KeyPath
     action: GithubActionEnum
 
