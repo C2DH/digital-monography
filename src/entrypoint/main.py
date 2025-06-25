@@ -26,6 +26,7 @@ except (ImportError, ModuleNotFoundError):
     from .constants import IS_DEBUG  # type: ignore
     from .lambda_wsgi import response as lambda_wsgi_response  # type: ignore
 
+from mypy_boto3_dynamodb.client import DynamoDBClient as boto3_DynamoDBClient
 from mypy_boto3_dynamodb.service_resource import (
     DynamoDBServiceResource as boto3_DynamoDBServiceResource,
 )
@@ -51,7 +52,8 @@ if IS_DEBUG:
     )
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-dynamodb: boto3_DynamoDBServiceResource = boto3.resource("dynamodb")
+dynamodb_c: boto3_DynamoDBClient = boto3.client("dynamodb")
+dynamodb_r: boto3_DynamoDBServiceResource = boto3.resource("dynamodb")
 secretsmanager: boto3_SecretsManagerClient = boto3.client("secretsmanager")
 sqs: boto3_SQSClient = boto3.client("sqs")
 s3: boto3_S3Client = boto3.client("s3")
@@ -202,7 +204,7 @@ def list_assets_from_dynamodb() -> flask.Response:
     logger.info("Retrieve assets from the database and return them to the client.")
     slug = flask.request.args.get("slug")
     assert slug is not None, "Error: slug was not provided"
-    contents = dynamodb.query(
+    contents = dynamodb_c.query(
         TableName=os.environ.get("DYNAMODB_ASSETS_TBL", ""),
         KeyConditionExpression="slug = :slug",
         ExpressionAttributeValues={":slug": {"S": slug}},
@@ -224,7 +226,7 @@ def list_refs_from_dynamodb() -> flask.Response:
     logger.info("Retrieve refs from the database and return them to the client.")
     slug = flask.request.args.get("slug")
     assert slug is not None, "Error: slug was not provided"
-    contents = dynamodb.query(
+    contents = dynamodb_c.query(
         TableName=os.environ.get("DYNAMODB_REFS_TBL", ""),
         KeyConditionExpression="slug = :slug",
         ExpressionAttributeValues={":slug": {"S": slug}},
@@ -246,7 +248,7 @@ def query_events() -> flask.Response:
     logger.info("Retrieve events from the database and return them to the client.")
     slug = flask.request.args.get("slug")
     assert slug is not None, "Error: slug was not provided"
-    contents = dynamodb.query(
+    contents = dynamodb_c.query(
         TableName=os.environ.get("DYNAMODB_AUDIT_TBL", ""),
         KeyConditionExpression="slug = :slug",
         ExpressionAttributeValues={":slug": {"S": slug}},
@@ -266,13 +268,13 @@ def query_events() -> flask.Response:
 def query_alerts() -> flask.Response:
     """Retrieve alerts from the database and return them to the client."""
     logger.info("Retrieve alerts from the database and return them to the client.")
-    resp = dynamodb.scan(
+    resp = dynamodb_c.scan(
         TableName=os.environ.get("DYNAMODB_ALERTS_TBL", ""),
     )
     contents = resp["Items"]
     logger.info(f"Resp: {json.dumps(resp, default=str)}")
     while "LastEvaluatedKey" in resp:
-        resp = dynamodb.scan(
+        resp = dynamodb_c.scan(
             TableName=os.environ.get("DYNAMODB_ALERTS_TBL", ""),
             ExclusiveStartKey=resp["LastEvaluatedKey"],
         )
@@ -296,7 +298,7 @@ def query_citations() -> flask.Response:
     logger.info("Retrieve citations from the database and return them to the client.")
     slug = flask.request.args.get("slug")
     assert slug is not None, "Error: slug was not provided"
-    contents = dynamodb.query(
+    contents = dynamodb_c.query(
         TableName=os.environ.get("DYNAMODB_CITATIONS_TBL", ""),
         KeyConditionExpression="slug = :slug",
         ExpressionAttributeValues={":slug": {"S": slug}},
@@ -318,7 +320,7 @@ def query_headings() -> flask.Response:
     logger.info("Retrieve headings from the database and return them to the client.")
     slug = flask.request.args.get("slug")
     assert slug is not None, "Error: slug was not provided"
-    contents = dynamodb.query(
+    contents = dynamodb_c.query(
         TableName=os.environ.get("DYNAMODB_HEADINGS_TBL", ""),
         KeyConditionExpression="slug = :slug",
         ExpressionAttributeValues={":slug": {"S": slug}},
@@ -414,8 +416,7 @@ def _send_msg_to_sqs(request_data: bytes) -> None:
 
 def dynamodb_set(tbl: str, **kwargs) -> None:
     expire_at = int((datetime.datetime.now() + datetime.timedelta(days=3)).timestamp())
-    dyndb = boto3.resource("dynamodb")
-    table = dyndb.Table(tbl)
+    table = dynamodb_r.Table(tbl)
     resp = table.put_item(Item={"expire_at": expire_at, **kwargs})
     logger.info(
         f"Response from dynamodb.Table({tbl}).put_item: {json.dumps(resp, default=str)}"
@@ -429,7 +430,7 @@ def dynamodb_set(tbl: str, **kwargs) -> None:
 def dynamodb_get(tbl: str, pk: dict[str, str]) -> boto3_GetItemOutputTypeDef:
     # table = dynamodb.Table(tbl)
     # resp = table.get_item(Key=pk)
-    resp = dynamodb.get_item(TableName=tbl, Key=pk)
+    resp = dynamodb_c.get_item(TableName=tbl, Key=pk)
     logger.info(
         f"Response from dynamodb.get_item(TableName={tbl}): {json.dumps(resp, default=str)}"
     )
