@@ -245,10 +245,18 @@ To set up sops, you can follow the [official instructions](https://github.com/ge
 
 Steps to configure the platform on your own AWS account.
 
+### Adding a new AWS account
+
+The project support multi-environment deployment. For the IaC scripts to work, every environment should have its own AWS account. If you want to deploy this project on your infrastructure just treat it as a new environment. To set up a new environment, follow these instructions:
+1. [Create a new AWS account](https://aws.amazon.com/resources/create-account/) or connect to an existing one.
+1. Using the root user, create a new AWS account and copy the number of the new account to encrypted tfvars in `secrets/` dir.
+1. In the IAM Identity Center, navigate to a multi-account permission and assign users/groups to the new account with applicable permission sets.
+1. Be sure to wait some time for the AWS staff to verify the new account.
+
 ### Configure an Identity Provider in AWS IAM
 
-Configure GitLab as an identity provider for IAM. This will allow IAM to recognize GitLab as a trusted entity that we can assign permissions via an IAM Role.
-Navigate to IAM in the AWS Management Console, and then click on "Identity Providers" on the sidebar under "Access Management". After that, click on the button saying "Add provider" on the top right-hand side.
+In this step you will configure GitLab as an identity provider for IAM. This will allow IAM to recognize GitLab as a trusted entity that we can assign permissions via an IAM Role.
+First, navigate to IAM in the AWS Management Console, and then click on "Identity Providers" on the sidebar under "Access Management". After that, click on the button saying "Add provider" on the top right-hand side.
 
 Make sure that the option for OpenID Connect is selected on the top, this is because OpenID Connect allows you to configure trust relationships with third party accounts including but not limited to GitLab. Also ensure that the provider URL is GitLab's root URL, https://gitlab.com as well as the Audience. The provider URL is the URL from which the OpenID configuration is obtained. See [this walkthrough](https://community.aws/content/2dquEzIKfm2wVH77AYmApToZdWj/gitlab-with-terraform) for details.
 
