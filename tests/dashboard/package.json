@@ -1,0 +1,12 @@
+{
+  "author": "Pawel Kaminski",
+  "type": "module",
+  "scripts": {
+    "test": "CYPRESS_BASE_URL=http://localhost:3000 cypress run --spec 'cypress/e2e/**/*'",
+    "test:open": "cypress open 'cypress/e2e/**/*'"
+  },
+  "devDependencies": {
+    "cypress": "^14.3.3",
+    "@aws-sdk/client-s3": "~3.835.0"
+  }
+}
