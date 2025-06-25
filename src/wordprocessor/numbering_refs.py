@@ -10,7 +10,7 @@ try:
 except (ImportError, ModuleNotFoundError):
     from .constants import AUTONUMBER_PLACEHOLDER  # type: ignore
     from .metadata import DocumentMetadata, TargetDatapoint  # type: ignore
-    from .keys import KeyPath
+    from .keys import KeyPath  # type: ignore
 
 
 def prepare_refs(
@@ -75,11 +75,6 @@ def _update_hyperlink_texts(
 ) -> None:
     for p in doc.paragraphs:
         _update_hyperlink_texts_in_paragraph(key, p, book_metadata)
-    for tbl in doc.tables:
-        for row in tbl.rows:
-            for cell in row.cells:
-                for p in cell.paragraphs:
-                    _update_hyperlink_texts_in_paragraph(key, p, book_metadata)
 
 
 def _update_hyperlink_texts_in_paragraph(
@@ -91,10 +86,13 @@ def _update_hyperlink_texts_in_paragraph(
         if AUTONUMBER_PLACEHOLDER in link.text and link.address:
             target_file_stem = link.address.split(".")[0]
             target = _find_target(link, target_file_stem, book_metadata)
-            _replace_link_text(link, target)
+            if target is not None:
+                _replace_link_text(link, target)
         elif AUTONUMBER_PLACEHOLDER in link.text and link.fragment:
-            target = _find_target(link, key.stem, book_metadata)
-            _replace_link_text(link, target)
+            stem = key.stem if hasattr(key, "stem") else ""
+            target = _find_target(link, stem, book_metadata)
+            if target is not None:
+                _replace_link_text(link, target)
 
 
 def _find_target(

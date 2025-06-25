@@ -58,7 +58,7 @@ else:
     dynamodb: boto3_DynamoDBServiceResource = boto3.resource("dynamodb")
 
 
-def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
+def lambda_handler(event, context) -> None:
     logger.info("Event: " + json.dumps(event, default=str))
     logger.info("Context: " + json.dumps(context, default=str))
     config_key = _get_config_key(event)
@@ -101,14 +101,14 @@ def _get_config_key(event) -> KeyPath:
         raise
 
 
-def _prepare_config(key: KeyPath) -> None:
+def _prepare_config(key: KeyPath) -> t.Any:
     with open(key) as f:
         config = yaml.safe_load(f)
     return config
 
 
 def _update_file_count(
-    config: dict[str : t.Any], book_metadata: dict[str, DocumentMetadata]
+    config: dict[str, t.Any], book_metadata: dict[str, DocumentMetadata]
 ) -> None:
     if "dgtmon" not in config or "prefixes" not in config["dgtmon"]:
         return
