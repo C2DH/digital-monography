@@ -56,6 +56,7 @@ init:
     - export TFSTATE_BACKEND="dgtmon-$CI_COMMIT_BRANCH"'-'"$(jq -r '.tfstate_backend' secrets/decrypted.tfvars.json)"
     - sed -e 's@TFSTATE_LOCKTBL@'"$TFSTATE_LOCKTBL"'@' infra/main.tf | scripts/sponge.awk infra/main.tf
     - sed -e 's@TFSTATE_BACKEND@'"$TFSTATE_BACKEND"'@' infra/main.tf | scripts/sponge.awk infra/main.tf
+    - echo "main.tf was updated" && cat infra/main.tf
     - echo "Step 2.5. Generate .env files for dashboard"
     - |
       cat > staticws/dashboard/.env.develop << EOF
