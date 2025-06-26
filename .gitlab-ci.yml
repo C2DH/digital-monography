@@ -82,6 +82,7 @@ init:
     # expire_in: 1 day # TODO: consider TTL
     paths:
       - secrets/decrypted.tfvars.json
+      - infra/main.tf
 
 build-dashboard:
   stage: init
