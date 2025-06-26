@@ -491,6 +491,12 @@ An alternative solution might be to fork myst.md and try to replace all features
 * deploy wordprocessor and connect with others
 * dashboard should fetch book details and alert info from API (now hard coded)
 
+## Troubleshooting
+
+### I uploaded a book to Dropbox but I don't see the output nor the logs
+
+If you uploaded a book to Dropbox but you don't see the output nor the logs, it probably means that you didn't authenticate the app with Dropbox before uploading. Be sure to hit the "login" button in the dashboard before uploading manuscript to Dropbox.
+
 ## Sundry
 
 ### Generating infrastrucutre visualisation
