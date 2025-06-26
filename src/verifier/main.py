@@ -164,9 +164,9 @@ def _put_json_to_s3(body: str, key: KeyPath) -> None:
 def _send_msg_to_sqs(key: KeyPath) -> None:
     logger.info(f"Preparing to send a message to the sqs queue.")
     try:
-        aws_account_id = os.environ["AWS_ACCOUNT_ID"]
-        aws_account_region = os.environ["AWS_ACCOUNT_REGION"]
-        sqs_builder_trigger = os.environ["SQS_BUILDER_FIFO_TRIGGER_NAME"]
+        aws_account_id = os.environ.get("AWS_ACCOUNT_ID")
+        aws_account_region = os.environ.get("AWS_ACCOUNT_REGION")
+        sqs_builder_trigger = os.environ.get("SQS_BUILDER_FIFO_TRIGGER_NAME")
         QueueUrl = f"https://sqs.{aws_account_region}.amazonaws.com/{aws_account_id}/{sqs_builder_trigger}"
         MessageBody = key.slug
         MessageDeduplicationId = key.slug
