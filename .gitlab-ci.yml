@@ -82,8 +82,10 @@ init:
   artifacts:
     # expire_in: 1 day # TODO: consider TTL
     paths:
-      - secrets/decrypted.tfvars.json
       - infra/main.tf
+      - secrets/decrypted.tfvars.json
+      - staticws/dashboard/.env.develop
+      - staticws/dashboard/.env.main
 
 build-dashboard:
   stage: pre-deploy

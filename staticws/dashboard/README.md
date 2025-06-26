@@ -14,8 +14,8 @@ Tech stack for the frontend:
 
 Note that the dashboard is updated every time you execute `git push` command. When you push to GitLab, the following scripts are triggered.
 
-* build-dashboard - builds the static website
-* upload-dashboard - uploads the static website to the cloud
+* build-dashboard - builds the static website (depends on the init stage)
+* upload-dashboard - uploads the static website to the cloud (depends on the deploy stage)
 
 See [the CI scripts](./../../.gitlab-ci.yml) for implementation details.
 
