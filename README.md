@@ -334,6 +334,13 @@ Go to the home page of the GitLab repository, and click on "CI/CD" under the "Se
 
 Also, add the "AWS_DEFAULT_REGION" variable with value equal to the AWS region selected for the above mentioned resources.
 
+### Register webhooks endpoints
+
+In order to set up the webhooks integration, be sure to register the "Redirect URI" and "Webhook URI" in the [Dropbox dashboard](https://www.dropbox.com/developers/apps?_tk=pilot_lp&_ad=topbar4&_camp=myapps).
+* The "Redirect URI" should match `<api_agw_endpoint_develop>/<stage>/oauth_callback`
+* The "Webhook URI" should match `<api_agw_endpoint_develop>/<stage>/webhook`
+See details of the endpoints in `src/entrypoiny/main.py`.
+
 ## Adding access to the infrastructure to a new user
 
 ### Create a IAM User for terminal access
