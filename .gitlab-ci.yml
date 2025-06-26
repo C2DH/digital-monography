@@ -82,7 +82,7 @@ init:
     paths:
       - secrets/decrypted.tfvars.json
 
-.build-dashboard:
+build-dashboard:
   stage: init
   # NOTE: make sure rules are in sync with upload-dashboard job
   rules:
@@ -111,7 +111,7 @@ init:
       - staticws/dashboard/.next
       - staticws/dashboard/out
 
-.deploy:
+deploy:
   stage: deploy
   dependencies:
     - init
@@ -139,7 +139,7 @@ init:
     paths:
       - tf_output.json
 
-.upload-dashboard:
+upload-dashboard:
   stage: post-deploy
   dependencies:
     - build-dashboard
@@ -188,7 +188,7 @@ init:
 #     - npm start &
 #     - CYPRESS_BASE_URL=https://${STATICWS_DASHBOARD_S3} npx cypress run --browser chrome --headless
 
-.destroy:
+destroy:
   stage: destroy
   only:
     - main
