@@ -1,5 +1,6 @@
 stages:
   - init
+  - pre-deploy
   - deploy
   - post-deploy
   - e2e-tests
@@ -85,7 +86,7 @@ init:
       - infra/main.tf
 
 build-dashboard:
-  stage: init
+  stage: pre-deploy
   # NOTE: make sure rules are in sync with upload-dashboard job
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"
