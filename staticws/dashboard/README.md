@@ -28,7 +28,7 @@ npm install
 npm run dev
 ```
 
-You can also run `npm run build` to build the static website locally. Be caution about the differences that might occur between your local build and build done by CI pipeline on GitLab's server.
+You can also run `npm run build:develop` to build the static website locally. Be caution about the differences that might occur between your local build and build done by CI pipeline on GitLab's server.
 
 ## Statically vs dynamically rendered
 
