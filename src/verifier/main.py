@@ -172,8 +172,7 @@ def _send_msg_to_sqs(key: KeyPath) -> None:
         MessageDeduplicationId = key.slug
         MessageGroupId = "0"
         logger.info(
-            f"Attempting to call sqs.send_message(QueueUrl={QueueUrl}, MessageBody={MessageBody}, MessageDeduplicationId={MessageDeduplicationId}, MessageGroupId={MessageGroupId}): "
-            + json.dumps(resp, default=str)
+            f"Attempting to call sqs.send_message(QueueUrl={QueueUrl}, MessageBody={MessageBody}, MessageDeduplicationId={MessageDeduplicationId}, MessageGroupId={MessageGroupId})"
         )
         resp = sqs.send_message(
             QueueUrl=QueueUrl,
