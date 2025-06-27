@@ -1,31 +1,31 @@
 {
     "ENTRYPOINT": {
-        "LATEST": "0.0.70",
-        "STABLE": "0.0.70"
+        "LATEST": "0.0.71",
+        "STABLE": "0.0.71"
     },
     "DROPBOX": {
-        "LATEST": "0.0.41",
-        "STABLE": "0.0.41"
+        "LATEST": "0.0.42",
+        "STABLE": "0.0.42"
     },
     "BUILDER": {
-        "LATEST": "0.1.39",
-        "STABLE": "0.1.39"
+        "LATEST": "0.1.40",
+        "STABLE": "0.1.40"
     },
     "GITHUB": {
-        "LATEST": "0.0.30",
-        "STABLE": "0.0.30"
+        "LATEST": "0.0.31",
+        "STABLE": "0.0.31"
     },
     "PREPARER": {
-        "LATEST": "0.1.42",
-        "STABLE": "0.1.42"
+        "LATEST": "0.1.43",
+        "STABLE": "0.1.43"
     },
     "VERIFIER": {
-        "LATEST": "0.1.22",
-        "STABLE": "0.1.22"
+        "LATEST": "0.1.23",
+        "STABLE": "0.1.23"
     },
     "GPU": {
-        "LATEST": "0.0.10",
-        "STABLE": "0.0.10"
+        "LATEST": "0.0.11",
+        "STABLE": "0.0.11"
     },
     "WORDPROCESSOR": {
         "LATEST": "0.0.5",
