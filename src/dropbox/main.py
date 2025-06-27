@@ -16,7 +16,6 @@ from mypy_boto3_dynamodb.service_resource import (
     DynamoDBServiceResource as boto3_DynamoDBServiceResource,
 )
 from mypy_boto3_s3.client import S3Client as boto3_S3Client
-from mypy_boto3_sqs import SQSClient as boto3_SQSClient
 
 
 try:
@@ -51,7 +50,6 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 dynamodb: boto3_DynamoDBServiceResource = boto3.resource("dynamodb")
 s3: boto3_S3Client = boto3.client("s3")
-sqs: boto3_SQSClient = boto3.client("sqs")
 # if IS_DEBUG:
 #     # TODO: add fakers
 #     dynamodb = None
