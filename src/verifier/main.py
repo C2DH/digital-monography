@@ -1,4 +1,4 @@
-import bs4
+# import bs4
 import boto3
 import datetime
 import json
