@@ -108,6 +108,7 @@ data "aws_iam_policy_document" "github" {
       "s3:PutObjectAcl",
       "s3:GetObject",
       "s3:GetObjectAcl",
+      "s3:ListBucket",
     ]
   }
   # is this necessary?
