@@ -547,8 +547,7 @@ def _enqueue_to_github(msg: GithubTriggerMsg) -> None:
         sqs_github_trigger = os.environ.get("SQS_GITHUB_FIFO_TRIGGER_NAME", "")
         QueueUrl = f"https://sqs.{aws_account_region}.amazonaws.com/{aws_account_id}/{sqs_github_trigger}"
         logger.info(
-            f"Attempting to call sqs.send_message(QueueUrl={QueueUrl}, MessageBody={msg.dumps()}, MessageDeduplicationId={msg.deduplication_id()}, MessageGroupId={msg.slug}): "
-            + json.dumps(resp, default=str)
+            f"Attempting to call sqs.send_message(QueueUrl={QueueUrl}, MessageBody={msg.dumps()}, MessageDeduplicationId={msg.deduplication_id()}, MessageGroupId={msg.slug})"
         )
         resp = sqs.send_message(
             QueueUrl=QueueUrl,
