@@ -364,7 +364,7 @@ def prepare_references(
             target = metadata.get_target(link.id) if link.is_inner_reference() else None
             link_text = link.make_text(a_tag.text, target)
             link_dest = link.make_destination()
-            prev_string = a_tag.string
+            prev_string = a_tag.string if a_tag.string is not None else ""
             prev_href = a_tag["href"]
             a_tag.string = link_text
             a_tag["href"] = link_dest

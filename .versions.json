@@ -16,8 +16,8 @@
         "STABLE": "0.0.32"
     },
     "PREPARER": {
-        "LATEST": "0.1.45",
-        "STABLE": "0.1.45"
+        "LATEST": "0.1.46",
+        "STABLE": "0.1.46"
     },
     "VERIFIER": {
         "LATEST": "0.1.25",
