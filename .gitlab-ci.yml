@@ -134,8 +134,11 @@ deploy:
     - cp -a infra/. .
     - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
     - mkdir ~/.aws
-    - echo -e "[profile oidc]\nrole_arn=${DGTMON_ROLE_DEPL_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
-    - echo "# main.tf" && cat infra/main.tf
+    # NOTE: This seems suboptinimal, but it works for now.
+    # If the number of env-specific variables or no. of environments keeps growing,
+    # consider using [GitLab's environments](https://docs.gitlab.com/ci/environments/).
+    - export ROLE_DEPL_ARN=`[ $CI_COMMIT_BRANCH = "main" ] && echo $MAIN_ROLE_DEPL_ARN || echo $DEV_ROLE_DEPL_ARN`
+    - echo -e "[profile oidc]\nrole_arn=${ROLE_DEPL_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
   script:
     - terraform init -backend-config="key=${CI_COMMIT_BRANCH}.tfstate" -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH" -reconfigure
     - terraform apply -auto-approve -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH"
@@ -165,7 +168,11 @@ upload-dashboard:
     - yum update -y && yum install -y jq
     - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
     - mkdir ~/.aws
-    - echo -e "[profile oidc]\nrole_arn=${DGTMON_ROLE_POSTDEPL_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
+    # NOTE: This seems suboptinimal, but it works for now.
+    # If the number of env-specific variables or no. of environments keeps growing,
+    # consider using [GitLab's environments](https://docs.gitlab.com/ci/environments/).
+    - export ROLE_POSTDEPL_ARN=`[ $CI_COMMIT_BRANCH = "main" ] && echo $MAIN_ROLE_POSTDEPL_ARN || echo $DEV_ROLE_POSTDEPL_ARN`
+    - echo -e "[profile oidc]\nrole_arn=${ROLE_POSTDEPL_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
   script:
     - export STATICWS_DASHBOARD_S3=$(jq -r '.staticws_dashboard_bucket_name.value' tf_output.json)
     - export AWS_CONFIG_FILE=~/.aws/config
@@ -209,7 +216,11 @@ destroy:
     - cp -a infra/. .
     - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
     - mkdir ~/.aws
-    - echo -e "[profile oidc]\nrole_arn=${DGTMON_ROLE_DEPL_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
+    # NOTE: This seems suboptinimal, but it works for now.
+    # If the number of env-specific variables or no. of environments keeps growing,
+    # consider using [GitLab's environments](https://docs.gitlab.com/ci/environments/).
+    - export ROLE_DEPL_ARN=`[ $CI_COMMIT_BRANCH = "main" ] && echo $MAIN_ROLE_DEPL_ARN || echo $DEV_ROLE_DEPL_ARN`
+    - echo -e "[profile oidc]\nrole_arn=${ROLE_DEPL_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
   script:
     - terraform init -backend-config="key=${CI_COMMIT_BRANCH}.tfstate" -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH" -reconfigure
     - terraform destroy -auto-approve -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH"
