@@ -2,39 +2,25 @@
 
 import { useEffect, useState } from 'react';
 import TnbBookCard from "./_components/TnbBookCard";
-import { endpoint, getGitBranch } from "./constants";
-
-type IBook = {
-  authors: string,
-  slug: string,
-  title: string,
-  alert: string,
-}
+import { API_ENDPOINT, API_STAGE } from "./constants";
+import { IBook, getAlert } from "../types/books";
 
 export default function Home() {
-  // const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
-  const stage = getGitBranch();
-  console.log("stage", stage);
+  // TODO: fetch the correct available books data
+  // TODO: read the alert
   const [books, setBooks] = useState<IBook[]>([
     {
       authors: "Pawel Kaminski",
       slug: "guidelines-for-drafting-manuscripts",
       title: "Guidelines for Drafting Manuscripts",
-      alert: "",
+      alert: getAlert(""),
     },
-    {
-      authors: "Anita Lucchesi",
-      slug: "hermeneutics-of-practice",
-      title: "For a new hermeneutics of practice in digital public history",
-      alert: "",
-    }
   ]);
   useEffect(() => {
     // require("bootstrap/dist/js/bootstrap.bundle.min.js");
-    console.log("test");
     async function fetchStatusData() {
       try {
-        const resp = await fetch(`${endpoint}/${stage}/alerts`);
+        const resp = await fetch(`${API_ENDPOINT}/${API_STAGE}/alerts`);
         const json = await resp.json();
         console.log("json", json);
         // const preSignedUrl = preSignedUrljson["presigned_url"];

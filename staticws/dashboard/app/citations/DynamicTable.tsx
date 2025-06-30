@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import TnbBookNav from "./../_components/TnbBookNav";
-import { endpoint, getGitBranch } from "./../constants";
+import { API_ENDPOINT, API_STAGE } from "./../constants";
 
 function getNestedStr(rec: any, attr: string): string {
     const dataType = "S";
@@ -26,12 +26,10 @@ export default function DynamicTable() {
     const searchParams = useSearchParams();
     const slug = searchParams?.get("slug");
     // const dbTable = "dgtmon-dev-dyndb-citations-tbl";
-    const stage = getGitBranch();
     const fetchRecords = async (pk: string) => {
         try {
             setLoading(true);
-            // const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
-            const resp = await fetch(`${endpoint}/${stage}/citations?slug=${pk}`);
+            const resp = await fetch(`${API_ENDPOINT}/${API_STAGE}/citations?slug=${pk}`);
             const respJson = await resp.json();
             const tableItems: ICitationGroup[] = [];
             for (let i = 0; i < (respJson.Items || []).length; i++) {

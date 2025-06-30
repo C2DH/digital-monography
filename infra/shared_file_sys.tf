@@ -5,7 +5,7 @@
 # # https://github.com/terraform-aws-modules/terraform-aws-lambda/tree/v7.2.2/examples/with-efs
 
 resource "aws_security_group" "efs_access_sg" {
-  name   = "${var.project}-shared-${var.efs_access_security_group}"
+  name   = "${var.project}-${var.env}-${var.efs_access_security_group}"
   vpc_id = aws_vpc.dgtmon_vpc.id
   ingress {
     from_port   = 2049

@@ -11,20 +11,25 @@ import os
 import typing as t
 import urllib.parse
 
+from mypy_boto3_dynamodb.service_resource import (
+    DynamoDBServiceResource as boto3_DynamoDBServiceResource,
+)
 from mypy_boto3_s3.client import S3Client as boto3_S3Client
-from mypy_boto3_dynamodb.client import DynamoDBClient as boto3_DynamoDBClient
+from mypy_boto3_sqs import SQSClient as boto3_SQSClient
 
 try:
     from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
     from conditional_rendering import is_paper_only, remove_paper_only
     from constants import (
         ModuleEnum,
+        S3Event,
         MAMMOTH_STYLE_MAP,
         IS_DEBUG,
         FIELD_DIGITAL_SOURCE,
     )
     from citations import add_bibliography, is_citation, prepare_citations
     from digital_prep import insert_digital_objects, remove_metadata_tables
+    from github_trigger import GithubTriggerMsg, GithubActionEnum
     from hide_metadata_in_html import hide_metadata_in_html
     from metadata import DocumentMetadata, AssetDatapoint
     from metadata_extraction import prepare_metadata_tables
@@ -50,12 +55,14 @@ except (ImportError, ModuleNotFoundError):
     from .conditional_rendering import is_paper_only, remove_paper_only
     from .constants import (
         ModuleEnum,
+        S3Event,
         MAMMOTH_STYLE_MAP,
         IS_DEBUG,
         FIELD_DIGITAL_SOURCE,
     )
     from .citations import add_bibliography, is_citation, prepare_citations
     from .digital_prep import insert_digital_objects, remove_metadata_tables
+    from .github_trigger import GithubTriggerMsg, GithubActionEnum
     from .hide_metadata_in_html import hide_metadata_in_html
     from .metadata import DocumentMetadata, AssetDatapoint
     from .metadata_extraction import prepare_metadata_tables
@@ -89,24 +96,20 @@ if IS_DEBUG:
     )
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-
-
 FIXED_SUBSTITUTIONS = {
     "01_a___Ref177042490": "1",
     "01_a___Ref177044323": "1",
     "02_b.docx#02_b__tblSimpleTable": "2",
     "02_b.docx#02_b__h1HyperlinksB": "1",
 }
-
-
 if IS_DEBUG:
     dynamodb = None
     s3 = Faker("s3")
     sqs = Faker("sqs")
 else:
-    dynamodb: boto3_DynamoDBClient = boto3.resource("dynamodb")
+    dynamodb: boto3_DynamoDBServiceResource = boto3.resource("dynamodb")
     s3: boto3_S3Client = boto3.client("s3")
-    sqs = boto3.client("sqs")
+    sqs: boto3_SQSClient = boto3.client("sqs")
 
 
 def is_table(tag: bs4.element.Tag) -> bool:
@@ -116,17 +119,54 @@ def is_table(tag: bs4.element.Tag) -> bool:
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info(f"lambda_handler. Event: {json.dumps(event, default=str)}")
     key = _get_key(event)
+    event_name = _get_event_name(event)
     metadata = DocumentMetadata(key)
-    src = _get_source_bucket(event)
-    _download_fileobj(src, key)
-    if key.suffix.lower() == ".ipynb":
+
+    if key.suffix.lower() == ".ipynb" and event_name == S3Event.OBJ_REMOVED.value:
+        _remove_fileobj(key)
+        msg = GithubTriggerMsg(key=key, action=GithubActionEnum.DELETE_OBJECT)
+        _enqueue_to_github(msg)
+        return {"statusCode": 200, "body": ""}
+    if key.suffix.lower() == ".docx" and event_name == S3Event.OBJ_REMOVED.value:
+        # TODO: split for ipynb and docx and else
+        _remove_fileobj(key)
+        _remove_assets_info_from_s3(key)
+        _remove_metadata_from_db(key)
+        _remove_metadata_from_efs(key)
+        _remove_processed_html_from_efs(key)
+        _remove_html_from_s3(html_soup_str, key)
+        _remove_processed_md_from_efs(key)
+        _remove_md_from_s3(md, key.s3_key.with_suffix(".md"))
+        msg = GithubTriggerMsg(key=key, action=GithubActionEnum.DELETE_OBJECT)
+        msg_md = GithubTriggerMsg(
+            key=key.s3_key.with_suffix(".md"), action=GithubActionEnum.DELETE_OBJECT
+        )
+        _enqueue_to_github(msg)
+        _enqueue_to_github(msg_md)
+        return {"statusCode": 200, "body": ""}
+    if event_name == S3Event.OBJ_REMOVED.value:
+        _remove_fileobj(key)
+        msg = GithubTriggerMsg(key=key, action=GithubActionEnum.DELETE_OBJECT)
+        _enqueue_to_github(msg)
+        return {"statusCode": 200, "body": ""}
+    # If the object was changed/created, prepare the file
+    if key.suffix.lower() == ".ipynb" and event_name == S3Event.OBJ_CREATED.value:
+        src = _get_source_bucket(event)
+        _download_fileobj(src, key)
         ipynb: nbformat.NotebookNode = _unmarshall_json(key.efs_filepath)
         tags_to_myst_crossref_targets(ipynb)
         _write_processed_ipynb_to_efs(ipynb, key)
-        _enqueue_to_github(key)
+        msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
+        _enqueue_to_github(msg)
+
+        # def _enqueue_to_github(msg: GithubTriggerMsg) -> None:
+        # msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
+
         # _put_to_archive_s3(key)
         return {"statusCode": 200, "body": ""}
-    if key.suffix.lower() == ".docx":
+    if key.suffix.lower() == ".docx" and event_name == S3Event.OBJ_CREATED.value:
+        src = _get_source_bucket(event)
+        _download_fileobj(src, key)
         html_str = _convert_to_html(key.efs_filepath)
         html_soup, metadata, tables = prepare_docx(html_str, metadata)
         # images_with_alttxt = []
@@ -202,8 +242,12 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         md = _convert_to_md(key, html_soup, metadata)
         _write_processed_md_to_efs(md, key)
         _put_md_to_s3(md, key.s3_key.with_suffix(".md"))
-        _enqueue_to_github(key)
-        _enqueue_to_github(key.s3_key.with_suffix(".md"))
+        msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
+        msg_md = GithubTriggerMsg(
+            key=key.s3_key.with_suffix(".md"), action=GithubActionEnum.UPDATE_OBJECT
+        )
+        _enqueue_to_github(msg)
+        _enqueue_to_github(msg_md)
         # _put_to_archive_s3(key.s3_key.with_suffix(".md"), md)
         _log_audit_event(
             key,
@@ -211,10 +255,10 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
             "Contents of the file prepared for further processing.",
         )
         return {"statusCode": 200, "body": ""}
-    else:
-
+    elif event_name == S3Event.OBJ_CREATED.value:
         # _write_to_efs(key) # <=============
-        _enqueue_to_github(key)
+        msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
+        _enqueue_to_github(msg)
         return {"statusCode": 200, "body": ""}
 
 
@@ -226,6 +270,22 @@ def _get_key(event) -> KeyPath:
         return KeyPath(key_str)
     except Exception as e:
         logger.error(f"Unable to retrieve object key. Error: {repr(e)}")
+        raise
+
+
+def _get_event_name(event) -> t.Literal["ObjectCreated", "ObjectRemoved"]:
+    try:
+        event_name: str = event["Records"][0]["eventName"]
+        # event_name should match "event:httpMethod" format, e.g. "ObjectCreated:Put"
+        assert ":" in event_name, f"Event name {event_name} is not supported."
+        event_name, _ = event_name.split(":")
+        assert event_name in (
+            "ObjectCreated",
+            "ObjectRemoved",
+        ), f"Event name {event_name} is not supported."
+        return event_name
+    except Exception as e:
+        logger.error(f"Unable to retrieve event name. Error: {repr(e)}")
         raise
 
 
@@ -242,10 +302,11 @@ def _get_source_bucket(event) -> str:
 def _download_fileobj(src: str, key: KeyPath) -> None:
     try:
         key = key.efs_filepath
-        # temp to remove the "assets" file
-        assets_dir = pathlib.Path("/mnt/efs/{key.slug}/assets")
-        if assets_dir.exists() and not assets_dir.is_dir() and assets_dir.is_file():
-            assets_dir.unlink()
+        # NOTE: this commented out code shouldn't be necassary.
+        # It was just a temp to fix my error when I uploaded the "assets" file instead of dir.
+        # assets_dir = pathlib.Path("/mnt/efs/{key.slug}/assets")
+        # if assets_dir.exists() and not assets_dir.is_dir() and assets_dir.is_file():
+        #     assets_dir.unlink()
         # end temp
         key.parent.mkdir(parents=True, exist_ok=True)
         with open(key, "wb") as fileobj:
@@ -258,8 +319,9 @@ def _download_fileobj(src: str, key: KeyPath) -> None:
                 f"Response from s3.download_fileobj(Bucket={src}, Key={s3_key}): "
                 + json.dumps(resp, default=str)
             )
-            for child in key.parent.iterdir():
-                logger.info(f"File {str(child)} was found in {str(key.parent)}.")
+            # NOTE: This logging should be replaced with a snapshot of the directory tree.
+            # for child in key.parent.iterdir():
+            #     logger.info(f"File {str(child)} was found in {str(key.parent)}.")
     except Exception as e:
         logger.exception(
             f"Downloading fileobj {str(key)} from {src} failed. Error: {repr(e)}"
@@ -268,6 +330,25 @@ def _download_fileobj(src: str, key: KeyPath) -> None:
             key,
             AuditStatus.FAILED.value,
             "Error upon internal download.",
+        )
+        raise
+
+
+def _remove_fileobj(key: KeyPath) -> None:
+    try:
+        key = key.efs_filepath
+        logger.info(f"Stat before removal:" + json.dumps(key.stat(), default=str))
+        key.unlink(missing_ok=True)  # remove file if it exists
+        logger.info(f"Stat after removal:" + json.dumps(key.stat(), default=str))
+        logger.info(f"File {str(key)} was removed from EFS.")
+    except Exception as e:
+        logger.exception(
+            f"Removing fileobj {str(key)} from EFS failed. Error: {repr(e)}"
+        )
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            "Error upon internal deletion from a file server.",
         )
         raise
 
@@ -382,6 +463,25 @@ def _put_object(body: bytes, dst: str, key: KeyPath) -> t.Any:
         raise
 
 
+def _remove_html_from_s3(key: KeyPath) -> None:
+    try:
+        s3_key = key.s3_key.with_suffix(".html")
+        bucket = os.environ["IR_APKG_HTML_BUCKET_NAME"]
+        resp = s3.delete_object(Bucket=bucket, Key=str(s3_key))
+        logger.info(
+            f"Response from s3.put_object(Bucket={bucket}, Key={s3_key}): "
+            + json.dumps(resp, default=str)
+        )
+    except Exception as e:
+        logger.exception(f"Deleting html from s3 bucket failed. Error: {repr(e)}")
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            "Error upon internal html synchronization.",
+        )
+        raise
+
+
 def _put_html_to_s3(contents: str, key: KeyPath) -> None:
     try:
         s3_key = key.s3_key.with_suffix(".html")
@@ -392,6 +492,25 @@ def _put_html_to_s3(contents: str, key: KeyPath) -> None:
         )
     except Exception as e:
         logger.exception(f"Putting html to s3 bucket failed. Error: {repr(e)}")
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            "Error upon internal html synchronization.",
+        )
+        raise
+
+
+def _remove_md_from_s3(key: KeyPath) -> None:
+    try:
+        s3_key = key.s3_key.with_suffix(".md")
+        bucket = os.environ["IR_APKG_MD_BUCKET_NAME"]
+        resp = s3.delete_object(Bucket=bucket, Key=str(s3_key))
+        logger.info(
+            f"Response from s3.put_object(Bucket={bucket}, Key={s3_key}): "
+            + json.dumps(resp, default=str)
+        )
+    except Exception as e:
+        logger.exception(f"Deleting md from s3 bucket failed. Error: {repr(e)}")
         _log_audit_event(
             key,
             AuditStatus.FAILED.value,
@@ -417,33 +536,35 @@ def _put_md_to_s3(contents: str, key: KeyPath) -> None:
         raise
 
 
-def _enqueue_to_github(key: KeyPath) -> None:
+def _enqueue_to_github(msg: GithubTriggerMsg) -> None:
     try:
-        key_str = str(key)
-        logger.info(f"_queue_to_trigger_github(key={key_str})")
+        # msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
+        logger.info(
+            f"_queue_to_trigger_github(key={msg.key}, action={msg.action.value})"
+        )
         aws_account_region = os.environ.get("AWS_ACCOUNT_REGION", "")
         aws_account_id = os.environ.get("AWS_ACCOUNT_ID", "")
         sqs_github_trigger = os.environ.get("SQS_GITHUB_FIFO_TRIGGER_NAME", "")
         QueueUrl = f"https://sqs.{aws_account_region}.amazonaws.com/{aws_account_id}/{sqs_github_trigger}"
-        MessageBody = key_str
-        MessageDeduplicationId = key_str
-        MessageGroupId = key.slug
+        logger.info(
+            f"Attempting to call sqs.send_message(QueueUrl={QueueUrl}, MessageBody={msg.dumps()}, MessageDeduplicationId={msg.deduplication_id()}, MessageGroupId={msg.slug})"
+        )
         resp = sqs.send_message(
             QueueUrl=QueueUrl,
-            MessageBody=MessageBody,
-            MessageDeduplicationId=MessageDeduplicationId,
-            MessageGroupId=MessageGroupId,
+            MessageBody=msg.dumps(),
+            MessageDeduplicationId=msg.deduplication_id(),
+            MessageGroupId=msg.slug,
         )
         logger.info(
-            f"Response from sqs.send_message(QueueUrl={QueueUrl}, MessageBody={MessageBody}, MessageDeduplicationId={MessageDeduplicationId}, MessageGroupId={MessageGroupId}): "
+            f"Response from sqs.send_message(QueueUrl={QueueUrl}, MessageBody={msg.dumps()}, MessageDeduplicationId={msg.deduplication_id()}, MessageGroupId={msg.slug}): "
             + json.dumps(resp, default=str)
         )
     except Exception as e:
-        logger.exception(f"Putting file to archive s3 bucket failed. Error: {repr(e)}")
+        logger.exception(f"Putting file to Github failed. Error: {repr(e)}")
         _log_audit_event(
-            key,
+            msg.key,
             AuditStatus.FAILED.value,
-            "Error upon archiving.",
+            "Error upon saving to GitHub.",
         )
         raise
 
@@ -480,17 +601,66 @@ def _write_config_to_efs(metadata: DocumentMetadata, key: KeyPath) -> None:
     pass
 
 
+def _remove_processed_html_from_efs(key: KeyPath) -> None:
+    try:
+        new_efs_filepath = key.efs_slug_html_path.with_suffix(".html")
+        new_efs_filepath.unlink(missing_ok=True)
+        logger.info(f"{new_efs_filepath} was removed from EFS.")
+    except Exception as e:
+        logger.exception(f"Deleting html from /efs failed. Error: {repr(e)}")
+        raise
+
+
 def _write_processed_html_to_efs(html: str, key: KeyPath) -> None:
-    new_efs_filepath = key.efs_slug_html_path.with_suffix(".html")
-    new_efs_filepath.parent.mkdir(exist_ok=True)
-    with open(new_efs_filepath, "w") as f:
-        f.write(html)
+    try:
+        new_efs_filepath = key.efs_slug_html_path.with_suffix(".html")
+        new_efs_filepath.parent.mkdir(exist_ok=True)
+        with open(new_efs_filepath, "w") as f:
+            f.write(html)
+    except Exception as e:
+        logger.exception(f"Writing html to /efs failed. Error: {repr(e)}")
+        raise
+
+
+def _remove_processed_md_from_efs(key: KeyPath) -> None:
+    try:
+        new_efs_filepath = key.efs_filepath.with_suffix(".md")
+        new_efs_filepath.unlink(missing_ok=True)
+        logger.info(f"{new_efs_filepath} was removed from EFS.")
+    except Exception as e:
+        logger.exception(f"Deleting md from /efs failed. Error: {repr(e)}")
+        raise
 
 
 def _write_processed_md_to_efs(md: str, key: KeyPath) -> None:
-    new_efs_filepath = key.efs_filepath.with_suffix(".md")
-    with open(new_efs_filepath, "w") as f:
-        f.write(md)
+    try:
+        new_efs_filepath = key.efs_filepath.with_suffix(".md")
+        with open(new_efs_filepath, "w") as f:
+            f.write(md)
+    except Exception as e:
+        logger.exception(f"Writing md to /efs failed. Error: {repr(e)}")
+        raise
+
+
+def _remove_assets_info_from_s3(key: KeyPath) -> None:
+    try:
+        s3_key = AssetDatapoint.get_s3_key(key)
+        bucket = os.environ.get("METADATA_ASSETS_BUCKET_NAME", "")
+        resp = s3.delete_object(Bucket=bucket, Key=s3_key)
+        logger.info(
+            f"Response from s3.delete_object(Bucket={bucket}, Key={s3_key}): "
+            + json.dumps(resp, default=str)
+        )
+    except Exception as e:
+        logger.exception(
+            f"Deleting assets info from s3 bucket failed. Error: {repr(e)}"
+        )
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            "Error upon removing assets info from docs.",
+        )
+        raise
 
 
 def _write_assets_info_to_s3(metadata: DocumentMetadata, key: KeyPath) -> None:
@@ -509,6 +679,35 @@ def _write_assets_info_to_s3(metadata: DocumentMetadata, key: KeyPath) -> None:
             key,
             AuditStatus.FAILED.value,
             "Error upon writing assets info from docs.",
+        )
+        raise
+
+
+def _remove_metadata_from_db(key: KeyPath) -> None:
+    if dynamodb is None:
+        return
+    try:
+        tables = {
+            "assets": os.environ.get("DYNAMODB_ASSETS_TBL", ""),
+            "citation_groups": os.environ.get("DYNAMODB_CITATIONS_TBL", ""),
+            "headings": os.environ.get("DYNAMODB_HEADINGS_TBL", ""),
+            # "warnings": os.environ.get("DYNAMODB_WARNINGS_TBL", ""),
+        }
+        for tbl in tables.values():
+            table = dynamodb.Table(tbl)
+            resp = table.delete_item(Key={"slug": key.slug, "fn": key.name})
+            logger.info(
+                f"Response from dynamodb.Table({tbl}).delete_item: {json.dumps(resp, default=str)}"
+            )
+        return
+    except Exception as e:
+        logger.exception(
+            f"Writing metadata in json to database failed. Error: {repr(e)}"
+        )
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            "Error upon writing metadata to database.",
         )
         raise
 
@@ -548,6 +747,28 @@ def _write_metadata_to_db(metadata: DocumentMetadata, key: KeyPath) -> None:
             AuditStatus.FAILED.value,
             "Error upon writing metadata to database.",
         )
+        raise
+
+
+def _remove_metadata_from_efs(key: KeyPath) -> None:
+    try:
+        fp = key.add_to_efs_slug_dir("_metadata").parent / key.github_path.with_suffix(
+            ".json"
+        )
+        logger.info(f"File: {fp}")
+        fp.unlink(missing_ok=True)  # remove file if it exists
+        # with open(fp, "w") as f:
+        #     json.dump(json_data, f)
+        logger.info(f"Metadata was removed from {str(fp)}")
+    except Exception as e:
+        logger.exception(
+            f"Removing metadata in json from /efs directory failed. Error: {repr(e)}"
+        )
+        # _log_audit_event(
+        #     key,
+        #     AuditStatus.FAILED.value,
+        #     "Error upon writing metadata.",
+        # )
         raise
 
 

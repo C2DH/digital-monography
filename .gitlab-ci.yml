@@ -1,5 +1,6 @@
 stages:
   - init
+  - pre-deploy
   - deploy
   - post-deploy
   - e2e-tests
@@ -12,23 +13,82 @@ init:
     - develop
   image: google/cloud-sdk
   before_script:
+    - echo "Step 1. Script preparation"
+    - echo "Step 1.1. Install sops and jq"
     - apt-get update && apt-get install -y curl gnupg jq
     - curl -qsL https://github.com/mozilla/sops/releases/download/v3.5.0/sops-v3.5.0.linux -o /usr/local/bin/sops
     - chmod +x /usr/local/bin/sops
+    - chmod +x scripts/sponge.awk
     - cat $PGP_KEY | gpg --batch --import
     - echo $PGP_PASSPHRASE | gpg --batch --always-trust --yes --passphrase-fd 0 --pinentry-mode=loopback -s $(mktemp)
   script:
+    - echo "Step 2. Script execution"
+    - echo "Step 2.1. Decrypt tfvars"
+    # TODO: This scaled differently than I previously expected.
+    # If the number of env-specific variables or no. of environments keeps growing,
+    # consider splitting .tfvars.json into separate files per each environment.
     - sops -d secrets/encrypted.tfvars.json | jq '.data' > secrets/decrypted.tfvars.json
-    # - >
-    #   sops -d secrets/encrypted.tfvars.json |
-    #   jq -r --arg CI_COMMIT_BRANCH "$CI_COMMIT_BRANCH" '.data += {env: $CI_COMMIT_BRANCH}'
+    - |
+      echo "Step 2.2. Set environment variables based on environment"
+      if [ "$CI_COMMIT_BRANCH" = "main" ]; then
+        export AWS_ACCOUNT_ID=$(jq -r '.aws_account_id_main' secrets/decrypted.tfvars.json)
+        export DBX_APP_DIR=$(jq -r '.dropbox_app_dir_main' secrets/decrypted.tfvars.json)
+        export DBX_APP_KEY=$(jq -r '.dropbox_app_key_main' secrets/decrypted.tfvars.json)
+        export FLASK_SECRETK=$(jq -r '.flask_secret_key_main' secrets/decrypted.tfvars.json)
+      elif [ "$CI_COMMIT_BRANCH" = "develop" ]; then
+        export AWS_ACCOUNT_ID=$(jq -r '.aws_account_id_develop' secrets/decrypted.tfvars.json)
+        export DBX_APP_DIR=$(jq -r '.dropbox_app_dir_develop' secrets/decrypted.tfvars.json)
+        export DBX_APP_KEY=$(jq -r '.dropbox_app_key_develop' secrets/decrypted.tfvars.json)
+        export FLASK_SECRETK=$(jq -r '.flask_secret_key_develop' secrets/decrypted.tfvars.json)
+      else
+        echo "hello"
+      fi
+    - |
+      echo "Step 2.3. Update tfvars with environment-based variables"
+      jq \
+      --arg AWS_ACCOUNT_ID "$AWS_ACCOUNT_ID" \
+      --arg DBX_APP_DIR "$DBX_APP_DIR" \
+      --arg DBX_APP_KEY "$DBX_APP_KEY" \
+      --arg FLASK_SECRETK "$FLASK_SECRETK" \
+      '. += { "aws_account_id": $AWS_ACCOUNT_ID, "dropbox_app_dir": $DBX_APP_DIR, "dropbox_app_key": $DBX_APP_KEY, "flask_secret_key": $FLASK_SECRETK }' \
+      secrets/decrypted.tfvars.json | ./scripts/sponge.awk secrets/decrypted.tfvars.json
+    - echo "Step 2.4. Substitute values in infra/main.tf with environment-based variables"
+    - export TFSTATE_LOCKTBL="dgtmon-$CI_COMMIT_BRANCH"'-'"$(jq -r '.tfstate_locktbl' secrets/decrypted.tfvars.json)"
+    - export TFSTATE_BACKEND="dgtmon-$CI_COMMIT_BRANCH"'-'"$(jq -r '.tfstate_backend' secrets/decrypted.tfvars.json)"
+    - sed -e 's@TFSTATE_LOCKTBL@'"$TFSTATE_LOCKTBL"'@' infra/main.tf | scripts/sponge.awk infra/main.tf
+    - sed -e 's@TFSTATE_BACKEND@'"$TFSTATE_BACKEND"'@' infra/main.tf | scripts/sponge.awk infra/main.tf
+    - echo "main.tf was updated" && cat infra/main.tf
+    - echo "Step 2.5. Generate .env files for dashboard"
+    - |
+      cat > staticws/dashboard/.env.develop << EOF
+      NEXT_PUBLIC_ENV=${CI_COMMIT_BRANCH}
+      NEXT_PUBLIC_ENV_DESC=$(jq -r '.desc_develop' secrets/decrypted.tfvars.json)
+      NEXT_PUBLIC_API_ENDPOINT=$(jq -r '.api_agw_endpoint_develop' secrets/decrypted.tfvars.json)
+      NEXT_PUBLIC_API_STAGE=${CI_COMMIT_BRANCH}
+      NEXT_PUBLIC_GITHUB_ORG=$(jq -r '.github_org_develop' secrets/decrypted.tfvars.json)
+      NEXT_PUBLIC_S3_STATICWS_WIP=$(jq -r '.api_s3_staticws_wip_develop' secrets/decrypted.tfvars.json)
+      NEXT_PUBLIC_DBX_DIR=$(jq -r '.dropbox_app_dir_develop' secrets/decrypted.tfvars.json)
+      EOF
+    - |
+      cat > staticws/dashboard/.env.main << EOF
+      NEXT_PUBLIC_ENV=${CI_COMMIT_BRANCH}
+      NEXT_PUBLIC_ENV_DESC=$(jq -r '.desc_main' secrets/decrypted.tfvars.json)
+      NEXT_PUBLIC_API_ENDPOINT=$(jq -r '.api_agw_endpoint_main' secrets/decrypted.tfvars.json)
+      NEXT_PUBLIC_API_STAGE=${CI_COMMIT_BRANCH}
+      NEXT_PUBLIC_GITHUB_ORG=$(jq -r '.github_org_main' secrets/decrypted.tfvars.json)
+      NEXT_PUBLIC_S3_STATICWS_WIP=$(jq -r '.api_s3_staticws_wip_main' secrets/decrypted.tfvars.json)
+      NEXT_PUBLIC_DBX_DIR=$(jq -r '.dropbox_app_dir_main' secrets/decrypted.tfvars.json)
+      EOF
   artifacts:
     # expire_in: 1 day # TODO: consider TTL
     paths:
+      - infra/main.tf
       - secrets/decrypted.tfvars.json
+      - staticws/dashboard/.env.develop
+      - staticws/dashboard/.env.main
 
-.build-dashboard:
-  stage: init
+build-dashboard:
+  stage: pre-deploy
   # NOTE: make sure rules are in sync with upload-dashboard job
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"
@@ -37,12 +97,12 @@ init:
   image: node:20
   before_script:
     - cd staticws/dashboard/
-    - touch .env
-    - echo "NEXT_PUBLIC_GIT_BRANCH=${CI_COMMIT_BRANCH}" >> .env
-    - cat .env
+    # - touch .env
+    # - echo "NEXT_PUBLIC_GIT_BRANCH=${CI_COMMIT_BRANCH}" >> .env
+    # - cat .env
     - npm install
   script:
-    - npm run build
+    - npm run build:${CI_COMMIT_BRANCH}
   after_script:
     - ls -la staticws/dashboard/out
   cache:
@@ -56,7 +116,7 @@ init:
       - staticws/dashboard/.next
       - staticws/dashboard/out
 
-.deploy:
+deploy:
   stage: deploy
   dependencies:
     - init
@@ -74,7 +134,11 @@ init:
     - cp -a infra/. .
     - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
     - mkdir ~/.aws
-    - echo -e "[profile oidc]\nrole_arn=${DGTMON_ROLE_DEPL_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
+    # NOTE: This seems suboptinimal, but it works for now.
+    # If the number of env-specific variables or no. of environments keeps growing,
+    # consider using [GitLab's environments](https://docs.gitlab.com/ci/environments/).
+    - export ROLE_DEPL_ARN=`[ $CI_COMMIT_BRANCH = "main" ] && echo $MAIN_ROLE_DEPL_ARN || echo $DEV_ROLE_DEPL_ARN`
+    - echo -e "[profile oidc]\nrole_arn=${ROLE_DEPL_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
   script:
     - terraform init -backend-config="key=${CI_COMMIT_BRANCH}.tfstate" -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH" -reconfigure
     - terraform apply -auto-approve -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH"
@@ -84,7 +148,7 @@ init:
     paths:
       - tf_output.json
 
-.upload-dashboard:
+upload-dashboard:
   stage: post-deploy
   dependencies:
     - build-dashboard
@@ -104,7 +168,11 @@ init:
     - yum update -y && yum install -y jq
     - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
     - mkdir ~/.aws
-    - echo -e "[profile oidc]\nrole_arn=${DGTMON_ROLE_POSTDEPL_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
+    # NOTE: This seems suboptinimal, but it works for now.
+    # If the number of env-specific variables or no. of environments keeps growing,
+    # consider using [GitLab's environments](https://docs.gitlab.com/ci/environments/).
+    - export ROLE_POSTDEPL_ARN=`[ $CI_COMMIT_BRANCH = "main" ] && echo $MAIN_ROLE_POSTDEPL_ARN || echo $DEV_ROLE_POSTDEPL_ARN`
+    - echo -e "[profile oidc]\nrole_arn=${ROLE_POSTDEPL_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
   script:
     - export STATICWS_DASHBOARD_S3=$(jq -r '.staticws_dashboard_bucket_name.value' tf_output.json)
     - export AWS_CONFIG_FILE=~/.aws/config
@@ -148,7 +216,11 @@ destroy:
     - cp -a infra/. .
     - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
     - mkdir ~/.aws
-    - echo -e "[profile oidc]\nrole_arn=${DGTMON_ROLE_DEPL_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
+    # NOTE: This seems suboptinimal, but it works for now.
+    # If the number of env-specific variables or no. of environments keeps growing,
+    # consider using [GitLab's environments](https://docs.gitlab.com/ci/environments/).
+    - export ROLE_DEPL_ARN=`[ $CI_COMMIT_BRANCH = "main" ] && echo $MAIN_ROLE_DEPL_ARN || echo $DEV_ROLE_DEPL_ARN`
+    - echo -e "[profile oidc]\nrole_arn=${ROLE_DEPL_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
   script:
     - terraform init -backend-config="key=${CI_COMMIT_BRANCH}.tfstate" -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH" -reconfigure
     - terraform destroy -auto-approve -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH"

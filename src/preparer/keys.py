@@ -20,26 +20,37 @@ class InvalidKey(Exception):
 
 
 class KeyPath(type(pathlib.Path())):  # type: ignore
-    _abs_root = DEFAULT_SFS_DIR
+
+    # def __init__(self):
+    #     self.abs_root = KeyPath(DEFAULT_SFS_DIR)
 
     def __new__(cls, *pathsegments):
         return super().__new__(cls, *pathsegments)
 
+    def __truediv__(self, new_part: str) -> "KeyPath":
+        """Overriding the '/' operator to return a KeyPath object"""
+        return KeyPath(super().__truediv__(new_part))
+
+    @property
+    def abs_root(self) -> "KeyPath":
+        """Returns the absolute root directory for the KeyPath."""
+        return KeyPath(DEFAULT_SFS_DIR)
+
     @property
     def efs_filepath(self) -> "KeyPath":
         """Returns /mnt/efs/my-slug/path/to/file.txt"""
-        return KeyPath(self._abs_root) / self
+        return self.abs_root / self
 
     @cached_property
     def efs_slug_dir(self) -> "KeyPath":
         """Returns /mnt/efs/my-slug"""
-        return KeyPath(pathlib.Path(self._abs_root) / self.slug)
+        return self.abs_root / self.slug
 
     @cached_property
     def s3_key(self) -> "KeyPath":
         """Returns my-slug/path/to/file.txt"""
         try:
-            return KeyPath(self.relative_to(self._abs_root))
+            return KeyPath(self.relative_to(self.abs_root))
         except ValueError:
             return KeyPath(self)
 
@@ -80,7 +91,3 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
         if not (self.efs_slug_dir / fldr).exists():
             (self.efs_slug_dir / fldr).mkdir()
         return self.efs_slug_dir / fldr / self.github_path
-
-    def __truediv__(self, new_part: str) -> "KeyPath":
-        """Overriding the '/' operator to return a KeyPath object"""
-        return KeyPath(super().__truediv__(new_part))

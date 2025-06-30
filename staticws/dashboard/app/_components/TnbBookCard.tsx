@@ -3,8 +3,9 @@
 import type { DocxResult } from 'myst-to-docx';
 import { u } from 'unist-builder';
 
-
+import { IBook } from "./../../types/books";
 import TnbBookNav from "./TnbBookNav";
+import { GITHUB_ORG, S3_READER_STATICWS } from '../constants';
 
 function downloadBlob(filename: string, blob: Blob) {
     const a = document.createElement('a');
@@ -69,30 +70,7 @@ const mdast = u('root', [
 ]);
 
 
-export default function TnbBookCard(
-    { authors, slug, title, alert }: { authors: string, slug: string, title: string, alert: string }
-) {
-    let alertHeading = "";
-    let alertMessage = "";
-    let alertIcon = "";
-    let alertColor = "";
-    // NOTE: important to keep the 
-    if (alert == "auth-rejected") {
-        alertIcon = "❌";
-        alertColor = "danger";
-        alertHeading = "Access denied. System rejected changes from unauthenticated user.";
-        alertMessage = "The output will not show the latest version of the manuscript. Login in and reupload.";
-    } else if (alert == "verif-warning") {
-        alertIcon = "⚠";
-        alertColor = "warning";
-        alertHeading = "System encountered serious issues with the manuscript.";
-        alertMessage = 'We advise to navigate to the "Warnings" section and to fix them before continuing.';
-    } else if (alert == "pipeline-fail") {
-        alertIcon = "❌";
-        alertColor = "danger";
-        alertHeading = "Processing the manuscript failed.";
-        alertMessage = "The output might not show the latest version of the manuscript due to the error.";
-    }
+export default function TnbBookCard({ authors, slug, title, alert }: IBook) {
     return (
         <>
             <span className="list-group-item list-group-item-action d-flex gap-3 py-2"
@@ -119,19 +97,20 @@ export default function TnbBookCard(
                                 </button>
                                 <a
                                     target="_blank" rel="noopener noreferrer"
-                                    href={`https://github.com/digital-monographs/${slug}`}
+                                    href={`https://github.com/${GITHUB_ORG}/${slug}`}
                                     className="btn btn-outline-primary"
                                 >Public source</a>
                                 <a
                                     target="_blank" rel="noopener noreferrer"
-                                    href={`https://github.com/digital-monographs/${slug}/issues`}
+                                    href={`https://github.com/${GITHUB_ORG}/${slug}/issues`}
                                     className="btn btn-outline-primary"
                                 >Discussion</a>
                                 <a
                                     target="_blank" rel="noopener noreferrer"
-                                    href={`https://cpy-dgtmon-dev-staticws-wip.s3.eu-west-1.amazonaws.com/read/${slug}/index.html`}
+                                    href={`${S3_READER_STATICWS}/read/${slug}/index.html`}
                                     className="btn btn-outline-primary"
                                 >Digital</a>
+                                {/* // href={`https://cpy-dgtmon-dev-staticws-wip.s3.eu-west-1.amazonaws.com/read/${slug}/index.html`} */}
                                 <a onClick={() => saveDocxFile('demo.docx', mdast)} className="btn btn-outline-primary">Paper</a>
                                 {/* <a href="" className="btn btn-outline-primary disabled">Paper</a> */}
                                 <a href="" className="btn btn-outline-primary disabled">Zip package</a>
@@ -144,9 +123,9 @@ export default function TnbBookCard(
             <strong>{alertIcon} {alertHeading}</strong>
             <p>{alertMessage}</p>
         </span>} */}
-            {alert && <div className={`alert alert-${alertColor} gap-1 py-1`} role="alert">
-                <strong>{alertIcon} {alertHeading}</strong>
-                <p>{alertMessage}</p>
+            {alert.id && <div className={`alert alert-${alert.color} gap-1 py-1`} role="alert">
+                <strong>{alert.icon} {alert.heading}</strong>
+                <p>{alert.message}</p>
             </div>}
         </>
     )

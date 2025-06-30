@@ -77,7 +77,7 @@ data "aws_iam_policy_document" "entrypoint" {
   statement {
     sid       = "AllowWritingLogs"
     effect    = "Allow"
-    resources = ["arn:aws:logs:${var.region}:*:log-group:/aws/*:*"]
+    resources = ["arn:aws:logs:${var.region}:*:log-group:*:*"]
     actions = [
       "logs:CreateLogStream",
       "logs:PutLogEvents",
@@ -220,7 +220,12 @@ resource "aws_lambda_function" "entrypoint_func" {
       SQS_URL                 = aws_sqs_queue.entrypoint_to_dropbox.url
       APKG_UPLOAD_BUCKET_NAME = aws_s3_bucket.upload_apkg.bucket
       VERIFIER_MSGS           = aws_s3_bucket.verification_msg.bucket
+      DASHBOARD_DOMAIN        = aws_s3_bucket.staticws_dashboard.bucket_regional_domain_name
+      FLASK_SECRET_KEY        = var.flask_secret_key
       DROPBOX_SECRET_ID       = data.aws_secretsmanager_secret.github_api_token.id
+      DROPBOX_APP_DIR         = var.dropbox_app_dir
+      DROPBOX_APP_KEY         = var.dropbox_app_key
+      INFRA_ENV               = var.env
     }
   }
   #   file_system_config {

@@ -108,6 +108,7 @@ data "aws_iam_policy_document" "github" {
       "s3:PutObjectAcl",
       "s3:GetObject",
       "s3:GetObjectAcl",
+      "s3:ListBucket",
     ]
   }
   # is this necessary?
@@ -137,7 +138,7 @@ data "aws_iam_policy_document" "github" {
   statement {
     sid       = "AllowWritingLogs"
     effect    = "Allow"
-    resources = ["arn:aws:logs:${var.region}:*:log-group:/aws/*:*"]
+    resources = ["arn:aws:logs:${var.region}:*:log-group:*:*"]
     actions = [
       "logs:CreateLogStream",
       "logs:PutLogEvents",

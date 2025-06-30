@@ -10,12 +10,14 @@ Tech stack for the frontend:
 - Next.js - as a build tool, _DO NOT_ use it for anything else than build or routing
 - S3 - for hosting
 
+API requests go to the "endpoint" microservice via the API Gateway. The endpoint makes appropriate calls to S3 buckets and Dynamodb noSQL database to fetch the data to pass it to the frontend.
+
 ## Updating
 
 Note that the dashboard is updated every time you execute `git push` command. When you push to GitLab, the following scripts are triggered.
 
-* build-dashboard - builds the static website
-* upload-dashboard - uploads the static website to the cloud
+* build-dashboard - builds the static website (depends on the init stage)
+* upload-dashboard - uploads the static website to the cloud (depends on the deploy stage)
 
 See [the CI scripts](./../../.gitlab-ci.yml) for implementation details.
 
@@ -28,7 +30,7 @@ npm install
 npm run dev
 ```
 
-You can also run `npm run build` to build the static website locally. Be caution about the differences that might occur between your local build and build done by CI pipeline on GitLab's server.
+You can also run `npm run build:develop` to build the static website locally. Be caution about the differences that might occur between your local build and build done by CI pipeline on GitLab's server.
 
 ## Statically vs dynamically rendered
 

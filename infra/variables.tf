@@ -16,9 +16,29 @@ variable "project" {
   description = "Global name of the project, which acts as a prefix to all resources"
 }
 
+variable "org" {
+  type        = string
+  description = "Global name of the organization, mostly acts as a tag to all resources in an org"
+}
+
 variable "env" {
   type        = string
   description = "Name of the environment of the project read from git branch in CI/CD pipeline (i.e. main or develop)"
+}
+
+variable "dropbox_app_dir" {
+  type        = string
+  description = "App folder name matching one of the apps defined in https://www.dropbox.com/developers/apps/"
+}
+
+variable "dropbox_app_key" {
+  type        = string
+  description = "App key matching one of the apps defined in https://www.dropbox.com/developers/apps/"
+}
+
+variable "flask_secret_key" {
+  type        = string
+  description = "Flask secret key that will be used for securely signing session cookies"
 }
 
 ## Set by the Dev team
@@ -375,4 +395,9 @@ variable "usr_ir_apkg_md_uploader" {
 variable "usr_cli_PAK" {
   type        = string
   description = "Name of the IAM User behind the CLI for the SSO user 'PAK'"
+}
+
+variable "usr_cli_ELG" {
+  type        = string
+  description = "Name of the IAM User behind the CLI for the SSO user 'ELG'"
 }

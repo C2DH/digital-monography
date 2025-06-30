@@ -11,8 +11,10 @@ import typing as t
 import yaml
 from jupyter_book.cli.main import build
 
+from mypy_boto3_dynamodb.service_resource import (
+    DynamoDBServiceResource as boto3_DynamoDBServiceResource,
+)
 from mypy_boto3_s3.client import S3Client as boto3_S3Client
-from mypy_boto3_dynamodb.client import DynamoDBClient as boto3_DynamoDBClient
 
 IS_DEBUG = bool(int(os.environ.get("DGTMON_DEBUG", 0)))
 if not IS_DEBUG:
@@ -65,7 +67,7 @@ if IS_DEBUG:
     dynamodb = None  # TODO: add fakers
     s3 = Faker("s3")
 else:
-    dynamodb: boto3_DynamoDBClient = boto3.resource("dynamodb")
+    dynamodb: boto3_DynamoDBServiceResource = boto3.resource("dynamodb")
     s3: boto3_S3Client = boto3.client("s3")
 
 
@@ -109,6 +111,7 @@ def _get_key(event) -> KeyPath:
 # TODO: Check if this is necessary. If not, remove.
 def _mkdir_read():
     new_path = pathlib.Path(DEFAULT_SFS_DIR) / "read"
+    print("new_path created", new_path)
     if not new_path.exists():
         new_path.mkdir(exist_ok=True)
 

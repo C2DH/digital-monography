@@ -48,6 +48,14 @@ The project consists of the following main software components.
 
 _Image repo_ is the docker image repository from where the CI/CD pipeline pulls a specific microservice code.
 
+The main workflow for generating digital monographies can be simplified as an interaction between the dropbox, entrypoint, preparer, verifier and builder microservices.
+
+![simplified_diagram_digital_book](./cartoon-book-digital.png)
+
+The workflow for generating docx for typesetting is not yet implemented. The most work here is made by the wordprocessor triggered by the endpoint microservice.
+
+![simplified_diagram_paper_book](./cartoon-book-paper.png)
+
 ### Details of pipeline architecture
 
 ![aws_architecture_diagram](./arch_details.svg)
@@ -59,7 +67,7 @@ The architecture attempts to follow the pattern of `... -> s3 upload -> Lambda i
 The platform consists of the following microservices (Lambda functions):
 | Name              | In VPC? | Description                                                                  |
 | ----------------- | ------- | ---------------------------------------------------------------------------- |
-| **entrypoint**    | false   | Opens up REST endpoints, incl. OAuth and webhooks to integrate with Dropbox. |
+| **entrypoint**    | false   | Exposes REST endpoints, incl. OAuth and webhooks to integrate with Dropbox.  |
 | **dropbox**       | false   | Calls Dropbox API to retrieve files from Dropbox and writes them to s3.      |
 | **preparer**      | true    | Does all the transformations of the files in the author package.             |
 | **verifier**      | true    | Checks the author package against the verification rules.                    |
@@ -138,7 +146,7 @@ The project has two cloud environments: main and develop. Each time you run `git
 Each resource deployed should follow the same naming convention: `<project>-<env>-<awsservice>-<microservice>-<details>`
 
 * `project` should be always "dgtmon". Helpful e.g. when you look for a IAM Policy related to the project - just start typing the name of the project and you'll filter only relavant items.
-* `env` is generally the name of the environment ("main" or "develop"). For resources shared between different environments (e.g. security groups) it should be either "shared" or (especially for legacy resources) "dev".
+* `env` is generally the name of the environment ("main" or "develop"). For shared resources (e.g. ECR images) and for legacy resources it can be equal to "dev".
 * `awsservice` is the abbreviation of a infrastructure resource. It should anwser the question: "what is it".
 * `microservice` is the related service, like "builder" or "preparer". `microservice` can also be "general" or "gen" if the resource is for general use. You can also leave it empty.
 
@@ -237,10 +245,18 @@ To set up sops, you can follow the [official instructions](https://github.com/ge
 
 Steps to configure the platform on your own AWS account.
 
+### Adding a new AWS account
+
+The project support multi-environment deployment. For the IaC scripts to work, every environment should have its own AWS account. If you want to deploy this project on your infrastructure just treat it as a new environment. To set up a new environment, follow these instructions:
+1. [Create a new AWS account](https://aws.amazon.com/resources/create-account/) or connect to an existing one.
+1. Using the root user, create a new AWS account and copy the number of the new account to encrypted tfvars in `secrets/` dir.
+1. In the IAM Identity Center, navigate to a multi-account permission and assign users/groups to the new account with applicable permission sets.
+1. Be sure to wait some time for the AWS staff to verify the new account.
+
 ### Configure an Identity Provider in AWS IAM
 
-Configure GitLab as an identity provider for IAM. This will allow IAM to recognize GitLab as a trusted entity that we can assign permissions via an IAM Role.
-Navigate to IAM in the AWS Management Console, and then click on "Identity Providers" on the sidebar under "Access Management". After that, click on the button saying "Add provider" on the top right-hand side.
+In this step you will configure GitLab as an identity provider for IAM. This will allow IAM to recognize GitLab as a trusted entity that we can assign permissions via an IAM Role.
+First, navigate to IAM in the AWS Management Console, and then click on "Identity Providers" on the sidebar under "Access Management". After that, click on the button saying "Add provider" on the top right-hand side.
 
 Make sure that the option for OpenID Connect is selected on the top, this is because OpenID Connect allows you to configure trust relationships with third party accounts including but not limited to GitLab. Also ensure that the provider URL is GitLab's root URL, https://gitlab.com as well as the Audience. The provider URL is the URL from which the OpenID configuration is obtained. See [this walkthrough](https://community.aws/content/2dquEzIKfm2wVH77AYmApToZdWj/gitlab-with-terraform) for details.
 
@@ -318,13 +334,20 @@ Go to the home page of the GitLab repository, and click on "CI/CD" under the "Se
 
 Also, add the "AWS_DEFAULT_REGION" variable with value equal to the AWS region selected for the above mentioned resources.
 
+### Register webhooks endpoints
+
+In order to set up the webhooks integration, be sure to register the "Redirect URI" and "Webhook URI" in the [Dropbox dashboard](https://www.dropbox.com/developers/apps?_tk=pilot_lp&_ad=topbar4&_camp=myapps).
+* The "Redirect URI" should match `<api_agw_endpoint_develop>/<stage>/oauth_callback`
+* The "Webhook URI" should match `<api_agw_endpoint_develop>/<stage>/webhook`
+See details of the endpoints in `src/entrypoiny/main.py`.
+
 ## Adding access to the infrastructure to a new user
 
 ### Create a IAM User for terminal access
 
 Remember, the platform makes updates by pulling docker images from the ECR container repository. In order to update the source code, users should push their modifications to the repository using docker (preferably via commands defined in the `Makefile` file).
 
-To add a CLI client for a specific user the admin should add a IAM User directly in `infra/users.tf` and attach it to a group with ECR permissions. Push changes via git to "main" or "develop" branch.
+To add a CLI client for a specific user the admin should add an IAM User directly in `infra/users.tf` and attach it to a group with ECR permissions. Name of the new user should be written in the encrypted `secrets/variables.tf` file. Push changes via git to "main" or "develop" branch.
 
 Every user pushing to the ECR must have installed on their machines:
 * docker (tested on Docker v24.0.6)
@@ -353,7 +376,11 @@ Make sure that the "Developers" IAM Group has "ReadOnlyAccess" or "ViewOnlyAcces
 
 At this point the new user should be prompted to add a new password. The user should be able to finalize the creation by following the steps provided by the AWS. Particularly, the user should register a MFA device.
 
-## Adding a new Lambda function
+## Adding new Dropbox app
+
+To create an app, set its options and/or see its details, navigate to Dropbox [dashboard](https://www.dropbox.com/developers/apps?_tk=pilot_lp&_ad=topbar4&_camp=myapps).
+
+## Adding new Lambda function
 
 When adding a new Lambda function (a new microservice), please follow these steps:
 1. Add the microservice code to the `src/ ` directory.
@@ -454,6 +481,12 @@ To work properly, the build output needs to be served with [Vercel's serve repo]
 
 An alternative solution might be to fork myst.md and try to replace all features that require a server with neutral ones.
 
+<!-- 1. install node.js v 20
+1. npm install mystmd
+1. myst build --html
+1. create myst.yml config file (different from v1)
+1. copy _build/html to s3 bucket -->
+
 ### Additional change suggestions
 
 * add e2e cloud testing on actual Lambdas
@@ -461,14 +494,15 @@ An alternative solution might be to fork myst.md and try to replace all features
 * flake8 linting
 * refactor link management (refs.py)
 * migrate JupyterBook v1 to v2
+* restore verification rules
+* deploy wordprocessor and connect with others
+* dashboard should fetch book details and alert info from API (now hard coded)
 
-#### Requirements for migrating Jupyter Book v1 to v2
+## Troubleshooting
 
-1. install node.js v 20
-1. npm install mystmd
-1. myst build --html
-1. create myst.yml config file (different from v1)
-1. copy _build/html to s3 bucket
+### I uploaded a book to Dropbox but I don't see the output nor the logs
+
+If you uploaded a book to Dropbox but you don't see the output nor the logs, it probably means that you didn't authenticate the app with Dropbox before uploading. Be sure to hit the "login" button in the dashboard before uploading manuscript to Dropbox.
 
 ## Sundry
 
@@ -504,3 +538,7 @@ gpg --armor --export-secret-keys [keyId] > sth.txt
 ```
 
 In GitLab, update "CI/CD Settings" > "Variables" > "PGP_KEY" with the new private pgp key.
+
+### Accessing project email
+
+Please consult the internal documentation in the [c2dh backstage](https://c2dh.atlassian.net/wiki/spaces/DDRI/pages/162923897/Related+links) for more details about accessing and managing the emails connected with the project.
