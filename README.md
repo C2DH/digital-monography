@@ -247,7 +247,7 @@ Steps to configure the platform on your own AWS account.
 
 ### Adding a new AWS account
 
-The project support multi-environment deployment. For the IaC scripts to work, every environment should have its own AWS account. If you want to deploy this project on your infrastructure just treat it as a new environment. To set up a new environment, follow these instructions:
+The project supports multi-environment deployment. For the IaC scripts to work, every environment should have its own AWS account. If you want to deploy this project on your infrastructure just treat it as a new environment. To set up a new environment, follow these instructions:
 1. [Create a new AWS account](https://aws.amazon.com/resources/create-account/) or connect to an existing one.
 1. Using the root user, create a new AWS account and copy the number of the new account to encrypted tfvars in `secrets/` dir.
 1. In the IAM Identity Center, navigate to a multi-account permission and assign users/groups to the new account with applicable permission sets.
@@ -258,7 +258,7 @@ The project support multi-environment deployment. For the IaC scripts to work, e
 In this step you will configure GitLab as an identity provider for IAM. This will allow IAM to recognize GitLab as a trusted entity that we can assign permissions via an IAM Role.
 First, navigate to IAM in the AWS Management Console, and then click on "Identity Providers" on the sidebar under "Access Management". After that, click on the button saying "Add provider" on the top right-hand side.
 
-Make sure that the option for OpenID Connect is selected on the top, this is because OpenID Connect allows you to configure trust relationships with third party accounts including but not limited to GitLab. Also ensure that the provider URL is GitLab's root URL, https://gitlab.com as well as the Audience. The provider URL is the URL from which the OpenID configuration is obtained. See [this walkthrough](https://community.aws/content/2dquEzIKfm2wVH77AYmApToZdWj/gitlab-with-terraform) for details.
+Make sure that the option for OpenID Connect is selected on the top, this is because OpenID Connect allows you to configure trust relationships with third party accounts including but not limited to GitLab. Also ensure that the provider URL is GitLab's root URL, https://gitlab.com, as well as the Audience. The provider URL is the URL from which the OpenID configuration is obtained. See [this walkthrough](https://community.aws/content/2dquEzIKfm2wVH77AYmApToZdWj/gitlab-with-terraform) for details.
 
 ### Create an IAM Role for GitLab CI
 
@@ -292,7 +292,7 @@ The trusted entity type should be "web identity". In the "Trust relationships" s
 }
 ```
 
-See the `secrets/` dir to find policies examples to attach to that IAM Role.
+See the `secrets/` directory to find policies examples to attach to those IAM Roles.
 
 ### Create terraform state backend
 
@@ -334,11 +334,20 @@ Go to the home page of the GitLab repository, and click on "CI/CD" under the "Se
 
 Also, add the "AWS_DEFAULT_REGION" variable with value equal to the AWS region selected for the above mentioned resources.
 
+## Configure the infrastructure after initial deployment
+
+There are additional steps you have to perform to complete setting up the infrastructure.
+
+### Allow IAM Users to push to ECR registries in other environments
+
+Every environment should be deployed in its own AWS account. For simplicity, a single IAM User should be able to perform actions on ECR registries among all accounts, like "ecr:PutImage". For the purposes of ECR access, the IAM User is defined in the "develop" environment and ECR Repository Policies have to be added in other environments that should be affected by that IAM User.
+Follow the steps below to set up the needed cross-account permissions to the non-develop AWS accounts: First, navigate to "ECR" > "Features & Settings" > "Permissions" and hit "Edit" button. Then, generate a statement similar to the one in `secrets/policy_ecr_crossaccount.json`. Remember to add ARN of cli-IAM Users to ECR in the "Principal" field. Also, replace placeholders with appropriate AWS account ids. The images will not be copied automatically (there is no "pull through cache" configured), so you might need to push the latest ones.
+
 ### Register webhooks endpoints
 
-In order to set up the webhooks integration, be sure to register the "Redirect URI" and "Webhook URI" in the [Dropbox dashboard](https://www.dropbox.com/developers/apps?_tk=pilot_lp&_ad=topbar4&_camp=myapps).
-* The "Redirect URI" should match `<api_agw_endpoint_develop>/<stage>/oauth_callback`
-* The "Webhook URI" should match `<api_agw_endpoint_develop>/<stage>/webhook`
+After API Gateway was created, you can connect the deployed infrastructure with the Dropbox via webhooks. In order to set up the webhooks integration, be sure to register the "Redirect URI" and "Webhook URI" in the [Dropbox dashboard](https://www.dropbox.com/developers/apps?_tk=pilot_lp&_ad=topbar4&_camp=myapps).
+* The "Redirect URI" should match `<api_agw_endpoint_develop>/<stage>/oauth_callback`.
+* The "Webhook URI" should match `<api_agw_endpoint_develop>/<stage>/webhook`.
 See details of the endpoints in `src/entrypoiny/main.py`.
 
 ## Adding access to the infrastructure to a new user

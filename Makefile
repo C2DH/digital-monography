@@ -7,7 +7,8 @@ VERIFIER_LATEST_V  := $(shell jq -r '.VERIFIER.LATEST' < .versions.json)
 GPU_LATEST_V  := $(shell jq -r '.GPU.LATEST' < .versions.json)
 WORDPROCESSOR_LATEST_V  := $(shell jq -r '.WORDPROCESSOR.LATEST' < .versions.json)
 LOCAL_LATEST_V := $(shell jq -r '.LOCAL_LATEST_V' < .versions.json)
-DOCKER_ECR = 825580929289.dkr.ecr.eu-central-1.amazonaws.com
+DEV_DOCKER_ECR = 825580929289.dkr.ecr.eu-central-1.amazonaws.com
+MAIN_DOCKER_ECR = 875551125547.dkr.ecr.eu-central-1.amazonaws.com
 DOCKER_HUB = c2dhunilu
 
 test/copy:
@@ -38,7 +39,8 @@ typecheck:
 	mypy src/wordprocessor/ --check-untyped-defs
 
 login:
-	aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin ${DOCKER_ECR}
+	aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin ${MAIN_DOCKER_ECR}
+	aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin ${DEV_DOCKER_ECR}
 	docker login --username c2dhadmin
 
 dev/build:
@@ -109,11 +111,13 @@ entrypoint/build:
 	docker build -t dgtmon-dev-entrypoint src/entrypoint
 
 entrypoint/tag:
-	docker tag dgtmon-dev-entrypoint ${DOCKER_ECR}/dgtmon-dev-entrypoint:${ENTRYPOINT_LATEST_V}
+	docker tag dgtmon-dev-entrypoint ${DEV_DOCKER_ECR}/dgtmon-dev-entrypoint:${ENTRYPOINT_LATEST_V}
+	docker tag dgtmon-dev-entrypoint ${MAIN_DOCKER_ECR}/dgtmon-dev-entrypoint:${ENTRYPOINT_LATEST_V}
 	docker tag dgtmon-dev-entrypoint ${DOCKER_HUB}/dgtmon-dev-entrypoint:${ENTRYPOINT_LATEST_V}
 
 entrypoint/push:
-	docker push ${DOCKER_ECR}/dgtmon-dev-entrypoint:${ENTRYPOINT_LATEST_V}
+	docker push ${DEV_DOCKER_ECR}/dgtmon-dev-entrypoint:${ENTRYPOINT_LATEST_V}
+	docker push ${MAIN_DOCKER_ECR}/dgtmon-dev-entrypoint:${ENTRYPOINT_LATEST_V}
 	docker push ${DOCKER_HUB}/dgtmon-dev-entrypoint:${ENTRYPOINT_LATEST_V}
 
 entrypoint/make: entrypoint/build entrypoint/tag entrypoint/push
@@ -124,11 +128,13 @@ dropbox/build:
 	docker build -t dgtmon-dev-dropbox src/dropbox
 
 dropbox/tag:
-	docker tag dgtmon-dev-dropbox ${DOCKER_ECR}/dgtmon-dev-dropbox:${DROPBOX_LATEST_V}
+	docker tag dgtmon-dev-dropbox ${DEV_DOCKER_ECR}/dgtmon-dev-dropbox:${DROPBOX_LATEST_V}
+	docker tag dgtmon-dev-dropbox ${MAIN_DOCKER_ECR}/dgtmon-dev-dropbox:${DROPBOX_LATEST_V}
 	docker tag dgtmon-dev-dropbox ${DOCKER_HUB}/dgtmon-dev-dropbox:${DROPBOX_LATEST_V}
 
 dropbox/push:
-	docker push ${DOCKER_ECR}/dgtmon-dev-dropbox:${DROPBOX_LATEST_V}
+	docker push ${DEV_DOCKER_ECR}/dgtmon-dev-dropbox:${DROPBOX_LATEST_V}
+	docker push ${MAIN_DOCKER_ECR}/dgtmon-dev-dropbox:${DROPBOX_LATEST_V}
 	docker push ${DOCKER_HUB}/dgtmon-dev-dropbox:${DROPBOX_LATEST_V}
 
 dropbox/make: dropbox/build dropbox/tag dropbox/push
@@ -141,11 +147,13 @@ preparer/build:
 	docker build -t dgtmon-dev-preparer src/preparer
 
 preparer/tag:
-	docker tag dgtmon-dev-preparer ${DOCKER_ECR}/dgtmon-dev-preparer:${PREPARER_LATEST_V}
+	docker tag dgtmon-dev-preparer ${DEV_DOCKER_ECR}/dgtmon-dev-preparer:${PREPARER_LATEST_V}
+	docker tag dgtmon-dev-preparer ${MAIN_DOCKER_ECR}/dgtmon-dev-preparer:${PREPARER_LATEST_V}
 	docker tag dgtmon-dev-preparer ${DOCKER_HUB}/dgtmon-dev-preparer:${PREPARER_LATEST_V}
 
 preparer/push:
-	docker push ${DOCKER_ECR}/dgtmon-dev-preparer:${PREPARER_LATEST_V}
+	docker push ${DEV_DOCKER_ECR}/dgtmon-dev-preparer:${PREPARER_LATEST_V}
+	docker push ${MAIN_DOCKER_ECR}/dgtmon-dev-preparer:${PREPARER_LATEST_V}
 	docker push ${DOCKER_HUB}/dgtmon-dev-preparer:${PREPARER_LATEST_V}
 
 preparer/make: preparer/build preparer/tag preparer/push
@@ -157,11 +165,13 @@ builder/build:
 	docker build -t dgtmon-dev-builder src/builder
 
 builder/tag:
-	docker tag dgtmon-dev-builder ${DOCKER_ECR}/dgtmon-dev-builder:${BUILDER_LATEST_V}
+	docker tag dgtmon-dev-builder ${DEV_DOCKER_ECR}/dgtmon-dev-builder:${BUILDER_LATEST_V}
+	docker tag dgtmon-dev-builder ${MAIN_DOCKER_ECR}/dgtmon-dev-builder:${BUILDER_LATEST_V}
 	docker tag dgtmon-dev-builder ${DOCKER_HUB}/dgtmon-dev-builder:${BUILDER_LATEST_V}
 
 builder/push:
-	docker push ${DOCKER_ECR}/dgtmon-dev-builder:${BUILDER_LATEST_V}
+	docker push ${DEV_DOCKER_ECR}/dgtmon-dev-builder:${BUILDER_LATEST_V}
+	docker push ${MAIN_DOCKER_ECR}/dgtmon-dev-builder:${BUILDER_LATEST_V}
 	docker push ${DOCKER_HUB}/dgtmon-dev-builder:${BUILDER_LATEST_V}
 
 builder/make: builder/build builder/tag builder/push
@@ -172,11 +182,13 @@ github/build:
 	docker build -t dgtmon-dev-github src/github
 
 github/tag:
-	docker tag dgtmon-dev-github ${DOCKER_ECR}/dgtmon-dev-github:${GITHUB_LATEST_V}
+	docker tag dgtmon-dev-github ${DEV_DOCKER_ECR}/dgtmon-dev-github:${GITHUB_LATEST_V}
+	docker tag dgtmon-dev-github ${MAIN_DOCKER_ECR}/dgtmon-dev-github:${GITHUB_LATEST_V}
 	docker tag dgtmon-dev-github ${DOCKER_HUB}/dgtmon-dev-github:${GITHUB_LATEST_V}
 
 github/push:
-	docker push ${DOCKER_ECR}/dgtmon-dev-github:${GITHUB_LATEST_V}
+	docker push ${DEV_DOCKER_ECR}/dgtmon-dev-github:${GITHUB_LATEST_V}
+	docker push ${MAIN_DOCKER_ECR}/dgtmon-dev-github:${GITHUB_LATEST_V}
 	docker push ${DOCKER_HUB}/dgtmon-dev-github:${GITHUB_LATEST_V}
 
 github/make: github/build github/tag github/push
@@ -189,11 +201,13 @@ verifier/build:
 	docker build -t dgtmon-dev-verifier src/verifier
 
 verifier/tag:
-	docker tag dgtmon-dev-verifier ${DOCKER_ECR}/dgtmon-dev-verifier:${VERIFIER_LATEST_V}
+	docker tag dgtmon-dev-verifier ${DEV_DOCKER_ECR}/dgtmon-dev-verifier:${VERIFIER_LATEST_V}
+	docker tag dgtmon-dev-verifier ${MAIN_DOCKER_ECR}/dgtmon-dev-verifier:${VERIFIER_LATEST_V}
 	docker tag dgtmon-dev-verifier ${DOCKER_HUB}/dgtmon-dev-verifier:${VERIFIER_LATEST_V}
 
 verifier/push:
-	docker push ${DOCKER_ECR}/dgtmon-dev-verifier:${VERIFIER_LATEST_V}
+	docker push ${DEV_DOCKER_ECR}/dgtmon-dev-verifier:${VERIFIER_LATEST_V}
+	docker push ${MAIN_DOCKER_ECR}/dgtmon-dev-verifier:${VERIFIER_LATEST_V}
 	docker push ${DOCKER_HUB}/dgtmon-dev-verifier:${VERIFIER_LATEST_V}
 
 verifier/make: verifier/build verifier/tag verifier/push
@@ -203,11 +217,13 @@ gpu/build:
 	docker build -t dgtmon-dev-gpu src/gpu
 
 gpu/tag:
-	docker tag dgtmon-dev-gpu ${DOCKER_ECR}/dgtmon-dev-gpu:${GPU_LATEST_V}
+	docker tag dgtmon-dev-gpu ${DEV_DOCKER_ECR}/dgtmon-dev-gpu:${GPU_LATEST_V}
+	docker tag dgtmon-dev-gpu ${MAIN_DOCKER_ECR}/dgtmon-dev-gpu:${GPU_LATEST_V}
 	docker tag dgtmon-dev-gpu ${DOCKER_HUB}/dgtmon-dev-gpu:${GPU_LATEST_V}
 
 gpu/push:
-	docker push ${DOCKER_ECR}/dgtmon-dev-gpu:${GPU_LATEST_V}
+	docker push ${DEV_DOCKER_ECR}/dgtmon-dev-gpu:${GPU_LATEST_V}
+	docker push ${MAIN_DOCKER_ECR}/dgtmon-dev-gpu:${GPU_LATEST_V}
 	docker push ${DOCKER_HUB}/dgtmon-dev-gpu:${GPU_LATEST_V}
 
 gpu/make: gpu/build gpu/tag gpu/push
@@ -217,12 +233,13 @@ wordprocessor/build:
 	docker build -t dgtmon-dev-wordprocessor src/wordprocessor
 
 wordprocessor/tag:
-	docker tag dgtmon-dev-wordprocessor ${DOCKER_ECR}/dgtmon-dev-wordprocessor:${WORDPROCESSOR_LATEST_V}
+	docker tag dgtmon-dev-wordprocessor ${DEV_DOCKER_ECR}/dgtmon-dev-wordprocessor:${WORDPROCESSOR_LATEST_V}
+	docker tag dgtmon-dev-wordprocessor ${MAIN_DOCKER_ECR}/dgtmon-dev-wordprocessor:${WORDPROCESSOR_LATEST_V}
 	docker tag dgtmon-dev-wordprocessor ${DOCKER_HUB}/dgtmon-dev-wordprocessor:${WORDPROCESSOR_LATEST_V}
 
 wordprocessor/push:
-	docker push ${DOCKER_ECR}/dgtmon-dev-wordprocessor:${WORDPROCESSOR_LATEST_V}
+	docker push ${DEV_DOCKER_ECR}/dgtmon-dev-wordprocessor:${WORDPROCESSOR_LATEST_V}
+	docker push ${MAIN_DOCKER_ECR}/dgtmon-dev-wordprocessor:${WORDPROCESSOR_LATEST_V}
 	docker push ${DOCKER_HUB}/dgtmon-dev-wordprocessor:${WORDPROCESSOR_LATEST_V}
 
 wordprocessor/make: wordprocessor/build wordprocessor/tag wordprocessor/push
-
