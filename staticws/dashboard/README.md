@@ -40,9 +40,7 @@ This app is supposed to work as a static website, but at the same time have some
 
 ### Statically rendered
 
-This part of HTML is generated at the build time, rather than on each request. Since the HTML is pre-generated, it can be served very quickly to users. 
-
-If your page needs to fetch data after build (e.g. when a user opens a page) use a React's client component wrapped in a `<Suspense>` object.
+This part of HTML is generated at the build time, rather than on each request. Since the HTML is pre-generated, it can be served very quickly to users. If your page needs to fetch data after build (e.g. when a user opens a page) use a React's client component wrapped in a `<Suspense>` object.
 
 ### Suspense
 
