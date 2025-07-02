@@ -76,6 +76,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info("Context: " + json.dumps(context, default=str))
     key = _get_key(event)
     _log_audit_event(key, AuditStatus.PENDING.value, "Building book in progress...")
+    _log_tree(key)
     _mkdir_read()
     _copy_assets(key)
     book_metadata = _read_book_metadata(key)
@@ -83,6 +84,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     _make_substitutions(key, book_metadata)
     _build_book(key)
     _distribute_book(key)
+    _log_tree(key)
     _log_audit_event(key, AuditStatus.SUCCESS.value, "Digital version was created.")
     # NOTE: post-build phase, this should probably go to another Lambda service
     _connect_assets_to_references_to_assets(book_metadata)
@@ -201,6 +203,22 @@ def _make_substitutions(
                 AuditStatus.FAILED.value,
                 "Error upon updating automatic numbering.",
             )
+
+
+def _log_tree(key: KeyPath) -> None:
+    """
+    Log the directory tree of the book.
+    """
+    try:
+        # ["tree", str(key.efs_slug_dir)],
+        res = subprocess.run(
+            ["tree", "/mnt/efs"],
+            capture_output=True,
+            text=True,
+        )
+        logger.info("Directory tree:\n" + res.stdout)
+    except Exception as e:
+        logger.exception(f"Logging directory tree failed. Error: {repr(e)}")
 
 
 def _build_book(key: KeyPath) -> None:
