@@ -8,8 +8,8 @@
         "STABLE": "0.0.43"
     },
     "BUILDER": {
-        "LATEST": "0.1.41",
-        "STABLE": "0.1.41"
+        "LATEST": "0.1.44",
+        "STABLE": "0.1.44"
     },
     "GITHUB": {
         "LATEST": "0.0.32",
@@ -32,7 +32,7 @@
         "STABLE": "0.0.5"
     },
     "LOCAL": {
-        "LATEST": "0.1.2",
-        "STABLE": "0.1.2"
+        "LATEST": "0.1.3",
+        "STABLE": "0.1.3"
     }
 }
