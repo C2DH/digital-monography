@@ -211,12 +211,13 @@ def _log_tree(key: KeyPath) -> None:
     """
     try:
         # ["tree", str(key.efs_slug_dir)],
-        res = subprocess.run(
-            ["tree", "/mnt/efs"],
-            capture_output=True,
-            text=True,
-        )
-        logger.info("Directory tree:\n" + res.stdout)
+        # res = subprocess.run(
+        #     ["tree", "/mnt/efs"],
+        #     capture_output=True,
+        #     text=True,
+        # )
+        flist = [str(p) for p in key.efs_slug_dir.iterdir() if p.is_file()]
+        logger.info(f"Files in dir {key.efs_slug_dir}:\n{flist}")
     except Exception as e:
         logger.exception(f"Logging directory tree failed. Error: {repr(e)}")
 
