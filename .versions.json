@@ -8,16 +8,16 @@
         "STABLE": "0.0.43"
     },
     "BUILDER": {
-        "LATEST": "0.1.45",
-        "STABLE": "0.1.45"
+        "LATEST": "0.1.44",
+        "STABLE": "0.1.44"
     },
     "GITHUB": {
         "LATEST": "0.0.32",
         "STABLE": "0.0.32"
     },
     "PREPARER": {
-        "LATEST": "0.1.46",
-        "STABLE": "0.1.46"
+        "LATEST": "0.1.47",
+        "STABLE": "0.1.47"
     },
     "VERIFIER": {
         "LATEST": "0.1.25",
