@@ -256,13 +256,18 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         )
         return {"statusCode": 200, "body": ""}
     elif event_name == S3Event.OBJ_CREATED.value:
-        # _write_to_efs(key) # <=============
+        src = _get_source_bucket(event)
+        _download_fileobj(src, key)
         msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
         _enqueue_to_github(msg)
         return {"statusCode": 200, "body": ""}
 
 
 def _get_key(event) -> KeyPath:
+    """
+    Retrieves the key of the S3 object from the event, where
+    "key" is the path to the file in the S3 bucket.
+    """
     try:
         key_str = urllib.parse.unquote_plus(
             event["Records"][0]["s3"]["object"]["key"], encoding="utf-8"
@@ -276,7 +281,7 @@ def _get_key(event) -> KeyPath:
 def _get_event_name(event) -> t.Literal["ObjectCreated", "ObjectRemoved"]:
     try:
         event_name: str = event["Records"][0]["eventName"]
-        # event_name should match "event:httpMethod" format, e.g. "ObjectCreated:Put"
+        # event_name should match "<event>:<httpMethod>" format, e.g. "ObjectCreated:Put"
         assert ":" in event_name, f"Event name {event_name} is not supported."
         event_name, _ = event_name.split(":")
         assert event_name in (
@@ -290,6 +295,10 @@ def _get_event_name(event) -> t.Literal["ObjectCreated", "ObjectRemoved"]:
 
 
 def _get_source_bucket(event) -> str:
+    """
+    Retrieves the source bucket name from the event. This bucket name is used to download
+    the file from S3 to Elastic File System (EFS).
+    """
     try:
         src = event["Records"][0]["s3"]["bucket"]["name"]
         logger.info(f"Source-bucket {src} was found in the event records.")
@@ -300,6 +309,12 @@ def _get_source_bucket(event) -> str:
 
 
 def _download_fileobj(src: str, key: KeyPath) -> None:
+    """
+    Writes a file to Elastic File System (EFS).
+    The source of the file is an S3 bucket. Name of the bucket file is read from the event.
+    See more details about downloading files from s3 in the boto3 documentation:
+    https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/download_fileobj.html
+    """
     try:
         key = key.efs_filepath
         # NOTE: this commented out code shouldn't be necassary.
@@ -335,6 +350,9 @@ def _download_fileobj(src: str, key: KeyPath) -> None:
 
 
 def _remove_fileobj(key: KeyPath) -> None:
+    """
+    Removes a file from Elastic File System (EFS).
+    """
     try:
         key = key.efs_filepath
         logger.info(f"Stat before removal:" + json.dumps(key.stat(), default=str))
