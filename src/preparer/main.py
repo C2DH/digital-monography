@@ -121,14 +121,13 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     key = _get_key(event)
     event_name = _get_event_name(event)
     metadata = DocumentMetadata(key)
-
-    if key.suffix.lower() == ".ipynb" and event_name == S3Event.OBJ_REMOVED.value:
+    ### Handle deletions
+    if _is_file_ipynb(key) and _is_deletion(event_name):
         _remove_fileobj(key)
         msg = GithubTriggerMsg(key=key, action=GithubActionEnum.DELETE_OBJECT)
         _enqueue_to_github(msg)
         return {"statusCode": 200, "body": ""}
-    if key.suffix.lower() == ".docx" and event_name == S3Event.OBJ_REMOVED.value:
-        # TODO: split for ipynb and docx and else
+    if _is_file_docx(key) and _is_deletion(event_name):
         _remove_fileobj(key)
         _remove_assets_info_from_s3(key)
         _remove_metadata_from_db(key)
@@ -144,13 +143,13 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _enqueue_to_github(msg)
         _enqueue_to_github(msg_md)
         return {"statusCode": 200, "body": ""}
-    if event_name == S3Event.OBJ_REMOVED.value:
+    if _is_deletion(event_name):
         _remove_fileobj(key)
         msg = GithubTriggerMsg(key=key, action=GithubActionEnum.DELETE_OBJECT)
         _enqueue_to_github(msg)
         return {"statusCode": 200, "body": ""}
-    # If the object was changed/created, prepare the file
-    if key.suffix.lower() == ".ipynb" and event_name == S3Event.OBJ_CREATED.value:
+    ### Handle updates (incl. new files)
+    if _is_file_ipynb(key) and _is_update(event_name):
         src = _get_source_bucket(event)
         _download_fileobj(src, key)
         ipynb: nbformat.NotebookNode = _unmarshall_json(key.efs_filepath)
@@ -160,7 +159,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _enqueue_to_github(msg)
         # _put_to_archive_s3(key)
         return {"statusCode": 200, "body": ""}
-    if key.suffix.lower() == ".docx" and event_name == S3Event.OBJ_CREATED.value:
+    if key.suffix.lower() == ".docx" and _is_update(event_name):
         src = _get_source_bucket(event)
         _download_fileobj(src, key)
         html_str = _convert_to_html(key.efs_filepath)
@@ -195,7 +194,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
             "Contents of the file prepared for further processing.",
         )
         return {"statusCode": 200, "body": ""}
-    elif event_name == S3Event.OBJ_CREATED.value:
+    elif _is_update(event_name):
         src = _get_source_bucket(event)
         _download_fileobj(src, key)
         msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
@@ -246,6 +245,22 @@ def _get_source_bucket(event) -> str:
     except Exception as e:
         logger.error(f"Unable to retrieve the source-bucket. Error: {repr(e)}")
         raise
+
+
+def _is_file_docx(key: KeyPath) -> bool:
+    return key.suffix.lower() == ".docx"
+
+
+def _is_file_ipynb(key: KeyPath) -> bool:
+    return key.suffix.lower() == ".ipynb"
+
+
+def _is_update(event_name: t.Literal["ObjectCreated", "ObjectRemoved"]) -> bool:
+    return event_name == S3Event.OBJ_CREATED.value
+
+
+def _is_deletion(event_name: t.Literal["ObjectCreated", "ObjectRemoved"]) -> bool:
+    return event_name == S3Event.OBJ_REMOVED.value
 
 
 def _download_fileobj(src: str, key: KeyPath) -> None:
