@@ -158,10 +158,6 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _write_processed_ipynb_to_efs(ipynb, key)
         msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
         _enqueue_to_github(msg)
-
-        # def _enqueue_to_github(msg: GithubTriggerMsg) -> None:
-        # msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
-
         # _put_to_archive_s3(key)
         return {"statusCode": 200, "body": ""}
     if key.suffix.lower() == ".docx" and event_name == S3Event.OBJ_CREATED.value:
@@ -169,54 +165,6 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _download_fileobj(src, key)
         html_str = _convert_to_html(key.efs_filepath)
         html_soup, metadata, tables = prepare_docx(html_str, metadata)
-        # images_with_alttxt = []
-        # tables = []
-        # headers = []
-        # captions = []
-        # citations = []
-        # footnotes = []
-        # references = []
-        # paper_only = []
-        # html_str = _convert_to_html(key.efs_filepath)
-        # html_soup = bs4.BeautifulSoup(html_str, "html.parser")
-        # metadata.char_count, metadata.word_count = _get_char_and_word_count(html_soup)
-        # classifiers = [
-        #     (is_img_with_alt_text, images_with_alttxt),
-        #     (is_citation, citations),
-        #     (is_table, tables),
-        #     (is_header, headers),
-        #     (is_caption, captions),
-        #     (is_footnote, footnotes),
-        #     (is_reference, references),
-        #     (is_paper_only, paper_only),
-        # ]
-        # """
-        # Before applying the processing, this subprocedure traverses the tree
-        # recursively and puts relevant bs4 objects (html elements) inside
-        # respective lists. Processing is then applied on the marked elements.
-        # """
-        # for node in html_soup.descendants:
-        #     for check_if_meets_criteria, container in classifiers:
-        #         if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
-        #             container.append(node)
-        # html_soup, bibliography = prepare_citations(html_soup, metadata, citations)
-        # html_soup = add_bibliography(html_soup, bibliography)
-        # html_soup = prepare_ref_targets_in_headers(html_soup, metadata, headers)
-        # html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
-        # html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, footnotes)
-        # html_soup = prepare_references(html_soup, metadata, references)
-        # html_soup = prepare_metadata_tables(html_soup, metadata, tables)
-        # html_soup = remove_paper_only(html_soup, metadata, paper_only)
-        # html_soup = remove_empty_tables(html_soup, metadata, tables)
-        # html_soup = prepare_alt_texts(html_soup, metadata, images_with_alttxt)
-        # html_soup = count_targets_for_substitutions(html_soup, metadata)
-        # ########################
-
-        logger.info("====================================")
-        logger.info(f"Looking for {FIELD_DIGITAL_SOURCE}")
-        logger.info(f"metadata.filepath.parent: ({metadata.filepath.parent})")
-        # root = pathlib.Path(DEFAULT_SFS_DIR) / metadata.filepath.parent
-        # metadata = compute_additional_metadata_fields(metadata)
         html_soup = hide_metadata_in_html(html_soup, metadata)  # last step
         html_soup_str = str(html_soup)
         # IMPORTANT NOTE: other services depend on html produced at this stage, make sure that:
@@ -226,14 +174,6 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_soup = insert_digital_objects(html_soup, metadata, tables)
         html_soup = remove_metadata_tables(html_soup, metadata, tables)
         _write_config_to_efs(metadata, key)
-
-        # for rec in getattr(metadata, "assets"):
-        #     for k, v in rec.to_json().items():
-        #         print(">", k, v, type(v))
-        # logger.info(
-        #     f"==Metadata: "
-        #     + json.dumps([rec.to_json() for rec in getattr(metadata, "assets")], default=str)
-        # )
         _write_assets_info_to_s3(metadata, key)
         _write_metadata_to_db(metadata, key)
         _write_metadata_to_efs(metadata, key)
