@@ -116,14 +116,16 @@ data "aws_iam_policy_document" "dropbox" {
     ]
   }
   statement {
-    sid       = "AllowPuttingToS3"
+    sid       = "AllowManagingFilesInS3"
     effect    = "Allow"
     resources = ["${aws_s3_bucket.upload_apkg.arn}/*"]
     actions = [
-      "s3:PutObject",
-      "s3:PutObjectAcl",
+      "s3:DeleteObject",
+      "s3:DeleteObjectTagging",
       "s3:GetObject",
       "s3:GetObjectAcl",
+      "s3:PutObject",
+      "s3:PutObjectAcl",
     ]
   }
 }
