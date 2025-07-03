@@ -306,14 +306,17 @@ def _download_fileobj(src: str, key: KeyPath) -> None:
 
 def _remove_fileobj(key: KeyPath) -> None:
     """
-    Removes a file from Elastic File System (EFS).
+    Remove a file from Elastic File System (EFS).
     """
     try:
         key = key.efs_filepath
-        logger.info(f"Stat before removal:" + json.dumps(key.stat(), default=str))
+        if key.exists():
+            logger.info(f"Stat before removal:" + json.dumps(key.stat(), default=str))
         key.unlink(missing_ok=True)  # remove file if it exists
-        logger.info(f"Stat after removal:" + json.dumps(key.stat(), default=str))
-        logger.info(f"File {str(key)} was removed from EFS.")
+        if key.exists():
+            logger.info(f"Stat after removal:" + json.dumps(key.stat(), default=str))
+        else:
+            logger.info(f"File {str(key)} was removed from EFS.")
     except Exception as e:
         logger.exception(
             f"Removing fileobj {str(key)} from EFS failed. Error: {repr(e)}"
