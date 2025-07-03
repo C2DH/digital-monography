@@ -66,11 +66,13 @@ data "aws_iam_policy_document" "preparer" {
     effect    = "Allow"
     resources = ["*"] # TODO: limit (since we also want to list buckets, include both "arn:aws:s3:::mybucket/*" and "arn:aws:s3:::mybucket")
     actions = [
-      "s3:PutObject",
-      "s3:PutObjectAcl",
       "s3:GetObject",
       "s3:GetObjectAcl",
-      "s3:ListBucket"
+      "s3:DeleteObject",
+      "s3:DeleteObjectTagging",
+      "s3:ListBucket",
+      "s3:PutObject",
+      "s3:PutObjectAcl",
     ]
   }
   statement {
@@ -83,11 +85,13 @@ data "aws_iam_policy_document" "preparer" {
       "${aws_s3_bucket.metadata_refs_s3.arn}/*",
     ]
     actions = [
-      "s3:PutObject",
-      "s3:PutObjectAcl",
       "s3:GetObject",
       "s3:GetObjectAcl",
-      "s3:ListBucket"
+      "s3:DeleteObject",
+      "s3:DeleteObjectTagging",
+      "s3:ListBucket",
+      "s3:PutObject",
+      "s3:PutObjectAcl",
     ]
   }
   statement {
@@ -137,14 +141,14 @@ data "aws_iam_policy_document" "preparer" {
     effect = "Allow"
     resources = [
       aws_dynamodb_table.assets_tbl.arn,
+      aws_dynamodb_table.citations_tbl.arn,
       aws_dynamodb_table.headings_tbl.arn,
-      aws_dynamodb_table.citations_tbl.arn
     ]
     actions = [
       "dynamodb:PutItem",
-      # "dynamodb:GetItem",
-      # "dynamodb:UpdateItem",
-      # "dynamodb:DeleteItem",
+      "dynamodb:GetItem",
+      "dynamodb:UpdateItem",
+      "dynamodb:DeleteItem",
       # "dynamodb:Scan",
       # "dynamodb:Query"
     ]
