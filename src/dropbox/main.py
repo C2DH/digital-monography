@@ -242,9 +242,12 @@ def _put_file_from_dbx_to_s3(body: bytes, key: KeyPath) -> None:
 
 
 def _delete_file_from_dbx_to_s3(key: KeyPath) -> None:
-    # This lambda cannot remove from EFS because it is outside of the VPC.
-    # To remedy that, I write to S3 and the next Lambda in the pipeline
-    # downloads it from there.
+    """
+    Sends a request to delete a file from S3 for uploading the author's package.
+    This lambda cannot remove from EFS because it is outside of the VPC.
+    To remedy that, I write to S3 and the next Lambda in the pipeline
+    downloads it from there.
+    """
     try:
         dst = os.environ.get("APKG_UPLOAD_BUCKET_NAME", "")
         resp = s3.delete_object(Bucket=dst, Key=str(key))
@@ -263,6 +266,22 @@ def _delete_file_from_dbx_to_s3(key: KeyPath) -> None:
 
 
 def _remove_file(entry: dropbox.files.DeletedMetadata) -> None:
+    """
+    When a file is removed from the Dropbox dir it should also be removed from
+        * EFS - the file system attached to the workflow,
+        * S3 bucket where the author's package is uploaded,
+        * S3 buckets where intermediate representations, verification warnings
+        and metadata are stored (the logs should be kept, at least for outstanding TTL),
+        * DynamoDB tables where the file metadata is stored,
+        * GitHub repository.
+    Afterwards, the builder microservice should be triggered to build the manuscript
+    from the remaining files, if any.
+
+    Note that this microservice is outside the VPC and it does not have access to EFS,
+    so it should send a request  to S3, which will be processed by the next microservice
+    in the pipeline. Similarly, it should trigger the github microservice to remove the file
+    from the GitHub repo.
+    """
     logger.info("_remove_file")
     p = entry.path_lower[1:] if entry.path_lower[0] == "/" else entry.path_lower
     logger.info(f"path: {p}")
