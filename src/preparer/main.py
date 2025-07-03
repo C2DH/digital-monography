@@ -133,7 +133,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _remove_metadata_from_db(key)
         _remove_metadata_from_efs(key)
         _remove_processed_html_from_efs(key)
-        _remove_html_from_s3(html_soup_str, key)
+        _remove_html_from_s3(key)
         _remove_processed_md_from_efs(key)
         _remove_md_from_s3(md, key.s3_key.with_suffix(".md"))
         msg = GithubTriggerMsg(key=key, action=GithubActionEnum.DELETE_OBJECT)
