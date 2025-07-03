@@ -25,7 +25,6 @@ try:
         S3Event,
         MAMMOTH_STYLE_MAP,
         IS_DEBUG,
-        FIELD_DIGITAL_SOURCE,
     )
     from citations import add_bibliography, is_citation, prepare_citations
     from digital_prep import insert_digital_objects, remove_metadata_tables
@@ -58,7 +57,6 @@ except (ImportError, ModuleNotFoundError):
         S3Event,
         MAMMOTH_STYLE_MAP,
         IS_DEBUG,
-        FIELD_DIGITAL_SOURCE,
     )
     from .citations import add_bibliography, is_citation, prepare_citations
     from .digital_prep import insert_digital_objects, remove_metadata_tables
@@ -135,7 +133,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _remove_processed_html_from_efs(key)
         _remove_html_from_s3(key)
         _remove_processed_md_from_efs(key)
-        _remove_md_from_s3(md, key.s3_key.with_suffix(".md"))
+        _remove_md_from_s3(key.s3_key.with_suffix(".md"))
         msg = GithubTriggerMsg(key=key, action=GithubActionEnum.DELETE_OBJECT)
         msg_md = GithubTriggerMsg(
             key=key.s3_key.with_suffix(".md"), action=GithubActionEnum.DELETE_OBJECT
@@ -311,10 +309,10 @@ def _remove_fileobj(key: KeyPath) -> None:
     try:
         key = key.efs_filepath
         if key.exists():
-            logger.info(f"Stat before removal:" + json.dumps(key.stat(), default=str))
+            logger.info(f"Stat before removal: {key.stat()}")
         key.unlink(missing_ok=True)  # remove file if it exists
         if key.exists():
-            logger.info(f"Stat after removal:" + json.dumps(key.stat(), default=str))
+            logger.info(f"Stat after removal: {key.stat()}")
         else:
             logger.info(f"File {str(key)} was removed from EFS.")
     except Exception as e:
