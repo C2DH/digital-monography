@@ -1,0 +1,28 @@
+{
+  "properties": {
+    "pk": {
+      "title": "Pk",
+      "type": "string"
+    },
+    "schema_v": {
+      "default": 1,
+      "title": "Schema V",
+      "type": "integer"
+    },
+    "stem": {
+      "title": "Stem",
+      "type": "string"
+    },
+    "prefix": {
+      "title": "Prefix",
+      "type": "string"
+    }
+  },
+  "required": [
+    "pk",
+    "stem",
+    "prefix"
+  ],
+  "title": "FileDatapoint",
+  "type": "object"
+}

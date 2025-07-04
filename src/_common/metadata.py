@@ -34,7 +34,17 @@ except (ImportError, ModuleNotFoundError):
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-
+DATAPOINTS: list[str] = [
+    # "AssetDatapoint",
+    "HeadingDatapoint",
+    "RefDatapoint",
+    "TargetDatapoint",
+    "SubstitutionDatapoint",
+    "CitationGroupDatapoint",
+    "CitationItemDatapoint",
+    "FileDatapoint",
+    "MetadataTableDatapoint",
+]
 
 # TODO: elem attributes should be left as bs4.element.PageElement,
 # not immediatly stringified.

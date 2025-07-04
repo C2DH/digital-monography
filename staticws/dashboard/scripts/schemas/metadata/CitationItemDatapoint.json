@@ -1,0 +1,47 @@
+{
+  "properties": {
+    "pk": {
+      "title": "Pk",
+      "type": "string"
+    },
+    "schema_v": {
+      "default": 1,
+      "title": "Schema V",
+      "type": "integer"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "file_name": {
+      "title": "File Name",
+      "type": "string"
+    },
+    "citationId": {
+      "title": "Citationid",
+      "type": "string"
+    },
+    "uris": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Uris",
+      "type": "array"
+    },
+    "itemData": {
+      "additionalProperties": true,
+      "title": "Itemdata",
+      "type": "object"
+    }
+  },
+  "required": [
+    "pk",
+    "id",
+    "file_name",
+    "citationId",
+    "uris",
+    "itemData"
+  ],
+  "title": "CitationItemDatapoint",
+  "type": "object"
+}

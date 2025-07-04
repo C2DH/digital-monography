@@ -1,0 +1,65 @@
+{
+  "properties": {
+    "pk": {
+      "title": "Pk",
+      "type": "string"
+    },
+    "schema_v": {
+      "default": 1,
+      "title": "Schema V",
+      "type": "integer"
+    },
+    "fn": {
+      "title": "Fn",
+      "type": "string"
+    },
+    "target_id": {
+      "title": "Target Id",
+      "type": "string"
+    },
+    "text": {
+      "title": "Text",
+      "type": "string"
+    },
+    "href": {
+      "title": "Href",
+      "type": "string"
+    },
+    "prev_string": {
+      "title": "Prev String",
+      "type": "string"
+    },
+    "prev_href": {
+      "title": "Prev Href",
+      "type": "string"
+    },
+    "elem": {
+      "title": "Elem",
+      "type": "string"
+    },
+    "asset_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Asset Id"
+    }
+  },
+  "required": [
+    "pk",
+    "fn",
+    "target_id",
+    "text",
+    "href",
+    "prev_string",
+    "prev_href",
+    "elem"
+  ],
+  "title": "RefDatapoint",
+  "type": "object"
+}

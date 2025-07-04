@@ -1,0 +1,131 @@
+{
+  "properties": {
+    "pk": {
+      "title": "Pk",
+      "type": "string"
+    },
+    "schema_v": {
+      "default": 1,
+      "title": "Schema V",
+      "type": "integer"
+    },
+    "was": {
+      "title": "Was",
+      "type": "string"
+    },
+    "placeholder": {
+      "title": "Placeholder",
+      "type": "string"
+    },
+    "is_digital": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Is Digital"
+    },
+    "is_paper": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Is Paper"
+    },
+    "item_type": {
+      "enum": [
+        "heading",
+        "equation",
+        "figure",
+        "table",
+        "graph",
+        "ref",
+        ""
+      ],
+      "title": "Item Type",
+      "type": "string"
+    },
+    "target_fn": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Target Fn"
+    },
+    "file_count": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "File Count"
+    },
+    "prefix": {
+      "title": "Prefix",
+      "type": "string"
+    },
+    "prev_item_num": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Prev Item Num"
+    },
+    "new_item_num": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "New Item Num"
+    },
+    "fprefix": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Fprefix"
+    }
+  },
+  "required": [
+    "pk",
+    "was",
+    "placeholder",
+    "is_digital",
+    "is_paper",
+    "item_type",
+    "target_fn",
+    "file_count",
+    "prefix",
+    "prev_item_num"
+  ],
+  "title": "SubstitutionDatapoint",
+  "type": "object"
+}

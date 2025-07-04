@@ -91,11 +91,14 @@ copy/keys:
 	cp src/_common/keys.py src/wordprocessor/keys.py
 
 copy/metadata:
+	echo 'Step 1. Copying "metadata" models.'
 	cp src/_common/metadata.py scripts/metadata.py
 	cp src/_common/metadata.py src/preparer/metadata.py
 	cp src/_common/metadata.py src/builder/metadata.py
 	cp src/_common/metadata.py src/verifier/metadata.py
 	cp src/_common/metadata.py src/wordprocessor/metadata.py
+	python scripts/metadata_to_json_schema.py
+	cd staticws/dashboard && npm run copy:metadata
 
 copy/html2md:
 	cp src/_common/html2md.py src/preparer/html2md.py

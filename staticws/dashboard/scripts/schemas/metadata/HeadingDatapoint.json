@@ -1,0 +1,53 @@
+{
+  "properties": {
+    "pk": {
+      "title": "Pk",
+      "type": "string"
+    },
+    "schema_v": {
+      "default": 1,
+      "title": "Schema V",
+      "type": "integer"
+    },
+    "file_name": {
+      "title": "File Name",
+      "type": "string"
+    },
+    "elem": {
+      "title": "Elem",
+      "type": "string"
+    },
+    "level": {
+      "title": "Level",
+      "type": "string"
+    },
+    "text": {
+      "title": "Text",
+      "type": "string"
+    },
+    "word_count": {
+      "title": "Word Count",
+      "type": "integer"
+    },
+    "char_count": {
+      "title": "Char Count",
+      "type": "integer"
+    },
+    "target": {
+      "title": "Target",
+      "type": "string"
+    }
+  },
+  "required": [
+    "pk",
+    "file_name",
+    "elem",
+    "level",
+    "text",
+    "word_count",
+    "char_count",
+    "target"
+  ],
+  "title": "HeadingDatapoint",
+  "type": "object"
+}
