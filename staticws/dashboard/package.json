@@ -7,7 +7,8 @@
     "build": "env-cmd -f .env.develop next build",
     "build:develop": "env-cmd -f .env.develop next build",
     "build:main": "env-cmd -f .env.main next build",
-    "lint": "next lint"
+    "lint": "next lint",
+    "copy:metadata": "npx tsc scripts/genMetadata.ts && node scripts/genMetadata.js && rm scripts/genMetadata.js"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.699.0",
@@ -29,6 +30,7 @@
     "@types/react": "^19.0.10",
     "eslint": "^8",
     "eslint-config-next": "15.0.3",
+    "json-schema-to-typescript": "15.0.4",
     "typescript": "^5.7.3"
   }
 }
