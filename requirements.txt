@@ -12,8 +12,16 @@ pytest==7.4.*
 # scripts/prep_manuscript.py
 python-docx==1.1.*
 
+# db
+alembic==1.16.*
+
 # TODO: consider adding linting and type checking
 # flake8==7.0.*
 mypy==1.15.*
 types-PyYAML==6.0.*
 types-beautifulsoup4==4.12.*
+
+# py2ts: Pydantic models to TS interfaces 
+# datamodel-code-generator==0.31.*
+# pydantic2-to-typescript==0.0.1
+
