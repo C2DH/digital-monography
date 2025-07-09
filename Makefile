@@ -231,6 +231,22 @@ gpu/push:
 
 gpu/make: gpu/build gpu/tag gpu/push
 
+orm/build:
+	# cp src/_common/constants.py src/orm/constants.py
+	docker build -t dgtmon-dev-orm src/orm
+
+orm/tag:
+	docker tag dgtmon-dev-orm ${DEV_DOCKER_ECR}/dgtmon-dev-orm:${GPU_LATEST_V}
+	docker tag dgtmon-dev-orm ${MAIN_DOCKER_ECR}/dgtmon-dev-orm:${GPU_LATEST_V}
+	docker tag dgtmon-dev-orm ${DOCKER_HUB}/dgtmon-dev-orm:${GPU_LATEST_V}
+
+orm/push:
+	docker push ${DEV_DOCKER_ECR}/dgtmon-dev-orm:${GPU_LATEST_V}
+	docker push ${MAIN_DOCKER_ECR}/dgtmon-dev-orm:${GPU_LATEST_V}
+	docker push ${DOCKER_HUB}/dgtmon-dev-orm:${GPU_LATEST_V}
+
+orm/make: orm/build orm/tag orm/push
+
 wordprocessor/build:
 	cp src/_common/constants.py src/wordprocessor/constants.py
 	docker build -t dgtmon-dev-wordprocessor src/wordprocessor

@@ -178,6 +178,11 @@ variable "lambda_gpu_func" {
   description = "Name of the gpu Lambda function"
 }
 
+variable "lambda_orm_func" {
+  type        = string
+  description = "Name of the orm Lambda function"
+}
+
 variable "lambda_verifier_func" {
   type        = string
   description = "Name of the verifier Lambda function"
@@ -213,6 +218,11 @@ variable "microservice_gpu" {
   description = "Name of the gpu microservice"
 }
 
+variable "microservice_orm" {
+  type        = string
+  description = "Name of the orm microservice"
+}
+
 variable "microservice_verifier" {
   type        = string
   description = "Name of the verifier microservice"
@@ -246,6 +256,11 @@ variable "policy_preparer" {
 variable "policy_gpu" {
   type        = string
   description = "Name of the IAM policy to be assumed by the gpu IAM role"
+}
+
+variable "policy_orm" {
+  type        = string
+  description = "Name of the IAM policy to be assumed by the orm IAM role"
 }
 
 variable "policy_verifier" {
@@ -296,6 +311,11 @@ variable "role_preparer" {
 variable "role_gpu" {
   type        = string
   description = "Name of the IAM role for the gpu Lambda function"
+}
+
+variable "role_orm" {
+  type        = string
+  description = "Name of the IAM role for the orm Lambda function"
 }
 
 variable "role_verifier" {
