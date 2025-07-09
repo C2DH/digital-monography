@@ -183,8 +183,12 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         msg_md = GithubTriggerMsg(
             key=key.s3_key.with_suffix(".md"), action=GithubActionEnum.UPDATE_OBJECT
         )
+        msg_html = GithubTriggerMsg(
+            key=key.s3_key.with_suffix(".html"), action=GithubActionEnum.UPDATE_OBJECT
+        )
         _enqueue_to_github(msg)
         _enqueue_to_github(msg_md)
+        _enqueue_to_github(msg_html)
         # _put_to_archive_s3(key.s3_key.with_suffix(".md"), md)
         _log_audit_event(
             key,
