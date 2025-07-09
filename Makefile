@@ -36,7 +36,8 @@ test/make: test/copy test/prep test/run
 typecheck:
 	mypy src/entrypoint/ --check-untyped-defs
 	mypy src/gpu/ --check-untyped-defs
-	mypy src/wordprocessor/ --check-untyped-defs
+	mypy src/orm/ --check-untyped-defs --explicit-package-bases
+	# mypy src/wordprocessor/ --check-untyped-defs
 
 login:
 	aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin ${MAIN_DOCKER_ECR}

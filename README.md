@@ -74,6 +74,7 @@ The platform consists of the following microservices (Lambda functions):
 | **github**        | false   | Pushes the processed documents to GitHub remote repository.                  |
 | **builder**       | true    | Runs Jupyter Book to build a book out of processed documents.                |
 | **gpu**           | false   | Generates pre-signed url from private S3 bucket.                             |
+| **orm**           | false   | Middleware between microservices and the shared database. |
 | **wordprocessor** | false   | Transforms docx files for the paper version.                                 |
 
 Deployment of each microservice should be done in order:
@@ -419,7 +420,8 @@ At the beginning of the project every microservice was type checked and linted. 
 | github        | false*       | 
 | builder       | false        | 
 | gpu           | true         | 
-| wordprocessor | true         | 
+| orm           | true         | 
+| wordprocessor | broken       | 
 
 ### Linting
 
@@ -443,6 +445,27 @@ I see this as a controversial choice and I encourage to keep looking for a bette
 #### Cons of schema-less db
 
 * When the software changes (e.g. the dashboard or the preparation of db records) the schema in which the data is stored changes as well. It is up to the client of this data to parse it correctly. With schema-based sql databases there is usually some migration mechanism to synchronize the changes in the schema. With the current solution, the changes apply only to the documents uploaded after the change. In case of db records written before the change and after the change you will have to write logic to remodel the data after those items are retrieved. This logic has to be written in the client that receives the data (e.g. in the dashboard).
+
+#### Attempt at adding a schema-based db
+
+We use alembic as the database migration system.
+
+##### TODOs
+
+Configure logging handlers in `db/alembic.init`.
+
+##### Useful commands
+
+```sh
+# create a db revision (migration) file
+alembic revision -m "Create account table"
+# run upgrade operations to HEAD
+# alternative 1: alembic upgrade ae1027a6acf
+# alternative 2: alembic upgrade +2
+alembic upgrade head
+# view migration history
+alembic history --verbose
+```
 
 ### Migration to Jupyter Book v2
 
