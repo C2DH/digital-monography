@@ -14,22 +14,23 @@ DOCKER_HUB = c2dhunilu
 test/copy:
 	# rm -r tests/_fixtures/a_book/
 	cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/a_book/' tests/_fixtures/
+	cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/book-content-examples/' tests/_fixtures/
 
 test/prep:
 	# echo 'maybe book-content-examples dir can be better utilized'
-	cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/book-content-examples/' tests/_fixtures/
+	# cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/book-content-examples/' tests/_fixtures/
 	DGTMON_NO_WAIT=1 \
 		IR_APKG_HTML_BUCKET_NAME=_HTML \
 		IR_APKG_MD_BUCKET_NAME=_MARKDOWN \
 		METADATA_ASSETS_BUCKET_NAME=_METDATA \
 		VERIFIER_MSGS=_WARNINGS \
-		python scripts/prepare_and_build.py book_path="tests/_fixtures/a_book/"
+		python3.12 scripts/prepare_and_build.py book_path="tests/_fixtures/a_book/"
 
 test/run:
-	DGTMON_DEBUG=1 python -m pytest tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
+	DGTMON_DEBUG=1 python3.12 -m pytest tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
 
 test:
-	DGTMON_DEBUG=1 python -m pytest tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
+	DGTMON_DEBUG=1 python3.12 -m pytest tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
 
 test/make: test/copy test/prep test/run
 
@@ -62,7 +63,8 @@ dev/test:
 	docker compose run main make test
 
 dev/draft:
-	docker compose run main python scripts/prepare_and_build.py book_path=data/input/$(SLUG)
+	# docker compose run main python3.12 scripts/prepare_and_build.py book_path=data/input/$(SLUG)
+	docker compose run make test/run
 
 copy/audit:
 	cp src/_common/audit.py src/dropbox/audit.py
@@ -81,6 +83,7 @@ copy/constants:
 	cp src/_common/constants.py src/github/constants.py
 	cp src/_common/constants.py src/verifier/constants.py
 	cp src/_common/constants.py src/gpu/constants.py
+	cp src/_common/constants.py src/orm/constants.py
 	cp src/_common/constants.py src/wordprocessor/constants.py
 
 copy/keys:
@@ -98,7 +101,7 @@ copy/metadata:
 	cp src/_common/metadata.py src/builder/metadata.py
 	cp src/_common/metadata.py src/verifier/metadata.py
 	cp src/_common/metadata.py src/wordprocessor/metadata.py
-	python scripts/metadata_to_json_schema.py
+	python3.12 scripts/metadata_to_json_schema.py
 	cd staticws/dashboard && npm run copy:metadata
 
 copy/html2md:
