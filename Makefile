@@ -40,6 +40,9 @@ typecheck:
 	mypy src/orm/ --check-untyped-defs --explicit-package-bases
 	# mypy src/wordprocessor/ --check-untyped-defs
 
+db/init:
+	cd src/_common && alembic init migrations
+
 login:
 	aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin ${MAIN_DOCKER_ECR}
 	aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin ${DEV_DOCKER_ECR}
