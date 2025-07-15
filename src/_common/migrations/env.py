@@ -25,9 +25,11 @@ if config.config_file_name is not None:
 # print(dir(__loader__))
 
 from models import Base  # noqa
+from sqlmodel import SQLModel  # noqa
 from models import *  # I have to import all models
 
-target_metadata = [Base.metadata]
+target_metadata = [Base.metadata, SQLModel.metadata]
+# target_metadata = [Base.metadata]
 
 db_user = os.environ.get("DB_USER")
 db_pass = os.environ.get("DB_PASS")

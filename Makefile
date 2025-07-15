@@ -50,17 +50,19 @@ db/makemigrations:
 
 db/copy:
 	echo 'Step 1. Copy models'
-	cp src/_common/models scripts/models
-	cp src/_common/models src/preparer/models
-	cp src/_common/models src/builder/models
-	cp src/_common/models src/verifier/models
-	cp src/_common/models src/wordprocessor/models
-	echo 'Step 2. Copy migration files'
-	cp src/_common/migrations scripts/migrations
-	cp src/_common/migrations src/preparer/migrations
-	cp src/_common/migrations src/builder/migrations
-	cp src/_common/migrations src/verifier/migrations
-	cp src/_common/migrations src/wordprocessor/migrations
+	cp -r src/_common/models scripts/models
+	cp -r src/_common/models src/preparer/models
+	cp -r src/_common/models src/builder/models
+	cp -r src/_common/models src/orm/models
+	cp -r src/_common/models src/verifier/models
+	cp -r src/_common/models src/wordprocessor/models
+	echo -r 'Step 2. Copy migration files'
+	cp -r src/_common/migrations scripts/migrations
+	cp -r src/_common/migrations src/preparer/migrations
+	cp -r src/_common/migrations src/builder/migrations
+	cp -r src/_common/migrations src/orm/migrations
+	cp -r src/_common/migrations src/verifier/migrations
+	cp -r src/_common/migrations src/wordprocessor/migrations
 	echo 'Step 3. Copy alembic config'
 	cp src/_common/alembic.ini scripts/alembic.ini
 	cp src/_common/alembic.ini src/preparer/alembic.ini
@@ -69,7 +71,7 @@ db/copy:
 	cp src/_common/alembic.ini src/wordprocessor/alembic.ini
 
 db/migrate:
-	cd src/_common && alembic upgrade heads
+	cd src/_common && DB_PATH=/tmp/efs/_dev.db alembic upgrade heads
 
 login:
 	aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin ${MAIN_DOCKER_ECR}
