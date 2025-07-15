@@ -43,6 +43,34 @@ typecheck:
 db/init:
 	cd src/_common && alembic init migrations
 
+db/makemigrations:
+	ls src/_common/migrations/versions
+	# 'Enter migration message, best in `01_init_db` format.'
+	# cd src/_common && DB_PATH=/tmp/efs/_dev.db alembic revision --autogenerate -m  ; cd ../..
+
+db/copy:
+	echo 'Step 1. Copy models'
+	cp src/_common/models scripts/models
+	cp src/_common/models src/preparer/models
+	cp src/_common/models src/builder/models
+	cp src/_common/models src/verifier/models
+	cp src/_common/models src/wordprocessor/models
+	echo 'Step 2. Copy migration files'
+	cp src/_common/migrations scripts/migrations
+	cp src/_common/migrations src/preparer/migrations
+	cp src/_common/migrations src/builder/migrations
+	cp src/_common/migrations src/verifier/migrations
+	cp src/_common/migrations src/wordprocessor/migrations
+	echo 'Step 3. Copy alembic config'
+	cp src/_common/alembic.ini scripts/alembic.ini
+	cp src/_common/alembic.ini src/preparer/alembic.ini
+	cp src/_common/alembic.ini src/builder/alembic.ini
+	cp src/_common/alembic.ini src/verifier/alembic.ini
+	cp src/_common/alembic.ini src/wordprocessor/alembic.ini
+
+db/migrate:
+	cd src/_common && alembic upgrade heads
+
 login:
 	aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin ${MAIN_DOCKER_ECR}
 	aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin ${DEV_DOCKER_ECR}
@@ -104,8 +132,6 @@ copy/metadata:
 	cp src/_common/metadata.py src/builder/metadata.py
 	cp src/_common/metadata.py src/verifier/metadata.py
 	cp src/_common/metadata.py src/wordprocessor/metadata.py
-	python3.12 scripts/metadata_to_json_schema.py
-	cd staticws/dashboard && npm run copy:metadata
 
 copy/html2md:
 	cp src/_common/html2md.py src/preparer/html2md.py
