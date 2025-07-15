@@ -50,19 +50,19 @@ db/makemigrations:
 
 db/copy:
 	echo 'Step 1. Copy models'
-	cp -r src/_common/models scripts/models
-	cp -r src/_common/models src/preparer/models
-	cp -r src/_common/models src/builder/models
-	cp -r src/_common/models src/orm/models
-	cp -r src/_common/models src/verifier/models
-	cp -r src/_common/models src/wordprocessor/models
+	cp -r src/_common/models scripts/
+	cp -r src/_common/models src/preparer/
+	cp -r src/_common/models src/builder/
+	cp -r src/_common/models src/orm/
+	cp -r src/_common/models src/verifier/
+	cp -r src/_common/models src/wordprocessor/
 	echo -r 'Step 2. Copy migration files'
-	cp -r src/_common/migrations scripts/migrations
-	cp -r src/_common/migrations src/preparer/migrations
-	cp -r src/_common/migrations src/builder/migrations
-	cp -r src/_common/migrations src/orm/migrations
-	cp -r src/_common/migrations src/verifier/migrations
-	cp -r src/_common/migrations src/wordprocessor/migrations
+	cp -r src/_common/migrations scripts/
+	cp -r src/_common/migrations src/preparer/
+	cp -r src/_common/migrations src/builder/
+	cp -r src/_common/migrations src/orm/
+	cp -r src/_common/migrations src/verifier/
+	cp -r src/_common/migrations src/wordprocessor/
 	echo 'Step 3. Copy alembic config'
 	cp src/_common/alembic.ini scripts/alembic.ini
 	cp src/_common/alembic.ini src/preparer/alembic.ini
