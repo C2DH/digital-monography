@@ -14,11 +14,10 @@ DOCKER_HUB = c2dhunilu
 test/copy:
 	# rm -r tests/_fixtures/a_book/
 	cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/a_book/' tests/_fixtures/
+	# echo 'maybe book-content-examples dir can be better utilized'
 	cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/book-content-examples/' tests/_fixtures/
 
 test/prep:
-	# echo 'maybe book-content-examples dir can be better utilized'
-	# cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/book-content-examples/' tests/_fixtures/
 	DGTMON_NO_WAIT=1 \
 		IR_APKG_HTML_BUCKET_NAME=_HTML \
 		IR_APKG_MD_BUCKET_NAME=_MARKDOWN \
