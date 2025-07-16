@@ -124,6 +124,7 @@ copy/keys:
 	cp src/_common/keys.py src/preparer/keys.py
 	cp src/_common/keys.py src/builder/keys.py
 	cp src/_common/keys.py src/github/keys.py
+	cp src/_common/keys.py src/orm/keys.py
 	cp src/_common/keys.py src/verifier/keys.py
 	cp src/_common/keys.py src/wordprocessor/keys.py
 

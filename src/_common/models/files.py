@@ -1,8 +1,13 @@
 import sqlmodel
 import typing as t
 
+try:
+    from _base import MySQLModel
+except (ImportError, ModuleNotFoundError):
+    from ._base import MySQLModel  # type: ignore
 
-class File(sqlmodel.SQLModel, table=True):
+
+class File(MySQLModel, table=True):
     __tablename__ = "files"
 
     id: int = sqlmodel.Field(primary_key=True)
@@ -10,7 +15,7 @@ class File(sqlmodel.SQLModel, table=True):
     stem: str
     prefix: str
 
-    def __init__(self, **data: t.Any) -> None:
+    def __init__(self, **data: t.Dict[str, t.Any]) -> None:
         data["pk"] = data["stem"]
         super().__init__(**data)
 
@@ -25,28 +30,3 @@ class File(sqlmodel.SQLModel, table=True):
 #     def __init__(self, **data) -> None:
 #         data["pk"] = data["stem"]
 #         super().__init__(**data)
-
-
-class Heading(sqlmodel.SQLModel, table=True):
-    __tablename__ = "headings"
-
-    id: int = sqlmodel.Field(primary_key=True)
-    file_name: str
-    elem: str
-    level: str
-    text: str
-    word_count: int
-    char_count: int
-    target: str
-
-
-# class HeadingDatapoint(DatapointBase):
-#     schema_v: int = 1  # if multiple v in the db, the client might have to differentiate
-#     ###
-#     file_name: str
-#     elem: str
-#     level: str
-#     text: str
-#     word_count: int
-#     char_count: int
-#     target: str

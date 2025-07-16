@@ -15,12 +15,14 @@ from aws_lambda_powertools.utilities.data_classes import (
 )
 
 try:
-    from constants import IS_DEBUG
-    from models import File
+    from constants import MediumEnum, IS_DEBUG
+    from keys import KeyPath
+    from models import Asset, File
     from lambda_wsgi import response as lambda_wsgi_response
 except (ImportError, ModuleNotFoundError):
-    from .constants import IS_DEBUG  # type: ignore
-    from .models import File
+    from .constants import MediumEnum, IS_DEBUG  # type: ignore
+    from .keys import KeyPath
+    from .models import Asset, File
     from .lambda_wsgi import response as lambda_wsgi_response  # type: ignore
 
 
@@ -46,19 +48,71 @@ engine = sqlmodel.create_engine(os.environ["DB_URL"])
 # session_factory = sa_orm.sessionmaker(bind=engine)
 
 
-@app.route("/read-users", methods=["GET"])
-def query_events() -> flask.Response:
-    logger.info("read-users")
+@app.route("/write", methods=["GET"])
+def write() -> flask.Response:
+    logger.info("write")
     slug = flask.request.args.get("slug")
     logger.info("slug: %s", slug)
     # assert slug is not None, "Error: slug was not provided"
 
+    # path = pathlib.Path("/tmp/efs/a_book/01_a.md")
+    # medium = MediumEnum.PAPER
+    # location = KeyPath("/mnt/efs/a_book/01_a.md")
+
     with sqlmodel.Session(engine) as session:
         session.add(File(stem="stem", prefix="prefix"))
+        session.add(
+            Asset(
+                fp=pathlib.PosixPath("foo/bar/1.txt"),
+                metadata_table="0a7bf8c-0a7b-4b8c-0a7b-f8c0a7bf8c0a",
+                medium=MediumEnum.PAPER,
+                slug="slug",
+                author="author",
+                source="source",
+                location=KeyPath("foo/bar/config.yml"),
+                alttext="alttext",
+                caption="caption",
+                comments="comments",
+                target="target",
+                is_color=True,
+                is_ready=False,
+            )
+        )
         session.commit()
 
         # stem=stem, prefix=str(prefix)
 
+    resp = flask.Response(
+        response=flask.json.dumps({"a": "1", "b": "2"}),
+        status=200,
+        mimetype="application/json",
+    )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
+
+
+@app.route("/read", methods=["GET"])
+def read() -> flask.Response:
+    with sqlmodel.Session(engine) as session:
+        stmt = sqlmodel.select(Asset)
+        res = session.exec(stmt)
+        for asset in res:
+            print(asset)
+        assets = res.all()
+        print(assets)
+        asset = res.first()
+        print(asset)
+        # File
+        stmt = sqlmodel.select(File)
+        res = session.exec(stmt)
+        for asset in res:
+            print(asset)
+        assets = res.all()
+        print(assets)
+        asset = res.first()
+        print(asset)
     resp = flask.Response(
         response=flask.json.dumps({"a": "1", "b": "2"}),
         status=200,

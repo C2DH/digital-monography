@@ -26,7 +26,7 @@ if config.config_file_name is not None:
 
 from models import Base  # noqa
 from sqlmodel import SQLModel  # noqa
-from models import *  # I have to import all models
+from models import *  # see models.__init__.py
 
 target_metadata = [Base.metadata, SQLModel.metadata]
 # target_metadata = [Base.metadata]
