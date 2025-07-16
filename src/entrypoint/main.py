@@ -60,7 +60,7 @@ s3: boto3_S3Client = boto3.client("s3")
 
 
 app = flask.Flask(__name__)
-app.debug = True
+app.debug = IS_DEBUG
 app.secret_key = os.environ["FLASK_SECRET_KEY"]
 
 
