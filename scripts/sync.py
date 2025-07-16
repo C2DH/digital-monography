@@ -50,6 +50,8 @@ def listen_for_updates(
             print(f"total: {total_t} (100%)")
             break
         if os.environ.get("DGTMON_NO_WAIT") is not None:
+            if not is_update:
+                time_status.update(func_after_loop(book_path))
             break
         else:
             print(".", end="", flush=True)
