@@ -45,7 +45,7 @@ db/init:
 db/makemigrations:
 	ls src/_common/migrations/versions
 	# 'Enter migration message, best in `01_init_db` format.'
-	# cd src/_common && DB_PATH=/tmp/efs/_dev.db alembic revision --autogenerate -m  ; cd ../..
+	# cd src/_common && DB_PATH=/tmp/efs/_database.db alembic revision --autogenerate -m  ; cd ../..
 
 db/copy:
 	echo 'Step 1. Copy models'
@@ -70,7 +70,7 @@ db/copy:
 	cp src/_common/alembic.ini src/wordprocessor/alembic.ini
 
 db/migrate:
-	cd src/_common && DB_PATH=/tmp/efs/_dev.db alembic upgrade heads
+	cd src/_common && DB_PATH=/tmp/efs/_database.db alembic upgrade heads
 
 login:
 	aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin ${MAIN_DOCKER_ECR}

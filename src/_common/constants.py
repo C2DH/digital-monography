@@ -43,6 +43,15 @@ if IS_DEBUG:
     DEFAULT_SFS_DIR = "/tmp/efs"  # local execution
 else:
     DEFAULT_SFS_DIR = "/mnt/efs"  # AWS EFS
+# database
+db_user = os.environ.get("DB_USER")
+db_pass = os.environ.get("DB_PASS")
+db_path = os.environ.get("DB_PATH", DEFAULT_SFS_DIR + "/_database.db")
+db_driver = os.environ.get("DB_DRIVER", "sqlite")
+if db_user and db_pass:
+    DB_URL = "{}://{}:{}@/{}".format(db_driver, db_user, db_pass, db_path)
+else:
+    DB_URL = "{}:///{}".format(db_driver, db_path)
 # API endpoints
 BE_PATH_ASSET_METADATA = "assets-metadata"
 BE_PATH_ASSET_UPLOAD = "assets-s3-list"

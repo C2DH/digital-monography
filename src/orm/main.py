@@ -15,12 +15,12 @@ from aws_lambda_powertools.utilities.data_classes import (
 )
 
 try:
-    from constants import MediumEnum, IS_DEBUG
+    from constants import MediumEnum, DB_URL, IS_DEBUG
     from keys import KeyPath
     from models import Asset, File
     from lambda_wsgi import response as lambda_wsgi_response
 except (ImportError, ModuleNotFoundError):
-    from .constants import MediumEnum, IS_DEBUG  # type: ignore
+    from .constants import MediumEnum, DB_URL, IS_DEBUG  # type: ignore
     from .keys import KeyPath
     from .models import Asset, File
     from .lambda_wsgi import response as lambda_wsgi_response  # type: ignore
@@ -43,7 +43,8 @@ logger.setLevel(logging.INFO)
 app = flask.Flask(__name__)
 app.debug = IS_DEBUG
 app.secret_key = os.environ["FLASK_SECRET_KEY"]
-engine = sqlmodel.create_engine(os.environ["DB_URL"])
+print("DB_URL", DB_URL)
+engine = sqlmodel.create_engine(DB_URL)
 # engine = sa.create_engine(os.environ["DATABASE_URL"])
 # session_factory = sa_orm.sessionmaker(bind=engine)
 
