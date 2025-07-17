@@ -8,6 +8,7 @@ import logging
 import mammoth
 import nbformat
 import os
+import sqlmodel
 import typing as t
 import urllib.parse
 
@@ -21,8 +22,10 @@ try:
     from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
     from conditional_rendering import is_paper_only, remove_paper_only
     from constants import (
+        MediumEnum,
         ModuleEnum,
         S3Event,
+        DB_URL,
         MAMMOTH_STYLE_MAP,
         IS_DEBUG,
     )
@@ -32,6 +35,7 @@ try:
     from hide_metadata_in_html import hide_metadata_in_html
     from metadata import DocumentMetadata, AssetDatapoint
     from metadata_extraction import prepare_metadata_tables
+    from models import Asset
     from remove_empty_tables import remove_empty_tables
     from replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
     from refs import (
@@ -53,8 +57,10 @@ except (ImportError, ModuleNotFoundError):
     from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
     from .conditional_rendering import is_paper_only, remove_paper_only
     from .constants import (
+        MediumEnum,
         ModuleEnum,
         S3Event,
+        DB_URL,
         MAMMOTH_STYLE_MAP,
         IS_DEBUG,
     )
@@ -64,6 +70,7 @@ except (ImportError, ModuleNotFoundError):
     from .hide_metadata_in_html import hide_metadata_in_html
     from .metadata import DocumentMetadata, AssetDatapoint
     from .metadata_extraction import prepare_metadata_tables
+    from .models import Asset
     from .remove_empty_tables import remove_empty_tables
     from .replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
     from .refs import (
@@ -108,6 +115,7 @@ else:
     dynamodb: boto3_DynamoDBServiceResource = boto3.resource("dynamodb")
     s3: boto3_S3Client = boto3.client("s3")
     sqs: boto3_SQSClient = boto3.client("sqs")
+db_engine = sqlmodel.create_engine(DB_URL)
 
 
 def is_table(tag: bs4.element.Tag) -> bool:
@@ -130,6 +138,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _remove_assets_info_from_s3(key)
         _remove_metadata_from_db(key)
         _remove_metadata_from_efs(key)
+        _remove_records_from_db(key)
         _remove_processed_html_from_efs(key)
         _remove_html_from_s3(key)
         _remove_processed_md_from_efs(key)
@@ -174,6 +183,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _write_assets_info_to_s3(metadata, key)
         _write_metadata_to_db(metadata, key)
         _write_metadata_to_efs(metadata, key)
+        _write_records_to_db(metadata, key)
         _write_processed_html_to_efs(html_soup_str, key)
         _put_html_to_s3(html_soup_str, key)
         md = _convert_to_md(key, html_soup, metadata)
@@ -622,6 +632,7 @@ def _write_processed_md_to_efs(md: str, key: KeyPath) -> None:
 
 def _remove_assets_info_from_s3(key: KeyPath) -> None:
     try:
+        # TODO: this works, but it's a bad design
         s3_key = AssetDatapoint.get_s3_key(key)
         bucket = os.environ.get("METADATA_ASSETS_BUCKET_NAME", "")
         resp = s3.delete_object(Bucket=bucket, Key=s3_key)
@@ -643,6 +654,7 @@ def _remove_assets_info_from_s3(key: KeyPath) -> None:
 
 def _write_assets_info_to_s3(metadata: DocumentMetadata, key: KeyPath) -> None:
     try:
+        # TODO: this works, but it's a bad design
         s3_key = AssetDatapoint.get_s3_key(key)
         bucket = os.environ.get("METADATA_ASSETS_BUCKET_NAME", "")
         body = json.dumps([ass.to_json() for ass in metadata.assets], default=str)
@@ -771,6 +783,51 @@ def _write_metadata_to_efs(metadata: DocumentMetadata, key: KeyPath) -> None:
         #     AuditStatus.FAILED.value,
         #     "Error upon writing metadata.",
         # )
+        raise
+
+
+def _remove_records_from_db(key: KeyPath) -> None:
+    try:
+        with sqlmodel.Session(db_engine) as session:
+            statement = sqlmodel.delete(Asset).where(Asset.x_location == str(key))
+            session.exec(statement)
+            session.commit()
+        logger.info(
+            f"Removing records from database for key: {key.slug}, filename: {key.name}"
+        )
+        return
+    except Exception as e:
+        logger.exception(f"Removing records from the database failed. Error: {repr(e)}")
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            "Error upon removing records from the database.",
+        )
+        raise
+
+
+def _write_records_to_db(metadata: DocumentMetadata, key: KeyPath) -> None:
+    try:
+        with sqlmodel.Session(db_engine) as session:
+            # delete existing records for this file so there are no duplicates
+            statement = sqlmodel.delete(Asset).where(Asset.x_location == str(key))
+            session.exec(statement)
+            session.commit()
+            # write all assets included in the processed file
+            for asset in metadata.assets:
+                session.add(Asset(**asset.model_dump()))
+            session.commit()
+        logger.info(
+            f"Writing records to the database for key: {key.slug}, filename: {key.name}"
+        )
+        return
+    except Exception as e:
+        logger.exception(f"Writing records to the database failed. Error: {repr(e)}")
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            "Error upon writing records to the database.",
+        )
         raise
 
 
