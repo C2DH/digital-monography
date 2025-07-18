@@ -34,7 +34,15 @@ try:
     from hide_metadata_in_html import hide_metadata_in_html
     from metadata import DocumentMetadata, AssetDatapoint
     from metadata_extraction import prepare_metadata_tables
-    from models import Asset, CitationGroup, CitationItem, Heading, Ref, Target
+    from models import (
+        Asset,
+        CitationGroup,
+        CitationItem,
+        Heading,
+        Ref,
+        Substitution,
+        Target,
+    )
     from remove_empty_tables import remove_empty_tables
     from replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
     from refs import (
@@ -68,7 +76,15 @@ except (ImportError, ModuleNotFoundError):
     from .hide_metadata_in_html import hide_metadata_in_html
     from .metadata import DocumentMetadata, AssetDatapoint
     from .metadata_extraction import prepare_metadata_tables
-    from .models import Asset, CitationGroup, CitationItem, Heading, Ref, Target
+    from .models import (
+        Asset,
+        CitationGroup,
+        CitationItem,
+        Heading,
+        Ref,
+        Substitution,
+        Target,
+    )
     from .remove_empty_tables import remove_empty_tables
     from .replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
     from .refs import (
@@ -822,6 +838,7 @@ def _write_records_to_db(metadata: DocumentMetadata, key: KeyPath) -> None:
             session.exec(statement)
             statement = sqlmodel.delete(Ref).where(Ref.fn == key.name)
             session.exec(statement)
+            # TODO: delete Substitution, but I don't see a field to filter by file
             statement = sqlmodel.delete(Target).where(Target.filename == key.name)
             session.exec(statement)
             session.commit()
@@ -836,6 +853,8 @@ def _write_records_to_db(metadata: DocumentMetadata, key: KeyPath) -> None:
                 session.add(Heading(**dp.model_dump()))
             for dp in metadata.refs:
                 session.add(Ref(**dp.model_dump()))
+            for dp in metadata.substitutions:
+                session.add(Substitution(**dp.model_dump()))
             for dp in metadata.targets:
                 session.add(Target(**dp.model_dump()))
             session.commit()

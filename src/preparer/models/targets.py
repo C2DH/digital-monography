@@ -1,4 +1,3 @@
-import uuid
 import sqlmodel
 import typing as t
 
@@ -16,7 +15,7 @@ class Target(MySQLModel, table=True):
 
     __tablename__ = "targets"
 
-    pk: str = sqlmodel.Field(primary_key=True, default=str(uuid.uuid4()))
+    pk: str = sqlmodel.Field(primary_key=True)
     html: str
     text: str
     elem: str

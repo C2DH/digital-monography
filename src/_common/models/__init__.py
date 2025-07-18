@@ -4,6 +4,7 @@ from .citations import CitationGroup, CitationItem
 from .files import File
 from .headings import Heading
 from .refs import Ref
+from .substitutions import Substitution
 from .targets import Target
 from .users import User
 
@@ -14,6 +15,7 @@ __all__ = [
     "File",
     "Heading",
     "Ref",
+    "Substitution",
     "Target",
     "User",
 ]
