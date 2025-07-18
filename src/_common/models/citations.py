@@ -59,7 +59,7 @@ class CitationItem(MySQLModel, table=True):
 
     __tablename__ = "citation_items"
 
-    pk: int = sqlmodel.Field(primary_key=True)
+    pk: str = sqlmodel.Field(primary_key=True)
     id: int
     file_name: str
     citationId: str
@@ -74,17 +74,20 @@ class CitationItem(MySQLModel, table=True):
     def uris(self) -> list[str]:
         return self.x_uris.split("|")
 
-    @uris.setter
-    def uris(self, val: list[str]) -> None:
-        self.x_uris = "|".join(val)
+    def _get_uris(self, val: list[str]) -> str:
+        return "|".join(val)
 
     @property
     def itemData(self) -> dict[str, t.Any]:
         return json.loads(self.x_itemData)
 
-    @itemData.setter
-    def itemData(self, val: dict[str, t.Any]) -> None:
-        self.x_itemData = json.dumps(val)
+    def _get_itemData(self, val: dict[str, t.Any]) -> str:
+        return json.dumps(val)
+
+    def __init__(self, **data: t.Dict[str, t.Any]) -> None:
+        data["uris"] = self._get_uris(data["uris"])
+        data["itemData"] = self._get_itemData(data["itemData"])
+        super().__init__(**data)
 
 
 ###################

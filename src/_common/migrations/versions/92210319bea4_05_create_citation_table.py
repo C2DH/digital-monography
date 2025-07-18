@@ -1,8 +1,8 @@
-"""05_create_citation_tables
+"""05_create_citation_table
 
-Revision ID: 2c7646d6ac93
+Revision ID: 92210319bea4
 Revises: 2712ca7a22c7
-Create Date: 2025-07-17 18:26:52.440268
+Create Date: 2025-07-18 12:03:17.047642
 
 """
 from typing import Sequence, Union
@@ -15,7 +15,7 @@ import sqlmodel.sql.sqltypes
 
 
 # revision identifiers, used by Alembic.
-revision: str = '2c7646d6ac93'
+revision: str = '92210319bea4'
 down_revision: Union[str, Sequence[str], None] = '2712ca7a22c7'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -34,7 +34,7 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('citation_items',
-    sa.Column('pk', sa.Integer(), nullable=False),
+    sa.Column('pk', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('file_name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('citationId', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
