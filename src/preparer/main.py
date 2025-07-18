@@ -34,7 +34,7 @@ try:
     from hide_metadata_in_html import hide_metadata_in_html
     from metadata import DocumentMetadata, AssetDatapoint
     from metadata_extraction import prepare_metadata_tables
-    from models import Asset, CitationGroup, CitationItem, Heading
+    from models import Asset, CitationGroup, CitationItem, Heading, Ref
     from remove_empty_tables import remove_empty_tables
     from replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
     from refs import (
@@ -68,7 +68,7 @@ except (ImportError, ModuleNotFoundError):
     from .hide_metadata_in_html import hide_metadata_in_html
     from .metadata import DocumentMetadata, AssetDatapoint
     from .metadata_extraction import prepare_metadata_tables
-    from .models import Asset, CitationGroup, CitationItem, Heading
+    from .models import Asset, CitationGroup, CitationItem, Heading, Ref
     from .remove_empty_tables import remove_empty_tables
     from .replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
     from .refs import (
@@ -810,8 +810,6 @@ def _write_records_to_db(metadata: DocumentMetadata, key: KeyPath) -> None:
             # delete existing records for this file so there are no duplicates
             statement = sqlmodel.delete(Asset).where(Asset.x_location == str(key))
             session.exec(statement)
-            statement = sqlmodel.delete(Heading).where(Heading.file_name == key.name)
-            session.exec(statement)
             statement = sqlmodel.delete(CitationGroup).where(
                 CitationGroup.file_name == key.name
             )
@@ -820,17 +818,22 @@ def _write_records_to_db(metadata: DocumentMetadata, key: KeyPath) -> None:
                 CitationItem.file_name == key.name
             )
             session.exec(statement)
+            statement = sqlmodel.delete(Heading).where(Heading.file_name == key.name)
+            session.exec(statement)
+            statement = sqlmodel.delete(Ref).where(Ref.fn == key.name)
+            session.exec(statement)
             session.commit()
             # write all assets included in the processed file
             for dp in metadata.assets:
                 session.add(Asset(**dp.model_dump()))
-            for dp in metadata.headings:
-                session.add(Heading(**dp.model_dump()))
             for dp in metadata.citation_groups:
                 session.add(CitationGroup(**dp.model_dump()))
             for dp in metadata.citation_items:
                 session.add(CitationItem(**dp.model_dump()))
-
+            for dp in metadata.headings:
+                session.add(Heading(**dp.model_dump()))
+            for dp in metadata.refs:
+                session.add(Ref(**dp.model_dump()))
             session.commit()
         logger.info(
             f"Writing records to the database for key: {key.slug}, filename: {key.name}"
