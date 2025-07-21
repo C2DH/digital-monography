@@ -25,8 +25,11 @@ test/prep:
 		VERIFIER_MSGS=_WARNINGS \
 		python3.12 scripts/prepare_and_build.py book_path="tests/_fixtures/a_book/"
 
-test/run:
+test/unit:
 	DGTMON_DEBUG=1 python3.12 -m pytest tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
+
+test/integration:
+	DGTMON_DEBUG=1 python3.12 -m pytest tests/integration/
 
 test:
 	DGTMON_DEBUG=1 python3.12 -m pytest tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
