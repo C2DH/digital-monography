@@ -435,6 +435,7 @@ class SubstitutionDatapoint(DatapointBase):
     is_digital: bool | None
     is_paper: bool | None
     item_type: t.Literal["heading", "equation", "figure", "table", "graph", "ref", ""]
+    location: pathlib.Path | None
     target_fn: str | None
     file_count: int | None
     prefix: str

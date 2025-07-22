@@ -838,7 +838,10 @@ def _write_records_to_db(metadata: DocumentMetadata, key: KeyPath) -> None:
             session.exec(statement)
             statement = sqlmodel.delete(Ref).where(Ref.fn == key.name)
             session.exec(statement)
-            # TODO: delete Substitution, but I don't see a field to filter by file
+            statement = sqlmodel.delete(Substitution).where(
+                Substitution.x_location == str(key)
+            )
+            session.exec(statement)
             statement = sqlmodel.delete(Target).where(Target.filename == key.name)
             session.exec(statement)
             session.commit()

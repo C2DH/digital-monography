@@ -1,11 +1,14 @@
+import pathlib
 import sqlmodel
 import typing as t
 import uuid
 
 try:
     from ._base import MySQLModel
+    from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
     from ._base import MySQLModel  # type: ignore
+    from ..keys import KeyPath  # type: ignore
 
 
 class Substitution(MySQLModel, table=True):
@@ -19,12 +22,25 @@ class Substitution(MySQLModel, table=True):
     item_type: t.Literal[
         "heading", "equation", "figure", "table", "graph", "ref", ""
     ] = sqlmodel.Field(sa_type=sqlmodel.String)
+    x_location: str = sqlmodel.Field(alias="location")
     target_fn: str | None
     file_count: int | None
     prefix: str
     prev_item_num: int | None
     new_item_num: int | None = sqlmodel.Field(default=None)
     fprefix: str | None = sqlmodel.Field(default=None)
+
+    @property
+    def location(self) -> pathlib.Path:
+        return pathlib.Path(self.x_location)
+
+    @location.setter
+    def location(self, val: pathlib.Path) -> None:
+        self.x_location = str(val)
+
+    def __init__(self, **data: t.Dict[str, t.Any]) -> None:
+        data["x_location"] = str(data.pop("location"))
+        super().__init__(**data)
 
 
 # class SubstitutionDatapoint(DatapointBase):

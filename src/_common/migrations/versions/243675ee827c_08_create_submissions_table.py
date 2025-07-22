@@ -1,8 +1,8 @@
 """08_create_submissions_table
 
-Revision ID: 5051c4de121e
+Revision ID: 243675ee827c
 Revises: b0f01d438fad
-Create Date: 2025-07-18 17:38:08.076768
+Create Date: 2025-07-22 12:53:18.096554
 
 """
 from typing import Sequence, Union
@@ -15,7 +15,7 @@ import sqlmodel.sql.sqltypes
 
 
 # revision identifiers, used by Alembic.
-revision: str = '5051c4de121e'
+revision: str = '243675ee827c'
 down_revision: Union[str, Sequence[str], None] = 'b0f01d438fad'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -31,6 +31,7 @@ def upgrade() -> None:
     sa.Column('is_digital', sa.Boolean(), nullable=True),
     sa.Column('is_paper', sa.Boolean(), nullable=True),
     sa.Column('item_type', sa.String(), nullable=False),
+    sa.Column('x_location', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('target_fn', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('file_count', sa.Integer(), nullable=True),
     sa.Column('prefix', sqlmodel.sql.sqltypes.AutoString(), nullable=False),

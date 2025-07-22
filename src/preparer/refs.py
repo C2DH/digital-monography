@@ -231,6 +231,7 @@ def prepare_ref_targets_in_captions(
                         is_paper=is_paper,
                         file_count=metadata.get_chapter_number(),
                         # new
+                        location=metadata.filepath,
                         target_fn=target_fn,
                         prefix=target.prefix,
                         prev_item_num=target.prev_item_num,
@@ -404,6 +405,7 @@ def prepare_references(
                         item_type="ref",
                         is_digital=None,
                         is_paper=None,
+                        location=metadata.filepath,
                         target_fn=target_fn,
                         file_count=target_chapter_number,
                         prefix="",
