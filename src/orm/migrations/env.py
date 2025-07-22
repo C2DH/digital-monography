@@ -1,10 +1,12 @@
-import os
+from alembic import context
 from logging.config import fileConfig
-
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
-from alembic import context
+from models import Base
+from sqlmodel import SQLModel
+from models import *  # see models.__init__.py
+from constants import DB_URL
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -15,37 +17,8 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-# print(__loader__.name)
-# print(__loader__.path)
-# print(type(__loader__.path))
-# print(dir(__loader__))
-
-from models import Base  # noqa
-from sqlmodel import SQLModel  # noqa
-from models import *  # see models.__init__.py
-
 target_metadata = [Base.metadata, SQLModel.metadata]
-# target_metadata = [Base.metadata]
-
-db_user = os.environ.get("DB_USER")
-db_pass = os.environ.get("DB_PASS")
-db_path = os.environ.get("DB_PATH")
-# db_path = os.environ["DB_PATH"]
-if db_user and db_pass:
-    url = "sqlite://{}:{}@/{}".format(db_user, db_pass, db_path)
-else:
-    url = "sqlite:///{}".format(db_path)
-config.set_main_option("sqlalchemy.url", url)
-
-
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
+config.set_main_option("sqlalchemy.url", DB_URL)
 
 
 def run_migrations_offline() -> None:

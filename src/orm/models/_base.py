@@ -27,3 +27,7 @@ class MySQLModel(sqlmodel.SQLModel):
             else:
                 dump[k] = v
         return dump
+
+
+# Metadata tables and warnings fit were left to DynamoDB,
+# but maybe they should have a schema as well.
