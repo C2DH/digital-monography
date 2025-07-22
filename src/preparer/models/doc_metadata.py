@@ -1,3 +1,4 @@
+import sqlmodel
 import typing as t
 
 try:
@@ -8,9 +9,10 @@ except (ImportError, ModuleNotFoundError):
     from ..keys import KeyPath  # type: ignore
 
 
-class DocumentMetadata(MySQLModel):
+class DocumentMetadata(MySQLModel, table=True):
     __tablename__ = "doc_metadata"
 
+    id: int = sqlmodel.Field(primary_key=True)
     x_key: str
     slug: str = ""
     word_count: int = 0

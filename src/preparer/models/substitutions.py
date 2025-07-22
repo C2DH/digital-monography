@@ -39,10 +39,7 @@ class Substitution(MySQLModel, table=True):
         self.x_location = str(val)
 
     def __init__(self, **data: t.Dict[str, t.Any]) -> None:
-        # self.location = data["location"]
-        # self.location
         data["x_location"] = str(data.pop("location"))
-        # data["location"] = str(data.pop("location"))
         super().__init__(**data)
 
 
