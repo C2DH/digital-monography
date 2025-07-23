@@ -1,6 +1,5 @@
 import sqlalchemy
 import sqlmodel
-from ._base import Base  # noqa
 from .assets import Asset
 from .citation_groups import CitationGroup
 from .citation_items import CitationItem
@@ -10,7 +9,6 @@ from .doc_metadata import DocumentMetadata
 from .refs import Ref
 from .substitutions import Substitution
 from .targets import Target
-from .users import User
 
 type ModelMeta = sqlmodel.main.SQLModelMetaclass | sqlalchemy.orm.DeclarativeMeta
 
@@ -25,7 +23,6 @@ __all__ = [
     "Ref",
     "Substitution",
     "Target",
-    "User",
 ]
 
 tables_to_models: dict[str, ModelMeta] = {
@@ -38,7 +35,6 @@ tables_to_models: dict[str, ModelMeta] = {
     "refs": Ref,
     "substitutions": Substitution,
     "targets": Target,
-    "users": User,
 }
 
 

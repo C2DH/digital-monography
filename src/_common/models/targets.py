@@ -15,7 +15,7 @@ class Target(MySQLModel, table=True):
 
     __tablename__ = "targets"
 
-    pk: str = sqlmodel.Field(primary_key=True)
+    # pk: str = sqlmodel.Field(primary_key=True)
     html: str
     text: str
     elem: str

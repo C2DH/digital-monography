@@ -14,7 +14,7 @@ except (ImportError, ModuleNotFoundError):
 class Substitution(MySQLModel, table=True):
     __tablename__ = "substitutions"
 
-    pk: str = sqlmodel.Field(primary_key=True, default=str(uuid.uuid4()))
+    # pk: str = sqlmodel.Field(primary_key=True, default=str(uuid.uuid4()))
     was: str
     placeholder: str
     is_digital: bool | None

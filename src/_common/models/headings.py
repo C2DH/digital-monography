@@ -9,7 +9,7 @@ except (ImportError, ModuleNotFoundError):
 class Heading(MySQLModel, table=True):
     __tablename__ = "headings"
 
-    id: int = sqlmodel.Field(primary_key=True)
+    # id: int = sqlmodel.Field(primary_key=True)
     file_name: str
     elem: str
     level: str
