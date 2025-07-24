@@ -68,7 +68,7 @@ class DocumentState:
             return None
 
     def filter(
-        self, tablename: str, attrib: str | int | bool, val: str
+        self, tablename: str, val: str | int | bool, attrib: str
     ) -> list[sqlmodel.SQLModel]:
         """Filter 0 or more models instances (records) from the state."""
         records = self.__dict__.get(tablename, [])

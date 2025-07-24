@@ -54,10 +54,25 @@ class DocumentState:
         return self.__dict__[tablename][0]
 
     def add(self, record: sqlmodel.SQLModel) -> None:
-        """
-        Add a model's instance (a record) to the state.
-        """
+        """Add a model's instance (a record) to the state."""
         self.__dict__.setdefault(record.__tablename__, []).append(record)
+
+    def get(
+        self, tablename: str, val: str | int, attrib: str = "pk"
+    ) -> t.Optional[sqlmodel.SQLModel]:
+        """Get a model's instance (a record) from the state."""
+        records = self.__dict__.get(tablename, [])
+        try:
+            return next(rec for rec in records if getattr(rec, attrib) == val)
+        except StopIteration:
+            return None
+
+    def filter(
+        self, tablename: str, val: str | int | bool, attrib: str
+    ) -> list[sqlmodel.SQLModel]:
+        """Filter 0 or more models instances (records) from the state."""
+        records = self.__dict__.get(tablename, [])
+        return [rec for rec in records if getattr(rec, attrib) == val]
 
     def to_dict(self) -> DocumentStateSerialized:
         """

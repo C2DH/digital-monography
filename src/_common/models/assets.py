@@ -25,7 +25,6 @@ class Asset(MySQLModel, table=True):
     """
 
     __tablename__ = "assets"
-    __name__ = "Asset"
 
     # id: int = sqlmodel.Field(primary_key=True)
     # fp: pathlib.Path

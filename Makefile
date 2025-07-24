@@ -52,25 +52,27 @@ db/makemigrations:
 
 db/copy:
 	echo 'Step 1. Copy models'
-	cp -r src/_common/models scripts/
+	# cp -r src/_common/models scripts/
 	cp -r src/_common/models src/preparer/
-	cp -r src/_common/models src/builder/
-	cp -r src/_common/models src/orm/
-	cp -r src/_common/models src/verifier/
-	cp -r src/_common/models src/wordprocessor/
+	# cp -r src/_common/models src/builder/
+	# cp -r src/_common/models src/orm/
+	# cp -r src/_common/models src/verifier/
+	# cp -r src/_common/models src/wordprocessor/
 	echo -r 'Step 2. Copy migration files'
-	cp -r src/_common/migrations scripts/
+	# cp -r src/_common/migrations scripts/
 	cp -r src/_common/migrations src/preparer/
-	cp -r src/_common/migrations src/builder/
-	cp -r src/_common/migrations src/orm/
-	cp -r src/_common/migrations src/verifier/
-	cp -r src/_common/migrations src/wordprocessor/
-	echo 'Step 3. Copy alembic config'
-	cp src/_common/alembic.ini scripts/alembic.ini
+	# cp -r src/_common/migrations src/builder/
+	# cp -r src/_common/migrations src/orm/
+	# cp -r src/_common/migrations src/verifier/
+	# cp -r src/_common/migrations src/wordprocessor/
+	echo -r 'Step 3. Copy state file'
+	cp -r src/_common/state.py src/preparer/state.py
+	echo 'Step 4. Copy alembic config'
+	# cp src/_common/alembic.ini scripts/alembic.ini
 	cp src/_common/alembic.ini src/preparer/alembic.ini
-	cp src/_common/alembic.ini src/builder/alembic.ini
-	cp src/_common/alembic.ini src/verifier/alembic.ini
-	cp src/_common/alembic.ini src/wordprocessor/alembic.ini
+	# cp src/_common/alembic.ini src/builder/alembic.ini
+	# cp src/_common/alembic.ini src/verifier/alembic.ini
+	# cp src/_common/alembic.ini src/wordprocessor/alembic.ini
 
 db/migrate:
 	cd src/_common && DB_PATH=/tmp/efs/_database.db alembic upgrade heads

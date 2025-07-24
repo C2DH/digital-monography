@@ -9,7 +9,10 @@ class MySQLModel(sqlmodel.SQLModel):
     should inherit from this class.
     """
 
-    pk: str = sqlmodel.Field(primary_key=True, default=str(uuid.uuid4()))
+    # pk: str = sqlmodel.Field(primary_key=True, default=lambda: str(uuid.uuid4()))
+    pk: str = sqlmodel.Field(
+        primary_key=True, default_factory=lambda: str(uuid.uuid4())
+    )
 
     def model_dump(self, *args, **kwargs) -> t.Dict[str, t.Any]:
         """
