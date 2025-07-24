@@ -7,7 +7,13 @@ class MySQLModel(sqlmodel.SQLModel):
     """
     All db models that are stored in
     should inherit from this class.
+
+    Extending existing tables if needed since the file with this model
+    is duplicated among microservices.
+    https://docs.sqlalchemy.org/en/13/core/metadata.html#sqlalchemy.schema.Table.params.extend_existing
     """
+
+    __table_args__ = {"extend_existing": True}
 
     pk: str = sqlmodel.Field(
         primary_key=True, default_factory=lambda: str(uuid.uuid4())
