@@ -12,7 +12,7 @@ except (ImportError, ModuleNotFoundError):
 class DocumentMetadata(MySQLModel, table=True):
     __tablename__ = "doc_metadata"
 
-    id: int = sqlmodel.Field(primary_key=True)
+    # id: int = sqlmodel.Field(primary_key=True)
     x_key: str
     slug: str = ""
     word_count: int = 0

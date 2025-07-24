@@ -10,8 +10,8 @@ except (ImportError, ModuleNotFoundError):
 class File(MySQLModel, table=True):
     __tablename__ = "files"
 
-    id: int = sqlmodel.Field(primary_key=True)
-    pk: str
+    # id: int = sqlmodel.Field(primary_key=True)
+    pk: str = sqlmodel.Field(primary_key=True)
     stem: str
     prefix: str
 

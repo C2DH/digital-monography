@@ -25,9 +25,8 @@ class Asset(MySQLModel, table=True):
     """
 
     __tablename__ = "assets"
-    __name__ = "Asset"
 
-    id: int = sqlmodel.Field(primary_key=True)
+    # id: int = sqlmodel.Field(primary_key=True)
     # fp: pathlib.Path
     x_fp: str = sqlmodel.Field(alias="fp")
     metadata_table: str

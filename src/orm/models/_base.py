@@ -1,14 +1,17 @@
-import sqlalchemy.orm as sa_orm
+import uuid
 import sqlmodel
 import typing as t
-
-Base = sa_orm.declarative_base()
 
 
 class MySQLModel(sqlmodel.SQLModel):
     """
-    All db models should inherit from this class.
+    All db models that are stored in
+    should inherit from this class.
     """
+
+    pk: str = sqlmodel.Field(
+        primary_key=True, default_factory=lambda: str(uuid.uuid4())
+    )
 
     def model_dump(self, *args, **kwargs) -> t.Dict[str, t.Any]:
         """

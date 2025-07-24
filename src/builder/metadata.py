@@ -25,11 +25,11 @@ else:
     DataclassInstance = None
 
 try:
-    from keys import KeyPath
     from constants import MediumEnum, AUTONUMBER_PLACEHOLDER
+    from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
-    from .keys import KeyPath  # type: ignore
     from .constants import MediumEnum, AUTONUMBER_PLACEHOLDER  # type: ignore
+    from .keys import KeyPath  # type: ignore
 
 
 logger = logging.getLogger()

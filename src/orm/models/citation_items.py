@@ -32,7 +32,7 @@ class CitationItem(MySQLModel, table=True):
 
     __tablename__ = "citation_items"
 
-    pk: str = sqlmodel.Field(primary_key=True)
+    # pk: str = sqlmodel.Field(primary_key=True)
     id: int
     file_name: str
     citationId: str

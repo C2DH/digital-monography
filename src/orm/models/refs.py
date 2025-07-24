@@ -15,7 +15,7 @@ class Ref(MySQLModel, table=True):
 
     __tablename__ = "refs"
 
-    pk: str = sqlmodel.Field(primary_key=True, default=str(uuid.uuid4()))
+    # pk: str = sqlmodel.Field(primary_key=True, default=str(uuid.uuid4()))
     # pk: uuid.UUID = sqlmodel.Field(primary_key=True, default=uuid.uuid4())
     fn: str
     target_id: str
