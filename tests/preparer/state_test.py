@@ -50,6 +50,13 @@ class TestDocumentState:
         assert self.doc_state.metadata.word_count == 0
         assert self.doc_state.metadata.char_count == 0
 
+    def test_state_filter(self):
+        all_assets = self.doc_state.filter("assets", "author", "author")
+        assert len(all_assets) == 2
+        assets = self.doc_state.filter("assets", KeyPath("foo/bar/2.docx"), "location")
+        assert len(assets) == 1
+        assert assets[0].fp == pathlib.PosixPath("foo/bar/2.txt")
+
     def test_to_json_from_json(self):
         data = self.doc_state.to_dict()
         new_state = DocumentState(key=KeyPath("foo/bar/1.docx"))
