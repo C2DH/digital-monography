@@ -24,7 +24,6 @@ class Asset(MySQLModel, table=True):
     * book level information
     """
 
-    # __tablename__ = DbTableNames.Asset.value
     __tablename__ = "assets"
 
     # id: int = sqlmodel.Field(primary_key=True)

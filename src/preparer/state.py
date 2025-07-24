@@ -74,6 +74,10 @@ class DocumentState:
         records = self.__dict__.get(tablename, [])
         return [rec for rec in records if getattr(rec, attrib) == val]
 
+    def len(self, tablename: str) -> int:
+        """Get the number of records in a current document's state."""
+        return len(self.__dict__.get(tablename, []))
+
     def to_dict(self) -> DocumentStateSerialized:
         """
         Serialize the state to dictionary that contains only JSON serializable types.

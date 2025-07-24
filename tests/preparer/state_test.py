@@ -69,3 +69,4 @@ class TestDocumentState:
         assert asset2.metadata_table == self.asset2.metadata_table
         assert asset2.medium == self.asset2.medium
         assert asset2.location == self.asset2.location
+        assert self.doc_state.len("assets") == 2
