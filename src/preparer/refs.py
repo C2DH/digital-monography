@@ -1,3 +1,9 @@
+"""
+NOTE: This module is in dire need of refactoring.
+It is a mess of functions and classes that do not follow any particular pattern.
+Dear future me, please refactor it at the next time you need to touch referencing logic.
+"""
+
 import pathlib
 import bs4
 import docutils.nodes

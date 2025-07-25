@@ -17,12 +17,15 @@ try:
     )
     from keys import KeyPath
     from constants import (
+        AUTONUMBER_PLACEHOLDER,
         CAPTION_ITEM_TYPE_FIGURE,
         CAPTION_ITEM_TYPE_TABLE,
         CAPTION_ITEM_TYPE_GRAPH,
         CAPTION_ITEM_TYPE_OTHER,
         CLS_CAPTION,
     )
+    from models import Ref, Target
+    from state import DocumentState
 except (ImportError, ModuleNotFoundError):
     from .metadata import (
         DocumentMetadata,
@@ -33,12 +36,15 @@ except (ImportError, ModuleNotFoundError):
     )
     from .keys import KeyPath
     from .constants import (
+        AUTONUMBER_PLACEHOLDER,
         CAPTION_ITEM_TYPE_FIGURE,
         CAPTION_ITEM_TYPE_TABLE,
         CAPTION_ITEM_TYPE_GRAPH,
         CAPTION_ITEM_TYPE_OTHER,
         CLS_CAPTION,
     )
+    from .models import Ref, Target
+    from .state import DocumentState
 
 
 def is_header(tag: bs4.element.Tag) -> bool:
@@ -60,36 +66,14 @@ def is_reference(tag: bs4.element.Tag) -> bool:
     return bool(tag.name == "a" and tag.attrs.get("href"))
 
 
-def prepare_ref_targets_in_headers(
-    html_soup: bs4.BeautifulSoup,
-    metadata: DocumentMetadata,
-    headers: list[bs4.element.Tag],
-) -> bs4.BeautifulSoup:
-    return html_soup
-
-
-def prepare_ref_targets_in_captions(
-    html_soup: bs4.BeautifulSoup,
-    metadata: DocumentMetadata,
-    captions: list[bs4.element.Tag],
-) -> bs4.BeautifulSoup:
-    return html_soup
-
-
-def prepare_ref_targets_in_footnotes(
-    html_soup: bs4.BeautifulSoup,
-    metadata: DocumentMetadata,
-    footnotes: list[bs4.element.Tag],
-) -> bs4.BeautifulSoup:
-    return html_soup
-
-
 def prepare_references(
     html_soup: bs4.BeautifulSoup,
     metadata: DocumentMetadata,
+    dstate: DocumentState,
     references: list[bs4.element.Tag],
 ) -> bs4.BeautifulSoup:
     for a_tag in references:
+        a_tag: bs4.element.Tag
         if _is_target_footnote(a_tag):
             continue
         elif _is_ref_footnote(a_tag):
@@ -103,8 +87,21 @@ def prepare_references(
             ref = Reference(a_tag)
             ref.find_infile_target(metadata.get_target(ref.id))
 
+            link = Link(a_tag, dstate)
+            target = link.find_infile_target()
+            dstate.add(
+                Ref(
+                    fn=link.get_link_location_name(),  # TODO: change to location
+                    target_id=target.pk if target else "",
+                    text=link.new_link_text(),
+                    href=link.new_link_href(),
+                    prev_string=link.get_prev_string(),
+                    prev_href=link.get_prev_href(),
+                    elem=link.get_html_element(),
+                    # asset_id: # NOTE: asset_id is always empty. Why?
+                )
+            )
             # target = metadata.get_target(link.id) if link.is_inner_reference() else None
-
             # metadata.add_ref(ref.to_datapoint())
             # if ref.unique_id and metadata.get_substitution(ref.unique_id) is None:
             #     metadata.add_substitution(ref.to_substitution())
@@ -119,6 +116,126 @@ def _is_ref_footnote(a_tag: bs4.element.Tag) -> bool:
 
 def _is_target_footnote(a_tag: bs4.element.Tag) -> bool:
     return bool(a_tag.attrs.get("href", "").startswith("#footnote-ref-"))
+
+
+class Link:
+    def __init__(self, a_tag: bs4.Tag, dstate: DocumentState) -> None:
+        """
+        This should be transformed by `html2md` to
+        ```md
+        [link-text](link-destination)
+        ```
+        """
+
+        self.a_tag = a_tag
+        self.dstate = dstate
+
+    def find_infile_target(self) -> Target | None:
+        """
+        Look for the link's target in a current document.
+        If link leads to a target in separate document,
+        or if it is an external link (e.g. to website), return None.
+        """
+        return None
+
+    def get_link_location(self) -> KeyPath:
+        return self.dstate.metadata.key
+
+    def get_link_location_name(self) -> str:
+        return self.get_link_location().name
+
+    def new_link_text(self) -> str:
+        """
+        Markdown link text to be placed in `[text](...)` syntax.
+        """
+        # TODO:
+        # * unique_id
+        # * text_to_replace
+        # * target
+        # * is_cross_file_reference
+        # * is_inner_reference
+
+        tag_text = self.a_tag.text
+        if AUTONUMBER_PLACEHOLDER in tag_text:
+            self.text_to_replace = AUTONUMBER_PLACEHOLDER
+            replace_with = r"{{ " + self.unique_id + r" }}"
+            tag_text = tag_text.replace(self.text_to_replace, replace_with)
+            return tag_text
+        match = self._match_complex_numbering(tag_text)
+        if isinstance(match, re.Match):
+            start, end = match.span(1)
+            self.text_to_replace = tag_text[start:end]
+            replace_with = r"{{ " + self.unique_id + r" }}"
+            return tag_text.replace(self.text_to_replace, replace_with)
+        elif self.is_cross_file_reference():
+            to_replace = ""
+            for i in range(len(tag_text)):
+                if tag_text[i].isdigit():
+                    to_replace += tag_text[i]
+                if to_replace and not tag_text[i].isdigit():
+                    break
+            # replace_with = r"{{ " + self.path + "#" + self.fragment + r" }}"
+            replace_with = r"{{ " + self.unique_id + r" }}"
+            if to_replace:
+                tag_text = tag_text.replace(to_replace, replace_with)
+            self.text_to_replace = to_replace
+        elif self.is_inner_reference():
+            if target is not None:
+                to_replace = target.text
+                # replace_with = r"{{ " + self.fragment + r" }}"
+                replace_with = r"{{ " + self.unique_id + r" }}"
+                tag_text = tag_text.replace(to_replace, replace_with)
+                self.text_to_replace = to_replace
+        return tag_text
+
+    def _match_complex_numbering(self, tag_text: str) -> re.Match | None:
+        """
+        Search for complex numbering in the text of the anchor tag.
+        Complex number pattern is one of:
+            * `<digit><sep><digit>` (e.g. '1.1')
+            * `<roman_num><sep><digit>` (e.g. 'iv.1')
+            * `<letter of the alphabet><sep><digit>` (e.g. 'a.1')
+        This solution assumes the alphabetical numbering will not be greater than 'z' (26).
+        Accepted separators match MS Word separators: '.:—-'
+        """
+        before = r"(?:\s)"  # make sure starts with a whitespace
+        heading_number = r"([ivxlcdm]+|[a-z]{1}|\d+)"
+        sep = r"[.:—-]{1}"
+        pattern = rf"{before}({heading_number}{sep}\d)"
+        assert pattern == r"(?:\s)(([ivxlcdm]+|[a-z]{1}|\d+)[.:—-]{1}\d)"
+        return re.search(pattern, tag_text.lower())
+
+    def new_link_href(self) -> str:
+        """
+        Markdown destination to be placed in `[...](destination)` syntax.
+        """
+        # TODO:
+        # * is_cross_file_reference
+        # * is_inner_reference
+        # * uri
+        # * path
+        # * fragment
+
+        if self.is_cross_file_reference():
+            # TODO: when filename tracking is in place, add handling changing paths
+            path = (
+                self.path.replace(".docx", ".md")
+                if self.path.endswith(".docx")
+                else self.path
+            )
+            return f"./{path}#{self.fragment}"
+        elif self.is_inner_reference():
+            return f"#{self.fragment}"
+        return self.uri
+
+    # target = link.find_infile_target()
+    # fn=link.get_current_filename(),
+    # target_id=target.pk if target else "",
+    # text=link.new_link_text(),
+    # href=link.new_link_href(),
+    # prev_string=link.get_prev_string(),
+    # prev_href=link.get_prev_href(),
+    # elem=link.get_html_element(),
 
 
 class Reference:
