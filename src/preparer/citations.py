@@ -6,12 +6,14 @@ import citeproc
 
 try:
     from metadata import DocumentMetadata, CitationGroupDatapoint, CitationItemDatapoint
+    from state import DocumentState
 except (ImportError, ModuleNotFoundError):
     from .metadata import (
         DocumentMetadata,
         CitationGroupDatapoint,
         CitationItemDatapoint,
     )
+    from .state import DocumentState
 
 
 class CitationItem(t.TypedDict):
@@ -40,6 +42,7 @@ def is_citation(tag: bs4.element.Tag) -> bool:
 def prepare_citations(
     html_soup: bs4.BeautifulSoup,
     metadata: DocumentMetadata,
+    dstate: DocumentState,
     citation_tags: list[bs4.element.Tag],
 ) -> tuple[bs4.BeautifulSoup, citeproc.CitationStylesBibliography]:
     citation_style = "harvard1"  # TODO make it configurable

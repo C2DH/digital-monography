@@ -12,6 +12,7 @@ from src.preparer.refs import (
     prepare_ref_targets_in_footnotes,
     prepare_references,
 )
+from src.preparer.state import DocumentState
 from src.builder.metadata import DocumentMetadata
 from src.builder.keys import KeyPath
 from src.builder.verif_book import RefsAndTargetsVerifier
@@ -42,6 +43,7 @@ class TestRefsAndTargetsVerifier:
     ) -> tuple[bs4.BeautifulSoup, DocumentMetadata]:
         html_str = _convert_to_html(fp)
         html_soup = bs4.BeautifulSoup(html_str, "html.parser")
+        dstate = DocumentState(fp)
         metadata = DocumentMetadata(fp)
         headers, captions, footnotes, references = [], [], [], []
         classifiers = [
@@ -54,10 +56,15 @@ class TestRefsAndTargetsVerifier:
             for check_if_meets_criteria, container in classifiers:
                 if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
                     container.append(node)
-        html_soup = prepare_ref_targets_in_headers(html_soup, metadata, headers)
-        html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
-        html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, footnotes)
-        html_soup = prepare_references(html_soup, metadata, references)
+        html_soup = prepare_ref_targets_in_headers(html_soup, metadata, dstate, headers)
+        html_soup = prepare_ref_targets_in_captions(
+            html_soup, metadata, dstate, captions
+        )
+        html_soup = prepare_ref_targets_in_footnotes(
+            html_soup, metadata, dstate, footnotes
+        )
+        html_soup = prepare_references(html_soup, metadata, dstate, references)
+        # TODO: replace return metadata with dstate
         return html_soup, metadata
 
     def test_check_a_is_not_https(self):

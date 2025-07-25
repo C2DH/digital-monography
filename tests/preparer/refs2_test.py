@@ -5,6 +5,7 @@ from src.preparer.constants import AUTONUMBER_PLACEHOLDER
 from src.preparer.main import _convert_to_html, prepare_docx
 from src.preparer.metadata import DocumentMetadata, SubstitutionDatapoint
 from src.preparer.keys import KeyPath
+from src.preparer.state import DocumentState
 
 
 class TestRefDatapointsCreated:
@@ -32,9 +33,10 @@ class TestRefDatapointsCreated:
     def _prepare_docx_for_ref_handing(
         cls, fp: KeyPath
     ) -> tuple[bs4.BeautifulSoup, DocumentMetadata]:
+        cls.dstate = DocumentState(fp)
         metadata = DocumentMetadata(fp)
         html_str = _convert_to_html(fp)
-        html_soup, metadata, _ = prepare_docx(html_str, metadata)
+        html_soup, metadata, _ = prepare_docx(html_str, metadata, cls.dstate)
         return html_soup, metadata
 
     def test_target_as_a_user_placed_bookmark(self):
@@ -425,9 +427,10 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
     def _prepare_docx_for_ref_handing(
         cls, fp: KeyPath
     ) -> tuple[bs4.BeautifulSoup, DocumentMetadata]:
+        cls.dstate = DocumentState(fp)
         metadata = DocumentMetadata(fp)
         html_str = _convert_to_html(fp)
-        html_soup, metadata, _ = prepare_docx(html_str, metadata)
+        html_soup, metadata, _ = prepare_docx(html_str, metadata, cls.dstate)
         return html_soup, metadata
 
     def test_target_for_digital(self):

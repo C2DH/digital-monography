@@ -34,7 +34,7 @@ class AuditEvent:
                 datetime.datetime.now(datetime.timezone.utc)
                 + datetime.timedelta(days=30)
             ).timestamp()
-        )  # NOTE: if you want to archive the audit trail, disable TTL feature""
+        )  # NOTE: if you want to archive the audit trail, disable TTL feature
         table.put_item(
             Item={
                 "slug": self.slug,

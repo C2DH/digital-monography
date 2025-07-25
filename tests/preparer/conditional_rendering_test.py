@@ -17,6 +17,7 @@ from src.preparer.refs import (
     prepare_ref_targets_in_footnotes,
     prepare_references,
 )
+from src.preparer.state import DocumentState
 
 
 class TestConditionalRendering:
@@ -34,7 +35,9 @@ class TestConditionalRendering:
         cls.before_soup = bs4.BeautifulSoup(result.value, "html.parser")
         cls.before_md = convert_to_md(cls.before_soup)
         cls.after_soup = bs4.BeautifulSoup(result.value, "html.parser")
-        cls.metadata = DocumentMetadata(cls.fp.relative_to(cls.fp.parent.parent))
+        key = cls.fp.relative_to(cls.fp.parent.parent)
+        cls.dstate = DocumentState(key)
+        cls.metadata = DocumentMetadata(key)
         headers = []
         captions = []
         footnotes = []
@@ -52,19 +55,23 @@ class TestConditionalRendering:
                 if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
                     container.append(node)
         cls.after_soup = prepare_ref_targets_in_headers(
-            cls.after_soup, cls.metadata, headers
+            cls.after_soup, cls.metadata, cls.dstate, headers
         )
         cls.after_soup = prepare_ref_targets_in_captions(
-            cls.after_soup, cls.metadata, captions
+            cls.after_soup, cls.metadata, cls.dstate, captions
         )
         cls.after_soup = prepare_ref_targets_in_footnotes(
-            cls.after_soup, cls.metadata, footnotes
+            cls.after_soup, cls.metadata, cls.dstate, footnotes
         )
-        cls.after_soup = prepare_references(cls.after_soup, cls.metadata, references)
+        cls.after_soup = prepare_references(
+            cls.after_soup, cls.metadata, cls.dstate, references
+        )
         # html_soup = prepare_metadata_tables(html_soup, metadata, tables)
-        cls.after_soup = remove_paper_only(cls.after_soup, cls.metadata, paper_only)
+        cls.after_soup = remove_paper_only(
+            cls.after_soup, cls.metadata, cls.dstate, paper_only
+        )
         # html_soup = remove_empty_tables(html_soup, metadata, tables)
-        cls.after_md = convert_to_md(cls.after_soup, cls.metadata)
+        cls.after_md = convert_to_md(cls.after_soup, cls.metadata, cls.dstate)
 
     def test_removal_of_parts_of_paragraph(self):
         expected_before = (

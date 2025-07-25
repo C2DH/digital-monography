@@ -4,13 +4,15 @@ import json
 try:
     from metadata import DocumentMetadata
     from constants import CLS_METADATA_TABLE_JSONDATA
+    from state import DocumentState
 except (ImportError, ModuleNotFoundError):
     from .metadata import DocumentMetadata
     from .constants import CLS_METADATA_TABLE_JSONDATA
+    from .state import DocumentState
 
 
 def hide_metadata_in_html(
-    html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata
+    html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata, dstate: DocumentState
 ) -> bs4.BeautifulSoup:
     """
     Hide all metadata records in a hidden <script> tag at the end of

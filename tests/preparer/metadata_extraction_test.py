@@ -14,7 +14,7 @@ from src.preparer.refs import (
     is_caption,
     is_reference,
 )
-
+from src.preparer.state import DocumentState
 
 SLUG = "book-content-examples"
 
@@ -31,7 +31,9 @@ class TestMetadataTablesExtraction:
         with open(cls.fp, "rb") as f:
             result = mammoth.convert_to_html(f, style_map=MAMMOTH_STYLE_MAP)
         cls.soup = bs4.BeautifulSoup(result.value, "html.parser")
-        cls.metadata = DocumentMetadata(cls.fp.relative_to(cls.fp.parent.parent))
+        key = cls.fp.relative_to(cls.fp.parent.parent)
+        cls.dstate = DocumentState(key)
+        cls.metadata = DocumentMetadata(key)
         tables = cls.soup.find_all("table")
         captions = []
         references = []
@@ -43,11 +45,13 @@ class TestMetadataTablesExtraction:
             for check_if_meets_criteria, container in classifiers:
                 if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
                     container.append(node)
-        cls.soup = prepare_ref_targets_in_captions(cls.soup, cls.metadata, captions)
-        cls.soup = prepare_references(cls.soup, cls.metadata, references)
-        cls.soup = prepare_metadata_tables(cls.soup, cls.metadata, tables)
-        cls.soup = remove_metadata_tables(cls.soup, cls.metadata, tables)
-        cls.md = convert_to_md(cls.soup, cls.metadata)
+        cls.soup = prepare_ref_targets_in_captions(
+            cls.soup, cls.metadata, cls.dstate, captions
+        )
+        cls.soup = prepare_references(cls.soup, cls.metadata, cls.dstate, references)
+        cls.soup = prepare_metadata_tables(cls.soup, cls.metadata, cls.dstate, tables)
+        cls.soup = remove_metadata_tables(cls.soup, cls.metadata, cls.dstate, tables)
+        cls.md = convert_to_md(cls.soup, cls.metadata, cls.dstate)
         cls.asset_0 = cls.metadata.assets[0]
         cls.asset_1 = cls.metadata.assets[1]
         cls.asset_2 = cls.metadata.assets[2]

@@ -6,6 +6,7 @@ try:
         DocumentMetadata,
         MetadataTableDatapoint,
     )
+    from state import DocumentState
 except (ImportError, ModuleNotFoundError):
     from .constants import (
         ATTRIB_METADATA_UUID,
@@ -16,11 +17,13 @@ except (ImportError, ModuleNotFoundError):
         DocumentMetadata,
         MetadataTableDatapoint,
     )
+    from .state import DocumentState
 
 
 def insert_digital_objects(
     html_soup: bs4.BeautifulSoup,
     doc_metadata: DocumentMetadata,
+    dstate: DocumentState,
     tables: list[bs4.element.Tag],
 ) -> bs4.BeautifulSoup:
     for table in tables:
@@ -54,6 +57,7 @@ def insert_digital_objects(
 def remove_metadata_tables(
     html_soup: bs4.BeautifulSoup,
     _: DocumentMetadata,
+    dstate: DocumentState,
     tables: list[bs4.element.Tag],
 ) -> bs4.BeautifulSoup:
     for table in tables:

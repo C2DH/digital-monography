@@ -38,17 +38,12 @@ DEFAULT_S3_EVENT = {
 }
 
 
-# from src.wordprocessor.conditional_rendering import (
-#     remove_parts_and_highlights_due_to_conditional_rendering,
-# )
 from src.preparer.main import prepare_docx
 from src.wordprocessor.constants import AUTONUMBER_PLACEHOLDER, MAMMOTH_STYLE_MAP
 from src.wordprocessor.main import wordprocess_docx
 from src.wordprocessor.keys import KeyPath
 from src.wordprocessor.metadata import DocumentMetadata
-
-# from src.wordprocessor.numbering_captions import add_chapter_number_to_captions
-# from src.wordprocessor.remove_images import remove_images
+from src.wordprocessor.state import DocumentState
 from src.preparer.html2md import convert_to_md
 
 
@@ -81,8 +76,9 @@ class TestWordprocessor:
             before_html = mammoth.convert_to_html(f, style_map=MAMMOTH_STYLE_MAP)
             before_soup = bs4.BeautifulSoup(before_html.value, "html.parser")
         # preparer
+        cls.dstate = DocumentState(key)
         metadata = DocumentMetadata(key)
-        _, metadata, _ = prepare_docx(before_html.value, metadata)
+        _, metadata, _ = prepare_docx(before_html.value, metadata, cls.dstate)
         cls.book_metadata[key.stem] = metadata
         cls.before_soup[key.stem] = before_soup
         cls.before_md[key.stem] = convert_to_md(before_soup)

@@ -4,9 +4,11 @@ import bs4
 try:
     from constants import CLS_PAPER_ONLY
     from metadata import DocumentMetadata
+    from state import DocumentState
 except (ImportError, ModuleNotFoundError):
     from .constants import CLS_PAPER_ONLY
     from .metadata import DocumentMetadata
+    from .state import DocumentState
 
 
 def is_paper_only(tag: bs4.Tag) -> bool:
@@ -14,7 +16,10 @@ def is_paper_only(tag: bs4.Tag) -> bool:
 
 
 def remove_paper_only(
-    html_soup: bs4.BeautifulSoup, _: DocumentMetadata, paper_only: list[bs4.Tag]
+    html_soup: bs4.BeautifulSoup,
+    _: DocumentMetadata,
+    dstate: DocumentState,
+    paper_only: list[bs4.Tag],
 ) -> bs4.BeautifulSoup:
     """
     Remove all elements with the class "constants.CLS_PAPER_ONLY" from the html.

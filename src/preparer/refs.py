@@ -26,6 +26,7 @@ try:
         CLS_DIGITAL_ONLY,
         CLS_PAPER_ONLY,
     )
+    from state import DocumentState
 except (ImportError, ModuleNotFoundError):
     from .metadata import (
         DocumentMetadata,
@@ -45,6 +46,7 @@ except (ImportError, ModuleNotFoundError):
         CLS_DIGITAL_ONLY,
         CLS_PAPER_ONLY,
     )
+    from .state import DocumentState
 
 
 def is_header(tag: bs4.element.Tag) -> bool:
@@ -72,6 +74,7 @@ def is_reference(tag: bs4.element.Tag) -> bool:
 def prepare_ref_targets_in_headers(
     html_soup: bs4.BeautifulSoup,
     metadata: DocumentMetadata,
+    dstate: DocumentState,
     headers: list[bs4.element.Tag],
 ) -> bs4.BeautifulSoup:
     for tag in headers:
@@ -128,6 +131,7 @@ def prepare_ref_targets_in_headers(
 def prepare_ref_targets_in_captions(
     html_soup: bs4.BeautifulSoup,
     metadata: DocumentMetadata,
+    dstate: DocumentState,
     captions: list[bs4.element.Tag],
 ) -> bs4.BeautifulSoup:
     for caption in captions:
@@ -316,6 +320,7 @@ def _get_isdigital_and_ispaper(caption: bs4.Tag, identifier: str) -> tuple[bool,
 def prepare_ref_targets_in_footnotes(
     html_soup: bs4.BeautifulSoup,
     metadata: DocumentMetadata,
+    dstate: DocumentState,
     footnotes: list[bs4.element.Tag],
 ) -> bs4.BeautifulSoup:
     for li_tag in footnotes:
@@ -339,6 +344,7 @@ def prepare_ref_targets_in_footnotes(
 def prepare_references(
     html_soup: bs4.BeautifulSoup,
     metadata: DocumentMetadata,
+    dstate: DocumentState,
     references: list[bs4.element.Tag],
 ) -> bs4.BeautifulSoup:
     for a_tag in references:

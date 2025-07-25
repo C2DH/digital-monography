@@ -13,9 +13,11 @@ import typing as t
 try:
     from constants import CLS_DIGITAL_ONLY
     from metadata import DocumentMetadata
+    from state import DocumentState
 except (ImportError, ModuleNotFoundError):
     from .constants import CLS_DIGITAL_ONLY
     from .metadata import DocumentMetadata  # type: ignore
+    from .state import DocumentState
 
 
 line_beginning_re = re.compile(r"^", re.MULTILINE)
@@ -44,11 +46,14 @@ def sub_inline_conversion(markup_fn):
 
 class MystMdConverter(markdownify.MarkdownConverter):
 
-    def __init__(self, metadata: t.Optional[DocumentMetadata], **options):
+    def __init__(
+        self, metadata: t.Optional[DocumentMetadata], dstate: DocumentState, **options
+    ):
         if metadata is None:
             metadata = DocumentMetadata()
         self._metadata: DocumentMetadata = metadata
         self._soup = bs4.BeautifulSoup("", "html.parser")
+        self._dstate: DocumentState = dstate
         super().__init__(**options)
 
     class Options(markdownify.MarkdownConverter.DefaultOptions):
@@ -116,7 +121,6 @@ class MystMdConverter(markdownify.MarkdownConverter):
     def convert_span(self, el, text, convert_as_inline):
         if text.startswith("% :::{") and text.endswith(":::"):
             return "\n%s\n\n" % text
-        # elif el.get("class") == "dgt-mon-digital-only":
         elif CLS_DIGITAL_ONLY in el.get("class", []):
             return text
         return super().convert_p(el, text, convert_as_inline)
@@ -210,7 +214,8 @@ class MystMdConverter(markdownify.MarkdownConverter):
 def convert_to_md(
     soup: bs4.BeautifulSoup,
     metadata: t.Optional[DocumentMetadata] = None,
+    dstate: t.Optional[DocumentState] = None,
     **options,
 ) -> str:
     # TODO: change custom options to be passed to convert_to_md(**options <==)
-    return MystMdConverter(metadata, **options).convert_soup(soup)
+    return MystMdConverter(metadata, dstate, **options).convert_soup(soup)

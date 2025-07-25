@@ -17,6 +17,7 @@ try:
         METADATA_FIELDS,
     )
     from keys import KeyPath
+    from state import DocumentState
 except (ImportError, ModuleNotFoundError):
     from .metadata import AssetDatapoint, DocumentMetadata, MetadataTableDatapoint
     from .constants import (
@@ -29,6 +30,7 @@ except (ImportError, ModuleNotFoundError):
         METADATA_FIELDS,
     )
     from .keys import KeyPath
+    from .state import DocumentState
 
 type AcceptedValues = t.Union[str, bool, pathlib.Path]
 FALSE_EQUIVALENTS = [
@@ -49,6 +51,7 @@ FALSE_EQUIVALENTS = [
 def prepare_metadata_tables(
     html_soup: bs4.BeautifulSoup,
     document_metadata: DocumentMetadata,
+    dstate: DocumentState,
     tables: list[bs4.element.Tag],
 ) -> bs4.BeautifulSoup:
     """

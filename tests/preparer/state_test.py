@@ -43,12 +43,14 @@ class TestDocumentState:
         )
         cls.doc_state.add(cls.asset1)
         cls.doc_state.add(cls.asset2)
+        cls.doc_state.metadata.word_count = 30
+        cls.doc_state.metadata.char_count = 100
 
     def test_metadata(self):
         assert self.doc_state.metadata.key == KeyPath("foo/bar/1.docx")
         assert self.doc_state.metadata.slug == "foo"
-        assert self.doc_state.metadata.word_count == 0
-        assert self.doc_state.metadata.char_count == 0
+        assert self.doc_state.metadata.word_count == 30
+        assert self.doc_state.metadata.char_count == 100
 
     def test_state_filter(self):
         all_assets = self.doc_state.filter("assets", "author", "author")

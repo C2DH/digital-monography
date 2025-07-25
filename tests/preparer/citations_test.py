@@ -4,6 +4,7 @@ import pathlib
 
 from src.preparer.citations import add_bibliography, prepare_citations, is_citation
 from src.preparer.metadata import DocumentMetadata
+from src.preparer.state import DocumentState
 
 
 class TestCitationsFromFields:
@@ -15,12 +16,13 @@ class TestCitationsFromFields:
             result = mammoth.convert_to_html(f)
         cls.html_soup = bs4.BeautifulSoup(result.value, "html.parser")
         citations = []
+        cls.dstate = DocumentState()
         cls.metadata = DocumentMetadata()
         for node in cls.html_soup.descendants:
             if is_citation(node):
                 citations.append(node)
         cls.html_soup, cls.bib = prepare_citations(
-            cls.html_soup, cls.metadata, citations
+            cls.html_soup, cls.metadata, cls.dstate, citations
         )
         cls.html_soup = add_bibliography(cls.html_soup, cls.bib)
 
@@ -70,12 +72,13 @@ class TestCitationsFromFootnotes:
             result = mammoth.convert_to_html(f)
         cls.html_soup = bs4.BeautifulSoup(result.value, "html.parser")
         citations = []
+        cls.dstate = DocumentState()
         cls.metadata = DocumentMetadata()
         for node in cls.html_soup.descendants:
             if is_citation(node):
                 citations.append(node)
         cls.html_soup, cls.bib = prepare_citations(
-            cls.html_soup, cls.metadata, citations
+            cls.html_soup, cls.metadata, cls.dstate, citations
         )
         cls.html_soup = add_bibliography(cls.html_soup, cls.bib)
 

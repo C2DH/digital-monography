@@ -55,6 +55,7 @@ try:
         is_footnote,
         is_reference,
     )
+    from state import DocumentState
     from substitutions_prep import count_targets_for_substitutions
     from html2md import convert_to_md
     from ipynb_prep import tags_to_myst_crossref_targets
@@ -98,6 +99,7 @@ except (ImportError, ModuleNotFoundError):
         is_reference,
     )
     from .substitutions_prep import count_targets_for_substitutions
+    from .state import DocumentState
     from .html2md import convert_to_md
     from .ipynb_prep import tags_to_myst_crossref_targets
     from .keys import KeyPath
@@ -140,6 +142,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info(f"lambda_handler. Event: {json.dumps(event, default=str)}")
     key = _get_key(event)
     event_name = _get_event_name(event)
+    dstate = DocumentState(key)
     metadata = DocumentMetadata(key)
     ### Handle deletions
     if _is_file_ipynb(key) and _is_deletion(event_name):
@@ -150,8 +153,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     if _is_file_docx(key) and _is_deletion(event_name):
         _remove_fileobj(key)
         _remove_assets_info_from_s3(key)
-        _remove_metadata_from_db(key)
-        _remove_metadata_from_efs(key)
+        _remove_metadata_from_db(key)  # TODO: dstate
+        _remove_metadata_from_efs(key)  # TODO: dstate
         _remove_records_from_db(key)
         _remove_processed_html_from_efs(key)
         _remove_html_from_s3(key)
@@ -184,23 +187,23 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         src = _get_source_bucket(event)
         _download_fileobj(src, key)
         html_str = _convert_to_html(key.efs_filepath)
-        html_soup, metadata, tables = prepare_docx(html_str, metadata)
-        html_soup = hide_metadata_in_html(html_soup, metadata)  # last step
+        # TODO: prepare_docx shouldn't have to return "state"
+        html_soup, metadata, tables = prepare_docx(html_str, metadata, dstate)
+        html_soup = hide_metadata_in_html(html_soup, metadata, dstate)  # last step
         html_soup_str = str(html_soup)
         # IMPORTANT NOTE: other services depend on html produced at this stage, make sure that:
         # 1) all reversible transformations are made before saving html file;
         # 2) irreversible transformations are omited to avoid not being able to recreate a book
         # as html files written at this stage will be the basis for a paper version of a book.
-        html_soup = insert_digital_objects(html_soup, metadata, tables)
-        html_soup = remove_metadata_tables(html_soup, metadata, tables)
-        _write_config_to_efs(metadata, key)
-        _write_assets_info_to_s3(metadata, key)
-        _write_metadata_to_db(metadata, key)
-        _write_metadata_to_efs(metadata, key)
-        _write_records_to_db(metadata, key)
+        html_soup = insert_digital_objects(html_soup, metadata, dstate, tables)
+        html_soup = remove_metadata_tables(html_soup, metadata, dstate, tables)
+        _write_assets_info_to_s3(metadata, dstate, key)
+        _write_metadata_to_db(metadata, dstate, key)
+        _write_metadata_to_efs(metadata, dstate, key)
+        _write_records_to_db(metadata, dstate, key)
         _write_processed_html_to_efs(html_soup_str, key)
         _put_html_to_s3(html_soup_str, key)
-        md = _convert_to_md(key, html_soup, metadata)
+        md = _convert_to_md(key, html_soup, metadata, dstate)
         _write_processed_md_to_efs(md, key)
         _put_md_to_s3(md, key.s3_key.with_suffix(".md"))
         msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
@@ -356,8 +359,8 @@ def _remove_fileobj(key: KeyPath) -> None:
 
 
 def prepare_docx(
-    html_str: str, metadata: DocumentMetadata
-) -> tuple[bs4.BeautifulSoup, DocumentMetadata, list[bs4.element.Tag]]:
+    html_str: str, metadata: DocumentMetadata, dstate: DocumentState
+) -> tuple[bs4.BeautifulSoup, DocumentMetadata, DocumentState, list[bs4.element.Tag]]:
     images_with_alttxt = []
     tables = []
     headers = []
@@ -388,17 +391,17 @@ def prepare_docx(
         for check_if_meets_criteria, container in classifiers:
             if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
                 container.append(node)
-    html_soup, bibliography = prepare_citations(html_soup, metadata, citations)
+    html_soup, bibliography = prepare_citations(html_soup, metadata, dstate, citations)
     html_soup = add_bibliography(html_soup, bibliography)
-    html_soup = prepare_ref_targets_in_headers(html_soup, metadata, headers)
-    html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
-    html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, footnotes)
-    html_soup = prepare_references(html_soup, metadata, references)
-    html_soup = prepare_metadata_tables(html_soup, metadata, tables)
-    html_soup = remove_paper_only(html_soup, metadata, paper_only)
-    html_soup = remove_empty_tables(html_soup, metadata, tables)
-    html_soup = prepare_alt_texts(html_soup, metadata, images_with_alttxt)
-    html_soup = count_targets_for_substitutions(html_soup, metadata)
+    html_soup = prepare_ref_targets_in_headers(html_soup, metadata, dstate, headers)
+    html_soup = prepare_ref_targets_in_captions(html_soup, metadata, dstate, captions)
+    html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, dstate, footnotes)
+    html_soup = prepare_references(html_soup, metadata, dstate, references)
+    html_soup = prepare_metadata_tables(html_soup, metadata, dstate, tables)
+    html_soup = remove_paper_only(html_soup, metadata, dstate, paper_only)
+    html_soup = remove_empty_tables(html_soup, metadata, dstate, tables)
+    html_soup = prepare_alt_texts(html_soup, metadata, dstate, images_with_alttxt)
+    html_soup = count_targets_for_substitutions(html_soup, metadata, dstate)
     return html_soup, metadata, tables
 
 
@@ -432,10 +435,13 @@ def _convert_to_html(key: KeyPath) -> str:
 
 
 def _convert_to_md(
-    key: KeyPath, html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata
+    key: KeyPath,
+    html_soup: bs4.BeautifulSoup,
+    metadata: DocumentMetadata,
+    dstate: DocumentState,
 ) -> str:
     try:
-        return convert_to_md(html_soup, metadata)
+        return convert_to_md(html_soup, metadata, dstate)
     except Exception as e:
         logger.exception(f"Converting to md failed. Error: {repr(e)}")
         _log_audit_event(
@@ -596,13 +602,6 @@ def _enqueue_to_github(msg: GithubTriggerMsg) -> None:
 #         raise
 
 
-def _write_config_to_efs(metadata: DocumentMetadata, key: KeyPath) -> None:
-    # new_efs_filepath = key.efs_filepath.with_suffix(".yml")
-    # substitutions = {subs.placeholder: subs.was for subs in metadata.substitutions}
-    # TODO: set config for a particular file
-    pass
-
-
 def _remove_processed_html_from_efs(key: KeyPath) -> None:
     try:
         new_efs_filepath = key.efs_slug_html_path.with_suffix(".html")
@@ -666,7 +665,9 @@ def _remove_assets_info_from_s3(key: KeyPath) -> None:
         raise
 
 
-def _write_assets_info_to_s3(metadata: DocumentMetadata, key: KeyPath) -> None:
+def _write_assets_info_to_s3(
+    metadata: DocumentMetadata, dstate: DocumentState, key: KeyPath
+) -> None:
     try:
         # TODO: this works, but it's a bad design
         s3_key = AssetDatapoint.get_s3_key(key)
@@ -716,7 +717,9 @@ def _remove_metadata_from_db(key: KeyPath) -> None:
         raise
 
 
-def _write_metadata_to_db(metadata: DocumentMetadata, key: KeyPath) -> None:
+def _write_metadata_to_db(
+    metadata: DocumentMetadata, dstate: DocumentState, key: KeyPath
+) -> None:
     if dynamodb is None:
         return
     try:
@@ -776,7 +779,9 @@ def _remove_metadata_from_efs(key: KeyPath) -> None:
         raise
 
 
-def _write_metadata_to_efs(metadata: DocumentMetadata, key: KeyPath) -> None:
+def _write_metadata_to_efs(
+    metadata: DocumentMetadata, dstate: DocumentState, key: KeyPath
+) -> None:
     try:
         json_data = metadata.to_json()
         fp = key.add_to_efs_slug_dir("_metadata").parent / key.github_path.with_suffix(
@@ -820,7 +825,9 @@ def _remove_records_from_db(key: KeyPath) -> None:
         raise
 
 
-def _write_records_to_db(metadata: DocumentMetadata, key: KeyPath) -> None:
+def _write_records_to_db(
+    metadata: DocumentMetadata, dstate: DocumentState, key: KeyPath
+) -> None:
     try:
         with sqlmodel.Session(db_engine) as session:
             # delete existing records for this file so there are no duplicates

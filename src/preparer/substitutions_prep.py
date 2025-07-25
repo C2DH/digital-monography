@@ -2,12 +2,14 @@ import bs4
 
 try:
     from metadata import DocumentMetadata, SubstitutionDatapoint, TargetDatapoint
+    from state import DocumentState
 except (ImportError, ModuleNotFoundError):
     from .metadata import DocumentMetadata, SubstitutionDatapoint, TargetDatapoint
+    from .state import DocumentState
 
 
 def count_targets_for_substitutions(
-    soup: bs4.BeautifulSoup, metadata: DocumentMetadata
+    soup: bs4.BeautifulSoup, metadata: DocumentMetadata, dstate: DocumentState
 ) -> bs4.BeautifulSoup:
     update_datapoints_for_targets(soup, metadata.substitutions)
     update_datapoints_for_targets(soup, metadata.targets)

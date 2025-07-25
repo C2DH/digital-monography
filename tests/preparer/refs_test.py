@@ -13,6 +13,7 @@ from src.preparer.refs import (
 )
 from src.preparer.metadata import DocumentMetadata, TargetDatapoint
 from src.preparer.keys import KeyPath
+from src.preparer.state import DocumentState
 
 # targets in headers
 
@@ -37,9 +38,11 @@ def test_targets_in_headers__heading_crossref_targets_were_added():
         '<p>B <a href="other_file.docx#_Heading">link</a>.</p>'
     )
     bs = bs4.BeautifulSoup(sample_html, "html.parser")
-    metadata = DocumentMetadata(KeyPath("./tmp/sth/file.docx"))
+    key = KeyPath("./tmp/sth/file.docx")
+    dstate = DocumentState(key)
+    metadata = DocumentMetadata(key)
     headers = [node for node in bs.children if is_header(node)]
-    bs = prepare_ref_targets_in_headers(bs, metadata, headers)
+    bs = prepare_ref_targets_in_headers(bs, metadata, dstate, headers)
     pres = bs.find_all("pre")
     assert len(pres) == 3
     assert pres[0].text == "(f-file-heading)="
@@ -66,7 +69,9 @@ def test_targets_in_headers__corresponding_href_and_id():
         '<p>B <a href="other_file.docx#_Heading">link</a>.</p>'
     )
     bs = bs4.BeautifulSoup(sample_html, "html.parser")
-    metadata = DocumentMetadata(KeyPath("./tmp/sth/file.docx"))
+    key = KeyPath("./tmp/sth/file.docx")
+    dstate = DocumentState(key)
+    metadata = DocumentMetadata(key)
     headers = [node for node in bs.children if is_header(node)]
     references = []
     classifiers = [
@@ -76,8 +81,8 @@ def test_targets_in_headers__corresponding_href_and_id():
         for check_if_meets_criteria, container in classifiers:
             if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
                 container.append(node)
-    bs = prepare_ref_targets_in_headers(bs, metadata, headers)
-    bs = prepare_references(bs, metadata, references)
+    bs = prepare_ref_targets_in_headers(bs, metadata, dstate, headers)
+    bs = prepare_references(bs, metadata, dstate, references)
     pre = bs.find("pre")
     assert pre.text == "(f-file-heading)="
     anchors = bs.find_all("a", href=True)
@@ -96,7 +101,9 @@ def test_targets_in_headers__refs_and_targets_written_to_metadata():
         '<p>B <a href="other_file.docx#_Heading">link</a>.</p>'
     )
     bs = bs4.BeautifulSoup(sample_html, "html.parser")
-    metadata = DocumentMetadata(KeyPath("./tmp/sth/file.docx"))
+    key = KeyPath("./tmp/sth/file.docx")
+    dstate = DocumentState(key)
+    metadata = DocumentMetadata(key)
     headers = [node for node in bs.children if is_header(node)]
     references = []
     classifiers = [
@@ -106,8 +113,8 @@ def test_targets_in_headers__refs_and_targets_written_to_metadata():
         for check_if_meets_criteria, container in classifiers:
             if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
                 container.append(node)
-    bs = prepare_ref_targets_in_headers(bs, metadata, headers)
-    bs = prepare_references(bs, metadata, references)
+    bs = prepare_ref_targets_in_headers(bs, metadata, dstate, headers)
+    bs = prepare_references(bs, metadata, dstate, references)
     assert len(metadata.targets) == 3
     assert len(metadata.refs) == 2
     assert metadata.get_target("f-file-heading") is not None
@@ -132,9 +139,11 @@ def test_targets_in_captions__insert_pre_tag_before_caption():
         "</p>"
     )
     bs = bs4.BeautifulSoup(sample_html, "html.parser")
-    metadata = DocumentMetadata(KeyPath("./tmp/sth/file.docx"))
+    key = KeyPath("./tmp/sth/file.docx")
+    dstate = DocumentState(key)
+    metadata = DocumentMetadata(key)
     captions = [node for node in bs.children if is_caption(node)]
-    bs = prepare_ref_targets_in_captions(bs, metadata, captions)
+    bs = prepare_ref_targets_in_captions(bs, metadata, dstate, captions)
     pre = bs.find("pre")
     assert pre
     assert pre.text == "(f-file-ref178606189)="
@@ -152,9 +161,11 @@ def test_targets_in_captions__duplicated_target_id():
         ":</strong> Duplicated bookmarks.</p>"
     )
     bs = bs4.BeautifulSoup(sample_html, "html.parser")
-    metadata = DocumentMetadata(KeyPath("./tmp/sth/file.docx"))
+    key = KeyPath("./tmp/sth/file.docx")
+    dstate = DocumentState(key)
+    metadata = DocumentMetadata(key)
     captions = [node for node in bs.children if is_caption(node)]
-    bs = prepare_ref_targets_in_captions(bs, metadata, captions)
+    bs = prepare_ref_targets_in_captions(bs, metadata, dstate, captions)
     pres = bs.find_all("pre")
     assert len(pres) == 2
     assert pres[0].text == "(f-file-ref178606187)="
@@ -187,9 +198,11 @@ def test_targets_in_captions__replace_complex_numbering_in_caption():
         ":</strong> Complex numbering with separator.</p>"
     )
     bs = bs4.BeautifulSoup(sample_html, "html.parser")
-    metadata = DocumentMetadata(KeyPath("./tmp/sth/file.docx"))
+    key = KeyPath("./tmp/sth/file.docx")
+    dstate = DocumentState(key)
+    metadata = DocumentMetadata(key)
     captions = [node for node in bs.children if is_caption(node)]
-    bs = prepare_ref_targets_in_captions(bs, metadata, captions)
+    bs = prepare_ref_targets_in_captions(bs, metadata, dstate, captions)
     assert (
         captions[0].text
         == "Figure {{ ffileref178606189 }}: Complex numbering with separator."
@@ -214,9 +227,11 @@ def test_targets_in_captions__replace_roman_numbering_in_caption():
         " Roman numbering.</p>"
     )  # IV -> {{ file___Ref178606189 }}
     bs = bs4.BeautifulSoup(sample_html, "html.parser")
-    metadata = DocumentMetadata(KeyPath("./tmp/sth/file.docx"))
+    key = KeyPath("./tmp/sth/file.docx")
+    dstate = DocumentState(key)
+    metadata = DocumentMetadata(key)
     captions = [node for node in bs.children if is_caption(node)]
-    bs = prepare_ref_targets_in_captions(bs, metadata, captions)
+    bs = prepare_ref_targets_in_captions(bs, metadata, dstate, captions)
     assert captions[0].text == "Figure {{ ffileref178606189 }}: Roman numbering."
     # assert captions[0].text == "Figure {{ f-file-ref178606189 }}: Roman numbering."
     target = metadata.get_target("f-file-ref178606189")
@@ -236,9 +251,11 @@ def test_targets_in_captions__link_in_caption_is_left_not_changed():
         '<a href="https://example.com">link</a>.</p>'
     )
     bs = bs4.BeautifulSoup(sample_html, "html.parser")
-    metadata = DocumentMetadata(KeyPath("./tmp/sth/file.docx"))
+    key = KeyPath("./tmp/sth/file.docx")
+    dstate = DocumentState(key)
+    metadata = DocumentMetadata(key)
     captions = [node for node in bs.children if is_caption(node)]
-    bs = prepare_ref_targets_in_captions(bs, metadata, captions)
+    bs = prepare_ref_targets_in_captions(bs, metadata, dstate, captions)
     a = bs.find("a")
     assert a
     assert a["href"] == "https://example.com"
@@ -267,7 +284,9 @@ def test_ref_and_target_from_footnote():
         "</li></ol>"
     )
     bs = bs4.BeautifulSoup(sample_html, "html.parser")
-    metadata = DocumentMetadata(KeyPath("./tmp/sth/file.docx"))
+    key = KeyPath("./tmp/sth/file.docx")
+    dstate = DocumentState(key)
+    metadata = DocumentMetadata(key)
     references = []
     footnotes = []
     classifiers = [
@@ -278,8 +297,8 @@ def test_ref_and_target_from_footnote():
         for check_if_meets_criteria, container in classifiers:
             if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
                 container.append(node)
-    bs = prepare_ref_targets_in_footnotes(bs, metadata, footnotes)
-    bs = prepare_references(bs, metadata, references)
+    bs = prepare_ref_targets_in_footnotes(bs, metadata, dstate, footnotes)
+    bs = prepare_references(bs, metadata, dstate, references)
     sup = bs.find("sup")
     assert sup.a.text == r"[fn-file-1]"
     assert sup.a["href"] == "#footnote-fn-file-1"
