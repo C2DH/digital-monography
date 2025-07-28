@@ -7,6 +7,7 @@ import uuid
 
 try:
     from metadata import AssetDatapoint, DocumentMetadata, MetadataTableDatapoint
+    from models import Asset
     from constants import (
         MediumEnum,
         ATTRIB_METADATA_UUID,
@@ -20,6 +21,7 @@ try:
     from state import DocumentState
 except (ImportError, ModuleNotFoundError):
     from .metadata import AssetDatapoint, DocumentMetadata, MetadataTableDatapoint
+    from .models import Asset
     from .constants import (
         MediumEnum,
         ATTRIB_METADATA_UUID,
@@ -109,8 +111,10 @@ def prepare_metadata_tables(
             asset_digital = metadata_tbl.assetdatapoint_for_digital()
             if asset_paper:
                 document_metadata.add_asset(asset_paper)
+                dstate.add(Asset(loc=dstate.key, **asset_paper.model_dump()))
             if asset_digital and asset_paper and asset_digital.fp != asset_paper.fp:
                 document_metadata.add_asset(asset_digital)
+                dstate.add(Asset(loc=dstate.key, **asset_digital.model_dump()))
             placeholder = html_soup.new_tag("span")
             placeholder.string = "% :::{dgt-mon-asset} " + metadata_tbl.uuid + " :::"
             placeholder["hidden"] = "hidden"

@@ -21,6 +21,7 @@ try:
         SubstitutionDatapoint,
         TargetDatapoint,
     )
+    from models import Heading, Ref, Substitution, Target
     from keys import KeyPath
     from constants import (
         AUTONUMBER_PLACEHOLDER,
@@ -41,6 +42,7 @@ except (ImportError, ModuleNotFoundError):
         SubstitutionDatapoint,
         TargetDatapoint,
     )
+    from .models import Heading, Ref, Substitution, Target
     from .keys import KeyPath
     from .constants import (
         AUTONUMBER_PLACEHOLDER,
@@ -118,6 +120,24 @@ def prepare_ref_targets_in_headers(
                     prev_item_num=None,
                 )
                 metadata.add_target(target)
+                dstate.add(
+                    Target(
+                        loc=dstate.key,
+                        pk=link.id,
+                        html=str(tag),
+                        # text=link.id,
+                        text=tag.text,
+                        elem=str(tag),
+                        item_type="heading",
+                        is_digital=is_digital,
+                        is_paper=is_paper,
+                        filename=dstate.key.name if dstate.key else None,
+                        fragment=child["id"],
+                        prefix="",
+                        file_count=metadata.get_chapter_number(),  # TODO: get from somewhere else
+                        prev_item_num=None,
+                    )
+                )
         h_lvl = "".join(ch for ch in tag.name if ch.isdigit())
         heading = HeadingDatapoint(
             file_name=metadata.filepath.name if metadata.filepath else "",
@@ -129,6 +149,18 @@ def prepare_ref_targets_in_headers(
             elem=str(tag),
         )
         metadata.add_heading(heading)
+        dstate.add(
+            Heading(
+                loc=dstate.key,
+                file_name=dstate.key.name if dstate.key else "",
+                text=tag.text,
+                target=link.fragment if link else "",
+                word_count=metadata.word_count,  # TODO: get from dstate.metadata
+                char_count=metadata.char_count,  # TODO: get from dstate.metadata
+                level=h_lvl,
+                elem=str(tag),
+            )
+        )
         for a in anchors:
             a.extract()
     return html_soup
@@ -225,12 +257,49 @@ def prepare_ref_targets_in_captions(
                 prev_item_num=seq["prev_item_num"],  # calc from ref_stack
             )
             metadata.add_target(target)
+            dstate.add(
+                Target(
+                    # html="".join(str(elem) for elem in ref_stack),
+                    loc=dstate.key,
+                    pk=link.id,
+                    html=seq["html"],
+                    text=seq["plain_text_num"],  # calc from ref_stack
+                    elem=str(caption),
+                    item_type=seq["item_type"],
+                    is_digital=is_digital,  # calc from caption and identifier
+                    is_paper=is_paper,  # calc from caption and identifier
+                    filename=dstate.key.name if dstate.key else None,
+                    fragment=a["id"],
+                    file_count=metadata.get_chapter_number(),  # TODO: get from somewhere else
+                    prefix=seq["prefix"],  # calc from ref_stack
+                    prev_item_num=seq["prev_item_num"],  # calc from ref_stack
+                )
+            )
             if unique_id and metadata.get_substitution(unique_id[0]) is None:
                 target_fn = metadata.filepath.name if metadata.filepath else None
                 # print("target_fn", target_fn, type(target_fn))
                 # assert isinstance(target_fn, str)
                 metadata.add_substitution(
                     SubstitutionDatapoint(
+                        pk=unique_id[0],
+                        was=target.text,
+                        placeholder=target.pk,
+                        # placeholder=unique_id[0],
+                        # item_type=item_type,
+                        item_type=target.item_type,
+                        is_digital=is_digital,
+                        is_paper=is_paper,
+                        file_count=metadata.get_chapter_number(),
+                        # new
+                        location=metadata.filepath,
+                        target_fn=target_fn,
+                        prefix=target.prefix,
+                        prev_item_num=target.prev_item_num,
+                    )
+                )
+                dstate.add(
+                    Substitution(
+                        loc=dstate.key,
                         pk=unique_id[0],
                         was=target.text,
                         placeholder=target.pk,
@@ -391,6 +460,18 @@ def prepare_references(
                 elem=str(a_tag.parent),
             )
             metadata.add_ref(ref)
+            dstate.add(
+                Ref(
+                    loc=dstate.key,
+                    target_id=target.pk if target else "",
+                    fn=dstate.key.name if dstate.key else "",
+                    text=link_text,
+                    href=link_dest,
+                    prev_string=prev_string,
+                    prev_href=prev_href,
+                    elem=str(a_tag.parent),
+                )
+            )
             if link.unique_id and metadata.get_substitution(link.unique_id) is None:
                 # get chapter number from the href if f2f else number from current file
                 target_chapter_number = (
@@ -410,6 +491,23 @@ def prepare_references(
                 # )
                 metadata.add_substitution(
                     SubstitutionDatapoint(
+                        pk=link.unique_id,
+                        was=link.text_to_replace,
+                        # placeholder=link.unique_id,
+                        placeholder=link.id,
+                        item_type="ref",
+                        is_digital=None,
+                        is_paper=None,
+                        location=metadata.filepath,
+                        target_fn=target_fn,
+                        file_count=target_chapter_number,
+                        prefix="",
+                        prev_item_num=None,
+                    )
+                )
+                dstate.add(
+                    Substitution(
+                        loc=dstate.key,
                         pk=link.unique_id,
                         was=link.text_to_replace,
                         # placeholder=link.unique_id,

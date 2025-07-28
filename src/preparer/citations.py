@@ -6,6 +6,7 @@ import citeproc
 
 try:
     from metadata import DocumentMetadata, CitationGroupDatapoint, CitationItemDatapoint
+    from models import CitationGroup, CitationItem
     from state import DocumentState
 except (ImportError, ModuleNotFoundError):
     from .metadata import (
@@ -13,10 +14,11 @@ except (ImportError, ModuleNotFoundError):
         CitationGroupDatapoint,
         CitationItemDatapoint,
     )
+    from .models import CitationGroup, CitationItem
     from .state import DocumentState
 
 
-class CitationItem(t.TypedDict):
+class CitationItemTD(t.TypedDict):
     id: t.Union[int, str]
     itemData: dict[str, t.Any]  # TODO: extend itemData with explicit TypedDict
     uris: list[str]
@@ -30,7 +32,7 @@ class CitationItemProps(t.TypedDict):
 
 class Citation(t.TypedDict):
     citationID: str
-    citationItems: list[CitationItem]
+    citationItems: list[CitationItemTD]
     properties: CitationItemProps
     schema: str
 
@@ -62,10 +64,32 @@ def prepare_citations(
                 plainCitation=props.get("plainCitation"),
             )
         )
+        dstate.add(
+            CitationGroup(
+                pk=citation_group.get("citationID"),
+                loc=dstate.key,
+                file_name=metadata.filepath.name if metadata.filepath else "",
+                citation_schema=citation_group.get("schema"),
+                formattedCitation=props.get("formattedCitation"),
+                noteIndex=props.get("noteIndex"),
+                plainCitation=props.get("plainCitation"),
+            )
+        )
+        # TODO: link CGroup with CItem with a foreign key
         for citation_item in citation_group["citationItems"]:
             metadata.add_citation_item(
                 CitationItemDatapoint(
                     # pk=citation_item.get("id"),
+                    id=citation_item.get("id"),
+                    file_name=metadata.filepath.name if metadata.filepath else "",
+                    citationId=citation_group.get("citationID"),
+                    itemData=citation_item.get("itemData"),
+                    uris=citation_item.get("uris"),
+                )
+            )
+            dstate.add(
+                CitationItem(
+                    loc=dstate.key,
                     id=citation_item.get("id"),
                     file_name=metadata.filepath.name if metadata.filepath else "",
                     citationId=citation_group.get("citationID"),

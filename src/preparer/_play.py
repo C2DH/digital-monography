@@ -7,6 +7,7 @@ import pydantic
 import typing as t
 import uuid
 
+from models.assets import Asset
 from metadata import AssetDatapoint
 from constants import MediumEnum
 from keys import KeyPath
@@ -113,7 +114,7 @@ if __name__ == "__main__":
     dp3 = Bar(**json.loads(dp1.model_dump_json()))
     assert dp1.p == dp3.p
 
-    ad1 = AssetDatapoint(
+    ad1 = Asset(
         fp=pathlib.PosixPath("foo/bar/1.txt"),
         metadata_table="sdofiafjsoisdjfaosjfpafsodij",
         medium=MediumEnum.PAPER,
@@ -131,6 +132,6 @@ if __name__ == "__main__":
     )
 
     assert ad1.is_on_paper is True
-    print(ad1.to_json())
+    # print(ad1.to_json())
 
     # print(dp1.model)
