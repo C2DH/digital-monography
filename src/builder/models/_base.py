@@ -57,18 +57,6 @@ class MySQLModel(sqlmodel.SQLModel):
                 dump[k] = v
         return dump
 
-    @classmethod
-    def has_db_table(cls) -> bool:
-        """Returns True if the model has a db table assigned."""
-        model_config = getattr(cls, "model_config", {})
-        return model_config.get("table") == True
-
-    # def has_db_table(self) -> bool:
-    #     # ah, because this needs an instance, but I have a class
-    #     """Returns True if the model has a db table assigned."""
-    #     model_config = getattr(self, "model_config", {})
-    #     return model_config.get("table") == True
-
 
 # Metadata tables and warnings fit were left to DynamoDB,
 # but maybe they should have a schema as well.

@@ -6,7 +6,11 @@ import pathlib
 import pydantic
 import typing as t
 import uuid
+from sqlmodel.main import SQLModelMetaclass
+from sqlmodel import SQLModel
 
+from models._base import MySQLModel
+from models import tables_to_models
 from models.assets import Asset
 from metadata import AssetDatapoint
 from constants import MediumEnum

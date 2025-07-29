@@ -2,6 +2,7 @@ import json
 import sqlmodel
 import sqlalchemy
 import sqlalchemy.orm
+from sqlmodel.main import SQLModelMetaclass
 import typing as t
 
 try:
@@ -10,8 +11,8 @@ try:
     from models._base import MySQLModel
 except (ImportError, ModuleNotFoundError):
     from .keys import KeyPath  # type: ignore
-    from .models import DocumentMetadata, tables_to_models
-    from .models._base import MySQLModel
+    from .models import DocumentMetadata, tables_to_models  # type: ignore
+    from .models._base import MySQLModel  # type: ignore
 
 
 type PrimitiveValues = str | int | bool | None
@@ -126,7 +127,8 @@ class DocumentState:
             if (
                 records
                 and isinstance(records[0], MySQLModel)
-                and records[0].has_db_table()
+                and has_db_table(records[0])
+                # and records[0].has_db_table()
             ):
                 session.add_all(records)
         session.commit()
@@ -146,14 +148,21 @@ class DocumentState:
         back to the connection pool (important for unlocking SQLite db).
         """
         for model in tables_to_models.values():
-            if isinstance(model, MySQLModel) and model.has_db_table():
-                statement = sqlmodel.delete(model).where(model.loc == key)
-                print(">> loc", statement)
-                session.exec(statement)
-                statement = sqlmodel.delete(model).where(model.x_loc == key)
-                print(">> x_loc", statement)
+            model: SQLModelMetaclass
+            if isinstance(model, SQLModelMetaclass) and has_db_table(model):
+                assert hasattr(
+                    model, "x_loc"
+                ), f"Model {model.__name__} does not have x_loc attribute. Every db table model should inherit from {MySQLModel.__name__}."
+                model: MySQLModel
+                statement = sqlmodel.delete(model).where(model.x_loc == str(key))
                 session.exec(statement)
         session.commit()
 
     def __str__(self) -> str:
         return json.dumps(self.__dict__, default=str)
+
+
+def has_db_table(model: sqlmodel.SQLModel | sqlmodel.main.SQLModelMetaclass) -> bool:
+    """Returns True if the model has a db table assigned."""
+    model_config = getattr(model, "model_config", {})
+    return model_config.get("table") == True
