@@ -83,6 +83,7 @@ class HtmlVerifier:
                     child.name == "script"
                     and CLS_METADATA_TABLE_JSONDATA in child.attrs.get("class", [])
                 ):
+                    # TODO: read document state form script tag
                     self._metadata.from_json(json.loads(child.text))
             self._mark_html_elements_recursively(child, lvl + 1)
 
