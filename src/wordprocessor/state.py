@@ -1,7 +1,5 @@
 import json
 import sqlmodel
-import sqlalchemy
-import sqlalchemy.orm
 from sqlmodel.main import SQLModelMetaclass
 import typing as t
 
@@ -112,7 +110,6 @@ class DocumentState:
             assert isinstance(model, sqlmodel.main.SQLModelMetaclass)
             self.__dict__[tablename] = [model(**rec) for rec in records]
 
-    # def sql_insert_all(self, session: sqlalchemy.orm.Session) -> None:
     def sql_insert_all(self, session: sqlmodel.Session) -> None:
         """
         Send a sql INSERT command with all records that have a SQLModel db table assigned.

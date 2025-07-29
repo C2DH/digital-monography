@@ -1,3 +1,4 @@
+import json
 import bs4
 import copy
 import pathlib
@@ -7,7 +8,7 @@ import uuid
 
 try:
     from metadata import AssetDatapoint, DocumentMetadata, MetadataTableDatapoint
-    from models import Asset
+    from models import Asset, Substitution
     from constants import (
         MediumEnum,
         ATTRIB_METADATA_UUID,
@@ -21,7 +22,7 @@ try:
     from state import DocumentState
 except (ImportError, ModuleNotFoundError):
     from .metadata import AssetDatapoint, DocumentMetadata, MetadataTableDatapoint
-    from .models import Asset
+    from .models import Asset, Substitution
     from .constants import (
         MediumEnum,
         ATTRIB_METADATA_UUID,
@@ -111,14 +112,28 @@ def prepare_metadata_tables(
 
             metadata_tbl.add_slug(document_metadata.slug)
             metadata_tbl.add_location(document_metadata.filepath)
+            metadata_tbl.add_orig_caption(dstate)
             asset_paper = metadata_tbl.assetdatapoint_for_paper()
             asset_digital = metadata_tbl.assetdatapoint_for_digital()
+            unused_kwargs = _copy_unused_kwargs(metadata_tbl.kwargs)
             if asset_paper:
                 document_metadata.add_asset(asset_paper)
-                dstate.add(Asset(loc=dstate.key, **asset_paper.model_dump()))
+                dstate.add(
+                    Asset(
+                        loc=dstate.key,
+                        **asset_paper.model_dump(),
+                        rest=unused_kwargs,
+                    )
+                )
             if asset_digital and asset_paper and asset_digital.fp != asset_paper.fp:
                 document_metadata.add_asset(asset_digital)
-                dstate.add(Asset(loc=dstate.key, **asset_digital.model_dump()))
+                dstate.add(
+                    Asset(
+                        loc=dstate.key,
+                        **asset_digital.model_dump(),
+                        rest=unused_kwargs,
+                    )
+                )
             placeholder = html_soup.new_tag("span")
             placeholder.string = "% :::{dgt-mon-asset} " + metadata_tbl.uuid + " :::"
             placeholder["hidden"] = "hidden"
@@ -251,6 +266,27 @@ class MetadataTable:
         self.rows.append(("location", location))
         self.kwargs["location"] = location
 
+    def add_orig_caption(self, dstate: DocumentState) -> None:
+        """Add an original caption before substitution. E.g.:
+        kwargs["caption"] == 'Figure {{ subst_pk }}: xxx'
+        kwargs["orig_caption"] == 'Figure 2: xxx'
+        Note that this extracts the numbering from the input file."""
+        after_substitution: str = self.kwargs.get("caption", "")
+        between_mustache_brackets = r"(?<=\{\{ )\w+(?= \}\})"
+        re_match = re.search(between_mustache_brackets, after_substitution)
+        if not re_match:
+            self.kwargs["orig_caption"] = ""
+            return
+        subst_pk = re_match.group(0)
+        substitution = dstate.get("substitutions", subst_pk)
+        if subst_pk and substitution and after_substitution:
+            substitution: Substitution
+            self.kwargs["orig_caption"] = after_substitution.replace(
+                r"{{ " + subst_pk + r" }}", substitution.was
+            )
+        else:
+            self.kwargs["orig_caption"] = ""
+
     def add_described_el(self, described_el: bs4.element.Tag) -> None:
         self.rows.append(("elem", described_el))
         self.kwargs["elem"] = described_el
@@ -279,6 +315,7 @@ class MetadataTable:
             location=self.kwargs.get("location"),
             alttext=self._get_alttext(),
             caption=self.kwargs.get("caption", ""),
+            orig_caption=self.kwargs.get("orig_caption", ""),
             comments=self.kwargs.get("comments", ""),
             metadata_table=self.uuid,
             target=self.kwargs.get("target", ""),
@@ -298,6 +335,7 @@ class MetadataTable:
             location=self.kwargs.get("location"),
             alttext=self._get_alttext(),
             caption=self.kwargs.get("caption", ""),
+            orig_caption=self.kwargs.get("orig_caption", ""),
             comments=self.kwargs.get("comments", ""),
             metadata_table=self.uuid,
             target=self.kwargs.get("target", ""),
@@ -321,3 +359,27 @@ class MetadataTable:
             == self.kwargs.get(FIELD_PAPER_SOURCE)
             else medium
         )
+
+
+def _copy_unused_kwargs(kwargs: dict[str, t.Any]) -> str:
+    """
+    Copy unused kwargs to a string, to be stored in the Asset model.
+    This is a workaround for the fact that SQLModel does not support
+    storing dicts directly in the database.
+    """
+    unused_kwargs = copy.copy(kwargs)
+    unused_kwargs.pop(FIELD_DIGITAL_SOURCE, None)
+    unused_kwargs.pop(FIELD_PAPER_SOURCE, None)
+    unused_kwargs.pop("slug", None)
+    unused_kwargs.pop("author", None)
+    unused_kwargs.pop("source", None)
+    unused_kwargs.pop("location", None)
+    unused_kwargs.pop("caption", None)
+    unused_kwargs.pop("orig_caption", None)
+    unused_kwargs.pop("comments", None)
+    unused_kwargs.pop("target", None)
+    unused_kwargs.pop("iscolor", None)
+    unused_kwargs.pop("isready", None)
+    unused_kwargs.pop("alttext", None)
+    unused_kwargs.pop("elem", None)
+    return json.dumps(unused_kwargs, ensure_ascii=False, default=str)

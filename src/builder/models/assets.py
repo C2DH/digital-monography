@@ -26,24 +26,22 @@ class Asset(MySQLModel, table=True):
 
     __tablename__ = "assets"
 
-    # id: int = sqlmodel.Field(primary_key=True)
-    # fp: pathlib.Path
     x_fp: str = sqlmodel.Field(alias="fp")
     metadata_table: str
-    # medium: MediumEnum
     x_medium: str = sqlmodel.Field(alias="medium")
     slug: str
     author: str
     source: str
-    # location: KeyPath | None
     x_location: str | None = sqlmodel.Field(alias="location")
     alttext: str
     caption: str
+    orig_caption: str
     comments: str
     target: str
     is_color: bool | None
     is_ready: bool
     is_on_paper: bool
+    rest: str = sqlmodel.Field(default="")
 
     @property
     def fp(self) -> pathlib.Path:

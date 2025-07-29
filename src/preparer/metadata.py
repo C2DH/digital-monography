@@ -209,6 +209,7 @@ class AssetDatapoint(DatapointBase):
     location: KeyPath | None
     alttext: str
     caption: str
+    orig_caption: str
     comments: str
     target: str
     is_color: bool | None

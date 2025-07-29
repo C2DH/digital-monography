@@ -139,3 +139,31 @@ if __name__ == "__main__":
     # print(ad1.to_json())
 
     # print(dp1.model)
+
+
+kwargs1 = {
+    "digitalinput": pathlib.Path(
+        "assets/02_assets_and_links/orange_low_resolution.png"
+    ),
+    "source": "https://web.archive.org/web/20170702171643/https://openclipart.org/detail/237816/orange-low-resolutionPublished under Creative Commons Zero 1.0 Public Domain License (https://openclipart.org/share)",
+    "author": "Franz Eugen Köhler",
+    "alttext": "Low resolution drawing of an orange",
+}
+kwargs2 = {
+    "paperinput": pathlib.Path("assets/02_assets_and_links/orange_black_and_white.png"),
+    "source": "https://web.archive.org/web/20240226071359/https://freesvg.org/drawing-of-an-orangePublished under CC0 1.0 Public Domain (https://creativecommons.org/publicdomain/https://openclipart.org/share)",
+    "author": "Unknown",
+    "alttext": "Black and white drawing of an orange",
+}
+kwargs3 = {
+    "digitalinput": pathlib.Path("assets/common/uni_logo.png"),
+    "paperinput": pathlib.Path("assets/common/uni_logo.png"),
+    "source": "https://en.m.wikipedia.org/wiki/File:University_of_Luxembourg_logo_(fr).svg",
+    "alttext": "Logo of University of Luxembourg in French pointing to the uni.lu website",
+}
+kwargs4 = {
+    "digitalinput": pathlib.Path("assets/common/uni_logo.png"),
+    "paperinput": pathlib.Path("assets/common/uni_logo.png"),
+    "source": "https://en.m.wikipedia.org/wiki/File:University_of_Luxembourg_logo_(fr).svg",
+    "alttext": "Logo of University of Luxembourg in French pointing to the uni.lu website",
+}
