@@ -66,7 +66,11 @@ def prepare_metadata_tables(
             metadata_tbl = MetadataTable()
             key, val = "", ""
             for tr in table.find_all(["tr"]):
-                for descendent in tr.find_all():
+                tr: bs4.element.Tag
+                assert isinstance(tr, bs4.element.Tag)
+                for descendent in tr.find_all(["td", "th"]):
+                    descendent: bs4.element.Tag
+                    assert isinstance(descendent, bs4.element.Tag)
                     if re.match(r"^\s*##\s*\w+", descendent.text):
                         key = descendent.text
                     else:
