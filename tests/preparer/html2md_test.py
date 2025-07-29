@@ -6,17 +6,18 @@ from src.preparer.citations import add_bibliography, prepare_citations, is_citat
 from src.preparer.html2md import convert_to_md
 from src.preparer.metadata import DocumentMetadata
 from src.preparer.state import DocumentState
+from src.preparer.keys import KeyPath
 
 
 class TestHtml2MdFootnotes:
-    fp = pathlib.Path("tests") / "_fixtures" / "citation_in_footnotes.docx"
+    fp = KeyPath("tests") / "_fixtures" / "citation_in_footnotes.docx"
 
     @classmethod
     def setup_class(cls):
         with open(cls.fp, "rb") as f:
             result = mammoth.convert_to_html(f)
         cls.soup = bs4.BeautifulSoup(result.value, "html.parser")
-        dstate = DocumentState()
+        dstate = DocumentState(cls.fp)
         metadata = DocumentMetadata()
         citations = []
         for node in cls.soup.descendants:
@@ -59,16 +60,18 @@ class TestHtml2MdFootnotes:
             "[^footnote-ref-fn-02-a-99]:  [Link to an external website](http://www.example.com/) \n\n"
         )
         html_soup = bs4.BeautifulSoup(sample_html, "html.parser")
+        dstate = DocumentState(self.fp)
         metadata = DocumentMetadata()
-        md = convert_to_md(html_soup, metadata)
+        md = convert_to_md(html_soup, metadata, dstate)
         assert md == expected_md
 
 
 def test_heading_targets_markdownification():
     html = "<pre>(heading-target)=</pre><h1>Title</h1>"
     html_soup = bs4.BeautifulSoup(html, "html.parser")
+    dstate = DocumentState(KeyPath("tests") / "_fixtures" / "heading_target.docx")
     metadata = DocumentMetadata()
-    md = convert_to_md(html_soup, metadata)
+    md = convert_to_md(html_soup, metadata, dstate)
     assert md == "\n\n(heading-target)=\n# Title\n\n"
 
 
@@ -84,8 +87,10 @@ class TestHtml2MdGreedy:
         with open(cls.fp, "rb") as f:
             result = mammoth.convert_to_html(f, style_map=style_mappings)
         cls.html_soup = bs4.BeautifulSoup(result.value, "html.parser")
+        # oh no! someone put a pathlib.Path in the DocumentState constructor instead of KeyPath
+        cls.dstate = DocumentState(cls.fp)
         cls.metadata = DocumentMetadata()
-        cls.md = convert_to_md(cls.html_soup, cls.metadata)
+        cls.md = convert_to_md(cls.html_soup, cls.metadata, cls.dstate)
 
     def test_two_new_lines_after_blockquote_element(self):
         assert "a\n\n> b\n\nc\n\n" in self.md

@@ -28,4 +28,5 @@ class DocumentMetadata(MySQLModel, table=True):
 
     def __init__(self, **data: t.Dict[str, t.Any]) -> None:
         data["x_key"] = str(data["key"])
+        # data["x_loc"] = str(data["loc"])
         super().__init__(**data)

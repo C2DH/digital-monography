@@ -5,10 +5,11 @@ import pathlib
 from src.preparer.citations import add_bibliography, prepare_citations, is_citation
 from src.preparer.metadata import DocumentMetadata
 from src.preparer.state import DocumentState
+from src.preparer.keys import KeyPath
 
 
 class TestCitationsFromFields:
-    fp = pathlib.Path("tests") / "_fixtures" / "citation_in_fields.docx"
+    fp = KeyPath("tests") / "_fixtures" / "citation_in_fields.docx"
 
     @classmethod
     def setup_class(cls):
@@ -16,7 +17,7 @@ class TestCitationsFromFields:
             result = mammoth.convert_to_html(f)
         cls.html_soup = bs4.BeautifulSoup(result.value, "html.parser")
         citations = []
-        cls.dstate = DocumentState()
+        cls.dstate = DocumentState(cls.fp)
         cls.metadata = DocumentMetadata()
         for node in cls.html_soup.descendants:
             if is_citation(node):
@@ -64,7 +65,7 @@ class TestCitationsFromFields:
 
 
 class TestCitationsFromFootnotes:
-    fp = pathlib.Path("tests") / "_fixtures" / "citation_in_footnotes.docx"
+    fp = KeyPath("tests") / "_fixtures" / "citation_in_footnotes.docx"
 
     @classmethod
     def setup_class(cls):
@@ -72,7 +73,7 @@ class TestCitationsFromFootnotes:
             result = mammoth.convert_to_html(f)
         cls.html_soup = bs4.BeautifulSoup(result.value, "html.parser")
         citations = []
-        cls.dstate = DocumentState()
+        cls.dstate = DocumentState(cls.fp)
         cls.metadata = DocumentMetadata()
         for node in cls.html_soup.descendants:
             if is_citation(node):

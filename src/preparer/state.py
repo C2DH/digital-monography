@@ -40,6 +40,7 @@ class DocumentState:
     def __init__(self, key: t.Optional[KeyPath] = None) -> None:
         self.__dict__: dict[str, list[sqlmodel.SQLModel]] = {}
         if key is not None:
+            key = KeyPath(key)
             self.add(
                 DocumentMetadata(
                     **{
@@ -146,7 +147,11 @@ class DocumentState:
         """
         for model in tables_to_models.values():
             if isinstance(model, MySQLModel) and model.has_db_table():
-                statement = sqlmodel.delete(model)
+                statement = sqlmodel.delete(model).where(model.loc == key)
+                print(">> loc", statement)
+                session.exec(statement)
+                statement = sqlmodel.delete(model).where(model.x_loc == key)
+                print(">> x_loc", statement)
                 session.exec(statement)
         session.commit()
 

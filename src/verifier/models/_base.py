@@ -2,6 +2,11 @@ import uuid
 import sqlmodel
 import typing as t
 
+try:
+    from keys import KeyPath
+except (ImportError, ModuleNotFoundError):
+    from ..keys import KeyPath  # type: ignore
+
 
 class MySQLModel(sqlmodel.SQLModel):
     """
@@ -18,6 +23,21 @@ class MySQLModel(sqlmodel.SQLModel):
     pk: str = sqlmodel.Field(
         primary_key=True, default_factory=lambda: str(uuid.uuid4())
     )
+    x_loc: str = sqlmodel.Field(alias="loc")
+
+    @property
+    def loc(self) -> KeyPath:
+        return KeyPath(self.x_loc)
+
+    @loc.setter
+    def loc(self, val: KeyPath) -> None:
+        self.x_loc = str(val)
+
+    def __init__(self, **data: t.Dict[str, t.Any]) -> None:
+        for k, v in data.items():
+            if isinstance(v, KeyPath):
+                data[k] = str(v)
+        super().__init__(**data)
 
     def model_dump(self, *args, **kwargs) -> t.Dict[str, t.Any]:
         """
@@ -36,6 +56,18 @@ class MySQLModel(sqlmodel.SQLModel):
             else:
                 dump[k] = v
         return dump
+
+    @classmethod
+    def has_db_table(cls) -> bool:
+        """Returns True if the model has a db table assigned."""
+        model_config = getattr(cls, "model_config", {})
+        return model_config.get("table") == True
+
+    # def has_db_table(self) -> bool:
+    #     # ah, because this needs an instance, but I have a class
+    #     """Returns True if the model has a db table assigned."""
+    #     model_config = getattr(self, "model_config", {})
+    #     return model_config.get("table") == True
 
 
 # Metadata tables and warnings fit were left to DynamoDB,
