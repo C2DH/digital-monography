@@ -151,7 +151,8 @@ def prepare_ref_targets_in_headers(
         metadata.add_heading(heading)
         dstate.add(
             Heading(
-                loc=dstate.key,
+                loc=dstate.metadata.key,
+                slug=dstate.metadata.slug,
                 file_name=dstate.key.name if dstate.key else "",
                 text=tag.text,
                 target=link.fragment if link else "",

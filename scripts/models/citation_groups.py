@@ -30,6 +30,7 @@ class CitationGroup(MySQLModel, table=True):
     formattedCitation: str
     noteIndex: int
     plainCitation: str
+    slug: str
 
 
 # class CitationGroupDatapoint(DatapointBase):

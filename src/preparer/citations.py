@@ -67,7 +67,8 @@ def prepare_citations(
         dstate.add(
             CitationGroup(
                 pk=citation_group.get("citationID"),
-                loc=dstate.key,
+                loc=dstate.metadata.key,
+                slug=dstate.metadata.slug,
                 file_name=metadata.filepath.name if metadata.filepath else "",
                 citation_schema=citation_group.get("schema"),
                 formattedCitation=props.get("formattedCitation"),

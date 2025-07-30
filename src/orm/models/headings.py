@@ -17,6 +17,7 @@ class Heading(MySQLModel, table=True):
     word_count: int
     char_count: int
     target: str
+    slug: str
 
 
 # class HeadingDatapoint(DatapointBase):
