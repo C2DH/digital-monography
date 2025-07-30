@@ -7,6 +7,7 @@ import pathlib
 import sqlalchemy as sa
 import sqlalchemy.orm as sa_orm
 import sqlmodel
+import sqlmodel.main
 import typing as t
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from aws_lambda_powertools.utilities.data_classes import (
@@ -17,13 +18,17 @@ from aws_lambda_powertools.utilities.data_classes import (
 try:
     from constants import MediumEnum, DB_URL, IS_DEBUG
     from keys import KeyPath
-    from models import Asset, File
     from lambda_wsgi import response as lambda_wsgi_response
+    from models._base import MySQLModel
+    from models import Asset, CitationGroup, Heading
+    from state import has_db_table
 except (ImportError, ModuleNotFoundError):
     from .constants import MediumEnum, DB_URL, IS_DEBUG  # type: ignore
     from .keys import KeyPath
-    from .models import Asset, File
     from .lambda_wsgi import response as lambda_wsgi_response  # type: ignore
+    from .models import Asset, CitationGroup, Heading
+    from .models._base import MySQLModel
+    from .state import has_db_table
 
 
 if IS_DEBUG:
@@ -43,10 +48,112 @@ logger.setLevel(logging.INFO)
 app = flask.Flask(__name__)
 app.debug = IS_DEBUG
 app.secret_key = os.environ["FLASK_SECRET_KEY"]
-print("DB_URL", DB_URL)
-engine = sqlmodel.create_engine(DB_URL)
-# engine = sa.create_engine(os.environ["DATABASE_URL"])
-# session_factory = sa_orm.sessionmaker(bind=engine)
+db_engine = sqlmodel.create_engine(DB_URL)
+
+
+@app.route("/", methods=["GET"])
+def index() -> flask.Response:
+    slug = flask.request.args.get("slug", "None")
+    resp = flask.Response(
+        response=flask.json.dumps({"site": "index", "slug": slug}),
+        status=200,
+        mimetype="application/json",
+    )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
+
+
+def _select_by_slug(
+    session: sqlmodel.Session,
+    model: Asset | Heading,
+    slug: str,
+    # session: sqlmodel.Session, model: t.Type[sqlmodel.SQLModel], slug: str
+) -> list[dict[str, str | int | bool]]:
+    """
+    Query the database for a model by its slug and dump to a json serializable format.
+    """
+    assert isinstance(model, sqlmodel.main.SQLModelMetaclass)
+    if not hasattr(model, "slug"):
+        logger.error(f"Model {model.__name__} does not have a 'slug' attribute.")
+        return []
+    res = []
+    statement = sqlmodel.select(model).where(model.slug == slug)
+    query_result = session.exec(statement)
+    for dp in query_result:
+        dp: sqlmodel.SQLModel
+        res.append(dp.model_dump(mode="json"))
+    return res
+
+
+@app.route("/assets/list", methods=["GET"])
+def assets_list() -> flask.Response:
+    """
+    List models.Asset objects by a "slug" parameter. See example URL:
+    /assets/list?slug=a_book
+    """
+    slug = flask.request.args.get("slug")
+    with sqlmodel.Session(db_engine) as session:
+        db_data = _select_by_slug(session, Asset, slug)
+        # statement = sqlmodel.select(Asset).where(Asset.slug == slug)
+        # res = session.exec(statement)
+        # db_data = [dp.model_dump(mode="json") for dp in res.all()]
+    resp = flask.Response(
+        response=flask.json.dumps(db_data, default=str),
+        status=200,
+        mimetype="application/json",
+    )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
+
+
+@app.route("/headers/list", methods=["GET"])
+def headings_list() -> flask.Response:
+    """
+    List models.Heading object by a "slug" parameter. See example URL:
+    /headings/list?slug=a_book
+    """
+    slug = flask.request.args.get("slug")
+    with sqlmodel.Session(db_engine) as session:
+        # statement = sqlmodel.select(Heading).where(Heading.slug == slug)
+        # res = session.exec(statement)
+        # db_data = [dp.model_dump(mode="json") for dp in res.all()]
+        db_data = _select_by_slug(session, Heading, slug)
+    resp = flask.Response(
+        response=flask.json.dumps(db_data, default=str),
+        status=200,
+        mimetype="application/json",
+    )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
+
+
+@app.route("/citations/list", methods=["GET"])
+def citations_list() -> flask.Response:
+    """
+    List objects.CitationGroup object by a "slug" parameter. See example URL:
+    /citations/list?slug=a_book
+    """
+    slug = flask.request.args.get("slug")
+    with sqlmodel.Session(db_engine) as session:
+        # statement = sqlmodel.select(Heading).where(Heading.slug == slug)
+        # res = session.exec(statement)
+        # db_data = [dp.model_dump(mode="json") for dp in res.all()]
+        db_data = _select_by_slug(session, CitationGroup, slug)
+    resp = flask.Response(
+        response=flask.json.dumps(db_data, default=str),
+        status=200,
+        mimetype="application/json",
+    )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
 
 
 @app.route("/write", methods=["GET"])
@@ -60,8 +167,7 @@ def write() -> flask.Response:
     # medium = MediumEnum.PAPER
     # location = KeyPath("/mnt/efs/a_book/01_a.md")
 
-    with sqlmodel.Session(engine) as session:
-        session.add(File(stem="stem", prefix="prefix"))
+    with sqlmodel.Session(db_engine) as session:
         session.add(
             Asset(
                 fp=pathlib.PosixPath("foo/bar/1.txt"),
@@ -96,17 +202,8 @@ def write() -> flask.Response:
 
 @app.route("/read", methods=["GET"])
 def read() -> flask.Response:
-    with sqlmodel.Session(engine) as session:
+    with sqlmodel.Session(db_engine) as session:
         stmt = sqlmodel.select(Asset)
-        res = session.exec(stmt)
-        for asset in res:
-            print(asset)
-        assets = res.all()
-        print(assets)
-        asset = res.first()
-        print(asset)
-        # File
-        stmt = sqlmodel.select(File)
         res = session.exec(stmt)
         for asset in res:
             print(asset)
@@ -133,4 +230,4 @@ def lambda_handler(event: APIGatewayProxyEventV2, context: LambdaContext):
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(port=8001)
