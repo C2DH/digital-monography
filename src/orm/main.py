@@ -19,16 +19,12 @@ try:
     from constants import MediumEnum, DB_URL, IS_DEBUG
     from keys import KeyPath
     from lambda_wsgi import response as lambda_wsgi_response
-    from models._base import MySQLModel
     from models import Asset, CitationGroup, Heading
-    from state import has_db_table
 except (ImportError, ModuleNotFoundError):
     from .constants import MediumEnum, DB_URL, IS_DEBUG  # type: ignore
     from .keys import KeyPath
     from .lambda_wsgi import response as lambda_wsgi_response  # type: ignore
     from .models import Asset, CitationGroup, Heading
-    from .models._base import MySQLModel
-    from .state import has_db_table
 
 
 if IS_DEBUG:
@@ -67,9 +63,8 @@ def index() -> flask.Response:
 
 def _select_by_slug(
     session: sqlmodel.Session,
-    model: Asset | Heading,
+    model: Asset | Heading | CitationGroup,
     slug: str,
-    # session: sqlmodel.Session, model: t.Type[sqlmodel.SQLModel], slug: str
 ) -> list[dict[str, str | int | bool]]:
     """
     Query the database for a model by its slug and dump to a json serializable format.
@@ -96,9 +91,6 @@ def assets_list() -> flask.Response:
     slug = flask.request.args.get("slug")
     with sqlmodel.Session(db_engine) as session:
         db_data = _select_by_slug(session, Asset, slug)
-        # statement = sqlmodel.select(Asset).where(Asset.slug == slug)
-        # res = session.exec(statement)
-        # db_data = [dp.model_dump(mode="json") for dp in res.all()]
     resp = flask.Response(
         response=flask.json.dumps(db_data, default=str),
         status=200,
@@ -110,7 +102,7 @@ def assets_list() -> flask.Response:
     return resp
 
 
-@app.route("/headers/list", methods=["GET"])
+@app.route("/headings/list", methods=["GET"])
 def headings_list() -> flask.Response:
     """
     List models.Heading object by a "slug" parameter. See example URL:
@@ -118,9 +110,6 @@ def headings_list() -> flask.Response:
     """
     slug = flask.request.args.get("slug")
     with sqlmodel.Session(db_engine) as session:
-        # statement = sqlmodel.select(Heading).where(Heading.slug == slug)
-        # res = session.exec(statement)
-        # db_data = [dp.model_dump(mode="json") for dp in res.all()]
         db_data = _select_by_slug(session, Heading, slug)
     resp = flask.Response(
         response=flask.json.dumps(db_data, default=str),
@@ -141,9 +130,6 @@ def citations_list() -> flask.Response:
     """
     slug = flask.request.args.get("slug")
     with sqlmodel.Session(db_engine) as session:
-        # statement = sqlmodel.select(Heading).where(Heading.slug == slug)
-        # res = session.exec(statement)
-        # db_data = [dp.model_dump(mode="json") for dp in res.all()]
         db_data = _select_by_slug(session, CitationGroup, slug)
     resp = flask.Response(
         response=flask.json.dumps(db_data, default=str),
