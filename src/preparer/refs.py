@@ -85,6 +85,7 @@ def prepare_ref_targets_in_headers(
     dstate: DocumentState,
     headers: list[bs4.element.Tag],
 ) -> bs4.BeautifulSoup:
+    heading_count = 0
     for tag in headers:
         tag: bs4.element.Tag
         anchors = []
@@ -149,15 +150,17 @@ def prepare_ref_targets_in_headers(
             elem=str(tag),
         )
         metadata.add_heading(heading)
+        heading_count += 1
         dstate.add(
             Heading(
                 loc=dstate.metadata.key,
                 slug=dstate.metadata.slug,
                 file_name=dstate.key.name if dstate.key else "",
+                h_num=heading_count,
                 text=tag.text,
                 target=link.fragment if link else "",
-                word_count=metadata.word_count,  # TODO: get from dstate.metadata
-                char_count=metadata.char_count,  # TODO: get from dstate.metadata
+                word_count=metadata.word_count,
+                char_count=metadata.char_count,
                 level=h_lvl,
                 elem=str(tag),
             )

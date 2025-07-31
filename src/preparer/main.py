@@ -139,6 +139,7 @@ def is_table(tag: bs4.element.Tag) -> bool:
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
+    # assert False, "Fetch Assets, Headings and Citations from the dashboard"
     logger.info(f"lambda_handler. Event: {json.dumps(event, default=str)}")
     key = _get_key(event)
     event_name = _get_event_name(event)

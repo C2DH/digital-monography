@@ -15,6 +15,7 @@ class Heading(MySQLModel, table=True):
     # id: int = sqlmodel.Field(primary_key=True)
     file_name: str
     file_num: int = sqlmodel.Field(default=-1)
+    h_num: int
     elem: str
     level: str
     text: str
