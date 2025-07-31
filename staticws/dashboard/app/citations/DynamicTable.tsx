@@ -15,9 +15,13 @@ function getNestedStr(rec: any, attr: string): string {
 }
 
 type ICitationGroup = {
-    location: string,
-    // plainCitation: string,
-    citationInJson: string,
+    pk: string
+    file_name: string
+    citation_schema: string
+    formattedCitation: string
+    noteIndex: number
+    plainCitation: string
+    slug: string
 }
 
 export default function DynamicTable() {
@@ -25,23 +29,12 @@ export default function DynamicTable() {
     const [loading, setLoading] = useState<boolean>(true);
     const searchParams = useSearchParams();
     const slug = searchParams?.get("slug");
-    // const dbTable = "dgtmon-dev-dyndb-citations-tbl";
-    const fetchRecords = async (pk: string) => {
+    const fetchDbRecords = async (aSlug: string) => {
         try {
             setLoading(true);
-            const resp = await fetch(`${API_ENDPOINT}/${API_STAGE}/citations?slug=${pk}`);
-            const respJson = await resp.json();
-            const tableItems: ICitationGroup[] = [];
-            for (let i = 0; i < (respJson.Items || []).length; i++) {
-                let records = respJson.Items![i].records.L || [];
-                for (let j = 0; j < records.length; j++) {
-                    tableItems.push({
-                        location: getNestedStr(records[j], "file_name"),
-                        // plainCitation: getNestedStr(records[j], "plainCitation"),
-                        citationInJson: JSON.stringify(records[j], null, 2),
-                    })
-                }
-            }
+            // const resp = await fetch(`${API_ENDPOINT}/${API_STAGE}/citations?slug=${aSlug}`);
+            const resp = await fetch(`http://localhost:8001/citations/groups/list?slug=${aSlug}`);
+            const tableItems = await resp.json();
             setTableData(tableItems);
             setLoading(false);
         } catch (err) {
@@ -49,10 +42,9 @@ export default function DynamicTable() {
             setLoading(false);
         }
     };
-
     useEffect(() => {
         if (slug) {
-            fetchRecords(slug);
+            fetchDbRecords(slug);
         }
     }, [slug]);
 
@@ -70,9 +62,8 @@ export default function DynamicTable() {
                     {
                         tableData.map((val: ICitationGroup, idx: number) => (
                             <tr key={idx}>
-                                <td>{val.location}</td>
-                                {/* <td>{val.plainCitation}</td> */}
-                                <td>{val.citationInJson}</td>
+                                <td>{val.file_name}</td>
+                                <td>{val.plainCitation}</td>
                             </tr>
                         ))
                     }

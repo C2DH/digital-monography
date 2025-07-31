@@ -4,13 +4,15 @@ import "./../_styles/treeView.css";
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import TnbBookNav from "./../_components/TnbBookNav";
-// import { API_ENDPOINT, API_STAGE } from "./../constants";
+import { API_ENDPOINT, API_STAGE } from "./../constants";
 
 type ICountMap = {
     [fileName: string]: number;
 }
 
 type IHeading = {
+    pk: string
+    loc: string
     file_name: string
     file_num: number
     h_num: number
