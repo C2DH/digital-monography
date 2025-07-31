@@ -1,9 +1,9 @@
 import pathlib
 
-from src.preparer.state import DocumentState
-from src.preparer.constants import MediumEnum
-from src.preparer.keys import KeyPath
-from src.preparer.models import Asset
+from src._common.state import DocumentState
+from src._common.constants import MediumEnum
+from src._common.keys import KeyPath
+from src._common.models import Asset
 
 
 class TestDocumentState:

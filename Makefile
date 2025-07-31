@@ -26,7 +26,7 @@ test/prep:
 		python3.12 scripts/prepare_and_build.py book_path="tests/_fixtures/a_book/"
 
 test/unit:
-	DGTMON_DEBUG=1 python3.12 -m pytest tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
+	DGTMON_DEBUG=1 python3.12 -m pytest tests/common/ tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
 
 test/integration:
 	DGTMON_DEBUG=1 python3.12 -m pytest tests/integration/
@@ -52,27 +52,38 @@ db/makemigrations:
 
 db/copy:
 	echo 'Step 1. Copy models'
-	# cp -r src/_common/models scripts/
+	cp -r src/_common/models scripts/
 	cp -r src/_common/models src/preparer/
-	# cp -r src/_common/models src/builder/
-	# cp -r src/_common/models src/orm/
-	# cp -r src/_common/models src/verifier/
-	# cp -r src/_common/models src/wordprocessor/
-	echo -r 'Step 2. Copy migration files'
-	# cp -r src/_common/migrations scripts/
+	cp -r src/_common/models src/builder/
+	cp -r src/_common/models src/orm/
+	cp -r src/_common/models src/verifier/
+	cp -r src/_common/models src/wordprocessor/
+	echo 'Step 2. Copy services'
+	cp -r src/_common/services scripts/
+	cp -r src/_common/services src/preparer/
+	cp -r src/_common/services src/builder/
+	cp -r src/_common/services src/orm/
+	cp -r src/_common/services src/verifier/
+	cp -r src/_common/services src/wordprocessor/
+	echo 'Step 3. Copy migration files'
+	cp -r src/_common/migrations scripts/
 	cp -r src/_common/migrations src/preparer/
-	# cp -r src/_common/migrations src/builder/
-	# cp -r src/_common/migrations src/orm/
-	# cp -r src/_common/migrations src/verifier/
-	# cp -r src/_common/migrations src/wordprocessor/
-	echo -r 'Step 3. Copy state file'
-	cp -r src/_common/state.py src/preparer/state.py
-	echo 'Step 4. Copy alembic config'
-	# cp src/_common/alembic.ini scripts/alembic.ini
+	cp -r src/_common/migrations src/builder/
+	cp -r src/_common/migrations src/orm/
+	cp -r src/_common/migrations src/verifier/
+	cp -r src/_common/migrations src/wordprocessor/
+	echo 'Step 4. Copy state file'
+	cp src/_common/state.py scripts/state.py
+	cp src/_common/state.py src/preparer/state.py
+	cp src/_common/state.py src/builder/state.py
+	cp src/_common/state.py src/verifier/state.py
+	cp src/_common/state.py src/wordprocessor/state.py
+	echo 'Step 5. Copy alembic config'
+	cp src/_common/alembic.ini scripts/alembic.ini
 	cp src/_common/alembic.ini src/preparer/alembic.ini
-	# cp src/_common/alembic.ini src/builder/alembic.ini
-	# cp src/_common/alembic.ini src/verifier/alembic.ini
-	# cp src/_common/alembic.ini src/wordprocessor/alembic.ini
+	cp src/_common/alembic.ini src/builder/alembic.ini
+	cp src/_common/alembic.ini src/verifier/alembic.ini
+	cp src/_common/alembic.ini src/wordprocessor/alembic.ini
 
 db/migrate:
 	cd src/_common && DB_PATH=/tmp/efs/_database.db alembic upgrade heads
@@ -139,6 +150,14 @@ copy/metadata:
 	cp src/_common/metadata.py src/builder/metadata.py
 	cp src/_common/metadata.py src/verifier/metadata.py
 	cp src/_common/metadata.py src/wordprocessor/metadata.py
+
+copy/state:
+	echo 'Step 1. Copying "state" models.'
+	cp src/_common/state.py scripts/state.py
+	cp src/_common/state.py src/preparer/state.py
+	cp src/_common/state.py src/builder/state.py
+	cp src/_common/state.py src/verifier/state.py
+	cp src/_common/state.py src/wordprocessor/state.py
 
 copy/html2md:
 	cp src/_common/html2md.py src/preparer/html2md.py
