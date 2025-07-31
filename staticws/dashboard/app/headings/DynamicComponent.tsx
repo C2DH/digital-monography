@@ -4,36 +4,27 @@ import "./../_styles/treeView.css";
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import TnbBookNav from "./../_components/TnbBookNav";
-import { API_ENDPOINT, API_STAGE } from "./../constants";
+// import { API_ENDPOINT, API_STAGE } from "./../constants";
 
 type ICountMap = {
     [fileName: string]: number;
 }
 
 type IHeading = {
-    text: string,
-    level: string,
-    fileName: string,
+    file_name: string
+    file_num: number
+    h_num: number
+    elem: string
+    level: string
+    text: string
+    word_count: number
+    char_count: number
+    target: string
+    slug: string
 }
 
 type IHeadings = {
     [key: string]: IHeading[],
-}
-
-function getNestedStr(rec: any, attr: string): string {
-    if (rec && rec.M && Object.hasOwn(rec.M, attr) && Object.hasOwn(rec.M[attr], "S")) {
-        return rec.M[attr].S;
-    } else {
-        return "";
-    }
-}
-
-function getNestedNum(rec: any, attr: string): number {
-    if (rec && rec.M && Object.hasOwn(rec.M, attr) && Object.hasOwn(rec.M[attr], "N")) {
-        return Number(rec.M[attr].N);
-    } else {
-        return 0;
-    }
 }
 
 export default function DynamicListGroup(): React.JSX.Element {
@@ -45,62 +36,59 @@ export default function DynamicListGroup(): React.JSX.Element {
 
     const searchParams = useSearchParams();
     const slug = searchParams?.get("slug");
-    // const dbTable = "dgtmon-dev-dyndb-headings-tbl";
     useEffect(() => {
         const wCount = {};
         const cCount = {};
-        const fetchRecords = async (pk: string) => {
+        const fetchFromDb = async (aSlug: string) => {
             try {
-                setLoading(true);
-                const resp = await fetch(`${API_ENDPOINT}/${API_STAGE}/headings?slug=${pk}`);
-                const respJson = await resp.json();
-                const headings: IHeadings = {};
-                const items = respJson.Items || [];
-                for (let i = 0; i < items.length; i++) {
-                    let records = items[i].records?.L || [];
-                    const fileName = getNestedStr(records[0], "file_name");
-                    wCount[fileName] = getNestedNum(records[0], "word_count");
-                    cCount[fileName] = getNestedNum(records[0], "char_count");
-                    for (let j = 0; j < records.length; j++) {
-                        const text = getNestedStr(records[j], "text");
-                        let level = getNestedStr(records[j], "level");
-                        level = level.replace(/\D+/g, ''); // TODO: backend should produce "1" instead of "h1"
-                        if (!Object.hasOwn(headings, fileName)) {
-                            headings[fileName] = [];
-                        }
-                        headings[fileName].push({
-                            fileName: fileName,
-                            text: text,
-                            level: level,
-                        });
+                // const resp = await fetch(`${API_ENDPOINT}/${API_STAGE}/headings/list?slug=${aSlug}`);
+                const resp = await fetch(`http://localhost:8001/headings/list?slug=${aSlug}`);
+                const dbRecords = await resp.json();
+                const sortedRecords = dbRecords.sort((a: IHeading, b: IHeading) => {
+                    if (a.file_num !== b.file_num) {
+                        return a.file_num - b.file_num;
                     }
+                    return a.h_num - b.h_num;
+                });
+                const headings: IHeadings = {};
+                for (let i = 0; i < sortedRecords.length; i++) {
+                    let rec = sortedRecords[i];
+                    if (!Object.hasOwn(headings, rec.file_name)) {
+                        headings[rec.file_name] = [];
+                        wCount[rec.file_name] = rec.word_count;
+                        cCount[rec.file_name] = rec.char_count;
+                    }
+                    headings[rec.file_name].push(rec);
                 }
                 setData(headings);
                 setWordCount(wCount);
                 setCharCount(cCount);
                 setLoading(false);
-            } catch (err) {
-                setLoading(false);
-                console.error(err);
-            }
-        };
-        const fetchObjectFromS3 = async (aSlug: string) => {
-            try {
-                const configKey = btoa(`${aSlug}/_config.yml`)
-                const getPreSignedUrlResp = await fetch(`${API_ENDPOINT}/${API_STAGE}/gpu?type=asset&key=${configKey}`);
-                const preSignedUrljson = await getPreSignedUrlResp.json();
-                const preSignedUrl = preSignedUrljson["presigned_url"];
-                const resp = await fetch(preSignedUrl);
-                const blob = await resp.blob();
-                const yml = await blob.text();
-                console.log("config", yml);
             } catch (e) {
+                setLoading(false);
                 console.error(e);
             }
+        }
+        const fetchObjectFromS3 = async (aSlug: string) => {
+            /* 
+            We can fetch the _config.yml file from S3, but I don't see why
+            */
+            // try {
+            //     const configKey = btoa(`${aSlug}/_config.yml`);
+            //     const getPreSignedUrlResp = await fetch(`${API_ENDPOINT}/${API_STAGE}/gpu?type=asset&key=${configKey}`);
+            //     const preSignedUrljson = await getPreSignedUrlResp.json();
+            //     const preSignedUrl = preSignedUrljson["presigned_url"];
+            //     const resp = await fetch(preSignedUrl);
+            //     const blob = await resp.blob();
+            //     const yml = await blob.text();
+            //     console.log("config", yml);
+            // } catch (e) {
+            //     console.error(e);
+            // }
         };
         if (slug) {
-            fetchRecords(slug);
-            fetchObjectFromS3(slug);
+            // fetchObjectFromS3(slug);
+            fetchFromDb(slug);
         }
     }, [slug]);
 
@@ -119,8 +107,8 @@ export default function DynamicListGroup(): React.JSX.Element {
                         <ul className="list-group" key={idx}>
                             <li className="list-group-item list-group-item-primary" key={file}>
                                 <b>{file}</b>
-                                {wordCount[file] > 0 && <small> {wordCount[file]} words</small>}
-                                {charCount[file] > 0 && <small> {charCount[file]} characters</small>}
+                                {headings[0].word_count > 0 && <small> {headings[0].word_count} words</small>}
+                                {headings[0].char_count > 0 && <small> {headings[0].char_count} characters</small>}
                             </li>
                             {headings && headings.map((h: IHeading, i: number) => (
                                 <li className="list-group-item"
