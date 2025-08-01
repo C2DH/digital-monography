@@ -806,17 +806,11 @@ def _write_metadata_to_efs(
         raise
 
 
-def _remove_records_from_db(key: KeyPath) -> None:
+def _remove_records_from_db(dstate: DocumentState, key: KeyPath) -> None:
     try:
-        logger.info(f"Deleting records for key: {key} to the database {DB_URL}.")
-        logger.info(f"db_engine: {db_engine}")
         with sqlmodel.Session(db_engine) as session:
-            statement = sqlmodel.delete(Asset).where(Asset.x_location == str(key))
-            session.exec(statement)
-            session.commit()
-        logger.info(
-            f"Removing records from database for key: {key.slug}, filename: {key.name}"
-        )
+            dstate.sql_delete_by_key(session, key)
+        logger.info(f"Sent SQL DELETE cmd for {key} without an error.")
         return
     except Exception as e:
         logger.exception(f"Removing records from the database failed. Error: {repr(e)}")
@@ -832,16 +826,12 @@ def _write_records_to_db(
     metadata: DocumentMetadata, dstate: DocumentState, key: KeyPath
 ) -> None:
     try:
-        logger.info(f"Writing records for key: {key} to the database {DB_URL}.")
-        logger.info(f"db_engine: {db_engine}")
         with sqlmodel.Session(db_engine) as session:
             # delete existing records for this file so there are no duplicates
             dstate.sql_delete_by_key(session, key)
             # write all assets included in the processed file
             dstate.sql_insert_all(session)
-        logger.info(
-            f"Writing records to the database for key: {key.slug}, filename: {key.name}"
-        )
+        logger.info(f"Sent SQL INSERT cmd for {key} without an error.")
         return
     except Exception as e:
         logger.exception(f"Writing records to the database failed. Error: {repr(e)}")
