@@ -38,6 +38,7 @@ class CitationItem(MySQLModel, table=True):
     citationId: str
     x_uris: str = sqlmodel.Field(alias="uris")
     x_itemData: str = sqlmodel.Field(alias="itemData")
+    slug: str
     # x_uris: str = sqlmodel.Field(
     #     sa_column_args=sa.Column("uris", sa.String), alias="uris"
     # )

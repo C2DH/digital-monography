@@ -96,6 +96,7 @@ def prepare_citations(
                     citationId=citation_group.get("citationID"),
                     itemData=citation_item.get("itemData"),
                     uris=citation_item.get("uris"),
+                    slug=dstate.metadata.slug,
                 )
             )
             citeproc_input.append(citation_item["itemData"])
