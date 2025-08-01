@@ -155,8 +155,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _remove_fileobj(key)
         _remove_assets_info_from_s3(key)
         _remove_metadata_from_db(key)  # TODO: dstate
-        _remove_metadata_from_efs(key)  # TODO: dstate
-        _remove_records_from_db(key)
+        _remove_state_from_efs(key)
+        _remove_state_from_db(key)
         _remove_processed_html_from_efs(key)
         _remove_html_from_s3(key)
         _remove_processed_md_from_efs(key)
@@ -200,8 +200,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_soup = remove_metadata_tables(html_soup, metadata, dstate, tables)
         _write_assets_info_to_s3(metadata, dstate, key)
         _write_metadata_to_db(metadata, dstate, key)  # TODO: dstate
-        _write_metadata_to_efs(metadata, dstate, key)  # TODO: dstate
-        _write_records_to_db(metadata, dstate, key)
+        _write_state_to_efs(metadata, dstate, key)
+        _write_state_to_db(metadata, dstate, key)
         _write_processed_html_to_efs(html_soup_str, key)
         _put_html_to_s3(html_soup_str, key)
         md = _convert_to_md(key, html_soup, metadata, dstate)
@@ -758,55 +758,39 @@ def _write_metadata_to_db(
         raise
 
 
-def _remove_metadata_from_efs(key: KeyPath) -> None:
+def _remove_state_from_efs(key: KeyPath) -> None:
     try:
         fp = key.add_to_efs_slug_dir("_metadata").parent / key.github_path.with_suffix(
             ".json"
         )
-        logger.info(f"File: {fp}")
         fp.unlink(missing_ok=True)  # remove file if it exists
-        # with open(fp, "w") as f:
-        #     json.dump(json_data, f)
         logger.info(f"Metadata was removed from {str(fp)}")
     except Exception as e:
         logger.exception(
             f"Removing metadata in json from /efs directory failed. Error: {repr(e)}"
         )
-        # _log_audit_event(
-        #     key,
-        #     AuditStatus.FAILED.value,
-        #     "Error upon writing metadata.",
-        # )
         raise
 
 
-def _write_metadata_to_efs(
+def _write_state_to_efs(
     metadata: DocumentMetadata, dstate: DocumentState, key: KeyPath
 ) -> None:
     try:
-        json_data = metadata.to_json()
+        # json_data = metadata.to_json() # TODO: DocumentMetadata should be depracated
         fp = key.add_to_efs_slug_dir("_metadata").parent / key.github_path.with_suffix(
             ".json"
         )
-        logger.info(f"File: {fp}")
-        # logger.info(f"Meta: {json.dumps(json_data)}")
-        # logger.info(f"Meta: {json.dumps(json_data, default=str)}")
         with open(fp, "w") as f:
-            json.dump(json_data, f)
+            json.dump(dstate.to_dict(), f)
         logger.info(f"Metadata was saved to {str(fp)}")
     except Exception as e:
         logger.exception(
             f"Writing metadata in json to /efs directory failed. Error: {repr(e)}"
         )
-        # _log_audit_event(
-        #     key,
-        #     AuditStatus.FAILED.value,
-        #     "Error upon writing metadata.",
-        # )
         raise
 
 
-def _remove_records_from_db(dstate: DocumentState, key: KeyPath) -> None:
+def _remove_state_from_db(dstate: DocumentState, key: KeyPath) -> None:
     try:
         with sqlmodel.Session(db_engine) as session:
             dstate.sql_delete_by_key(session, key)
@@ -822,7 +806,7 @@ def _remove_records_from_db(dstate: DocumentState, key: KeyPath) -> None:
         raise
 
 
-def _write_records_to_db(
+def _write_state_to_db(
     metadata: DocumentMetadata, dstate: DocumentState, key: KeyPath
 ) -> None:
     try:
