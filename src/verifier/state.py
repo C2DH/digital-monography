@@ -1,3 +1,4 @@
+import collections
 import json
 import sqlmodel
 from sqlmodel.main import SQLModelMetaclass
@@ -37,6 +38,8 @@ class DocumentState:
     """
 
     def __init__(self, key: t.Optional[KeyPath] = None) -> None:
+        # NOTE: for __dict__ can only have sqlmodel.SQLModel-s,
+        # but that might change in the future once we add DynamoDB into the mix.
         self.__dict__: dict[str, list[sqlmodel.SQLModel]] = {}
         if key is not None:
             key = KeyPath(key)
@@ -51,6 +54,11 @@ class DocumentState:
                     }
                 )
             )
+
+    def __getitem__(self, item) -> list[sqlmodel.SQLModel]:
+        if item in self.__dict__:
+            return self.__dict__[item]
+        return []
 
     @property
     def metadata(self) -> DocumentMetadata:
@@ -157,6 +165,66 @@ class DocumentState:
 
     def __str__(self) -> str:
         return json.dumps(self.__dict__, default=str)
+
+
+def read_book_metadata(key: KeyPath) -> dict[str, DocumentState]:
+    """
+    Read JSON state stored in Elastic File System (EFS) and update the __dict__
+    with all DocumentState objects for a specific book.
+    """
+    book_metadata: dict[str, DocumentState] = {}
+    for meta_file in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
+        meta_file: KeyPath
+        with meta_file.open("r") as f:
+            state = DocumentState(meta_file)
+            state.from_dict(json.load(f))
+            book_metadata[meta_file.stem] = state
+    return book_metadata
+
+
+MAYBE_BOOK_STATE_SHOULD_BE_AN_OBJECT_LIKE_THIS = '''
+class BookState(collections.abc.MutableMapping):
+    """
+    Collection of DocumentState objects.
+
+    Inter-microservice state describing a single book
+    consisting of one or more docx or ipynb documents.
+    TODO: consider an adapter over JupyterBook config and ToC.
+    """
+
+    def __init__(self) -> None:
+        self.__dict__: dict[str, DocumentState] = {}
+
+    def __contains__(self, name: str) -> bool:
+        return name in self.__dict__
+
+    def __getitem__(self, name: str) -> DocumentState:
+        return self.__dict__[name]
+
+    def __setitem__(self, name: str, value: DocumentState):
+        self.__dict__[name] = value
+
+    def __delitem__(self, name: str):
+        del self.__dict__[name]
+
+    def __iter__(self):
+        return iter(self.__dict__)
+
+    def __len__(self):
+        return len(self.__dict__)
+
+    def load_from_file(self, key: KeyPath) -> None:
+        """
+        Read JSON state stored in Elastic File System (EFS) and update the __dict__
+        with all DocumentState objects for a specific book.
+        """
+        for meta_file in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
+            meta_file: KeyPath
+            with meta_file.open("r") as f:
+                state = DocumentState(meta_file)
+                state.from_dict(json.load(f))
+                self.__dict__[meta_file.stem] = state
+'''
 
 
 def has_db_table(model: sqlmodel.SQLModel | sqlmodel.main.SQLModelMetaclass) -> bool:

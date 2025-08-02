@@ -6,9 +6,11 @@ import uuid
 try:
     from ._base import MySQLModel
     from keys import KeyPath
+    from constants import AUTONUMBER_PLACEHOLDER
 except (ImportError, ModuleNotFoundError):
     from ._base import MySQLModel  # type: ignore
     from ..keys import KeyPath  # type: ignore
+    from ..constants import AUTONUMBER_PLACEHOLDER
 
 
 class Substitution(MySQLModel, table=True):
@@ -43,35 +45,21 @@ class Substitution(MySQLModel, table=True):
         super().__init__(**data)
 
 
-# class SubstitutionDatapoint(DatapointBase):
-#     schema_v: int = 1  # if multiple v in the db, the client might have to differentiate
-#     ###
-#     was: str
-#     placeholder: str
-#     is_digital: bool | None
-#     is_paper: bool | None
-#     item_type: t.Literal["heading", "equation", "figure", "table", "graph", "ref", ""]
-#     target_fn: str | None
-#     file_count: int | None
-#     prefix: str
-#     prev_item_num: int | None
-#     new_item_num: int | None = None
-#     fprefix: str | None = None
-#     # make sure that literal options are equal to constants.CAPTION_ITEM_TYPE_*
-
-#     def new_value(self, file_prefix=None) -> str:
-#         """
-#         Returns the value that will replace placeholder.
-#         Used for substituting values in builder (for digital version).
-#         """
-#         if self.is_digital is False and self.is_paper is True:
-#             return ""
-#         elif self.new_item_num and file_prefix:
-#             return f"{file_prefix}.{self.prefix}{self.new_item_num}"
-#         elif self.new_item_num is not None:
-#             file_count = self.file_count if self.file_count is not None else ""
-#             return f"{file_count}.{self.prefix}{self.new_item_num}"
-#         elif self.was == AUTONUMBER_PLACEHOLDER:
-#             return ""
-#         else:
-#             return self.was
+class SubstitutionService:
+    @staticmethod
+    def to_digital_version(subst: Substitution, file_prefix=None) -> str:
+        """
+        Returns the value that will replace placeholder, e.g. `1.I`.
+        Used for substituting values in builder (for digital version).
+        """
+        if subst.is_digital is False and subst.is_paper is True:
+            return ""
+        elif subst.new_item_num and file_prefix:
+            return f"{file_prefix}.{subst.prefix}{subst.new_item_num}"
+        elif subst.new_item_num is not None:
+            file_count = subst.file_count if subst.file_count is not None else ""
+            return f"{file_count}.{subst.prefix}{subst.new_item_num}"
+        elif subst.was == AUTONUMBER_PLACEHOLDER:
+            return ""
+        else:
+            return subst.was

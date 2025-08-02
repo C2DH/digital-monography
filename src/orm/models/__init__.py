@@ -4,11 +4,11 @@ import sqlmodel
 from .assets import Asset
 from .citation_groups import CitationGroup
 from .citation_items import CitationItem
-from .files import File
-from .headings import Heading
+from .files import File, FileService  # noqa
+from .headings import Heading, HeadingService  # noqa
 from .doc_metadata import DocumentMetadata
-from .refs import Ref
-from .substitutions import Substitution
+from .refs import Ref, RefService  # noqa
+from .substitutions import Substitution, SubstitutionService  # noqa
 from .targets import Target
 
 type ModelMeta = sqlmodel.main.SQLModelMetaclass | sqlalchemy.orm.DeclarativeMeta

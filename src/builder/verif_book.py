@@ -1,18 +1,20 @@
 import bs4
 import datetime
-import json
-import logging
 import pathlib
 import typing as t
 import uuid
 
 try:
     from metadata import DocumentMetadata, RefDatapoint, TargetDatapoint
+    from models import Ref, RefService, Target
+    from state import DocumentState
     from keys import KeyPath
     from verif_warnings import MessagesJson, VerifierMessages
     from html2md import convert_to_md
 except (ImportError, ModuleNotFoundError):
     from .metadata import DocumentMetadata, RefDatapoint, TargetDatapoint
+    from .models import Ref, RefService, Target
+    from .state import DocumentState
     from .keys import KeyPath
     from .verif_warnings import MessagesJson, VerifierMessages
     from .html2md import convert_to_md
@@ -21,7 +23,7 @@ except (ImportError, ModuleNotFoundError):
 class BookVerifier:
     def __init__(self) -> None:
         self._messages = VerifierMessages()
-        self._metadatas: t.Dict[str, DocumentMetadata] = {}
+        self._book_metadata: t.Dict[str, DocumentState] = {}
 
     def to_json(self, md: bool = False) -> MessagesJson:
         return self._messages.to_json(md)
@@ -36,7 +38,7 @@ class BookVerifier:
 
 # TODO: add filename in RefDatapoint and TargetDatapoint cls
 # centralize warnings schema in _common/_models.py
-# centralize VerifierMessages
+# centralize VerifierMessages <== add Warning model
 
 
 LINKS = "links"
@@ -55,37 +57,37 @@ MSG_PROBLEMS = {
 
 class RefsAndTargetsVerifier:
     def __init__(self) -> None:
-        self._targets: dict[str, tuple[pathlib.PurePath, TargetDatapoint]] = {}
+        self._targets: dict[str, tuple[pathlib.PurePath, Target]] = {}
         self._timestamp = datetime.datetime.now(tz=datetime.timezone.utc)
-        self._metadatas: dict[pathlib.PurePath, DocumentMetadata] = {}
+        self._book_metadata: dict[str, DocumentState] = {}
         self._messages: list[dict[str, str]] = []
-        # TODO: self._messages: VerifierMessages = VerifierMessages()
+        # TODO: self._messages: list[Warning] = []
 
     def verify(
         self,
-        book_metadata: dict[str, DocumentMetadata],
+        book_metadata: dict[str, DocumentState],
         # targets: dict[str, tuple[pathlib.PurePath, TargetDatapoint]],
     ) -> list[dict[str, str]]:
         # mark targets
         self._book_metadata = book_metadata
         # self._book_metadata_stemmed_filenames = [m for m in self._book_metadata]
         # self._targets = targets
-        for fn, meta in self._book_metadata.items():
-            for target in meta.targets:
-                target: TargetDatapoint
+        for fn, dstate in self._book_metadata.items():
+            targets: list[Target] = dstate["targets"]
+            for target in targets:
                 self._targets[target.pk] = (fn, target)
         # iterate over refs, matching them with targets
         i = 0
-        for fn, md in self._book_metadata.items():
-            for ref in md.refs:
+        for fn, dstate in self._book_metadata.items():
+            for ref in dstate["refs"]:
+                ref: Ref
                 i += 1
-                ref: RefDatapoint
                 self.md_elem = ""
-                if ref.is_external():
+                if RefService.is_external(ref.href):
                     self._verify_external_links(ref)
-                elif ref.is_internal_infile():
+                elif RefService.is_internal_infile(ref.href):
                     self._verify_internal_infile_links(ref)
-                elif ref.is_internal_f2f():
+                elif RefService.is_internal_f2f(ref.href):
                     self._verify_internal_f2f_links(ref)
                 else:
                     check = "check_a_without_hash_or_http"
@@ -106,7 +108,7 @@ class RefsAndTargetsVerifier:
                     )
         return self._messages
 
-    def _verify_external_links(self, ref: RefDatapoint) -> None:
+    def _verify_external_links(self, ref: Ref) -> None:
         if self._check_a_is_not_https(ref.href):
             check = "check_a_is_not_https"
             self._markwownify_html_elem(ref)
@@ -148,7 +150,7 @@ class RefsAndTargetsVerifier:
                 }
             )
 
-    def _verify_internal_infile_links(self, ref: RefDatapoint) -> None:
+    def _verify_internal_infile_links(self, ref: Ref) -> None:
         target_dp = self._targets.get(ref.href[1:])
         if self._check_a_is_invalid_infile_link(target_dp):
             check = "check_a_is_invalid_infile_link"
@@ -172,7 +174,7 @@ class RefsAndTargetsVerifier:
                 }
             )
 
-    def _verify_internal_f2f_links(self, ref: RefDatapoint) -> None:
+    def _verify_internal_f2f_links(self, ref: Ref) -> None:
         target_fn, fragment = ref.href.split("#")
         target_dp = self._targets.get(fragment)
         target_stem = pathlib.Path(target_fn).stem
@@ -240,7 +242,7 @@ class RefsAndTargetsVerifier:
                 }
             )
 
-    def _markwownify_html_elem(self, ref: RefDatapoint) -> None:
+    def _markwownify_html_elem(self, ref: Ref) -> None:
         if self.md_elem != "":
             return self.md_elem
         soup = bs4.BeautifulSoup(ref.elem, "html.parser")
@@ -256,12 +258,10 @@ class RefsAndTargetsVerifier:
             "https://web.archive.org/"
         )
 
-    def _check_a_is_invalid_infile_link(
-        self, target: t.Optional[TargetDatapoint]
-    ) -> bool:
+    def _check_a_is_invalid_infile_link(self, target: t.Optional[Target]) -> bool:
         return target is None
 
-    def _check_a_is_invalid_f2f(self, target: t.Optional[TargetDatapoint]) -> bool:
+    def _check_a_is_invalid_f2f(self, target: t.Optional[Target]) -> bool:
         return target is None
 
     def _check_a_f2f_filename_is_invalid(self, target_fn: str) -> bool:
