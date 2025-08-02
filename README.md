@@ -574,3 +574,8 @@ In GitLab, update "CI/CD Settings" > "Variables" > "PGP_KEY" with the new privat
 ### Accessing project email
 
 Please consult the internal documentation in the [c2dh backstage](https://c2dh.atlassian.net/wiki/spaces/DDRI/pages/162923897/Related+links) for more details about accessing and managing the emails connected with the project.
+
+### Developing new sql db
+
+cp -r src/_common/migrations src/preparer/ && cp -r src/_common/models src/preparer/ && cp src/_common/state.py src/preparer/state.py
+DGTMON_DEBUG=1 FLASK_SECRET_KEY=123 python -it src/orm/main.py
