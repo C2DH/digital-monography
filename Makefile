@@ -33,6 +33,11 @@ test:
 
 test/make: test/copy test/prep test/run
 
+test/integration:
+	DGTMON_DEBUG=1 python3.12 -m pytest tests/integration
+
+test/e2e: test/prep test/integration
+
 typecheck:
 	mypy src/entrypoint/ --check-untyped-defs
 	mypy src/gpu/ --check-untyped-defs
