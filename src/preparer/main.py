@@ -197,7 +197,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _write_assets_info_to_s3(metadata, key)
         _write_metadata_to_db(metadata, key)
         _write_metadata_to_efs(metadata, key)
-        _write_records_to_db(metadata, key)
+        # _write_records_to_db(metadata, key)
         _write_processed_html_to_efs(html_soup_str, key)
         _put_html_to_s3(html_soup_str, key)
         md = _convert_to_md(key, html_soup, metadata)
