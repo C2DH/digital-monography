@@ -7,7 +7,7 @@ from src.wordprocessor.keys import KeyPath
 JB_BUILD_DIR = KeyPath(DEFAULT_SFS_DIR) / "a_book" / "_build" / "html"
 
 
-class TestReferencesInJupyterBookV1:
+class TestRefsAndTargetsInJupyterBookV1:
     key_a = JB_BUILD_DIR / "01_a.html"
     key_b = JB_BUILD_DIR / "02_b.html"
 
@@ -176,50 +176,3 @@ class TestReferencesInJupyterBookV1:
         assert target.text.startswith(
             target_text
         ), f'Expected target text to start with "{target_text}", but got "{target.text}"'
-
-
-# """
-# // here iterate over siblings
-# <span id="f-02-b-h2subheading"></span>
-# <span id="f-02-b-heading"></span>
-# <h2>
-#     Heading
-#     <a class="headerlink" href="#heading" title="Link to this heading">#</a>
-# </h2>
-# ...
-# // here go to a parent
-# <p id="f-02-b-figredsquare">
-#     <span id="f-02-b-ref177053481"></span>
-#     <strong>Figure 2.1:</strong>
-#     Red square. See the video below.
-# </p>
-# ...
-# // here go to a parent
-# <p id="f-02-b-ref177044319">
-#     <span id="f-02-b-ref177044323"></span>
-#     <span id="f-02-b-tblsimpletable"></span>
-#     <span id="f-02-b-ref177053494"></span>
-#     <strong>Table 2.1:</strong>
-#     Table.
-# </p>
-# """
-
-
-# """
-# <p>In a separate file: Links to
-# <a class="reference internal" href="02_b.html#f-02-b-h2subheading">
-#     <span class="std std-ref">
-#         Heading
-#     </span>
-# </a>,
-# <a class="reference internal" href="02_b.html#f-02-b-figredsquare">
-#     <span class="std std-ref">
-#         Figure 2.1
-#     </span>
-# </a>, and to
-# <a class="reference internal" href="02_b.html#f-02-b-tblsimpletable">
-#     <span class="std std-ref">
-#         Table 2.1
-#     </span>
-# </a>.</p>
-# """
