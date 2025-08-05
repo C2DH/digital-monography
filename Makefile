@@ -18,6 +18,7 @@ test/copy:
 	cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/book-content-examples/' tests/_fixtures/
 
 test/prep:
+	make db/migrate
 	DGTMON_NO_WAIT=1 \
 		IR_APKG_HTML_BUCKET_NAME=_HTML \
 		IR_APKG_MD_BUCKET_NAME=_MARKDOWN \
@@ -52,29 +53,8 @@ db/makemigrations:
 	# 'Enter migration message, best in `01_init_db` format.'
 	# cd src/_common && DB_PATH=/tmp/efs/_database.db alembic revision --autogenerate -m  ; cd ../..
 
-db/copy:
-	echo 'Step 1. Copy models'
-	cp -r src/_common/models scripts/
-	cp -r src/_common/models src/preparer/
-	cp -r src/_common/models src/builder/
-	cp -r src/_common/models src/orm/
-	cp -r src/_common/models src/verifier/
-	cp -r src/_common/models src/wordprocessor/
-	echo -r 'Step 2. Copy migration files'
-	cp -r src/_common/migrations scripts/
-	cp -r src/_common/migrations src/preparer/
-	cp -r src/_common/migrations src/builder/
-	cp -r src/_common/migrations src/orm/
-	cp -r src/_common/migrations src/verifier/
-	cp -r src/_common/migrations src/wordprocessor/
-	echo 'Step 3. Copy alembic config'
-	cp src/_common/alembic.ini scripts/alembic.ini
-	cp src/_common/alembic.ini src/preparer/alembic.ini
-	cp src/_common/alembic.ini src/builder/alembic.ini
-	cp src/_common/alembic.ini src/verifier/alembic.ini
-	cp src/_common/alembic.ini src/wordprocessor/alembic.ini
-
 db/migrate:
+	mkdir -p /tmp/efs
 	cd src/_common && DB_PATH=/tmp/efs/_database.db alembic upgrade heads
 
 login:
@@ -148,6 +128,28 @@ copy/html2md:
 copy/misc:
 	cp src/_common/github_trigger.py src/github/github_trigger.py
 	cp src/_common/github_trigger.py src/preparer/github_trigger.py
+
+copy/db:
+	echo 'Step 1. Copy models'
+	cp -r src/_common/models scripts/
+	cp -r src/_common/models src/preparer/
+	cp -r src/_common/models src/builder/
+	cp -r src/_common/models src/orm/
+	cp -r src/_common/models src/verifier/
+	cp -r src/_common/models src/wordprocessor/
+	echo -r 'Step 2. Copy migration files'
+	cp -r src/_common/migrations scripts/
+	cp -r src/_common/migrations src/preparer/
+	cp -r src/_common/migrations src/builder/
+	cp -r src/_common/migrations src/orm/
+	cp -r src/_common/migrations src/verifier/
+	cp -r src/_common/migrations src/wordprocessor/
+	echo 'Step 3. Copy alembic config'
+	cp src/_common/alembic.ini scripts/alembic.ini
+	cp src/_common/alembic.ini src/preparer/alembic.ini
+	cp src/_common/alembic.ini src/builder/alembic.ini
+	cp src/_common/alembic.ini src/verifier/alembic.ini
+	cp src/_common/alembic.ini src/wordprocessor/alembic.ini
 
 entrypoint/build:
 	cp src/_common/constants.py src/entrypoint/constants.py
