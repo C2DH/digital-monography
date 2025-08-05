@@ -1,6 +1,7 @@
 ENTRYPOINT_LATEST_V := $(shell jq -r '.ENTRYPOINT.LATEST' < .versions.json)
 DROPBOX_LATEST_V := $(shell jq -r '.DROPBOX.LATEST' < .versions.json)
 BUILDER_LATEST_V := $(shell jq -r '.BUILDER.LATEST' < .versions.json)
+BUILDERv2_LATEST_V := $(shell jq -r '.BUILDERv2.LATEST' < .versions.json)
 PREPARER_LATEST_V := $(shell jq -r '.PREPARER.LATEST' < .versions.json)
 GITHUB_LATEST_V  := $(shell jq -r '.GITHUB.LATEST' < .versions.json)
 VERIFIER_DOC_LATEST_V  := $(shell jq -r '.VERIFIER_DOC.LATEST' < .versions.json)
@@ -87,6 +88,7 @@ copy/audit:
 	cp src/_common/audit.py src/dropbox/audit.py
 	cp src/_common/audit.py src/preparer/audit.py
 	cp src/_common/audit.py src/builder/audit.py
+	cp src/_common/audit.py src/builderv2/audit.py
 	cp src/_common/audit.py src/github/audit.py
 	cp src/_common/audit.py src/verifier_doc/audit.py
 	cp src/_common/audit.py src/wordprocessor/audit.py
@@ -97,6 +99,7 @@ copy/constants:
 	cp src/_common/constants.py src/dropbox/constants.py
 	cp src/_common/constants.py src/preparer/constants.py
 	cp src/_common/constants.py src/builder/constants.py
+	cp src/_common/constants.py src/builderv2/constants.py
 	cp src/_common/constants.py src/github/constants.py
 	cp src/_common/constants.py src/verifier_doc/constants.py
 	cp src/_common/constants.py src/gpu/constants.py
@@ -107,6 +110,7 @@ copy/keys:
 	cp src/_common/keys.py src/dropbox/keys.py
 	cp src/_common/keys.py src/preparer/keys.py
 	cp src/_common/keys.py src/builder/keys.py
+	cp src/_common/keys.py src/builderv2/keys.py
 	cp src/_common/keys.py src/github/keys.py
 	cp src/_common/keys.py src/orm/keys.py
 	cp src/_common/keys.py src/verifier_doc/keys.py
@@ -221,6 +225,24 @@ builder/push:
 
 builder/make: builder/build builder/tag builder/push
 
+builderv2/build:
+	cp src/_common/constants.py src/builderv2/constants.py
+	cp src/_common/keys.py src/builderv2/keys.py
+	cp src/_common/metadata.py src/builderv2/metadata.py
+	docker build -t dgtmon-dev-builderv2 src/builderv2
+
+builderv2/tag:
+	docker tag dgtmon-dev-builderv2 ${DEV_DOCKER_ECR}/dgtmon-dev-builderv2:${BUILDERv2_LATEST_V}
+	docker tag dgtmon-dev-builderv2 ${MAIN_DOCKER_ECR}/dgtmon-dev-builderv2:${BUILDERv2_LATEST_V}
+	docker tag dgtmon-dev-builderv2 ${DOCKER_HUB}/dgtmon-dev-builderv2:${BUILDERv2_LATEST_V}
+
+builderv2/push:
+	docker push ${DEV_DOCKER_ECR}/dgtmon-dev-builderv2:${BUILDERv2_LATEST_V}
+	docker push ${MAIN_DOCKER_ECR}/dgtmon-dev-builderv2:${BUILDERv2_LATEST_V}
+	docker push ${DOCKER_HUB}/dgtmon-dev-builderv2:${BUILDERv2_LATEST_V}
+
+builderv2/make: builderv2/build builderv2/tag builderv2/push
+
 github/build:
 	cp src/_common/constants.py src/github/constants.py
 	cp src/_common/keys.py src/github/keys.py
@@ -246,14 +268,14 @@ verifier_doc/build:
 	docker build -t dgtmon-dev-verifier_doc src/verifier_doc
 
 verifier_doc/tag:
-	docker tag dgtmon-dev-verifier_doc ${DEV_DOCKER_ECR}/dgtmon-dev-verifierdoc:${verifier_doc_LATEST_V}
-	docker tag dgtmon-dev-verifier_doc ${MAIN_DOCKER_ECR}/dgtmon-dev-verifierdoc:${verifier_doc_LATEST_V}
-	docker tag dgtmon-dev-verifier_doc ${DOCKER_HUB}/dgtmon-dev-verifierdoc:${verifier_doc_LATEST_V}
+	docker tag dgtmon-dev-verifier_doc ${DEV_DOCKER_ECR}/dgtmon-dev-verifier:${verifier_doc_LATEST_V}
+	docker tag dgtmon-dev-verifier_doc ${MAIN_DOCKER_ECR}/dgtmon-dev-verifier:${verifier_doc_LATEST_V}
+	docker tag dgtmon-dev-verifier_doc ${DOCKER_HUB}/dgtmon-dev-verifier:${verifier_doc_LATEST_V}
 
 verifier_doc/push:
-	docker push ${DEV_DOCKER_ECR}/dgtmon-dev-verifierdoc:${verifier_doc_LATEST_V}
-	docker push ${MAIN_DOCKER_ECR}/dgtmon-dev-verifierdoc:${verifier_doc_LATEST_V}
-	docker push ${DOCKER_HUB}/dgtmon-dev-verifierdoc:${verifier_doc_LATEST_V}
+	docker push ${DEV_DOCKER_ECR}/dgtmon-dev-verifier:${verifier_doc_LATEST_V}
+	docker push ${MAIN_DOCKER_ECR}/dgtmon-dev-verifier:${verifier_doc_LATEST_V}
+	docker push ${DOCKER_HUB}/dgtmon-dev-verifier:${verifier_doc_LATEST_V}
 
 verifier_doc/make: verifier_doc/build verifier_doc/tag verifier_doc/push
 

@@ -113,6 +113,11 @@ variable "builder_repo_name" {
   description = "Name of the ECR repository for the book builder image"
 }
 
+variable "builderv2_repo_name" {
+  type        = string
+  description = "Name of the ECR repository for the builder with JupyterBook_v2 image"
+}
+
 variable "entrypoint_repo_name" {
   type        = string
   description = "Name of the ECR repository for the entrypoint image"
@@ -163,6 +168,11 @@ variable "lambda_builder_func" {
   description = "Name of the builder Lambda function"
 }
 
+variable "lambda_builderv2_func" {
+  type        = string
+  description = "Name of the builder Lambda function with JupyterBook_v2"
+}
+
 variable "lambda_github_func" {
   type        = string
   description = "Name of the github Lambda function"
@@ -203,6 +213,11 @@ variable "microservice_builder" {
   description = "Name of the builder microservice"
 }
 
+variable "microservice_builderv2" {
+  type        = string
+  description = "Name of the builder microservice with JupyterBook_v2"
+}
+
 variable "microservice_github" {
   type        = string
   description = "Name of the github microservice"
@@ -241,6 +256,11 @@ variable "policy_dropbox" {
 variable "policy_builder" {
   type        = string
   description = "Name of the IAM policy to be assumed by the builder IAM role"
+}
+
+variable "policy_builderv2" {
+  type        = string
+  description = "Name of the IAM policy to be assumed by the builderv2 IAM role"
 }
 
 variable "policy_github" {
@@ -296,6 +316,11 @@ variable "role_dropbox" {
 variable "role_builder" {
   type        = string
   description = "Name of the IAM role for the builder Lambda function"
+}
+
+variable "role_builderv2" {
+  type        = string
+  description = "Name of the IAM role for the builderv2 Lambda function"
 }
 
 variable "role_github" {

@@ -11,6 +11,10 @@
         "LATEST": "0.1.44",
         "STABLE": "0.1.44"
     },
+    "BUILDERv2": {
+        "LATEST": "0.0.1",
+        "STABLE": "0.0.1"
+    },
     "GITHUB": {
         "LATEST": "0.0.32",
         "STABLE": "0.0.32"
@@ -22,10 +26,6 @@
     "VERIFIER_DOC": {
         "LATEST": "0.1.25",
         "STABLE": "0.1.25"
-    },
-    "VERIFIER_BOOK": {
-        "LATEST": "0.0.1",
-        "STABLE": "0.0.1"
     },
     "GPU": {
         "LATEST": "0.0.11",
