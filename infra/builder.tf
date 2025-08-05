@@ -320,7 +320,7 @@ resource "aws_lambda_function" "builder_func" {
       DYNAMODB_REFS_TBL         = aws_dynamodb_table.refs_tbl.name
       METADATA_REFS_BUCKET_NAME = aws_s3_bucket.metadata_refs_s3.bucket
       STATICWS_WIP_BUCKET_NAME  = aws_s3_bucket.staticws_wip.bucket
-      VERIFIER_MSGS             = aws_s3_bucket.verification_msg.bucket
+      VERIFIER_DOC_MSGS         = aws_s3_bucket.verification_msg.bucket
     }
   }
 }

@@ -62,5 +62,5 @@ def _get_s3_bucket_name(keyword: str) -> str:
         BE_PATH_ASSET_METADATA: os.environ.get("METADATA_ASSETS_BUCKET_NAME", ""),
         BE_PATH_ASSET_RETRIEVE: os.environ.get("APKG_UPLOAD_BUCKET_NAME", ""),
         BE_PATH_REF_METADATA: os.environ.get("METADATA_REFS_BUCKET_NAME", ""),
-        "warnings": os.environ.get("VERIFIER_MSGS", ""),
+        "warnings": os.environ.get("VERIFIER_DOC_MSGS", ""),
     }[keyword]

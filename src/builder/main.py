@@ -77,13 +77,17 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     key = _get_key(event)
     _log_audit_event(key, AuditStatus.PENDING.value, "Building book in progress...")
     _log_tree(key)
-    _mkdir_read()
+    # _mkdir_read()
     _copy_assets(key)
     book_metadata = _read_book_metadata(key)
     _prepare_config(key, book_metadata)
     _make_substitutions(key, book_metadata)
-    _build_book(key)
-    _distribute_book(key)
+    _build_jb1_book(key)
+    _distribute_jb1_book(key)
+
+    _build_jb2_book(key)
+    _distribute_jb2_book(key)
+
     _log_tree(key)
     _log_audit_event(key, AuditStatus.SUCCESS.value, "Digital version was created.")
     # NOTE: post-build phase, this should probably go to another Lambda service
@@ -216,7 +220,7 @@ def _log_tree(key: KeyPath) -> None:
         logger.exception(f"Logging directory tree failed. Error: {repr(e)}")
 
 
-def _build_book(key: KeyPath) -> None:
+def _build_jb1_book(key: KeyPath) -> None:
     try:
         logger.info(f"key.efs_slug_dir: {str(key.efs_slug_dir)}")
         logger.info(
@@ -264,18 +268,20 @@ def _build_book(key: KeyPath) -> None:
             # https://github.com/sphinx-doc/sphinx/blob/4fbd3682d5cdf606159630f7daf6f818d58de05e/tests/test_util/test_util_logging.py#L56
             # params["verbose"] = 2
         build.callback(**params)
-        logging.info(f"Builder finished building the book at {key.efs_slug_dir}.")
+        logging.info(f"Builder finished building the JBv1 book at {key.efs_slug_dir}.")
     except RuntimeError as e:
-        logging.exception(f"Unable to build book. Error: {repr(e)}")
+        logging.exception(f"Unable to build JBv1 book. Error: {repr(e)}")
         _log_audit_event(
             key,
             AuditStatus.FAILED.value,
-            "Runtime error while Jupyter Book build operation.",
+            "Runtime error while Jupyter Book v1 build operation.",
         )
     except Exception as e:
-        logging.exception(f"Unable to build book. Error: {repr(e)}")
+        logging.exception(f"Unable to build JBv1 book. Error: {repr(e)}")
         _log_audit_event(
-            key, AuditStatus.FAILED.value, "Error while Jupyter Book build operation."
+            key,
+            AuditStatus.FAILED.value,
+            "Error while Jupyter Book v1 build operation.",
         )
         raise
 
@@ -340,7 +346,7 @@ def _build_book(key: KeyPath) -> None:
 #         raise
 
 
-def _distribute_book(key: KeyPath) -> None:
+def _distribute_jb1_book(key: KeyPath) -> None:
     src = key.efs_slug_dir / "_build" / "html"
     try:
         if IS_DEBUG:
@@ -348,25 +354,49 @@ def _distribute_book(key: KeyPath) -> None:
         else:
             _sync_efs_to_staticws(src, "read", key.slug)
     except Exception as e:
-        msg = f"Failed to copy post-build warnings report. Error: {repr(e)}"
+        msg = f"Failed to distribute JBv1 book build. Error: {repr(e)}"
         logging.exception(msg)
         _log_audit_event(
-            key, AuditStatus.FAILED.value, "Error while updating the digital version."
+            key,
+            AuditStatus.FAILED.value,
+            "Error while updating the digital version (JBv1).",
         )
         raise
 
 
-# def _distribute_report(key: KeyPath) -> None:
-#     try:
-#         src = key.efs_slug_dir / "_warnings" / "_build" / "html"
-#         if IS_DEBUG:
-#             _cp_efs_to_data_dir(src, "warnings", key.slug)
-#         else:
-#             _sync_efs_to_staticws(src, "check", key.slug)
-#     except Exception as e:
-#         msg = f"Failed to copy post-build warnings report. Error: {repr(e)}"
-#         logging.exception(msg)
-#         raise
+def _build_jb2_book(key: KeyPath) -> None:
+    try:
+        pass
+    except Exception as e:
+        msg = f"Unable to build JBv2 book. Error: {repr(e)}"
+        logging.exception(msg)
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            "Error while Jupyter Book v2 build operation.",
+        )
+        raise
+
+
+def _distribute_jb2_book(key: KeyPath) -> None:
+    try:
+        pass
+        # probably just send sqs message with new status to github microservice to:
+
+        # 1. call github api to create Github Pages site
+        # https://docs.github.com/en/rest/pages/pages?apiVersion=2022-11-28#create-a-github-pages-site
+
+        # 2. (maybe) call github api to update information about the site
+        # https://docs.github.com/en/rest/pages/pages?apiVersion=2022-11-28#update-information-about-a-github-pages-site
+    except Exception as e:
+        msg = f"Failed to distribute JBv2 book build. Error: {repr(e)}"
+        logging.exception(msg)
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            "Error while updating the digital version (JBv2).",
+        )
+        raise
 
 
 def _cp_efs_to_data_dir(src: pathlib.Path, dstdir: str, slug: str) -> None:
@@ -547,7 +577,7 @@ def _put_json_to_s3(key: KeyPath, warnings: list[dict[str, str]]) -> None:
         for fn, warnings in warnings_grouped.items():
             s3_key = key.slug + "/" + fn.split(".")[0] + ".json"
             body = json.dumps(warnings, default=str)
-            bucket = os.environ.get("VERIFIER_MSGS", "")
+            bucket = os.environ.get("VERIFIER_DOC_MSGS", "")
             resp = s3.put_object(Body=body, Bucket=bucket, Key=str(s3_key))
             logger.info(
                 f"Response from s3.put_object(Bucket={bucket}, Key={str(s3_key)}): "

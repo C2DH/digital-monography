@@ -147,7 +147,7 @@ def _write_json_to_efs(json_data: t.Any, key: KeyPath) -> None:
 def _put_json_to_s3(body: str, key: KeyPath) -> None:
     try:
         s3_key = key.s3_key.with_suffix(".json")
-        bucket = os.environ.get("VERIFIER_MSGS", "")
+        bucket = os.environ.get("VERIFIER_DOC_MSGS", "")
         resp = s3.put_object(Body=body, Bucket=bucket, Key=str(s3_key))
         logger.info(
             f"Response from s3.put_object(Bucket={bucket}, Key={str(s3_key)}): "

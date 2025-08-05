@@ -3,7 +3,7 @@ DROPBOX_LATEST_V := $(shell jq -r '.DROPBOX.LATEST' < .versions.json)
 BUILDER_LATEST_V := $(shell jq -r '.BUILDER.LATEST' < .versions.json)
 PREPARER_LATEST_V := $(shell jq -r '.PREPARER.LATEST' < .versions.json)
 GITHUB_LATEST_V  := $(shell jq -r '.GITHUB.LATEST' < .versions.json)
-VERIFIER_LATEST_V  := $(shell jq -r '.VERIFIER.LATEST' < .versions.json)
+VERIFIER_DOC_LATEST_V  := $(shell jq -r '.VERIFIER_DOC.LATEST' < .versions.json)
 GPU_LATEST_V  := $(shell jq -r '.GPU.LATEST' < .versions.json)
 WORDPROCESSOR_LATEST_V  := $(shell jq -r '.WORDPROCESSOR.LATEST' < .versions.json)
 LOCAL_LATEST_V := $(shell jq -r '.LOCAL_LATEST_V' < .versions.json)
@@ -23,14 +23,14 @@ test/prep:
 		IR_APKG_HTML_BUCKET_NAME=_HTML \
 		IR_APKG_MD_BUCKET_NAME=_MARKDOWN \
 		METADATA_ASSETS_BUCKET_NAME=_METDATA \
-		VERIFIER_MSGS=_WARNINGS \
+		VERIFIER_DOC_MSGS=_WARNINGS \
 		python3.12 scripts/prepare_and_build.py book_path="tests/_fixtures/a_book/"
 
 test/run:
-	DGTMON_DEBUG=1 python3.12 -m pytest tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
+	DGTMON_DEBUG=1 python3.12 -m pytest tests/preparer/ tests/verifier_doc/ tests/builder/ tests/wordprocessor/
 
 test:
-	DGTMON_DEBUG=1 python3.12 -m pytest tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
+	DGTMON_DEBUG=1 python3.12 -m pytest tests/preparer/ tests/verifier_doc/ tests/builder/ tests/wordprocessor/
 
 test/make: test/copy test/prep test/run
 
@@ -88,7 +88,7 @@ copy/audit:
 	cp src/_common/audit.py src/preparer/audit.py
 	cp src/_common/audit.py src/builder/audit.py
 	cp src/_common/audit.py src/github/audit.py
-	cp src/_common/audit.py src/verifier/audit.py
+	cp src/_common/audit.py src/verifier_doc/audit.py
 	cp src/_common/audit.py src/wordprocessor/audit.py
 
 copy/constants:
@@ -98,7 +98,7 @@ copy/constants:
 	cp src/_common/constants.py src/preparer/constants.py
 	cp src/_common/constants.py src/builder/constants.py
 	cp src/_common/constants.py src/github/constants.py
-	cp src/_common/constants.py src/verifier/constants.py
+	cp src/_common/constants.py src/verifier_doc/constants.py
 	cp src/_common/constants.py src/gpu/constants.py
 	cp src/_common/constants.py src/orm/constants.py
 	cp src/_common/constants.py src/wordprocessor/constants.py
@@ -109,7 +109,7 @@ copy/keys:
 	cp src/_common/keys.py src/builder/keys.py
 	cp src/_common/keys.py src/github/keys.py
 	cp src/_common/keys.py src/orm/keys.py
-	cp src/_common/keys.py src/verifier/keys.py
+	cp src/_common/keys.py src/verifier_doc/keys.py
 	cp src/_common/keys.py src/wordprocessor/keys.py
 
 copy/metadata:
@@ -117,12 +117,12 @@ copy/metadata:
 	cp src/_common/metadata.py scripts/metadata.py
 	cp src/_common/metadata.py src/preparer/metadata.py
 	cp src/_common/metadata.py src/builder/metadata.py
-	cp src/_common/metadata.py src/verifier/metadata.py
+	cp src/_common/metadata.py src/verifier_doc/metadata.py
 	cp src/_common/metadata.py src/wordprocessor/metadata.py
 
 copy/html2md:
 	cp src/_common/html2md.py src/preparer/html2md.py
-	cp src/_common/html2md.py src/verifier/html2md.py
+	cp src/_common/html2md.py src/verifier_doc/html2md.py
 	cp src/_common/html2md.py src/builder/html2md.py
 
 copy/misc:
@@ -135,20 +135,20 @@ copy/db:
 	cp -r src/_common/models src/preparer/
 	cp -r src/_common/models src/builder/
 	cp -r src/_common/models src/orm/
-	cp -r src/_common/models src/verifier/
+	cp -r src/_common/models src/verifier_doc/
 	cp -r src/_common/models src/wordprocessor/
 	echo -r 'Step 2. Copy migration files'
 	cp -r src/_common/migrations scripts/
 	cp -r src/_common/migrations src/preparer/
 	cp -r src/_common/migrations src/builder/
 	cp -r src/_common/migrations src/orm/
-	cp -r src/_common/migrations src/verifier/
+	cp -r src/_common/migrations src/verifier_doc/
 	cp -r src/_common/migrations src/wordprocessor/
 	echo 'Step 3. Copy alembic config'
 	cp src/_common/alembic.ini scripts/alembic.ini
 	cp src/_common/alembic.ini src/preparer/alembic.ini
 	cp src/_common/alembic.ini src/builder/alembic.ini
-	cp src/_common/alembic.ini src/verifier/alembic.ini
+	cp src/_common/alembic.ini src/verifier_doc/alembic.ini
 	cp src/_common/alembic.ini src/wordprocessor/alembic.ini
 
 entrypoint/build:
@@ -238,24 +238,24 @@ github/push:
 
 github/make: github/build github/tag github/push
 
-verifier/build:
-	cp src/_common/constants.py src/verifier/constants.py
-	cp src/_common/keys.py src/verifier/keys.py
-	cp src/_common/metadata.py src/verifier/metadata.py
-	cp src/_common/html2md.py src/verifier/html2md.py
-	docker build -t dgtmon-dev-verifier src/verifier
+verifier_doc/build:
+	cp src/_common/constants.py src/verifier_doc/constants.py
+	cp src/_common/keys.py src/verifier_doc/keys.py
+	cp src/_common/metadata.py src/verifier_doc/metadata.py
+	cp src/_common/html2md.py src/verifier_doc/html2md.py
+	docker build -t dgtmon-dev-verifier_doc src/verifier_doc
 
-verifier/tag:
-	docker tag dgtmon-dev-verifier ${DEV_DOCKER_ECR}/dgtmon-dev-verifier:${VERIFIER_LATEST_V}
-	docker tag dgtmon-dev-verifier ${MAIN_DOCKER_ECR}/dgtmon-dev-verifier:${VERIFIER_LATEST_V}
-	docker tag dgtmon-dev-verifier ${DOCKER_HUB}/dgtmon-dev-verifier:${VERIFIER_LATEST_V}
+verifier_doc/tag:
+	docker tag dgtmon-dev-verifier_doc ${DEV_DOCKER_ECR}/dgtmon-dev-verifierdoc:${verifier_doc_LATEST_V}
+	docker tag dgtmon-dev-verifier_doc ${MAIN_DOCKER_ECR}/dgtmon-dev-verifierdoc:${verifier_doc_LATEST_V}
+	docker tag dgtmon-dev-verifier_doc ${DOCKER_HUB}/dgtmon-dev-verifierdoc:${verifier_doc_LATEST_V}
 
-verifier/push:
-	docker push ${DEV_DOCKER_ECR}/dgtmon-dev-verifier:${VERIFIER_LATEST_V}
-	docker push ${MAIN_DOCKER_ECR}/dgtmon-dev-verifier:${VERIFIER_LATEST_V}
-	docker push ${DOCKER_HUB}/dgtmon-dev-verifier:${VERIFIER_LATEST_V}
+verifier_doc/push:
+	docker push ${DEV_DOCKER_ECR}/dgtmon-dev-verifierdoc:${verifier_doc_LATEST_V}
+	docker push ${MAIN_DOCKER_ECR}/dgtmon-dev-verifierdoc:${verifier_doc_LATEST_V}
+	docker push ${DOCKER_HUB}/dgtmon-dev-verifierdoc:${verifier_doc_LATEST_V}
 
-verifier/make: verifier/build verifier/tag verifier/push
+verifier_doc/make: verifier_doc/build verifier_doc/tag verifier_doc/push
 
 gpu/build:
 	cp src/_common/constants.py src/gpu/constants.py

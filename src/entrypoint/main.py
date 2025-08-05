@@ -168,7 +168,7 @@ def list_warnings() -> flask.Response:
     """List objects in a warnings bucket."""
     logger.info("List warnings REST api endpoint was called with GET.")
     slug = flask.request.args.get("slug")
-    contents = _s3_list_objects(os.environ.get("VERIFIER_MSGS", ""), f"{slug}/")
+    contents = _s3_list_objects(os.environ.get("VERIFIER_DOC_MSGS", ""), f"{slug}/")
     resp = flask.Response(
         response=flask.json.dumps(contents),
         status=200,

@@ -92,7 +92,7 @@ resource "aws_lambda_function" "gpu_func" {
       APKG_UPLOAD_BUCKET_NAME     = aws_s3_bucket.upload_apkg.bucket
       METADATA_ASSETS_BUCKET_NAME = aws_s3_bucket.metadata_assets_s3.bucket
       METADATA_REFS_BUCKET_NAME   = aws_s3_bucket.metadata_refs_s3.bucket
-      VERIFIER_MSGS               = aws_s3_bucket.verification_msg.bucket
+      VERIFIER_DOC_MSGS           = aws_s3_bucket.verification_msg.bucket
     }
   }
 }
