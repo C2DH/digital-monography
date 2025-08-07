@@ -1,20 +1,14 @@
-FROM public.ecr.aws/lambda/python:3.12
+FROM public.ecr.aws/lambda/nodejs:22 as builder
 
 ENV TZ=UTC
 
-RUN dnf install -y \
-    glibc \
-    groff \
-    less
+WORKDIR /usr/app
+COPY package.json main.ts  ./
+RUN npm install
+RUN npx esbuild main.ts --bundle --platform=node --target=node14 --outfile=dist/main.js
 
-RUN dnf install -y unzip && \
-    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
-    unzip awscliv2.zip && \
-    ./aws/install
-
-COPY requirements.txt  .
-RUN  pip3 install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
-
-COPY ./*.py ${LAMBDA_TASK_ROOT}
+FROM public.ecr.aws/lambda/nodejs:22
+WORKDIR ${LAMBDA_TASK_ROOT}
+COPY --from=builder /usr/app/dist/* ./
 
 CMD [ "main.lambda_handler" ]
