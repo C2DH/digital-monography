@@ -1,8 +1,9 @@
 -r src/entrypoint/requirements.txt
 -r src/preparer/requirements.txt
--r src/verifier/requirements.txt
+-r src/verifier_doc/requirements.txt
 -r src/github/requirements.txt
 -r src/builder/requirements.txt
+-r src/builderv3/requirements.txt
 -r src/gpu/requirements.txt
 -r src/orm/requirements.txt
 -r src/wordprocessor/requirements.txt
@@ -15,6 +16,9 @@ python-docx==1.1.*
 
 # db
 alembic==1.16.*
+
+# scripts
+pillow==11.3.0
 
 # TODO: consider adding linting and type checking
 # flake8==7.0.*
