@@ -58,6 +58,15 @@ db/migrate:
 	mkdir -p /tmp/efs
 	cd src/_common && DB_PATH=/tmp/efs/_database.db alembic upgrade heads
 
+show/dominique:
+	make db/migrate
+	DGTMON_NO_WAIT=1 \
+		IR_APKG_HTML_BUCKET_NAME=_HTML \
+		IR_APKG_MD_BUCKET_NAME=_MARKDOWN \
+		METADATA_ASSETS_BUCKET_NAME=_METDATA \
+		VERIFIER_DOC_MSGS=_WARNINGS \
+		python3.12 scripts/prepare_and_build.py book_path="/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/a-colonia-luxemburguesa/"
+
 login:
 	aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin ${MAIN_DOCKER_ECR}
 	aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin ${DEV_DOCKER_ECR}
@@ -226,9 +235,6 @@ builder/push:
 builder/make: builder/build builder/tag builder/push
 
 builderv2/build:
-	cp src/_common/constants.py src/builderv2/constants.py
-	cp src/_common/keys.py src/builderv2/keys.py
-	cp src/_common/metadata.py src/builderv2/metadata.py
 	docker build -t dgtmon-dev-builderv2 src/builderv2
 
 builderv2/tag:
