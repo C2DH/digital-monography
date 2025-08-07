@@ -6,6 +6,7 @@ import secrets
 import string
 import functools
 import typing as t
+import uuid
 
 try:
     from metadata import (
@@ -79,11 +80,12 @@ def prepare_ref_targets_in_headers(
         anchors = []
         link = None
         for child in tag.children:
+            child: bs4.element.PageElement
             if child.name == "a":
                 target_tag = html_soup.new_tag("pre")
                 link = LinkMystifier()
                 link.set_filepath(metadata.filepath)
-                link.set_from_id(child["id"])
+                link.set_from_id(child.get("id"))
                 target_tag.string = link.mystify_target()
                 tag.insert_before(target_tag)
                 anchors.append(child)
@@ -93,32 +95,33 @@ def prepare_ref_targets_in_headers(
                 # print("link.FRAGMENT????", link)
                 # print("-" * 50)
 
-                target = TargetDatapoint(
-                    pk=link.id,
-                    html=str(tag),
-                    # text=link.id,
-                    text=tag.text,
-                    elem=str(tag),
-                    item_type="heading",
-                    is_digital=is_digital,
-                    is_paper=is_paper,
-                    filename=metadata.filepath.name if metadata.filepath else None,
-                    fragment=child["id"],
-                    prefix="",
-                    file_count=metadata.get_chapter_number(),
-                    prev_item_num=None,
-                )
+                tdata = {
+                    "pk": link.id if link.id else uuid.uuid4().hex,
+                    "html": str(tag),
+                    "text": tag.text,
+                    "elem": str(tag),
+                    "item_type": "heading",
+                    "is_digital": is_digital,
+                    "is_paper": is_paper,
+                    "filename": metadata.filepath.name if metadata.filepath else None,
+                    "fragment": child.get("id"),
+                    "prefix": "",
+                    "file_count": metadata.get_chapter_number(),
+                    "prev_item_num": None,
+                }
+                target = TargetDatapoint(**tdata)
                 metadata.add_target(target)
         h_lvl = "".join(ch for ch in tag.name if ch.isdigit())
-        heading = HeadingDatapoint(
-            file_name=metadata.filepath.name if metadata.filepath else "",
-            text=tag.text,
-            target=link.fragment if link else "",
-            word_count=metadata.word_count,
-            char_count=metadata.char_count,
-            level=h_lvl,
-            elem=str(tag),
-        )
+        hdata = {
+            "file_name": metadata.filepath.name if metadata.filepath else "",
+            "text": tag.text,
+            "target": link.fragment if link and link.fragment else "",
+            "word_count": metadata.word_count,
+            "char_count": metadata.char_count,
+            "level": h_lvl,
+            "elem": str(tag),
+        }
+        heading = HeadingDatapoint(**hdata)
         metadata.add_heading(heading)
         for a in anchors:
             a.extract()
