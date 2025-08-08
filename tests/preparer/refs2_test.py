@@ -6,6 +6,7 @@ from src.preparer.main import _convert_to_html, prepare_docx
 from src.preparer.metadata import DocumentMetadata, SubstitutionDatapoint
 from src.preparer.keys import KeyPath
 from src.preparer.state import DocumentState
+from src.preparer.models import FileService, SubstitutionService
 
 
 class TestRefDatapointsCreated:
@@ -291,7 +292,10 @@ class TestRefDatapointsCreated:
         assert subst.file_count == 1
         assert subst.prefix == ""
         assert subst.prev_item_num == 1
-        assert subst.new_value() == "1.1"
+        # assert subst.new_value() == "1.1"
+        file_prefix = FileService.get_number_from_filename(self.fp_a.stem)
+        assert file_prefix == 1
+        assert SubstitutionService.to_digital_version(subst, file_prefix) == "1.1"
 
     def test_substitution_in_ref__crossref_fig1(self):
         ref = self.soup_a.find("a", href="#f-01-a-ref177042490")
@@ -308,16 +312,20 @@ class TestRefDatapointsCreated:
         assert subst.file_count == 1
         assert subst.prefix == ""
         assert subst.prev_item_num == 1
-        assert subst.new_value() == "1.1"
+        # assert subst.new_value() == "1.1"
+        file_prefix = FileService.get_number_from_filename(self.fp_a.stem)
+        assert file_prefix == 1
+        assert SubstitutionService.to_digital_version(subst, file_prefix) == "1.1"
 
     def test_substitution_in_ref__crossref_tbl1(self):
         ref = self.soup_a.find("a", href="#f-01-a-ref177044323")
         assert ref.text == r"Table {{ f01aref177044323 }}"
 
     def test_substitution_tbl1(self):
+        file_stem = self.fp_a.stem
         subst = next(
             subst
-            for subst in self.book_metadata[self.fp_a.stem].substitutions
+            for subst in self.book_metadata[file_stem].substitutions
             if subst.pk == "f01aequationwithcomplexnumbering"
         )
         assert subst.was == "I.A"
@@ -325,7 +333,10 @@ class TestRefDatapointsCreated:
         assert subst.file_count == 1
         assert subst.prefix == "I."
         assert subst.prev_item_num == 1
-        assert subst.new_value() == "1.I.1"
+        # assert subst.new_value() == "1.I.1"
+        file_prefix = FileService.get_number_from_filename(file_stem)
+        assert file_prefix == 1
+        assert SubstitutionService.to_digital_version(subst, file_prefix) == "1.I.1"
 
     def test_substitution_in_ref__infile_link(self):
         ref = self.soup_a.find("a", href="#f-01-a-equationwithcomplexnumbering")
@@ -475,7 +486,10 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.prefix == ""
         assert subs.prev_item_num == 1
         assert subs.new_item_num == 1
-        assert subs.new_value() == "5.1"
+        # assert subs.new_value() == "5.1"
+        file_prefix = FileService.get_number_from_filename(self.fp.stem)
+        assert file_prefix == 5
+        assert SubstitutionService.to_digital_version(subs, file_prefix) == "5.1"
 
     def test_substitution_for_paper(self):
         subs = self.metadata.get("substitutions", "f05conditionalrenderingref193102988")
@@ -500,7 +514,7 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.prefix == ""
         assert subs.prev_item_num == 3
         assert subs.new_item_num == 2
-        assert subs.new_value() == "5.2"
+        # assert subs.new_value() == "5.2"
 
     def test_substitution_for_refs(self):
         assert len(self.metadata.substitutions) == 7  # 4 targets + 3 refs
@@ -569,5 +583,9 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.prefix == ""
         assert subs.prev_item_num == 3
         assert subs.new_item_num == 2
-        assert subs.new_value() == "5.2"
-        assert subs.new_value("V") == "V.2"
+        # assert subs.new_value() == "5.2"
+        # assert subs.new_value("V") == "V.2"
+        file_prefix = FileService.get_number_from_filename(self.fp.stem)
+        assert file_prefix == 5
+        assert SubstitutionService.to_digital_version(subs, file_prefix) == "5.2"
+        assert SubstitutionService.to_digital_version(subs, file_prefix="V") == "V.2"
