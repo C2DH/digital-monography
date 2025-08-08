@@ -38,7 +38,10 @@ class TestAutomaticNumberingInJupyterBookV1:
                 "f-05-conditional-rendering-figfordigital",
                 "link to fig 5.1 (digital only)",
             ),
-            ("f-05-conditional-rendering-figforpaper", "link to fig  (paper only)"),
+            (
+                "f-05-conditional-rendering-figforpaper",
+                "link to fig  (paper only)",
+            ),  # this passes
             (
                 "f-05-conditional-rendering-figfordigitalandpaper",
                 "link to fig 5.2 (digital and paper)",

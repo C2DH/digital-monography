@@ -1,3 +1,4 @@
+import difflib
 import boto3
 import datetime
 import json
@@ -198,11 +199,12 @@ def _make_substitutions(key: KeyPath, book_metadata: dict[str, DocumentState]) -
                 continue
             with open(md, "r") as f:
                 mdstr = f.read()
+                pre_mdstr = mdstr
                 # Make mapping of file_count to file prefix.
                 # This is suboptimal, but FileDatapoint only knows file stem and prefix.
                 # I could add more data to it, but since user has to correctly
                 # write this data in yaml file by hand, the less data the better :/
-                file_prefices = {}
+                file_prefices: dict[int, str] = {}
                 files: list[File] = dstate["files"]
                 for file in files:
                     file_count = FileService.get_number_from_filename(file.stem)
@@ -214,10 +216,28 @@ def _make_substitutions(key: KeyPath, book_metadata: dict[str, DocumentState]) -
                         file_prefix = file_prefices[subs.file_count]
                     else:
                         file_prefix = None
+                    print(
+                        "\n\n\tSubstitutionService.to_digital_version(subs, file_prefix)",
+                        SubstitutionService.to_digital_version(subs, file_prefix),
+                    )
+                    print("file_count", file_prefix)
+                    print("\n")
                     mdstr = mdstr.replace(
                         r"{{ " + subs.pk + r" }}",
                         SubstitutionService.to_digital_version(subs, file_prefix),
                     )
+                    # NOTE: seems to just repeat "was" attr
+            post_mdstr = mdstr
+            if pre_mdstr != post_mdstr:
+                diff = difflib.ndiff(
+                    pre_mdstr.splitlines(keepends=True),
+                    post_mdstr.splitlines(keepends=True),
+                )
+                # print("".join(diff), end="")
+            assert False, (
+                "Incorrect substitution (autonumbering). "
+                "Check the `make test/integration`. Seems to simply take the `was` value."
+            )
             with open(md, "w") as f:
                 f.write(mdstr)
         except Exception as e:

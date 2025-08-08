@@ -47,7 +47,9 @@ class Substitution(MySQLModel, table=True):
 
 class SubstitutionService:
     @staticmethod
-    def to_digital_version(subst: Substitution, file_prefix=None) -> str:
+    def to_digital_version(
+        subst: Substitution, file_prefix: None | str | int = None
+    ) -> str:
         """
         Returns the value that will replace placeholder, e.g. `1.I`.
         Used for substituting values in builder (for digital version).
