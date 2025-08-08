@@ -1,3 +1,4 @@
+import pydantic
 import sqlmodel
 
 try:
@@ -22,6 +23,7 @@ class Ref(MySQLModel, table=True):
     prev_href: str
     elem: str
     asset_id: str | None = sqlmodel.Field(default=None)
+    _was_updated: bool = pydantic.PrivateAttr(default=False)
 
 
 class RefService:

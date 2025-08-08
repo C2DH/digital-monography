@@ -18,6 +18,7 @@ test/copy:
 	cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/book-content-examples/' tests/_fixtures/
 
 test/prep:
+	make db/migrate
 	DGTMON_NO_WAIT=1 \
 		IR_APKG_HTML_BUCKET_NAME=_HTML \
 		IR_APKG_MD_BUCKET_NAME=_MARKDOWN \
@@ -35,6 +36,11 @@ test:
 	DGTMON_DEBUG=1 python3.12 -m pytest tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
 
 test/make: test/copy test/prep test/run
+
+test/integration:
+	DGTMON_DEBUG=1 python3.12 -m pytest tests/integration
+
+test/e2e: test/prep test/integration
 
 typecheck:
 	mypy src/entrypoint/ --check-untyped-defs

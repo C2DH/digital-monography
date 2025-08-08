@@ -111,8 +111,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     # NOTE: post-build phase, this should probably go to another Lambda service
     _connect_assets_to_references_to_assets(book_metadata)
     # _write_assets_info_to_s3(book_metadata, key)
-    assert False, "Add integration test for "
-    _write_metadata_to_db(book_metadata, key)
+    # _write_metadata_to_db(book_metadata, key)
     _update_refs_in_db(book_metadata, key)
     #
     warnings = _verify_book(book_metadata)
@@ -422,6 +421,8 @@ def _connect_assets_to_references_to_assets(
     """
     Find asset id for each reference to asset in the book.
     Assign assets' primary keys to references.
+    Note that this updates the "asset_id" field locally. This change
+    has to be written to the database later.
     """
     # internal_links: list[RefDatapoint] = []
     for _, dstate in book_metadata.items():
@@ -433,6 +434,7 @@ def _connect_assets_to_references_to_assets(
                 try:
                     asset = next(ass for ass in assets if ass.target == ref.target_id)
                     ref.asset_id = asset.pk
+                    ref._was_updated = True
                 except StopIteration:
                     continue
 
@@ -453,16 +455,37 @@ def _connect_assets_to_references_to_assets(
 
 
 def _update_refs_in_db(book_metadata: dict[str, DocumentState], key: KeyPath) -> None:
+    """
+    Builder microservice is the aggregating function. Only it sees all the
+    documents that compose a book. Only in this microservice we can get information
+    about the state of the book from all the documents. Because of that, we can
+    use this information to link references to assets and update the db accordingly.
+
+    Fields that can change:
+    * asset_id - from None to uuid of the target asset
+      (see _connect_assets_to_references_to_assets)
+    """
     try:
-        assert (
-            False
-        ), "Test if we are really updating the db as before, because something is fishy here"
         with sqlmodel.Session(db_engine) as session:
             for dstate in book_metadata.values():
+                # Get all changed references
+                changed_refs: list[Ref] = []
+                refs_pk: list[int] = []
                 for ref in dstate["refs"]:
-                    print(ref.model_dump(mode="json"))
                     ref: Ref
-                    session.add(ref)
+                    if ref._was_updated:
+                        changed_refs.append(ref)
+                        refs_pk.append(ref.pk)
+                # Select all references that need to be updated
+                current_refs = session.exec(
+                    sqlmodel.select(Ref).where(sqlmodel.col(Ref.pk).in_(refs_pk))
+                ).all()
+                # Update every ref that needs to be updated
+                for curr_ref in current_refs:
+                    curr_ref.asset_id = next(
+                        (r.asset_id for r in changed_refs if r.pk == curr_ref.pk), None
+                    )
+                    session.add(curr_ref)
             session.commit()
     except Exception as e:
         logger.exception(f"Writing metadata to database failed. Error: {repr(e)}")
@@ -472,69 +495,6 @@ def _update_refs_in_db(book_metadata: dict[str, DocumentState], key: KeyPath) ->
             "Error upon writing metadata to database.",
         )
         raise
-
-
-def _write_metadata_to_db(
-    book_metadata: dict[str, "DocumentMetadata"], key: KeyPath
-) -> None:
-    if dynamodb is None:
-        return
-    try:
-        assert False, "We should not be using dynamodb here, but sql db"
-        tables = {
-            "refs": os.environ.get("DYNAMODB_REFS_TBL", ""),
-        }
-        for domain, tbl in tables.items():
-            table = dynamodb.Table(tbl)
-            for _, dstate in book_metadata.items():
-                resp = table.put_item(
-                    Item={
-                        "slug": key.slug,
-                        "fn": dstate.key.name,
-                        "records": [rec.to_dict() for rec in getattr(dstate, domain)],
-                    }
-                )
-                logger.info(
-                    f"Response from dynamodb.Table({tbl}).put_item: {json.dumps(resp, default=str)}"
-                )
-        return
-    except Exception as e:
-        logger.exception(f"Writing metadata to database failed. Error: {repr(e)}")
-        _log_audit_event(
-            key,
-            AuditStatus.FAILED.value,
-            "Error upon writing metadata to database.",
-        )
-        raise
-
-
-def _write_assets_info_to_s3(
-    book_metadata: dict[str, DocumentState], key: KeyPath
-) -> None:
-    for stem, dstate in book_metadata.items():
-        try:
-            # s3_key = RefDatapoint.get_s3_key(key.slug, fn)
-            s3_key = f"{key.slug}/{stem}.json"
-            bucket = os.environ.get("METADATA_REFS_BUCKET_NAME", "")
-            refs_data = []
-            for ref in dstate["refs"]:
-                ref: Ref
-                refs_data.append(ref.model_dump(mode="json"))
-            # body = json.dumps([ref.to_dict() for ref in dstate.refs], default=str)
-            body = json.dumps(refs_data, default=str)
-            resp = s3.put_object(Body=body, Bucket=bucket, Key=s3_key)
-            logger.info(
-                f"Response from s3.put_object(Bucket={bucket}, Key={s3_key}): "
-                + json.dumps(resp, default=str)
-            )
-        except Exception as e:
-            logger.exception(f"Putting refs info to s3 bucket failed. Error: {repr(e)}")
-            _log_audit_event(
-                key,
-                AuditStatus.FAILED.value,
-                "Error upon writing assets info from docs.",
-            )
-            raise
 
 
 def _verify_book(
