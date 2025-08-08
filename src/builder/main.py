@@ -367,6 +367,14 @@ def _distribute_jb1_book(key: KeyPath) -> None:
 def _build_jb2_book(key: KeyPath) -> None:
     try:
         pass
+        # NOTE: Use mystmd pip wrapper. It seems that there won't be any conflicts
+        # with Jupyter Book v1. However, check if your docker base image supports it.
+        # I tried this, works on my local machine, but not in the docker container.
+        # In docker container, myst command is not recognized, even when
+        # mystmd==1.6.0 was installed.
+        WORKS_IF_YOU_HAVE_MYST_CMD = subprocess.run(
+            f"myst build --html".split(), shell=True, cwd=key.efs_slug_dir
+        )
     except Exception as e:
         msg = f"Unable to build JBv2 book. Error: {repr(e)}"
         logging.exception(msg)
@@ -381,13 +389,23 @@ def _build_jb2_book(key: KeyPath) -> None:
 def _distribute_jb2_book(key: KeyPath) -> None:
     try:
         pass
-        # probably just send sqs message with new status to github microservice to:
 
+        ## Attempt 1: Github Pages
+        # probably just send sqs message with new status to github microservice to:
         # 1. call github api to create Github Pages site
         # https://docs.github.com/en/rest/pages/pages?apiVersion=2022-11-28#create-a-github-pages-site
-
         # 2. (maybe) call github api to update information about the site
         # https://docs.github.com/en/rest/pages/pages?apiVersion=2022-11-28#update-information-about-a-github-pages-site
+        # Problem:
+        # - With github api, you have to send every file separately. With Jupyter Book v2,
+        #   that's around 3500 files for every change. Before upload, you have to download
+        #   every file already in the repo, get the sha256 hash of the file, and then
+        #   upload the file with the sha256 hash. For. Every. File.
+
+        ## Attempt 2: Netlify
+        # Netlify accepts zip uploads, so you can just zip the book and upload it.
+        # Try it.
+
     except Exception as e:
         msg = f"Failed to distribute JBv2 book build. Error: {repr(e)}"
         logging.exception(msg)
