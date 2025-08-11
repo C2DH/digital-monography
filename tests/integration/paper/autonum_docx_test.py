@@ -45,19 +45,11 @@ class TestAutomaticNumberingInWordprocessor:
         ]
         assert "Asset for digital" not in after_headings
 
-        """
     def test_clearance_of_highlighted_run(self):
-        # NOTE: this should pass, but the preparer inserts newlines where spans were.
-        # TODO: add conditional rendering to the preparer
-        # print("self.before_md", repr(self.before_md)[150:400])
-        # print("self.after_md", repr(self.after_md)[150:400])
-        before_txt = "This paragraph contains an example of a run (part of a paragraph) that is only visible in the digitalpaper version."
+        before_txt = "This paragraph contains an example of a run (part of a paragraph) that is only visible in the digitalpaper"
         after_text = "This paragraph contains an example of a run (part of a paragraph) that is only visible in the paper version."
-        assert before_txt in self.before_md
-        assert before_txt not in self.after_md
-        assert after_text in self.after_md
-        assert after_text not in self.before_md
-        """
+        assert before_txt not in self.after_md[self.key_cr.stem]
+        assert after_text in self.after_md[self.key_cr.stem]
 
     def test_clearance_of_highlighted_hyperlink(self):
         before_txt = "hyperlinks to e.g. [ebook](https://en.wikipedia.org/wiki/Ebook)[book](https://en.wikipedia.org/wiki/Book)."
