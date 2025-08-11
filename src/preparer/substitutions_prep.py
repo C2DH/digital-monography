@@ -1,11 +1,11 @@
 import bs4
 
 try:
-    from metadata import DocumentMetadata, SubstitutionDatapoint, TargetDatapoint
+    from metadata import DocumentMetadata
     from models import Substitution, Target
     from state import DocumentState
 except (ImportError, ModuleNotFoundError):
-    from .metadata import DocumentMetadata, SubstitutionDatapoint, TargetDatapoint
+    from .metadata import DocumentMetadata
     from .models import Substitution, Target
     from .state import DocumentState
 
