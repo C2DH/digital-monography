@@ -18,6 +18,7 @@ test/copy:
 	cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/book-content-examples/' tests/_fixtures/
 
 test/prep:
+	mkdir -p /tmp/efs/
 	make db/migrate
 	DGTMON_NO_WAIT=1 \
 		IR_APKG_HTML_BUCKET_NAME=_HTML \
