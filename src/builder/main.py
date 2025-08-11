@@ -372,9 +372,9 @@ def _build_jb2_book(key: KeyPath) -> None:
         # I tried this, works on my local machine, but not in the docker container.
         # In docker container, myst command is not recognized, even when
         # mystmd==1.6.0 was installed.
-        WORKS_IF_YOU_HAVE_MYST_CMD = subprocess.run(
+        WORKS_IF_YOU_HAVE_MYST_CMD = """subprocess.run(
             f"myst build --html".split(), shell=True, cwd=key.efs_slug_dir
-        )
+        )"""
     except Exception as e:
         msg = f"Unable to build JBv2 book. Error: {repr(e)}"
         logging.exception(msg)
