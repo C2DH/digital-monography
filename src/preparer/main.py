@@ -407,9 +407,10 @@ def prepare_docx(
 
 
 def _get_char_and_word_count(html_soup: bs4.BeautifulSoup) -> tuple[int, int]:
-    soup_contents_list = []
+    soup_contents_list: list[str] = []
     for elem in html_soup.find_all(text=True):
-        soup_contents_list.append(elem.text.strip())
+        if isinstance(elem, bs4.element.PageElement):
+            soup_contents_list.append(elem.text.strip())
     soup_contents = "".join(soup_contents_list).replace(" ", "")  # minimize spaces
     words = []
     for line in soup_contents_list:
