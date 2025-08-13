@@ -31,3 +31,17 @@ class Target(MySQLModel, table=True):
     prefix: str
     prev_item_num: int | None
     new_item_num: int | None = sqlmodel.Field(default=None)
+
+
+class TargetService:
+    @staticmethod
+    def to_paper_version(t: Target) -> str:
+        """
+        Returns the value that will replace placeholder.
+        Used for substituting values in wordprocessor (for paper version).
+        """
+        if t.new_item_num is not None:
+            file_count = t.file_count if t.file_count is not None else ""
+            return f"{file_count}.{t.prefix}{t.new_item_num}"
+        else:
+            return ""
