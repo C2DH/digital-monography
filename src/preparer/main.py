@@ -403,7 +403,7 @@ def prepare_docx(
     html_soup = remove_empty_tables(html_soup, metadata, dstate, tables)
     html_soup = prepare_alt_texts(html_soup, metadata, dstate, images_with_alttxt)
     html_soup = count_targets_for_substitutions(html_soup, metadata, dstate)
-    return html_soup, metadata, tables
+    return html_soup, metadata, dstate, tables
 
 
 def _get_char_and_word_count(html_soup: bs4.BeautifulSoup) -> tuple[int, int]:
