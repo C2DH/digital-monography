@@ -60,7 +60,7 @@ class TestWordprocessor:
 
     @classmethod
     def setup_class(cls):
-        cls.book_metadata = {}
+        cls.bookstate: dict[str, DocumentState] = {}
         cls.before_soup, cls.before_md, cls.after_soup, cls.after_md = {}, {}, {}, {}
         cls._prepare_docx(cls.key_a)
         cls._prepare_docx(cls.key_b)
@@ -76,18 +76,19 @@ class TestWordprocessor:
             before_html = mammoth.convert_to_html(f, style_map=MAMMOTH_STYLE_MAP)
             before_soup = bs4.BeautifulSoup(before_html.value, "html.parser")
         # preparer
-        cls.dstate = DocumentState(key)
+        cls.docstate = DocumentState(key)
         metadata = DocumentMetadata(key)
-        _, metadata, _ = prepare_docx(before_html.value, metadata, cls.dstate)
-        cls.book_metadata[key.stem] = metadata
+        _, metadata, cls.docstate, _ = prepare_docx(
+            before_html.value, metadata, cls.docstate
+        )
+        cls.bookstate[key.stem] = cls.docstate
         cls.before_soup[key.stem] = before_soup
         cls.before_md[key.stem] = convert_to_md(before_soup)
-        # cls.before_md[key.stem] = before_md
 
     @classmethod
     def _wordprocess_docx(cls, key: KeyPath) -> None:
         # wordprocessor
-        doc = wordprocess_docx(key, cls.book_metadata)
+        doc = wordprocess_docx(key, cls.bookstate)
         # after wordprocessor
         file_stream = io.BytesIO()
         doc.save(file_stream)

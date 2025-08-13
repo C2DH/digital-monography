@@ -5,18 +5,20 @@ import docx.text.paragraph
 
 try:
     from constants import AUTONUMBER_PLACEHOLDER
-    from metadata import DocumentMetadata, TargetDatapoint
+    from models import Target, TargetService
+    from state import DocumentState
     from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
     from .constants import AUTONUMBER_PLACEHOLDER  # type: ignore
-    from .metadata import DocumentMetadata, TargetDatapoint  # type: ignore
+    from .models import Target, TargetService  # type: ignore
+    from .state import DocumentState  # type: ignore
     from .keys import KeyPath  # type: ignore
 
 
 def prepare_refs(
     key: KeyPath,
     doc: docx.document.Document,
-    book_metadata: dict[str, DocumentMetadata],
+    bookstate: dict[str, DocumentState],
 ) -> None:
     """
     In a reference, replace placeholder {{AUTONUMBER_PLACEHOLDER}}
@@ -32,13 +34,13 @@ def prepare_refs(
         </w:r>
     </w:hyperlink>
     """
-    for metadata in book_metadata.values():
-        _update_datapoints_for_targets(metadata.targets)
-    _update_hyperlink_texts(key, doc, book_metadata)
+    for docstate in bookstate.values():
+        _update_datapoints_for_targets(docstate["targets"])
+    _update_hyperlink_texts(key, doc, bookstate)
 
 
 def _update_datapoints_for_targets(
-    datapoints: list[TargetDatapoint],
+    datapoints: list[Target],
 ) -> None:
     """
     This function is similar (but not identic) to
@@ -71,26 +73,26 @@ def _update_datapoints_for_targets(
 def _update_hyperlink_texts(
     key: KeyPath,
     doc: docx.document.Document,
-    book_metadata: dict[str, DocumentMetadata],
+    bookstate: dict[str, DocumentState],
 ) -> None:
     for p in doc.paragraphs:
-        _update_hyperlink_texts_in_paragraph(key, p, book_metadata)
+        _update_hyperlink_texts_in_paragraph(key, p, bookstate)
 
 
 def _update_hyperlink_texts_in_paragraph(
     key: KeyPath,
     p: docx.text.paragraph.Paragraph,
-    book_metadata: dict[str, DocumentMetadata],
+    bookstate: dict[str, DocumentState],
 ) -> None:
     for link in p.hyperlinks:
         if AUTONUMBER_PLACEHOLDER in link.text and link.address:
             target_file_stem = link.address.split(".")[0]
-            target = _find_target(link, target_file_stem, book_metadata)
+            target = _find_target(link, target_file_stem, bookstate)
             if target is not None:
                 _replace_link_text(link, target)
         elif AUTONUMBER_PLACEHOLDER in link.text and link.fragment:
             stem = key.stem if hasattr(key, "stem") else ""
-            target = _find_target(link, stem, book_metadata)
+            target = _find_target(link, stem, bookstate)
             if target is not None:
                 _replace_link_text(link, target)
 
@@ -98,18 +100,15 @@ def _update_hyperlink_texts_in_paragraph(
 def _find_target(
     link: docx.text.hyperlink.Hyperlink,
     stem: str,
-    book_metadata: dict[str, DocumentMetadata],
-) -> TargetDatapoint | None:
-    try:
-        return next(
-            t for t in book_metadata[stem].targets if t.fragment == link.fragment
-        )
-    except StopIteration:
-        return None
+    bookstate: dict[str, DocumentState],
+) -> Target | None:
+    targets: list[Target] = bookstate[stem]["targets"]
+    return next((t for t in targets if t.fragment == link.fragment), None)
 
 
 def _replace_link_text(
-    link: docx.text.hyperlink.Hyperlink, target: TargetDatapoint
+    link: docx.text.hyperlink.Hyperlink,
+    target: Target,
 ) -> None:
     for run in link.runs:
         if (
@@ -119,4 +118,5 @@ def _replace_link_text(
         ):
             run.text = run.text.replace(AUTONUMBER_PLACEHOLDER, "")
         elif AUTONUMBER_PLACEHOLDER in run.text:
-            run.text = run.text.replace(AUTONUMBER_PLACEHOLDER, target.new_value())
+            new_value = TargetService.to_paper_version(target)
+            run.text = run.text.replace(AUTONUMBER_PLACEHOLDER, new_value)

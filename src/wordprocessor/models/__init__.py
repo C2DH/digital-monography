@@ -9,7 +9,7 @@ from .headings import Heading, HeadingService  # noqa
 from .doc_metadata import DocumentMetadata
 from .refs import Ref, RefService  # noqa
 from .substitutions import Substitution, SubstitutionService  # noqa
-from .targets import Target
+from .targets import Target, TargetService  # noqa
 
 type ModelMeta = sqlmodel.main.SQLModelMetaclass | sqlalchemy.orm.DeclarativeMeta
 

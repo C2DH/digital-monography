@@ -13,24 +13,28 @@ from mypy_boto3_dynamodb.service_resource import (
 )
 
 try:
+    # Default imports for in-microservice use
     from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
     from constants import IS_DEBUG, ModuleEnum
     from conditional_rendering import (
         remove_parts_and_highlights_due_to_conditional_rendering,
     )
+    from keys import KeyPath
+    from models import File
     from numbering_captions import add_chapter_number_to_captions
     from numbering_refs import prepare_refs
-    from metadata import DocumentMetadata, FileDatapoint
-    from keys import KeyPath
+    from state import DocumentState, read_book_metadata
     from remove_images import remove_images
 except (ImportError, ModuleNotFoundError):
+    # Fallback imports for local development (tests and local runtime)
     from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus  # type: ignore
     from .constants import IS_DEBUG, ModuleEnum  # type: ignore
     from .conditional_rendering import remove_parts_and_highlights_due_to_conditional_rendering  # type: ignore
+    from .keys import KeyPath  # type: ignore
+    from .models import File  # type: ignore
     from .numbering_captions import add_chapter_number_to_captions  # type: ignore
     from .numbering_refs import prepare_refs  # type: ignore
-    from .metadata import DocumentMetadata, FileDatapoint  # type: ignore
-    from .keys import KeyPath  # type: ignore
+    from .state import DocumentState, read_book_metadata  # type: ignore
     from .remove_images import remove_images  # type: ignore
 
 
@@ -62,24 +66,24 @@ def lambda_handler(event, context) -> None:
     logger.info("Event: " + json.dumps(event, default=str))
     logger.info("Context: " + json.dumps(context, default=str))
     config_key = _get_config_key(event)
-    book_metadata = _read_book_metadata(config_key)
+    bookstate = read_book_metadata(config_key)
     config = _prepare_config(config_key)
-    _update_file_count(config, book_metadata)
+    _update_file_count(config, bookstate)
     # TODO: read config file
     # TODO: update file_count from values in _config
     for key in config_key.efs_slug_dir.glob("*.docx"):
-        doc = wordprocess_docx(key, book_metadata)
+        doc = wordprocess_docx(key, bookstate)
         doc.save(key.efs_slug_paper_path)
 
 
 def wordprocess_docx(
-    key: KeyPath, book_metadata: dict[str, DocumentMetadata]
+    key: KeyPath, bookstate: dict[str, DocumentState]
 ) -> docx.document.Document:
     doc = _read_document(key)
-    metadata = book_metadata[key.stem]
+    metadata = bookstate[key.stem]
     _remove_parts_and_highlights_due_to_conditional_rendering(key, doc)
     _add_chapter_number_to_captions(key, doc, metadata)
-    _prepare_refs(key, doc, book_metadata)
+    _prepare_refs(key, doc, bookstate)
     _remove_images(key, doc, metadata)
     return doc
 
@@ -108,20 +112,32 @@ def _prepare_config(key: KeyPath) -> t.Any:
 
 
 def _update_file_count(
-    config: dict[str, t.Any], book_metadata: dict[str, DocumentMetadata]
+    config: dict[str, t.Any],
+    bookstate: dict[str, DocumentState],
 ) -> None:
     if "dgtmon" not in config or "prefixes" not in config["dgtmon"]:
         return
     prefixes = config["dgtmon"]["prefixes"]
     if type(prefixes) == list and type(prefixes[0]) == dict:
         prefixes = {k: v for kv in prefixes for k, v in kv.items()}
+        _ = """ 
+        #FOR_FULL_TYPECHECKING_TRY_THIS_OUT
+        updated_prefixes = {}
+        for kv in prefixes:
+            assert isinstance(kv, dict)
+            for k, v in kv.items():
+                updated_prefixes[k] = v
+        config["dgtmon"]["prefixes"] = updated_prefixes
+        """
     if type(prefixes) != dict or len(prefixes) == 0:
         return
     ###
-    for metadata in book_metadata.values():
+    for docstate in bookstate.values():
         for stem, prefix in prefixes.items():
-            metadata.add_file(FileDatapoint(stem=stem, prefix=str(prefix)))
-
+            # metadata.add_file(FileDatapoint(stem=stem, prefix=str(prefix)))
+            docstate.add(
+                File(stem=stem, slug="slug", prefix=str(prefix), loc=KeyPath(stem))
+            )
     # for metadata in book_metadata.values():
     #     for dp in metadata.substitutions:
     #         if dp.target_fn is None:
@@ -206,29 +222,6 @@ def _update_file_count(
 #     ### targets
 
 
-def _read_book_metadata(key: KeyPath) -> dict[str, DocumentMetadata]:
-    """
-    Read JSON metadata stored in Elastic File System (EFS) and return a dict
-    with all DocumentMetadata objects for a specific book.
-
-    Similar to the src/builder/main/_read_book_metadata function
-    """
-    book_metadata: dict[str, DocumentMetadata] = {}
-    # for meta_file in (key / "_metadata").glob("**/*.json"):
-    for meta_file in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
-        with meta_file.open("r") as f:
-            metadata = DocumentMetadata(meta_file)
-            try:
-                metadata.from_json(json.load(f))
-                book_metadata[meta_file.stem] = metadata
-            except KeyError as e:
-                logger.info(
-                    f"Invalid or obsolete metadata's Datapoint structure. Skipping "
-                    f"metadata file {meta_file}. KeyError: {repr(e)}"
-                )
-    return book_metadata
-
-
 def _read_document(key: KeyPath) -> docx.document.Document:
     try:
         return docx.Document(key)
@@ -262,10 +255,12 @@ def _remove_parts_and_highlights_due_to_conditional_rendering(
 
 
 def _add_chapter_number_to_captions(
-    key: KeyPath, doc: docx.document.Document, metadata: DocumentMetadata
+    key: KeyPath,
+    doc: docx.document.Document,
+    docstate: DocumentState,
 ) -> None:
     try:
-        return add_chapter_number_to_captions(doc, metadata)
+        return add_chapter_number_to_captions(doc, docstate)
     except Exception as e:
         logger.exception(
             f"Adding chapter number to captions failed. " f"Error: {repr(e)}"
@@ -281,10 +276,10 @@ def _add_chapter_number_to_captions(
 def _prepare_refs(
     key: KeyPath,
     doc: docx.document.Document,
-    book_metadata: dict[str, DocumentMetadata],
+    bookstate: dict[str, DocumentState],
 ) -> None:
     try:
-        return prepare_refs(key, doc, book_metadata)
+        return prepare_refs(key, doc, bookstate)
     except Exception as e:
         logger.exception(f"Preparing references failed. " f"Error: {repr(e)}")
         _log_audit_event(
@@ -296,10 +291,12 @@ def _prepare_refs(
 
 
 def _remove_images(
-    key: KeyPath, doc: docx.document.Document, metadata: DocumentMetadata
+    key: KeyPath,
+    doc: docx.document.Document,
+    docstate: DocumentState,
 ) -> None:
     try:
-        return remove_images(doc, metadata)
+        return remove_images(doc, docstate)
     except Exception as e:
         logger.exception(f"Removing images from .docx failed. " f"Error: {repr(e)}")
         _log_audit_event(
