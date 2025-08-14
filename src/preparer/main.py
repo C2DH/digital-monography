@@ -189,7 +189,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _download_fileobj(src, key)
         html_str = _convert_to_html(key.efs_filepath)
         # TODO: prepare_docx shouldn't have to return "state"
-        html_soup, metadata, tables = prepare_docx(html_str, metadata, dstate)
+        html_soup, metadata, dstate, tables = prepare_docx(html_str, metadata, dstate)
         html_soup = hide_metadata_in_html(html_soup, metadata, dstate)  # last step
         html_soup_str = str(html_soup)
         # IMPORTANT NOTE: other services depend on html produced at this stage, make sure that:
