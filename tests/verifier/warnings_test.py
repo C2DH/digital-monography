@@ -1,10 +1,8 @@
 import bs4
-
-# import pathlib
 import random
 
-from src.verifier.rules_v1 import HtmlVerifier
 from src.verifier.main import _fromtimestamp
+from src.verifier.rules_v1 import HtmlVerifier
 from src.verifier.verif_warnings import (
     FileVerificationMessage,
     GeneralVerificationMessage,

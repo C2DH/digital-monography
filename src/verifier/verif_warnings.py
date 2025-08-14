@@ -3,10 +3,7 @@ import datetime
 import typing as t
 import uuid
 
-try:
-    from html2md import convert_to_md
-except (ImportError, ModuleNotFoundError):
-    from .html2md import convert_to_md
+from src._common.html2md import convert_to_md
 
 
 type MessagesJson = list[
