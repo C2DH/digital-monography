@@ -321,3 +321,6 @@ wordprocessor/push:
 	docker push ${DOCKER_HUB}/dgtmon-dev-wordprocessor:${WORDPROCESSOR_LATEST_V}
 
 wordprocessor/make: wordprocessor/build wordprocessor/tag wordprocessor/push
+
+tesst/build:
+	docker build -t dgtmon-dev-tesst src/tesst --build-context common=src/_common
