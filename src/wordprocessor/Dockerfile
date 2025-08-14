@@ -5,16 +5,9 @@ RUN  pip3 install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
 
 COPY ./*.py ${LAMBDA_TASK_ROOT}
 
+# Copy contents of the shared "src/_common" directory to /var/task/src/_common/
+RUN mkdir -p ${LAMBDA_TASK_ROOT}/src/_common
+RUN --mount=from=common,target=common \
+    cp -r common/* ${LAMBDA_TASK_ROOT}/src/_common/
+
 CMD [ "main.lambda_handler" ]
-
-#### Maybe TypeScript??? ####
-# FROM public.ecr.aws/lambda/nodejs:22 as builder
-# WORKDIR /usr/app
-# COPY package.json main.ts  ./
-# RUN npm install
-# RUN npm run build
-
-# FROM public.ecr.aws/lambda/nodejs:22
-# WORKDIR ${LAMBDA_TASK_ROOT}
-# COPY --from=builder /usr/app/dist/* ./
-# CMD ["main.lambda_handler"]

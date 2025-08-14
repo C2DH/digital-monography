@@ -1,12 +1,12 @@
 import bs4
 import mammoth
 
-from src.wordprocessor.constants import (
+from src._common.constants import (
     AUTONUMBER_PLACEHOLDER,
     DEFAULT_SFS_DIR,
     MAMMOTH_STYLE_MAP,
 )
-from src.wordprocessor.keys import KeyPath
+from src._common.keys import KeyPath
 from src.preparer.html2md import convert_to_md
 
 DOCX_OUTPUT_DIR = KeyPath(DEFAULT_SFS_DIR) / "a_book" / "_paper"

@@ -3,10 +3,12 @@ import docx.oxml.drawing
 import docx.oxml.text.paragraph
 import docx.oxml.text.run
 
-try:
-    from state import DocumentState
-except (ImportError, ModuleNotFoundError):
-    from .state import DocumentState
+from src._common.state import DocumentState
+
+# try:
+#     from state import DocumentState
+# except (ImportError, ModuleNotFoundError):
+#     from .state import DocumentState
 
 
 def remove_images(doc: docx.document.Document, _: DocumentState) -> None:

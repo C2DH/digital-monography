@@ -11,14 +11,18 @@ import docx.oxml.text.run
 import docx.oxml.xmlchemy
 import typing as t
 
-try:
-    from constants import CAPTION_ALLOWED_ITEMS
-    from models import File, FileService
-    from state import DocumentState  # type: ignore
-except (ImportError, ModuleNotFoundError):
-    from .constants import CAPTION_ALLOWED_ITEMS  # type: ignore
-    from .models import File, FileService  # type: ignore
-    from .state import DocumentState  # type: ignore
+from src._common.constants import CAPTION_ALLOWED_ITEMS
+from src._common.models import File, FileService
+from src._common.state import DocumentState
+
+# try:
+#     from constants import CAPTION_ALLOWED_ITEMS
+#     from models import File, FileService
+#     from state import DocumentState  # type: ignore
+# except (ImportError, ModuleNotFoundError):
+#     from .constants import CAPTION_ALLOWED_ITEMS  # type: ignore
+#     from .models import File, FileService  # type: ignore
+#     from .state import DocumentState  # type: ignore
 
 
 def add_chapter_number_to_captions(

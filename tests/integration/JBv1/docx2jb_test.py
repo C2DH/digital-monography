@@ -1,7 +1,7 @@
 import bs4
 
-from src.wordprocessor.constants import DEFAULT_SFS_DIR
-from src.wordprocessor.keys import KeyPath
+from src._common.constants import DEFAULT_SFS_DIR
+from src._common.keys import KeyPath
 
 JB_BUILD_DIR = KeyPath(DEFAULT_SFS_DIR) / "a_book" / "_build" / "html"
 

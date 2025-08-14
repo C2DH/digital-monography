@@ -3,16 +3,21 @@ import docx.document
 import docx.text.hyperlink
 import docx.text.paragraph
 
-try:
-    from constants import AUTONUMBER_PLACEHOLDER
-    from models import Target, TargetService
-    from state import DocumentState
-    from keys import KeyPath
-except (ImportError, ModuleNotFoundError):
-    from .constants import AUTONUMBER_PLACEHOLDER  # type: ignore
-    from .models import Target, TargetService  # type: ignore
-    from .state import DocumentState  # type: ignore
-    from .keys import KeyPath  # type: ignore
+from src._common.constants import AUTONUMBER_PLACEHOLDER
+from src._common.models import Target, TargetService
+from src._common.state import DocumentState
+from src._common.keys import KeyPath
+
+# try:
+#     from constants import AUTONUMBER_PLACEHOLDER
+#     from models import Target, TargetService
+#     from state import DocumentState
+#     from keys import KeyPath
+# except (ImportError, ModuleNotFoundError):
+#     from .constants import AUTONUMBER_PLACEHOLDER  # type: ignore
+#     from .models import Target, TargetService  # type: ignore
+#     from .state import DocumentState  # type: ignore
+#     from .keys import KeyPath  # type: ignore
 
 
 def prepare_refs(

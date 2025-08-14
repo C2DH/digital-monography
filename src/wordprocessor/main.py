@@ -4,38 +4,30 @@ import datetime
 import docx.document
 import json
 import logging
+import os
 import pathlib
+import sys
 import typing as t
 import yaml
-
 from mypy_boto3_dynamodb.service_resource import (
     DynamoDBServiceResource as boto3_DynamoDBServiceResource,
 )
 
-try:
-    # Default imports for in-microservice use
-    from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
-    from constants import IS_DEBUG, ModuleEnum
-    from conditional_rendering import (
-        remove_parts_and_highlights_due_to_conditional_rendering,
-    )
-    from keys import KeyPath
-    from models import File
-    from numbering_captions import add_chapter_number_to_captions
-    from numbering_refs import prepare_refs
-    from state import DocumentState, read_book_metadata
-    from remove_images import remove_images
-except (ImportError, ModuleNotFoundError):
-    # Fallback imports for local development (tests and local runtime)
-    from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus  # type: ignore
-    from .constants import IS_DEBUG, ModuleEnum  # type: ignore
-    from .conditional_rendering import remove_parts_and_highlights_due_to_conditional_rendering  # type: ignore
-    from .keys import KeyPath  # type: ignore
-    from .models import File  # type: ignore
-    from .numbering_captions import add_chapter_number_to_captions  # type: ignore
-    from .numbering_refs import prepare_refs  # type: ignore
-    from .state import DocumentState, read_book_metadata  # type: ignore
-    from .remove_images import remove_images  # type: ignore
+# Get the current directory and add it to sys.path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
+
+from src._common.audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
+from src._common.constants import IS_DEBUG, ModuleEnum
+from src._common.keys import KeyPath
+from src._common.models import File
+from src._common.state import DocumentState, read_book_metadata
+from conditional_rendering import (
+    remove_parts_and_highlights_due_to_conditional_rendering,
+)
+from numbering_captions import add_chapter_number_to_captions
+from numbering_refs import prepare_refs
+from remove_images import remove_images
 
 
 parser = argparse.ArgumentParser(description="...")
