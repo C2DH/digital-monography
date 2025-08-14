@@ -136,6 +136,51 @@ Concrete subprocedures hide implementation details. Those subprocedures should b
 
 Code common to more than one microservice should be written in the `src/_common/<module_name.py>` and copied from there to the microservices using `make copy/<module_name>` command.
 
+#### Imports
+
+In this project, we don't strictly implement the microservice architecture. In particular, there is code shared between microservices found in `src/_common` directory and some microservice are connected to a single database.
+
+When arranging imports from modules within a microservice and from code shared between microservices, we also have to consider all the ways that a microservice code might be invoked:
+* CMD - the default command to run when a container is started, as defined in a Dockerfile.
+* tests,
+* scripts (see `tests` and `scripts` directories respecitively).
+
+To accomodate all those different modes, please follow this pattern.
+
+##### src/<microservice>/Dockerfile
+```Dockerfile
+FROM public.ecr.aws/lambda/python:3.12
+
+# Install internal dependencies to /var/task
+COPY requirements.txt  .
+RUN  pip3 install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
+
+# Copy python modules to /var/task/
+COPY ./*.py ${LAMBDA_TASK_ROOT}
+
+# Copy contents of the shared "src/_common" directory to /var/task/src/_common/
+RUN mkdir -p ${LAMBDA_TASK_ROOT}/src/_common
+RUN --mount=from=common,target=common \
+    cp -r common/* ${LAMBDA_TASK_ROOT}/src/_common/
+
+CMD [ "main.lambda_handler" ]
+```
+
+##### src/<microservice>/main.py
+```py
+# External dependencies
+import os
+import sys
+
+# Get the current directory and add it to sys.path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
+
+# Internal dependencies. Never use explicit relative imports.
+from src._common.constants import ...
+from mymodule import SOME_VAR
+```
+
 ### Multiple environments
 
 The project has two cloud environments: main and develop. Each time you run `git push` on the "develop" branch, you  trigger the CI/CD for the "develop" environment. Similarly, when you accept the merge request to the "main" branch, the CI/CD for the "main" branch will be invoked.
