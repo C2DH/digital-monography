@@ -167,7 +167,8 @@ class HtmlVerifier:
         return self._messages.to_json(md)
 
     def sort(self) -> None:
-        self._messages.sort(key=lambda msg: (msg["line"], msg["pos"]))
+        self._messages.sort(key=lambda msg: (msg.line, msg.pos))
+        # self._messages.sort(key=lambda msg: (msg["line"], msg["pos"]))
 
     def verify(
         self, html: str, fp: pathlib.Path, slug: str, timestamp: datetime.datetime

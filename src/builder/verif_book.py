@@ -4,20 +4,12 @@ import pathlib
 import typing as t
 import uuid
 
-try:
-    from metadata import DocumentMetadata, RefDatapoint, TargetDatapoint
-    from models import Ref, RefService, Target
-    from state import DocumentState
-    from keys import KeyPath
-    from verif_warnings import MessagesJson, VerifierMessages
-    from html2md import convert_to_md
-except (ImportError, ModuleNotFoundError):
-    from .metadata import DocumentMetadata, RefDatapoint, TargetDatapoint
-    from .models import Ref, RefService, Target
-    from .state import DocumentState
-    from .keys import KeyPath
-    from .verif_warnings import MessagesJson, VerifierMessages
-    from .html2md import convert_to_md
+from src._common.metadata import DocumentMetadata, RefDatapoint, TargetDatapoint
+from src._common.models import Ref, RefService, Target
+from src._common.state import DocumentState
+from src._common.keys import KeyPath
+from src._common.html2md import convert_to_md
+from verif_warnings import MessagesJson, VerifierMessages
 
 
 class BookVerifier:

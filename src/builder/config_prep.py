@@ -1,12 +1,8 @@
 import pathlib
 import typing as t
 
-try:
-    from models import File, Substitution, SubstitutionService, Target
-    from state import DocumentState
-except (ImportError, ModuleNotFoundError):
-    from .models import File, Substitution, SubstitutionService, Target
-    from .state import DocumentState
+from src._common.models import File, Substitution, SubstitutionService, Target
+from src._common.state import DocumentState
 
 
 def update_with_substitutions(

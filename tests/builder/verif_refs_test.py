@@ -1,6 +1,8 @@
 import pathlib
 import bs4
 
+from src._common.keys import KeyPath
+from src._common.metadata import DocumentMetadata
 from src._common.state import DocumentState
 from src.preparer.main import _convert_to_html
 from src.preparer.refs import (
@@ -13,8 +15,6 @@ from src.preparer.refs import (
     prepare_ref_targets_in_footnotes,
     prepare_references,
 )
-from src.builder.metadata import DocumentMetadata
-from src.builder.keys import KeyPath
 from src.builder.verif_book import RefsAndTargetsVerifier
 
 

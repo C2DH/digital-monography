@@ -11,63 +11,32 @@ import sys
 import typing as t
 import yaml
 from jupyter_book.cli.main import build
-
 from mypy_boto3_dynamodb.service_resource import (
     DynamoDBServiceResource as boto3_DynamoDBServiceResource,
 )
 from mypy_boto3_s3.client import S3Client as boto3_S3Client
 
-IS_DEBUG = bool(int(os.environ.get("DGTMON_DEBUG", 0)))
-if not IS_DEBUG:
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    sys.path.append(current_dir)
+# Get the current directory and add it to sys.path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
 
-try:
-    from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
-    from constants import (
-        ModuleEnum,
-        IS_DEBUG,
-        DB_URL,
-        DEFAULT_SFS_DIR,
-    )
-    from config_prep import update_with_substitutions
-    from fakers import Faker
-    from keys import KeyPath
-    from models import (
-        Asset,
-        File,
-        FileService,
-        Substitution,
-        SubstitutionService,
-        Ref,
-        RefService,
-    )
-    from state import DocumentState, read_book_metadata
-    from verif_book import RefsAndTargetsVerifier
-    from verif_warnings import MessagesJson
-except (ImportError, ModuleNotFoundError):
-    from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
-    from .constants import (
-        ModuleEnum,
-        IS_DEBUG,
-        DB_URL,
-        DEFAULT_SFS_DIR,
-    )
-    from .config_prep import update_with_substitutions
-    from .fakers import Faker
-    from .keys import KeyPath
-    from .models import (
-        Asset,
-        File,
-        FileService,
-        Substitution,
-        SubstitutionService,
-        Ref,
-        RefService,
-    )
-    from .state import DocumentState, read_book_metadata
-    from .verif_book import RefsAndTargetsVerifier
-    from .verif_warnings import MessagesJson
+from src._common.audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
+from src._common.constants import ModuleEnum, IS_DEBUG, DB_URL, DEFAULT_SFS_DIR
+from src._common.keys import KeyPath
+from src._common.models import (
+    Asset,
+    File,
+    FileService,
+    Substitution,
+    SubstitutionService,
+    Ref,
+    RefService,
+)
+from src._common.state import DocumentState, read_book_metadata
+from config_prep import update_with_substitutions
+from fakers import Faker
+from verif_book import RefsAndTargetsVerifier
+from verif_warnings import MessagesJson
 
 
 if IS_DEBUG:
