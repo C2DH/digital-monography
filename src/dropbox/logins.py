@@ -3,6 +3,9 @@ import datetime
 import enum
 import os
 import typing as t
+from mypy_boto3_dynamodb.service_resource import (
+    DynamoDBServiceResource as boto3_DynamoDBServiceResource,
+)
 
 
 class LoginStatus(enum.Enum):
@@ -19,7 +22,7 @@ class LoginEvent:
     def __post_init__(self):
         self.timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
-    def send(self, dynamodb: t.Any) -> t.Any:
+    def send(self, dynamodb: t.Optional[boto3_DynamoDBServiceResource]) -> t.Any:
         if dynamodb is None:
             return
         table = dynamodb.Table(os.environ.get("DYNAMODB_LOGINS_TBL", ""))
