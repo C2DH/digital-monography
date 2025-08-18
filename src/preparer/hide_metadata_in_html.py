@@ -1,14 +1,9 @@
 import bs4
 import json
 
-try:
-    from metadata import DocumentMetadata
-    from constants import CLS_METADATA_TABLE_JSONDATA, CLS_STATE_TABLE_JSONDATA
-    from state import DocumentState
-except (ImportError, ModuleNotFoundError):
-    from .metadata import DocumentMetadata
-    from .constants import CLS_METADATA_TABLE_JSONDATA, CLS_STATE_TABLE_JSONDATA
-    from .state import DocumentState
+from src._common.metadata import DocumentMetadata
+from src._common.constants import CLS_METADATA_TABLE_JSONDATA, CLS_STATE_TABLE_JSONDATA
+from src._common.state import DocumentState
 
 
 def hide_metadata_in_html(

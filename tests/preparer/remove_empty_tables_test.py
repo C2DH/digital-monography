@@ -1,9 +1,9 @@
 import bs4
 
 from src.preparer.remove_empty_tables import remove_empty_tables
-from src.preparer.constants import CLS_METADATA_TABLE_JSONDATA, CLS_STATE_TABLE_JSONDATA
-from src.preparer.metadata import DocumentMetadata
-from src.preparer.state import DocumentState
+from src._common.constants import CLS_METADATA_TABLE_JSONDATA, CLS_STATE_TABLE_JSONDATA
+from src._common.metadata import DocumentMetadata
+from src._common.state import DocumentState
 
 
 HTML_STR = f"""<p class="dgt-mon-caption">Table 1: An empty table.</p>

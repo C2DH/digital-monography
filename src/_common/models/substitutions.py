@@ -55,13 +55,18 @@ class SubstitutionService:
         Used for substituting values in builder (for digital version).
         """
         if subst.is_digital is False and subst.is_paper is True:
+            print("if subst.is_digital is False and subst.is_paper is True:")
             return ""
         elif subst.new_item_num and file_prefix:
+            print("elif subst.new_item_num and file_prefix:")
             return f"{file_prefix}.{subst.prefix}{subst.new_item_num}"
         elif subst.new_item_num is not None:
+            print("elif subst.new_item_num is not None:")
             file_count = subst.file_count if subst.file_count is not None else ""
             return f"{file_count}.{subst.prefix}{subst.new_item_num}"
         elif subst.was == AUTONUMBER_PLACEHOLDER:
+            print("elif subst.was == AUTONUMBER_PLACEHOLDER:")
             return ""
         else:
+            print("else:")
             return subst.was

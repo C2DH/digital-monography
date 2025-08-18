@@ -1,4 +1,4 @@
-from src.preparer.keys import KeyPath
+from src._common.keys import KeyPath
 
 
 def test_short_efs_filepath():

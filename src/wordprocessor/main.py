@@ -22,12 +22,12 @@ from src._common.constants import IS_DEBUG, ModuleEnum
 from src._common.keys import KeyPath
 from src._common.models import File
 from src._common.state import DocumentState, read_book_metadata
-from conditional_rendering import (
-    remove_parts_and_highlights_due_to_conditional_rendering,
-)
 from numbering_captions import add_chapter_number_to_captions
 from numbering_refs import prepare_refs
 from remove_images import remove_images
+from wpr_conditional_rendering import (
+    remove_parts_and_highlights_due_to_conditional_rendering,
+)
 
 
 parser = argparse.ArgumentParser(description="...")

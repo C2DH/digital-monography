@@ -1,11 +1,7 @@
 import bs4
 
-try:
-    from metadata import DocumentMetadata
-    from state import DocumentState
-except (ImportError, ModuleNotFoundError):
-    from .metadata import DocumentMetadata
-    from .state import DocumentState
+from src._common.metadata import DocumentMetadata
+from src._common.state import DocumentState
 
 
 def remove_empty_tables(

@@ -11,99 +11,59 @@ import os
 import sqlmodel
 import typing as t
 import urllib.parse
-
 from mypy_boto3_dynamodb.service_resource import (
     DynamoDBServiceResource as boto3_DynamoDBServiceResource,
 )
 from mypy_boto3_s3.client import S3Client as boto3_S3Client
 from mypy_boto3_sqs import SQSClient as boto3_SQSClient
 
-try:
-    from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
-    from conditional_rendering import is_paper_only, remove_paper_only
-    from constants import (
-        ModuleEnum,
-        S3Event,
-        DB_URL,
-        MAMMOTH_STYLE_MAP,
-        IS_DEBUG,
-    )
-    from citations import add_bibliography, is_citation, prepare_citations
-    from digital_prep import insert_digital_objects, remove_metadata_tables
-    from github_trigger import GithubTriggerMsg, GithubActionEnum
-    from hide_metadata_in_html import hide_metadata_in_html
-    from metadata import DocumentMetadata, AssetDatapoint
-    from metadata_extraction import prepare_metadata_tables
-    from models import (
-        Asset,
-        CitationGroup,
-        CitationItem,
-        Heading,
-        Ref,
-        Substitution,
-        Target,
-    )
-    from remove_empty_tables import remove_empty_tables
-    from replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
-    from refs import (
-        prepare_ref_targets_in_headers,
-        prepare_ref_targets_in_captions,
-        prepare_ref_targets_in_footnotes,
-        prepare_references,
-        is_header,
-        is_caption,
-        is_footnote,
-        is_reference,
-    )
-    from state import DocumentState
-    from substitutions_prep import count_targets_for_substitutions
-    from html2md import convert_to_md
-    from ipynb_prep import tags_to_myst_crossref_targets
-    from keys import KeyPath
-    from fakers import Faker
-except (ImportError, ModuleNotFoundError):
-    from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
-    from .conditional_rendering import is_paper_only, remove_paper_only
-    from .constants import (
-        ModuleEnum,
-        S3Event,
-        DB_URL,
-        MAMMOTH_STYLE_MAP,
-        IS_DEBUG,
-    )
-    from .citations import add_bibliography, is_citation, prepare_citations
-    from .digital_prep import insert_digital_objects, remove_metadata_tables
-    from .github_trigger import GithubTriggerMsg, GithubActionEnum
-    from .hide_metadata_in_html import hide_metadata_in_html
-    from .metadata import DocumentMetadata, AssetDatapoint
-    from .metadata_extraction import prepare_metadata_tables
-    from .models import (
-        Asset,
-        CitationGroup,
-        CitationItem,
-        Heading,
-        Ref,
-        Substitution,
-        Target,
-    )
-    from .remove_empty_tables import remove_empty_tables
-    from .replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
-    from .refs import (
-        prepare_ref_targets_in_headers,
-        prepare_ref_targets_in_captions,
-        prepare_ref_targets_in_footnotes,
-        prepare_references,
-        is_header,
-        is_caption,
-        is_footnote,
-        is_reference,
-    )
-    from .substitutions_prep import count_targets_for_substitutions
-    from .state import DocumentState
-    from .html2md import convert_to_md
-    from .ipynb_prep import tags_to_myst_crossref_targets
-    from .keys import KeyPath
-    from .fakers import Faker
+# Get the current directory and add it to sys.path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
+
+from src._common.audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
+from src._common.constants import (
+    ModuleEnum,
+    S3Event,
+    DB_URL,
+    MAMMOTH_STYLE_MAP,
+    IS_DEBUG,
+)
+from src._common.metadata import DocumentMetadata, AssetDatapoint
+from src._common.models import (
+    Asset,
+    CitationGroup,
+    CitationItem,
+    Heading,
+    Ref,
+    Substitution,
+    Target,
+)
+from src._common.github_trigger import GithubTriggerMsg, GithubActionEnum
+from src._common.state import DocumentState
+from src._common.keys import KeyPath
+from src._common.html2md import convert_to_md
+from conditional_prep import is_paper_only, remove_paper_only
+from citations import add_bibliography, is_citation, prepare_citations
+from digital_prep import insert_digital_objects, remove_metadata_tables
+from hide_metadata_in_html import hide_metadata_in_html
+from metadata_extraction import prepare_metadata_tables
+from remove_empty_tables import remove_empty_tables
+from replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
+from refs import (
+    prepare_ref_targets_in_headers,
+    prepare_ref_targets_in_captions,
+    prepare_ref_targets_in_footnotes,
+    prepare_references,
+    is_header,
+    is_caption,
+    is_footnote,
+    is_reference,
+)
+from substitutions_prep import count_targets_for_substitutions
+from ipynb_prep import tags_to_myst_crossref_targets
+from fakers import Faker
+
 
 if IS_DEBUG:
     today = datetime.date.today().isoformat()
@@ -154,7 +114,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     if _is_file_docx(key) and _is_deletion(event_name):
         _remove_fileobj(key)
         _remove_assets_info_from_s3(key)
-        _remove_metadata_from_db(key)  # TODO: dstate
+        # _remove_metadata_from_db(key)  # TODO: dstate
         _remove_state_from_efs(key)
         _remove_state_from_db(key)
         _remove_processed_html_from_efs(key)
@@ -199,7 +159,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_soup = insert_digital_objects(html_soup, metadata, dstate, tables)
         html_soup = remove_metadata_tables(html_soup, metadata, dstate, tables)
         _write_assets_info_to_s3(metadata, dstate, key)
-        _write_metadata_to_db(metadata, dstate, key)  # TODO: dstate
+        # _write_metadata_to_db(metadata, dstate, key)  # TODO: dstate
         _write_state_to_efs(metadata, dstate, key)
         _write_state_to_db(metadata, dstate, key)
         _write_processed_html_to_efs(html_soup_str, key)
@@ -811,6 +771,7 @@ def _write_state_to_db(
     metadata: DocumentMetadata, dstate: DocumentState, key: KeyPath
 ) -> None:
     try:
+        # print('len(dstate["refs"])', len(dstate["refs"]))
         with sqlmodel.Session(db_engine) as session:
             # delete existing records for this file so there are no duplicates
             dstate.sql_delete_by_key(session, key)

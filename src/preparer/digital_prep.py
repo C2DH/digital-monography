@@ -1,23 +1,15 @@
 import bs4
 
-try:
-    from constants import ATTRIB_METADATA_UUID, CLS_METADATA_TABLE, FIELD_DIGITAL_SOURCE
-    from metadata import (
-        DocumentMetadata,
-        MetadataTableDatapoint,
-    )
-    from state import DocumentState
-except (ImportError, ModuleNotFoundError):
-    from .constants import (
-        ATTRIB_METADATA_UUID,
-        CLS_METADATA_TABLE,
-        FIELD_DIGITAL_SOURCE,
-    )
-    from .metadata import (
-        DocumentMetadata,
-        MetadataTableDatapoint,
-    )
-    from .state import DocumentState
+from src._common.constants import (
+    ATTRIB_METADATA_UUID,
+    CLS_METADATA_TABLE,
+    FIELD_DIGITAL_SOURCE,
+)
+from src._common.metadata import (
+    DocumentMetadata,
+    MetadataTableDatapoint,
+)
+from src._common.state import DocumentState
 
 
 def insert_digital_objects(

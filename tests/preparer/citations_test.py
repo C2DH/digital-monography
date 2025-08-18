@@ -1,11 +1,10 @@
 import bs4
 import mammoth
-import pathlib
 
+from src._common.metadata import DocumentMetadata
+from src._common.state import DocumentState
+from src._common.keys import KeyPath
 from src.preparer.citations import add_bibliography, prepare_citations, is_citation
-from src.preparer.metadata import DocumentMetadata
-from src.preparer.state import DocumentState
-from src.preparer.keys import KeyPath
 
 
 class TestCitationsFromFields:

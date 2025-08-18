@@ -18,7 +18,7 @@
 # - [v] Preparer saves models to DB
 # - [v] Preparer saves models to EFS
 # - [ ] Builder uses the new state/models from EFS (book level)
-# - [ ] Wordprocessor uses new state/models from EFS (book level)
+# - [v] Wordprocessor uses new state/models from EFS (book level)
 # - [ ] Verifier uses new state/models from html script tag (doc level)
 # - [ ] DocumentMetadata is deprecated
 # - [ ] Datapoints are deprecated

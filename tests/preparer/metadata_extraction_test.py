@@ -2,19 +2,20 @@ import bs4
 import mammoth
 import pathlib
 
-from src.preparer.constants import MediumEnum, MAMMOTH_STYLE_MAP
+from src._common.constants import MediumEnum, MAMMOTH_STYLE_MAP
+from src._common.html2md import convert_to_md
+from src._common.metadata import DocumentMetadata, AssetDatapoint
+from src._common.models import Asset
+from src._common.keys import KeyPath
+from src._common.state import DocumentState
 from src.preparer.digital_prep import remove_metadata_tables
-from src.preparer.html2md import convert_to_md
-from src.preparer.metadata import DocumentMetadata, AssetDatapoint
 from src.preparer.metadata_extraction import prepare_metadata_tables
-from src.preparer.keys import KeyPath
 from src.preparer.refs import (
     prepare_ref_targets_in_captions,
     prepare_references,
     is_caption,
     is_reference,
 )
-from src.preparer.state import DocumentState
 
 SLUG = "book-content-examples"
 
@@ -52,16 +53,20 @@ class TestMetadataTablesExtraction:
         cls.soup = prepare_metadata_tables(cls.soup, cls.metadata, cls.dstate, tables)
         cls.soup = remove_metadata_tables(cls.soup, cls.metadata, cls.dstate, tables)
         cls.md = convert_to_md(cls.soup, cls.metadata, cls.dstate)
-        cls.asset_0 = cls.metadata.assets[0]
-        cls.asset_1 = cls.metadata.assets[1]
-        cls.asset_2 = cls.metadata.assets[2]
-        cls.asset_3 = cls.metadata.assets[3]
+        cls.asset_0: Asset = cls.dstate["assets"][0]
+        cls.asset_1: Asset = cls.dstate["assets"][1]
+        cls.asset_2: Asset = cls.dstate["assets"][2]
+        cls.asset_3: Asset = cls.dstate["assets"][3]
+        # cls.asset_0 = cls.metadata.assets[0]
+        # cls.asset_1 = cls.metadata.assets[1]
+        # cls.asset_2 = cls.metadata.assets[2]
+        # cls.asset_3 = cls.metadata.assets[3]
 
     def test_all_metadata_tables_were_extracted(self):
         assert len(self.metadata.metadata_tables) == 3
 
     def test_all_assets_were_extracted(self):
-        assert len(self.metadata.assets) == 4
+        assert len(self.dstate["assets"]) == 4
 
     def test_all_metadata_rows_were_extracted(self):
         assert len(self.metadata.metadata_tables[0].kwargs) == 7
@@ -138,20 +143,17 @@ class TestMetadataTablesExtraction:
         assert self.asset_3.is_on_paper == False
 
     def test_asset_to_json_handling(self):
-        jsonified = self.asset_3.to_json()
-        assert jsonified["fp"] == pathlib.PurePath("assets/10x10px-img.png")
-        # assert jsonified["fp"] == "assets/10x10px-img.png"
+        jsonified = self.asset_3.model_dump(mode="json")
+        assert jsonified["fp"] == "assets/10x10px-img.png"
         assert jsonified["metadata_table"] == self.metadata.metadata_tables[2].pk
         assert type(jsonified["metadata_table"]) == str
-        assert jsonified["medium"] == MediumEnum.DIGITAL
-        # assert jsonified["medium"] == "D"
-        assert type(jsonified["medium"]) == MediumEnum
-        # assert type(jsonified["medium"]) == str
+        assert jsonified["medium"] == MediumEnum.DIGITAL.value
+        assert jsonified["medium"] == "D"
+        assert type(jsonified["medium"]) == str
         assert jsonified["slug"] == SLUG
         assert jsonified["author"] == ""
         assert jsonified["source"] == ""
-        assert jsonified["location"] == KeyPath(f"{SLUG}/metadata_extraction.docx")
-        # assert jsonified["location"] == f"{SLUG}/metadata_extraction.docx"
+        assert jsonified["location"] == f"{SLUG}/metadata_extraction.docx"
         assert jsonified["alttext"] == ""
         assert jsonified["caption"] == ""
         assert jsonified["comments"] == "Looks good"
@@ -161,8 +163,8 @@ class TestMetadataTablesExtraction:
         assert jsonified["is_on_paper"] == False
 
     def test_asset_from_json_handling(self):
-        jsonified = self.asset_3.to_json()
-        asset = AssetDatapoint.from_json(jsonified)
+        jsonified = self.asset_3.model_dump(mode="json")
+        asset: Asset = Asset(**jsonified)
         assert asset.fp == pathlib.Path("assets/10x10px-img.png")
         assert asset.metadata_table == self.metadata.metadata_tables[2].pk
         assert type(asset.metadata_table) == str

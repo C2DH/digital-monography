@@ -2,11 +2,12 @@ import bs4
 import pathlib
 import mammoth
 
-from src.preparer.constants import MAMMOTH_STYLE_MAP
-from src.preparer.conditional_rendering import is_paper_only, remove_paper_only
-from src.preparer.keys import KeyPath
-from src.preparer.html2md import convert_to_md
-from src.preparer.metadata import DocumentMetadata
+from src._common.constants import MAMMOTH_STYLE_MAP
+from src._common.keys import KeyPath
+from src._common.html2md import convert_to_md
+from src._common.metadata import DocumentMetadata
+from src._common.state import DocumentState
+from src.preparer.conditional_prep import is_paper_only, remove_paper_only
 from src.preparer.refs import (
     is_header,
     is_caption,
@@ -17,7 +18,6 @@ from src.preparer.refs import (
     prepare_ref_targets_in_footnotes,
     prepare_references,
 )
-from src.preparer.state import DocumentState
 
 
 class TestConditionalRendering:

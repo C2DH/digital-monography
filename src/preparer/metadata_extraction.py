@@ -1,4 +1,5 @@
 import json
+from pprint import pprint
 import bs4
 import copy
 import pathlib
@@ -6,34 +7,24 @@ import re
 import typing as t
 import uuid
 
-try:
-    from metadata import AssetDatapoint, DocumentMetadata, MetadataTableDatapoint
-    from models import Asset, Substitution
-    from constants import (
-        MediumEnum,
-        ATTRIB_METADATA_UUID,
-        CLS_METADATA_TABLE,
-        FIELD_DELETE_PREVIOUS,
-        FIELD_DIGITAL_SOURCE,
-        FIELD_PAPER_SOURCE,
-        METADATA_FIELDS,
-    )
-    from keys import KeyPath
-    from state import DocumentState
-except (ImportError, ModuleNotFoundError):
-    from .metadata import AssetDatapoint, DocumentMetadata, MetadataTableDatapoint
-    from .models import Asset, Substitution
-    from .constants import (
-        MediumEnum,
-        ATTRIB_METADATA_UUID,
-        CLS_METADATA_TABLE,
-        FIELD_DELETE_PREVIOUS,
-        FIELD_DIGITAL_SOURCE,
-        FIELD_PAPER_SOURCE,
-        METADATA_FIELDS,
-    )
-    from .keys import KeyPath
-    from .state import DocumentState
+from src._common.metadata import (
+    AssetDatapoint,
+    DocumentMetadata,
+    MetadataTableDatapoint,
+)
+from src._common.models import Asset, Substitution
+from src._common.constants import (
+    MediumEnum,
+    ATTRIB_METADATA_UUID,
+    CLS_METADATA_TABLE,
+    FIELD_DELETE_PREVIOUS,
+    FIELD_DIGITAL_SOURCE,
+    FIELD_PAPER_SOURCE,
+    METADATA_FIELDS,
+)
+from src._common.keys import KeyPath
+from src._common.state import DocumentState
+
 
 type AcceptedValues = t.Union[str, bool, pathlib.Path]
 FALSE_EQUIVALENTS = [
@@ -113,27 +104,30 @@ def prepare_metadata_tables(
             metadata_tbl.add_slug(document_metadata.slug)
             metadata_tbl.add_location(document_metadata.filepath)
             metadata_tbl.add_orig_caption(dstate)
+            metadata_tbl.add_docstate(dstate)
             asset_paper = metadata_tbl.assetdatapoint_for_paper()
             asset_digital = metadata_tbl.assetdatapoint_for_digital()
-            unused_kwargs = _copy_unused_kwargs(metadata_tbl.kwargs)
+            # unused_kwargs = _copy_unused_kwargs(metadata_tbl.kwargs)
             if asset_paper:
-                document_metadata.add_asset(asset_paper)
-                dstate.add(
-                    Asset(
-                        loc=dstate.key,
-                        **asset_paper.model_dump(),
-                        rest=unused_kwargs,
-                    )
-                )
+                dstate.add(asset_paper)
+                # document_metadata.add_asset(asset_paper)
+                # dstate.add(
+                #     Asset(
+                #         loc=dstate.key,
+                #         **asset_paper.model_dump(),
+                #         rest=unused_kwargs,
+                #     )
+                # )
             if asset_digital and asset_paper and asset_digital.fp != asset_paper.fp:
-                document_metadata.add_asset(asset_digital)
-                dstate.add(
-                    Asset(
-                        loc=dstate.key,
-                        **asset_digital.model_dump(),
-                        rest=unused_kwargs,
-                    )
-                )
+                dstate.add(asset_digital)
+                # document_metadata.add_asset(asset_digital)
+                # dstate.add(
+                #     Asset(
+                #         loc=dstate.key,
+                #         **asset_digital.model_dump(),
+                #         rest=unused_kwargs,
+                #     )
+                # )
             placeholder = html_soup.new_tag("span")
             placeholder.string = "% :::{dgt-mon-asset} " + metadata_tbl.uuid + " :::"
             placeholder["hidden"] = "hidden"
@@ -287,6 +281,9 @@ class MetadataTable:
         else:
             self.kwargs["orig_caption"] = ""
 
+    def add_docstate(self, docstate: DocumentState) -> None:
+        self.docstate = docstate
+
     def add_described_el(self, described_el: bs4.element.Tag) -> None:
         self.rows.append(("elem", described_el))
         self.kwargs["elem"] = described_el
@@ -303,10 +300,11 @@ class MetadataTable:
         self.rows.append(("target", target_pk))
         self.kwargs["target"] = target_pk
 
-    def assetdatapoint_for_paper(self) -> t.Optional[AssetDatapoint]:
+    def assetdatapoint_for_paper(self) -> t.Optional[Asset]:
         if self.kwargs.get(FIELD_PAPER_SOURCE) is None:
             return None
-        return AssetDatapoint(
+        return Asset(
+            loc=self.docstate.key,
             fp=self.kwargs[FIELD_PAPER_SOURCE],
             slug=self.kwargs["slug"],
             medium=self._get_medium(MediumEnum.PAPER),
@@ -321,12 +319,14 @@ class MetadataTable:
             target=self.kwargs.get("target", ""),
             is_color=self.kwargs.get("iscolor"),
             is_ready=self.kwargs.get("isready", False),
+            rest=self._copy_unused_kwargs(),
         )
 
     def assetdatapoint_for_digital(self) -> t.Optional[AssetDatapoint]:
         if self.kwargs.get(FIELD_DIGITAL_SOURCE) is None:
             return None
-        return AssetDatapoint(
+        return Asset(
+            loc=self.docstate.key,
             fp=self.kwargs.get(FIELD_DIGITAL_SOURCE),
             slug=self.kwargs["slug"],
             medium=self._get_medium(MediumEnum.DIGITAL),
@@ -341,6 +341,7 @@ class MetadataTable:
             target=self.kwargs.get("target", ""),
             is_color=self.kwargs.get("iscolor"),
             is_ready=self.kwargs.get("isready", False),
+            rest=self._copy_unused_kwargs(),
         )
 
     def _get_alttext(self) -> t.Optional[str]:
@@ -360,26 +361,25 @@ class MetadataTable:
             else medium
         )
 
-
-def _copy_unused_kwargs(kwargs: dict[str, t.Any]) -> str:
-    """
-    Copy unused kwargs to a string, to be stored in the Asset model.
-    This is a workaround for the fact that SQLModel does not support
-    storing dicts directly in the database.
-    """
-    unused_kwargs = copy.copy(kwargs)
-    unused_kwargs.pop(FIELD_DIGITAL_SOURCE, None)
-    unused_kwargs.pop(FIELD_PAPER_SOURCE, None)
-    unused_kwargs.pop("slug", None)
-    unused_kwargs.pop("author", None)
-    unused_kwargs.pop("source", None)
-    unused_kwargs.pop("location", None)
-    unused_kwargs.pop("caption", None)
-    unused_kwargs.pop("orig_caption", None)
-    unused_kwargs.pop("comments", None)
-    unused_kwargs.pop("target", None)
-    unused_kwargs.pop("iscolor", None)
-    unused_kwargs.pop("isready", None)
-    unused_kwargs.pop("alttext", None)
-    unused_kwargs.pop("elem", None)
-    return json.dumps(unused_kwargs, ensure_ascii=False, default=str)
+    def _copy_unused_kwargs(self) -> str:
+        """
+        Copy unused kwargs to a string, to be stored in the Asset model.
+        This is a workaround for the fact that SQLModel does not support
+        storing dicts directly in the database.
+        """
+        unused_kwargs = copy.copy(self.kwargs)
+        unused_kwargs.pop(FIELD_DIGITAL_SOURCE, None)
+        unused_kwargs.pop(FIELD_PAPER_SOURCE, None)
+        unused_kwargs.pop("slug", None)
+        unused_kwargs.pop("author", None)
+        unused_kwargs.pop("source", None)
+        unused_kwargs.pop("location", None)
+        unused_kwargs.pop("caption", None)
+        unused_kwargs.pop("orig_caption", None)
+        unused_kwargs.pop("comments", None)
+        unused_kwargs.pop("target", None)
+        unused_kwargs.pop("iscolor", None)
+        unused_kwargs.pop("isready", None)
+        unused_kwargs.pop("alttext", None)
+        unused_kwargs.pop("elem", None)
+        return json.dumps(unused_kwargs, ensure_ascii=False, default=str)

@@ -1,8 +1,8 @@
 import bs4
 
 from src.preparer.replace_alt_texts import prepare_alt_texts
-from src.preparer.metadata import DocumentMetadata
-from src.preparer.state import DocumentState
+from src._common.metadata import DocumentMetadata
+from src._common.state import DocumentState
 
 
 HTML_STR = f"""<h1>Book Title</h1>

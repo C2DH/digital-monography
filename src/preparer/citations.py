@@ -4,18 +4,13 @@ import json
 import typing as t
 import citeproc
 
-try:
-    from metadata import DocumentMetadata, CitationGroupDatapoint, CitationItemDatapoint
-    from models import CitationGroup, CitationItem
-    from state import DocumentState
-except (ImportError, ModuleNotFoundError):
-    from .metadata import (
-        DocumentMetadata,
-        CitationGroupDatapoint,
-        CitationItemDatapoint,
-    )
-    from .models import CitationGroup, CitationItem
-    from .state import DocumentState
+from src._common.metadata import (
+    DocumentMetadata,
+    CitationGroupDatapoint,
+    CitationItemDatapoint,
+)
+from src._common.models import CitationGroup, CitationItem
+from src._common.state import DocumentState
 
 
 class CitationItemTD(t.TypedDict):

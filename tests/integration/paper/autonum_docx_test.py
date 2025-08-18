@@ -7,7 +7,7 @@ from src._common.constants import (
     MAMMOTH_STYLE_MAP,
 )
 from src._common.keys import KeyPath
-from src.preparer.html2md import convert_to_md
+from src._common.html2md import convert_to_md
 
 DOCX_OUTPUT_DIR = KeyPath(DEFAULT_SFS_DIR) / "a_book" / "_paper"
 

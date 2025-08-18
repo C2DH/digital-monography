@@ -11,9 +11,9 @@ from src.preparer.refs import (
     prepare_references,
     LinkMystifier,
 )
-from src.preparer.metadata import DocumentMetadata, TargetDatapoint
-from src.preparer.keys import KeyPath
-from src.preparer.state import DocumentState
+from src._common.metadata import DocumentMetadata, TargetDatapoint
+from src._common.keys import KeyPath
+from src._common.state import DocumentState
 
 # targets in headers
 

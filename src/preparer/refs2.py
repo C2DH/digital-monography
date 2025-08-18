@@ -7,44 +7,63 @@ import string
 import functools
 import typing as t
 
-try:
-    from metadata import (
-        DocumentMetadata,
-        HeadingDatapoint,
-        RefDatapoint,
-        SubstitutionDatapoint,
-        TargetDatapoint,
-    )
-    from keys import KeyPath
-    from constants import (
-        AUTONUMBER_PLACEHOLDER,
-        CAPTION_ITEM_TYPE_FIGURE,
-        CAPTION_ITEM_TYPE_TABLE,
-        CAPTION_ITEM_TYPE_GRAPH,
-        CAPTION_ITEM_TYPE_OTHER,
-        CLS_CAPTION,
-    )
-    from models import Ref, Target
-    from state import DocumentState
-except (ImportError, ModuleNotFoundError):
-    from .metadata import (
-        DocumentMetadata,
-        HeadingDatapoint,
-        RefDatapoint,
-        SubstitutionDatapoint,
-        TargetDatapoint,
-    )
-    from .keys import KeyPath
-    from .constants import (
-        AUTONUMBER_PLACEHOLDER,
-        CAPTION_ITEM_TYPE_FIGURE,
-        CAPTION_ITEM_TYPE_TABLE,
-        CAPTION_ITEM_TYPE_GRAPH,
-        CAPTION_ITEM_TYPE_OTHER,
-        CLS_CAPTION,
-    )
-    from .models import Ref, Target
-    from .state import DocumentState
+from src._common.metadata import (
+    DocumentMetadata,
+    HeadingDatapoint,
+    RefDatapoint,
+    SubstitutionDatapoint,
+    TargetDatapoint,
+)
+from src._common.keys import KeyPath
+from src._common.constants import (
+    AUTONUMBER_PLACEHOLDER,
+    CAPTION_ITEM_TYPE_FIGURE,
+    CAPTION_ITEM_TYPE_TABLE,
+    CAPTION_ITEM_TYPE_GRAPH,
+    CAPTION_ITEM_TYPE_OTHER,
+    CLS_CAPTION,
+)
+from src._common.models import Ref, Target
+from src._common.state import DocumentState
+
+# try:
+#     from metadata import (
+#         DocumentMetadata,
+#         HeadingDatapoint,
+#         RefDatapoint,
+#         SubstitutionDatapoint,
+#         TargetDatapoint,
+#     )
+#     from keys import KeyPath
+#     from constants import (
+#         AUTONUMBER_PLACEHOLDER,
+#         CAPTION_ITEM_TYPE_FIGURE,
+#         CAPTION_ITEM_TYPE_TABLE,
+#         CAPTION_ITEM_TYPE_GRAPH,
+#         CAPTION_ITEM_TYPE_OTHER,
+#         CLS_CAPTION,
+#     )
+#     from models import Ref, Target
+#     from state import DocumentState
+# except (ImportError, ModuleNotFoundError):
+#     from .metadata import (
+#         DocumentMetadata,
+#         HeadingDatapoint,
+#         RefDatapoint,
+#         SubstitutionDatapoint,
+#         TargetDatapoint,
+#     )
+#     from .keys import KeyPath
+#     from .constants import (
+#         AUTONUMBER_PLACEHOLDER,
+#         CAPTION_ITEM_TYPE_FIGURE,
+#         CAPTION_ITEM_TYPE_TABLE,
+#         CAPTION_ITEM_TYPE_GRAPH,
+#         CAPTION_ITEM_TYPE_OTHER,
+#         CLS_CAPTION,
+#     )
+#     from .models import Ref, Target
+#     from .state import DocumentState
 
 
 def is_header(tag: bs4.element.Tag) -> bool:
