@@ -57,34 +57,6 @@ db/makemigrations:
 	# 'Enter migration message, best in `01_init_db` format.'
 	# cd src/_common && DB_PATH=/tmp/efs/_database.db alembic revision --autogenerate -m  ; cd ../..
 
-db/copy:
-	echo 'Step 1. Copy models'
-	cp -r src/_common/models scripts/
-	cp -r src/_common/models src/preparer/
-	cp -r src/_common/models src/builder/
-	cp -r src/_common/models src/orm/
-	cp -r src/_common/models src/verifier/
-	cp -r src/_common/models src/wordprocessor/
-	echo 'Step 2. Copy migration files'
-	cp -r src/_common/migrations scripts/
-	cp -r src/_common/migrations src/preparer/
-	cp -r src/_common/migrations src/builder/
-	cp -r src/_common/migrations src/orm/
-	cp -r src/_common/migrations src/verifier/
-	cp -r src/_common/migrations src/wordprocessor/
-	echo 'Step 3. Copy state file'
-	cp src/_common/state.py scripts/state.py
-	cp src/_common/state.py src/preparer/state.py
-	cp src/_common/state.py src/builder/state.py
-	cp src/_common/state.py src/verifier/state.py
-	cp src/_common/state.py src/wordprocessor/state.py
-	echo 'Step 4. Copy alembic config'
-	cp src/_common/alembic.ini scripts/alembic.ini
-	cp src/_common/alembic.ini src/preparer/alembic.ini
-	cp src/_common/alembic.ini src/builder/alembic.ini
-	cp src/_common/alembic.ini src/verifier/alembic.ini
-	cp src/_common/alembic.ini src/wordprocessor/alembic.ini
-
 db/migrate:
 	cd src/_common && DB_PATH=/tmp/efs/_database.db alembic upgrade heads
 
@@ -113,51 +85,6 @@ dev/test:
 dev/draft:
 	# docker compose run main python3.12 scripts/prepare_and_build.py book_path=data/input/$(SLUG)
 	docker compose run make test/run
-
-copy/audit:
-	cp src/_common/audit.py src/dropbox/audit.py
-	cp src/_common/audit.py src/preparer/audit.py
-	cp src/_common/audit.py src/builder/audit.py
-	cp src/_common/audit.py src/github/audit.py
-	cp src/_common/audit.py src/verifier/audit.py
-	cp src/_common/audit.py src/wordprocessor/audit.py
-
-copy/constants:
-	cp src/_common/constants.py scripts/constants.py
-	cp src/_common/constants.py src/entrypoint/constants.py
-	cp src/_common/constants.py src/dropbox/constants.py
-	cp src/_common/constants.py src/preparer/constants.py
-	cp src/_common/constants.py src/builder/constants.py
-	cp src/_common/constants.py src/github/constants.py
-	cp src/_common/constants.py src/verifier/constants.py
-	cp src/_common/constants.py src/gpu/constants.py
-	cp src/_common/constants.py src/orm/constants.py
-	cp src/_common/constants.py src/wordprocessor/constants.py
-
-copy/keys:
-	cp src/_common/keys.py src/dropbox/keys.py
-	cp src/_common/keys.py src/preparer/keys.py
-	cp src/_common/keys.py src/builder/keys.py
-	cp src/_common/keys.py src/github/keys.py
-	cp src/_common/keys.py src/orm/keys.py
-	cp src/_common/keys.py src/verifier/keys.py
-	cp src/_common/keys.py src/wordprocessor/keys.py
-
-copy/metadata:
-	echo 'Step 1. Copying "metadata" models.'
-	cp src/_common/metadata.py scripts/metadata.py
-	cp src/_common/metadata.py src/preparer/metadata.py
-	cp src/_common/metadata.py src/builder/metadata.py
-	cp src/_common/metadata.py src/verifier/metadata.py
-	cp src/_common/metadata.py src/wordprocessor/metadata.py
-
-copy/state:
-	echo 'Step 1. Copying "state" models.'
-	cp src/_common/state.py scripts/state.py
-	cp src/_common/state.py src/preparer/state.py
-	cp src/_common/state.py src/builder/state.py
-	cp src/_common/state.py src/verifier/state.py
-	cp src/_common/state.py src/wordprocessor/state.py
 
 copy/html2md:
 	cp src/_common/html2md.py src/preparer/html2md.py
