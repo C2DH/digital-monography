@@ -8,6 +8,7 @@ import sqlalchemy as sa
 import sqlalchemy.orm as sa_orm
 import sqlmodel
 import sqlmodel.main
+import sys
 import typing as t
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from aws_lambda_powertools.utilities.data_classes import (
@@ -15,16 +16,14 @@ from aws_lambda_powertools.utilities.data_classes import (
     APIGatewayProxyEventV2,
 )
 
-try:
-    from constants import MediumEnum, DB_URL, IS_DEBUG
-    from keys import KeyPath
-    from lambda_wsgi import response as lambda_wsgi_response
-    from models import Asset, CitationGroup, CitationItem, Heading
-except (ImportError, ModuleNotFoundError):
-    from .constants import MediumEnum, DB_URL, IS_DEBUG  # type: ignore
-    from .keys import KeyPath  # type: ignore
-    from .lambda_wsgi import response as lambda_wsgi_response  # type: ignore
-    from .models import Asset, CitationGroup, CitationItem, Heading  # type: ignore
+# Get the current directory and add it to sys.path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
+
+from src._common.constants import MediumEnum, DB_URL, IS_DEBUG
+from src._common.keys import KeyPath
+from src._common.models import Asset, CitationGroup, CitationItem, Heading
+from lambda_wsgi import response as lambda_wsgi_response
 
 
 if IS_DEBUG:
