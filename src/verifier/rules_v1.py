@@ -14,12 +14,14 @@ from src._common.constants import (
     METADATA_FIELDS_KEYS,
     CLS_METADATA_TABLE,
     CLS_METADATA_TABLE_JSONDATA,
+    CLS_STATE_TABLE_JSONDATA,
     FIELD_LICENSE_NAME,
     FIELD_DIGITAL_SOURCE,
     FIELD_PAPER_SOURCE,
     CLS_CAPTION,
 )
 from src._common.metadata import DocumentMetadata, MetadataTableDatapoint
+from src._common.state import DocumentState
 from local_constants import RECOGNIZED_LICENSE_NAMES
 from path_handler import PathHandler, SUPPORTED_SUFFIXES
 from verif_warnings import VerifierMessages
@@ -148,6 +150,7 @@ class HtmlVerifier:
         self._comments = {}
         self._messages = VerifierMessages()
         self._metadata = DocumentMetadata()
+        self._docstate = DocumentState()
         self._logs = []
 
     def summary(self):
@@ -218,6 +221,11 @@ class HtmlVerifier:
                     and CLS_METADATA_TABLE_JSONDATA in child.attrs.get("class", [])
                 ):
                     self._metadata.from_json(json.loads(child.text))
+                elif (
+                    child.name == "script"
+                    and CLS_STATE_TABLE_JSONDATA in child.attrs.get("class", [])
+                ):
+                    self._docstate.from_dict(json.loads(child.text))
                     # TODO: read document state form script tag
                 if child.name == "p":
                     self._paragraphs.append(child)

@@ -27,7 +27,7 @@ class TestHtml2MdFootnotes:
             cls.soup, metadata, dstate, citations
         )
         cls.soup = add_bibliography(cls.soup, bibliography)
-        cls.md = convert_to_md(cls.soup, metadata, dstate)
+        cls.md = convert_to_md(cls.soup, dstate)
 
     def test_footnote_ref_properly_converted_to_myst_syntax(self):
         expected_md_start = "Claim A[^footnote-ref-1]. Claim B[^footnote-ref-2]."
@@ -61,8 +61,7 @@ class TestHtml2MdFootnotes:
         )
         html_soup = bs4.BeautifulSoup(sample_html, "html.parser")
         dstate = DocumentState(self.fp)
-        metadata = DocumentMetadata()
-        md = convert_to_md(html_soup, metadata, dstate)
+        md = convert_to_md(html_soup, dstate)
         assert md == expected_md
 
 
@@ -70,8 +69,7 @@ def test_heading_targets_markdownification():
     html = "<pre>(heading-target)=</pre><h1>Title</h1>"
     html_soup = bs4.BeautifulSoup(html, "html.parser")
     dstate = DocumentState(KeyPath("tests") / "_fixtures" / "heading_target.docx")
-    metadata = DocumentMetadata()
-    md = convert_to_md(html_soup, metadata, dstate)
+    md = convert_to_md(html_soup, dstate)
     assert md == "\n\n(heading-target)=\n# Title\n\n"
 
 
@@ -89,8 +87,7 @@ class TestHtml2MdGreedy:
         cls.html_soup = bs4.BeautifulSoup(result.value, "html.parser")
         # oh no! someone put a pathlib.Path in the DocumentState constructor instead of KeyPath
         cls.dstate = DocumentState(cls.fp)
-        cls.metadata = DocumentMetadata()
-        cls.md = convert_to_md(cls.html_soup, cls.metadata, cls.dstate)
+        cls.md = convert_to_md(cls.html_soup, cls.dstate)
 
     def test_two_new_lines_after_blockquote_element(self):
         assert "a\n\n> b\n\nc\n\n" in self.md

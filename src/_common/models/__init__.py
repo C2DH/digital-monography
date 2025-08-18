@@ -1,7 +1,7 @@
 import sqlalchemy
 import sqlalchemy.orm
 import sqlmodel
-from .assets import Asset
+from .assets import Asset, AssetService  # noqa
 from .citation_groups import CitationGroup
 from .citation_items import CitationItem
 from .files import File, FileService  # noqa

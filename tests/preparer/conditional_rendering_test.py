@@ -71,7 +71,7 @@ class TestConditionalRendering:
             cls.after_soup, cls.metadata, cls.dstate, paper_only
         )
         # html_soup = remove_empty_tables(html_soup, metadata, tables)
-        cls.after_md = convert_to_md(cls.after_soup, cls.metadata, cls.dstate)
+        cls.after_md = convert_to_md(cls.after_soup, cls.dstate)
 
     def test_removal_of_parts_of_paragraph(self):
         expected_before = (

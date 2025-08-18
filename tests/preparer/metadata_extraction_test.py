@@ -51,8 +51,8 @@ class TestMetadataTablesExtraction:
         )
         cls.soup = prepare_references(cls.soup, cls.metadata, cls.dstate, references)
         cls.soup = prepare_metadata_tables(cls.soup, cls.metadata, cls.dstate, tables)
-        cls.soup = remove_metadata_tables(cls.soup, cls.metadata, cls.dstate, tables)
-        cls.md = convert_to_md(cls.soup, cls.metadata, cls.dstate)
+        cls.soup = remove_metadata_tables(cls.soup, cls.dstate, tables)
+        cls.md = convert_to_md(cls.soup, cls.dstate)
         cls.asset_0: Asset = cls.dstate["assets"][0]
         cls.asset_1: Asset = cls.dstate["assets"][1]
         cls.asset_2: Asset = cls.dstate["assets"][2]

@@ -42,6 +42,7 @@ class Asset(MySQLModel, table=True):
     is_ready: bool
     is_on_paper: bool
     rest: str = sqlmodel.Field(default="")
+    height: str = sqlmodel.Field(default="100%")
 
     @property
     def fp(self) -> pathlib.Path:
@@ -76,6 +77,15 @@ class Asset(MySQLModel, table=True):
             if isinstance(v, pathlib.Path) or isinstance(v, KeyPath):
                 data[k] = str(v)
         super().__init__(**data)
+
+
+class AssetService:
+    @staticmethod
+    def is_digital(medium: MediumEnum) -> bool:
+        """
+        Check if the asset is digital based on its "medium" field.
+        """
+        return medium == MediumEnum.DIGITAL or medium == MediumEnum.PAPER_AND_DIGITAL
 
 
 #########################################################################################

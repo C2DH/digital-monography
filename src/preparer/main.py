@@ -156,15 +156,15 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         # 1) all reversible transformations are made before saving html file;
         # 2) irreversible transformations are omited to avoid not being able to recreate a book
         # as html files written at this stage will be the basis for a paper version of a book.
-        html_soup = insert_digital_objects(html_soup, metadata, dstate, tables)
-        html_soup = remove_metadata_tables(html_soup, metadata, dstate, tables)
-        _write_assets_info_to_s3(metadata, dstate, key)
+        html_soup = insert_digital_objects(html_soup, dstate, tables)
+        html_soup = remove_metadata_tables(html_soup, dstate, tables)
+        _write_assets_info_to_s3(dstate, key)
         # _write_metadata_to_db(metadata, dstate, key)  # TODO: dstate
-        _write_state_to_efs(metadata, dstate, key)
-        _write_state_to_db(metadata, dstate, key)
+        _write_state_to_efs(dstate, key)
+        _write_state_to_db(dstate, key)
         _write_processed_html_to_efs(html_soup_str, key)
         _put_html_to_s3(html_soup_str, key)
-        md = _convert_to_md(key, html_soup, metadata, dstate)
+        md = _convert_to_md(key, html_soup, dstate)
         _write_processed_md_to_efs(md, key)
         _put_md_to_s3(md, key.s3_key.with_suffix(".md"))
         msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
@@ -399,11 +399,10 @@ def _convert_to_html(key: KeyPath) -> str:
 def _convert_to_md(
     key: KeyPath,
     html_soup: bs4.BeautifulSoup,
-    metadata: DocumentMetadata,
     dstate: DocumentState,
 ) -> str:
     try:
-        return convert_to_md(html_soup, metadata, dstate)
+        return convert_to_md(html_soup, dstate)
     except Exception as e:
         logger.exception(f"Converting to md failed. Error: {repr(e)}")
         _log_audit_event(
@@ -627,14 +626,13 @@ def _remove_assets_info_from_s3(key: KeyPath) -> None:
         raise
 
 
-def _write_assets_info_to_s3(
-    metadata: DocumentMetadata, dstate: DocumentState, key: KeyPath
-) -> None:
+def _write_assets_info_to_s3(docstate: DocumentState, key: KeyPath) -> None:
     try:
         # TODO: this works, but it's a bad design
         s3_key = AssetDatapoint.get_s3_key(key)
         bucket = os.environ.get("METADATA_ASSETS_BUCKET_NAME", "")
-        body = json.dumps([ass.to_json() for ass in metadata.assets], default=str)
+        assets: list[Asset] = docstate["assets"]
+        body = json.dumps([ass.model_dump(mode="json") for ass in assets], default=str)
         resp = s3.put_object(Body=body, Bucket=bucket, Key=s3_key)
         logger.info(
             f"Response from s3.put_object(Bucket={bucket}, Key={s3_key}): "
@@ -733,16 +731,14 @@ def _remove_state_from_efs(key: KeyPath) -> None:
         raise
 
 
-def _write_state_to_efs(
-    metadata: DocumentMetadata, dstate: DocumentState, key: KeyPath
-) -> None:
+def _write_state_to_efs(docstate: DocumentState, key: KeyPath) -> None:
     try:
         # json_data = metadata.to_json() # TODO: DocumentMetadata should be depracated
         fp = key.add_to_efs_slug_dir("_metadata").parent / key.github_path.with_suffix(
             ".json"
         )
         with open(fp, "w") as f:
-            json.dump(dstate.to_dict(), f)
+            json.dump(docstate.to_dict(), f)
         logger.info(f"Metadata was saved to {str(fp)}")
     except Exception as e:
         logger.exception(
@@ -751,10 +747,10 @@ def _write_state_to_efs(
         raise
 
 
-def _remove_state_from_db(dstate: DocumentState, key: KeyPath) -> None:
+def _remove_state_from_db(docstate: DocumentState, key: KeyPath) -> None:
     try:
         with sqlmodel.Session(db_engine) as session:
-            dstate.sql_delete_by_key(session, key)
+            docstate.sql_delete_by_key(session, key)
         logger.info(f"Sent SQL DELETE cmd for {key} without an error.")
         return
     except Exception as e:
@@ -767,9 +763,7 @@ def _remove_state_from_db(dstate: DocumentState, key: KeyPath) -> None:
         raise
 
 
-def _write_state_to_db(
-    metadata: DocumentMetadata, dstate: DocumentState, key: KeyPath
-) -> None:
+def _write_state_to_db(dstate: DocumentState, key: KeyPath) -> None:
     try:
         # print('len(dstate["refs"])', len(dstate["refs"]))
         with sqlmodel.Session(db_engine) as session:

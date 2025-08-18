@@ -319,6 +319,7 @@ class MetadataTable:
             target=self.kwargs.get("target", ""),
             is_color=self.kwargs.get("iscolor"),
             is_ready=self.kwargs.get("isready", False),
+            height=self.kwargs.get("height"),
             rest=self._copy_unused_kwargs(),
         )
 
@@ -341,6 +342,7 @@ class MetadataTable:
             target=self.kwargs.get("target", ""),
             is_color=self.kwargs.get("iscolor"),
             is_ready=self.kwargs.get("isready", False),
+            height=self.kwargs.get("height"),
             rest=self._copy_unused_kwargs(),
         )
 
