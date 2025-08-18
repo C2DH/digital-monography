@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import requests
+import sys
 import typing as t
 import urllib.parse
 
@@ -16,16 +17,14 @@ from mypy_boto3_secretsmanager.client import (
     SecretsManagerClient as boto3_SecretsManagerClient,
 )
 
-try:
-    from audit import AuditEvent, AuditStatus
-    from constants import ModuleEnum, DgtmonSecrets
-    from keys import KeyPath
-    from github_trigger import GithubTriggerMsg, GithubActionEnum
-except (ImportError, ModuleNotFoundError):
-    from .audit import AuditEvent, AuditStatus
-    from .constants import ModuleEnum, DgtmonSecrets
-    from .keys import KeyPath
-    from .github_trigger import GithubTriggerMsg, GithubActionEnum
+# Get the current directory and add it to sys.path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
+
+from src._common.audit import AuditEvent, AuditStatus
+from src._common.constants import ModuleEnum, DgtmonSecrets
+from src._common.keys import KeyPath
+from src._common.github_trigger import GithubTriggerMsg, GithubActionEnum
 
 
 logger = logging.getLogger()
