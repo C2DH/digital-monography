@@ -86,17 +86,7 @@ dev/draft:
 	# docker compose run main python3.12 scripts/prepare_and_build.py book_path=data/input/$(SLUG)
 	docker compose run make test/run
 
-copy/html2md:
-	cp src/_common/html2md.py src/preparer/html2md.py
-	cp src/_common/html2md.py src/verifier/html2md.py
-	cp src/_common/html2md.py src/builder/html2md.py
-
-copy/misc:
-	cp src/_common/github_trigger.py src/github/github_trigger.py
-	cp src/_common/github_trigger.py src/preparer/github_trigger.py
-
 entrypoint/build:
-	cp src/_common/constants.py src/entrypoint/constants.py
 	docker build -t dgtmon-dev-entrypoint src/entrypoint
 
 entrypoint/tag:
@@ -112,8 +102,6 @@ entrypoint/push:
 entrypoint/make: entrypoint/build entrypoint/tag entrypoint/push
 
 dropbox/build:
-	cp src/_common/constants.py src/dropbox/constants.py
-	cp src/_common/keys.py src/dropbox/keys.py
 	docker build -t dgtmon-dev-dropbox src/dropbox
 
 dropbox/tag:
@@ -129,10 +117,6 @@ dropbox/push:
 dropbox/make: dropbox/build dropbox/tag dropbox/push
 
 preparer/build:
-	cp src/_common/constants.py src/preparer/constants.py
-	cp src/_common/keys.py src/preparer/keys.py
-	cp src/_common/metadata.py src/preparer/metadata.py
-	cp src/_common/html2md.py src/preparer/html2md.py
 	docker build -t dgtmon-dev-preparer src/preparer
 
 preparer/tag:
@@ -148,9 +132,6 @@ preparer/push:
 preparer/make: preparer/build preparer/tag preparer/push
 
 builder/build:
-	cp src/_common/constants.py src/builder/constants.py
-	cp src/_common/keys.py src/builder/keys.py
-	cp src/_common/metadata.py src/builder/metadata.py
 	docker build -t dgtmon-dev-builder src/builder
 
 builder/tag:
@@ -166,8 +147,6 @@ builder/push:
 builder/make: builder/build builder/tag builder/push
 
 github/build:
-	cp src/_common/constants.py src/github/constants.py
-	cp src/_common/keys.py src/github/keys.py
 	docker build -t dgtmon-dev-github src/github
 
 github/tag:
@@ -183,10 +162,6 @@ github/push:
 github/make: github/build github/tag github/push
 
 verifier/build:
-	cp src/_common/constants.py src/verifier/constants.py
-	cp src/_common/keys.py src/verifier/keys.py
-	cp src/_common/metadata.py src/verifier/metadata.py
-	cp src/_common/html2md.py src/verifier/html2md.py
 	docker build -t dgtmon-dev-verifier src/verifier
 
 verifier/tag:
@@ -202,7 +177,6 @@ verifier/push:
 verifier/make: verifier/build verifier/tag verifier/push
 
 gpu/build:
-	cp src/_common/constants.py src/gpu/constants.py
 	docker build -t dgtmon-dev-gpu src/gpu
 
 gpu/tag:
@@ -218,7 +192,6 @@ gpu/push:
 gpu/make: gpu/build gpu/tag gpu/push
 
 orm/build:
-	# cp src/_common/constants.py src/orm/constants.py
 	docker build -t dgtmon-dev-orm src/orm
 
 orm/tag:
@@ -234,7 +207,6 @@ orm/push:
 orm/make: orm/build orm/tag orm/push
 
 wordprocessor/build:
-	cp src/_common/constants.py src/wordprocessor/constants.py
 	docker build -t dgtmon-dev-wordprocessor src/wordprocessor
 
 wordprocessor/tag:
