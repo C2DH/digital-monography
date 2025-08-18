@@ -54,6 +54,7 @@ class SubstitutionService:
         Returns the value that will replace placeholder, e.g. `1.I`.
         Used for substituting values in builder (for digital version).
         """
+        print("subst", subst)
         if subst.is_digital is False and subst.is_paper is True:
             print("if subst.is_digital is False and subst.is_paper is True:")
             return ""

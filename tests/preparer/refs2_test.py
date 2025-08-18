@@ -296,7 +296,9 @@ class TestRefDatapointsCreated:
         )
 
     def test_substitution_fig1(self):
-        substitutions: list[Substitution] = self.bookstate[self.fp_a.stem]["substitutions"]
+        substitutions: list[Substitution] = self.bookstate[self.fp_a.stem][
+            "substitutions"
+        ]
         subst = next(subst for subst in substitutions if subst.pk == "f01aref177042490")
         assert subst.was == "1"
         assert subst.item_type == "figure"
@@ -306,7 +308,6 @@ class TestRefDatapointsCreated:
         # assert subst.new_value() == "1.1"
         file_prefix = FileService.get_number_from_filename(self.fp_a.stem)
         assert file_prefix == 1
-        print(subst.model_dump(mode="json"))
         assert SubstitutionService.to_digital_version(subst, file_prefix) == "1.1"
 
     def test_substitution_in_ref__crossref_fig1(self):
@@ -435,7 +436,6 @@ class TestRefDatapointsCreated:
         )
 
 
-DISABLED_JUST_FOR_TEST_FIXING = """
 class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
     fp = KeyPath(
         pathlib.Path("tests") / "_fixtures" / "a_book" / "05_conditional_rendering.docx"
@@ -443,24 +443,22 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
 
     @classmethod
     def setup_class(cls):
-        cls.book_metadata: dict[str, DocumentMetadata] = {}
-        cls.soup, cls.metadata = cls._prepare_docx_for_ref_handing(cls.fp)
-        # cls.book_metadata[cls.fp.stem] = cls.meta
+        cls.bookstate: dict[str, DocumentState] = {}
+        cls.soup, cls.docstate = cls._prepare_docx_for_ref_handing(cls.fp)
+        cls.bookstate[cls.fp.stem] = cls.docstate
 
     @classmethod
     def _prepare_docx_for_ref_handing(
         cls, fp: KeyPath
     ) -> tuple[bs4.BeautifulSoup, DocumentMetadata]:
-        cls.dstate = DocumentState(fp)
+        docstate = DocumentState(fp)
         metadata = DocumentMetadata(fp)
         html_str = _convert_to_html(fp)
-        html_soup, metadata, cls.dstate, _ = prepare_docx(
-            html_str, metadata, cls.dstate
-        )
-        return html_soup, metadata
+        html_soup, metadata, docstate, _ = prepare_docx(html_str, metadata, docstate)
+        return html_soup, docstate
 
     def test_target_for_digital(self):
-        target = self.metadata.get(
+        target = self.docstate.get(
             "targets", "f-05-conditional-rendering-figfordigital"
         )
         assert target
@@ -471,7 +469,7 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert target.fragment == "figForDigital"
 
     def test_target_for_paper(self):
-        target = self.metadata.get("targets", "f-05-conditional-rendering-figforpaper")
+        target = self.docstate.get("targets", "f-05-conditional-rendering-figforpaper")
         assert target
         assert target.text == "2"
         assert target.is_digital == False
@@ -480,7 +478,7 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert target.fragment == "figForPaper"
 
     def test_target_for_digital_and_for_paper(self):
-        target = self.metadata.get(
+        target = self.docstate.get(
             "targets", "f-05-conditional-rendering-figfordigitalandpaper"
         )
         assert target
@@ -491,7 +489,7 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert target.fragment == "figForDigitalAndPaper"
 
     def test_substitution_for_digital(self):
-        subs = self.metadata.get("substitutions", "f05conditionalrenderingref193102947")
+        subs = self.docstate.get("substitutions", "f05conditionalrenderingref193102947")
         assert subs
         assert subs.was == "1"
         assert subs.is_digital == True
@@ -507,7 +505,7 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert SubstitutionService.to_digital_version(subs, file_prefix) == "5.1"
 
     def test_substitution_for_paper(self):
-        subs = self.metadata.get("substitutions", "f05conditionalrenderingref193102988")
+        subs = self.docstate.get("substitutions", "f05conditionalrenderingref193102988")
         assert subs
         assert subs.was == "2"
         assert subs.is_digital == False
@@ -519,7 +517,7 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.new_item_num == None
 
     def test_substitution_for_digital_and_for_paper(self):
-        subs = self.metadata.get("substitutions", "f05conditionalrenderingref193103002")
+        subs = self.docstate.get("substitutions", "f05conditionalrenderingref193103002")
         assert subs
         assert subs.was == "3"
         assert subs.is_digital == True
@@ -532,8 +530,8 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         # assert subs.new_value() == "5.2"
 
     def test_substitution_for_refs(self):
-        assert len(self.metadata.substitutions) == 7  # 4 targets + 3 refs
-        subs = self.metadata.get(
+        assert len(self.docstate["substitutions"]) == 7  # 4 targets + 3 refs
+        subs = self.docstate.get(
             "substitutions", "f05conditionalrenderingfigfordigital"
         )
         assert subs
@@ -547,7 +545,7 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         # assert subs.prefix == ""
         # assert subs.new_item_num == 1
         # assert subs.new_value() == "5.1"
-        subs = self.metadata.get("substitutions", "f05conditionalrenderingfigforpaper")
+        subs = self.docstate.get("substitutions", "f05conditionalrenderingfigforpaper")
         assert subs
         assert subs.was == "2"
         assert subs.is_digital == None
@@ -559,7 +557,7 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         # assert subs.prefix == ""
         # assert subs.new_item_num == None
         # assert subs.new_value() == ""
-        subs = self.metadata.get(
+        subs = self.docstate.get(
             "substitutions", "f05conditionalrenderingfigfordigitalandpaper"
         )
         assert subs
@@ -575,8 +573,10 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         # assert subs.new_value() == "5.2"
 
     def test_substitution_to_json_handling(self):
-        subs = self.metadata.get("substitutions", "f05conditionalrenderingref193103002")
-        jsonified = subs.to_json()
+        subs: Substitution = self.docstate.get(
+            "substitutions", "f05conditionalrenderingref193103002"
+        )
+        jsonified = subs.model_dump(mode="json")
         assert jsonified["was"] == "3"
         assert jsonified["is_digital"] == True
         assert jsonified["is_paper"] == True
@@ -587,9 +587,9 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert jsonified["new_item_num"] == 2
 
     def test_substitution_from_json_handling(self):
-        subs = self.metadata.get("substitutions", "f05conditionalrenderingref193103002")
-        jsonified = subs.to_json()
-        subs = SubstitutionDatapoint.from_json(jsonified)
+        subs = self.docstate.get("substitutions", "f05conditionalrenderingref193103002")
+        jsonified = subs.model_dump(mode="json")
+        subs: Substitution = Substitution(**jsonified)
         assert subs.was == "3"
         assert subs.is_digital == True
         assert subs.is_paper == True
@@ -598,10 +598,7 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         assert subs.prefix == ""
         assert subs.prev_item_num == 3
         assert subs.new_item_num == 2
-        # assert subs.new_value() == "5.2"
-        # assert subs.new_value("V") == "V.2"
         file_prefix = FileService.get_number_from_filename(self.fp.stem)
         assert file_prefix == 5
         assert SubstitutionService.to_digital_version(subs, file_prefix) == "5.2"
         assert SubstitutionService.to_digital_version(subs, file_prefix="V") == "V.2"
-"""

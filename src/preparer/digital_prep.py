@@ -17,7 +17,6 @@ def insert_digital_objects(
     for table in tables:
         if table.get("class", "") == CLS_METADATA_TABLE:
             pk = table.get(ATTRIB_METADATA_UUID)
-            print("pk", pk)
             # metadata_table: MetadataTableDatapoint = doc_metadata.get_metadata_table(pk)
             # default_height = "100%"
             asset = _find_asset(docstate, metadata_table_pk=pk)
