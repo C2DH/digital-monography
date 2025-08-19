@@ -8,9 +8,9 @@ COPY ./*.py ${LAMBDA_TASK_ROOT}
 # Copy contents of the shared "src/_common" directory to /var/task/src/_common/
 RUN mkdir -p ${LAMBDA_TASK_ROOT}/src/_common
 RUN --mount=from=common,target=common \
-    cp -r common/audit.py ${LAMBDA_TASK_ROOT}/src/_common/audit.py \
-    cp -r common/constants.py ${LAMBDA_TASK_ROOT}/src/_common/constants.py \
-    cp -r common/keys.py ${LAMBDA_TASK_ROOT}/src/_common/keys.py \
-    cp -r common/github_trigger.py ${LAMBDA_TASK_ROOT}/src/_common/github_trigger.py
+    cp common/audit.py ${LAMBDA_TASK_ROOT}/src/_common/audit.py && \
+    cp common/constants.py ${LAMBDA_TASK_ROOT}/src/_common/constants.py && \
+    cp common/keys.py ${LAMBDA_TASK_ROOT}/src/_common/keys.py && \
+    cp common/github_trigger.py ${LAMBDA_TASK_ROOT}/src/_common/github_trigger.py
 
 CMD [ "main.lambda_handler" ]

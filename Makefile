@@ -87,7 +87,7 @@ dev/draft:
 	docker compose run make test/run
 
 entrypoint/build:
-	docker build -t dgtmon-dev-entrypoint src/entrypoint
+	docker build -t dgtmon-dev-entrypoint src/entrypoint --build-context common=src/_common
 
 entrypoint/tag:
 	docker tag dgtmon-dev-entrypoint ${DEV_DOCKER_ECR}/dgtmon-dev-entrypoint:${ENTRYPOINT_LATEST_V}
@@ -102,7 +102,7 @@ entrypoint/push:
 entrypoint/make: entrypoint/build entrypoint/tag entrypoint/push
 
 dropbox/build:
-	docker build -t dgtmon-dev-dropbox src/dropbox
+	docker build -t dgtmon-dev-dropbox src/dropbox --build-context common=src/_common
 
 dropbox/tag:
 	docker tag dgtmon-dev-dropbox ${DEV_DOCKER_ECR}/dgtmon-dev-dropbox:${DROPBOX_LATEST_V}
@@ -117,7 +117,7 @@ dropbox/push:
 dropbox/make: dropbox/build dropbox/tag dropbox/push
 
 preparer/build:
-	docker build -t dgtmon-dev-preparer src/preparer
+	docker build -t dgtmon-dev-preparer src/preparer --build-context common=src/_common
 
 preparer/tag:
 	docker tag dgtmon-dev-preparer ${DEV_DOCKER_ECR}/dgtmon-dev-preparer:${PREPARER_LATEST_V}
@@ -132,7 +132,7 @@ preparer/push:
 preparer/make: preparer/build preparer/tag preparer/push
 
 builder/build:
-	docker build -t dgtmon-dev-builder src/builder
+	docker build -t dgtmon-dev-builder src/builder --build-context common=src/_common
 
 builder/tag:
 	docker tag dgtmon-dev-builder ${DEV_DOCKER_ECR}/dgtmon-dev-builder:${BUILDER_LATEST_V}
@@ -147,7 +147,7 @@ builder/push:
 builder/make: builder/build builder/tag builder/push
 
 github/build:
-	docker build -t dgtmon-dev-github src/github
+	docker build -t dgtmon-dev-github src/github --build-context common=src/_common
 
 github/tag:
 	docker tag dgtmon-dev-github ${DEV_DOCKER_ECR}/dgtmon-dev-github:${GITHUB_LATEST_V}
@@ -162,7 +162,7 @@ github/push:
 github/make: github/build github/tag github/push
 
 verifier/build:
-	docker build -t dgtmon-dev-verifier src/verifier
+	docker build -t dgtmon-dev-verifier src/verifier --build-context common=src/_common
 
 verifier/tag:
 	docker tag dgtmon-dev-verifier ${DEV_DOCKER_ECR}/dgtmon-dev-verifier:${VERIFIER_LATEST_V}
@@ -177,7 +177,7 @@ verifier/push:
 verifier/make: verifier/build verifier/tag verifier/push
 
 gpu/build:
-	docker build -t dgtmon-dev-gpu src/gpu
+	docker build -t dgtmon-dev-gpu src/gpu --build-context common=src/_common
 
 gpu/tag:
 	docker tag dgtmon-dev-gpu ${DEV_DOCKER_ECR}/dgtmon-dev-gpu:${GPU_LATEST_V}
@@ -192,7 +192,7 @@ gpu/push:
 gpu/make: gpu/build gpu/tag gpu/push
 
 orm/build:
-	docker build -t dgtmon-dev-orm src/orm
+	docker build -t dgtmon-dev-orm src/orm --build-context common=src/_common
 
 orm/tag:
 	docker tag dgtmon-dev-orm ${DEV_DOCKER_ECR}/dgtmon-dev-orm:${GPU_LATEST_V}
@@ -207,7 +207,7 @@ orm/push:
 orm/make: orm/build orm/tag orm/push
 
 wordprocessor/build:
-	docker build -t dgtmon-dev-wordprocessor src/wordprocessor
+	docker build -t dgtmon-dev-wordprocessor src/wordprocessor --build-context common=src/_common
 
 wordprocessor/tag:
 	docker tag dgtmon-dev-wordprocessor ${DEV_DOCKER_ECR}/dgtmon-dev-wordprocessor:${WORDPROCESSOR_LATEST_V}
