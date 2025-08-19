@@ -181,6 +181,10 @@ from src._common.constants import ...
 from mymodule import SOME_VAR
 ```
 
+##### Please note
+* When you want to import a few modules without models or migration data, it is recommended to copy just the files you need.
+* Avoid repeating file names (other than `main.py`) across microservices. Otherwise a module name might be overwritten in `sys.modules` when importing code from different microservices in tests or scripts, causing a wrong module to be imported (e.g. a mixup between `src/preparer/utils.py` and `src/builder/utils.py`).
+
 ### Multiple environments
 
 The project has two cloud environments: main and develop. Each time you run `git push` on the "develop" branch, you  trigger the CI/CD for the "develop" environment. Similarly, when you accept the merge request to the "main" branch, the CI/CD for the "main" branch will be invoked.
@@ -619,8 +623,3 @@ In GitLab, update "CI/CD Settings" > "Variables" > "PGP_KEY" with the new privat
 ### Accessing project email
 
 Please consult the internal documentation in the [c2dh backstage](https://c2dh.atlassian.net/wiki/spaces/DDRI/pages/162923897/Related+links) for more details about accessing and managing the emails connected with the project.
-
-### Developing new sql db
-
-cp -r src/_common/migrations src/preparer/ && cp -r src/_common/models src/preparer/ && cp src/_common/state.py src/preparer/state.py
-DGTMON_DEBUG=1 FLASK_SECRET_KEY=123 python -it src/orm/main.py

@@ -1,11 +1,14 @@
+import alembic
+import alembic.config
 import datetime
 import flask  # TODO: consider replacing flask with something microVM specific (fastapi? bottle?)
 import json
 import os
 import logging
 import pathlib
-import sqlalchemy as sa
-import sqlalchemy.orm as sa_orm
+
+# import sqlalchemy as sa
+# import sqlalchemy.orm as sa_orm
 import sqlmodel
 import sqlmodel.main
 import sys
@@ -22,7 +25,7 @@ sys.path.insert(0, current_dir)
 
 from src._common.constants import MediumEnum, DB_URL, IS_DEBUG
 from src._common.keys import KeyPath
-from src._common.models import Asset, CitationGroup, CitationItem, Heading
+from src._common.models import *
 from lambda_wsgi import response as lambda_wsgi_response
 
 
@@ -161,17 +164,48 @@ def citations_items_list() -> flask.Response:
     return resp
 
 
+@app.route("/admin/migrate", methods=["GET"])
+def admin_migrate() -> flask.Response:
+    """
+    Migrate the database schema.
+    """
+    msg = {"status": "success", "message": "ok"}
+    status = 200
+    try:
+        alembicArgs = [
+            "-c",
+            os.path.join("src", "_common", "alembic.ini"),
+            # "--sqlalchemy-url",
+            # DB_URL,
+            "--raiseerr",
+            "upgrade",
+            "head",
+        ]
+        alembic.config.main(argv=alembicArgs)
+    except Exception as e:
+        status = 503
+        logger.error(f"Error migrating database: {e}")
+        msg = {"status": "error", "message": str(e)}
+    resp = flask.Response(
+        response=flask.json.dumps(msg, default=str),
+        status=status,
+        mimetype="application/json",
+    )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
+
+
 @app.route("/write", methods=["GET"])
 def write() -> flask.Response:
     logger.info("write")
     slug = flask.request.args.get("slug")
     logger.info("slug: %s", slug)
     # assert slug is not None, "Error: slug was not provided"
-
     # path = pathlib.Path("/tmp/efs/a_book/01_a.md")
     # medium = MediumEnum.PAPER
     # location = KeyPath("/mnt/efs/a_book/01_a.md")
-
     with sqlmodel.Session(db_engine) as session:
         session.add(
             Asset(
