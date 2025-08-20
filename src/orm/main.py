@@ -1,3 +1,4 @@
+import uuid
 import alembic
 import alembic.config
 import datetime
@@ -202,34 +203,48 @@ def write() -> flask.Response:
     logger.info("write")
     slug = flask.request.args.get("slug")
     logger.info("slug: %s", slug)
-    # assert slug is not None, "Error: slug was not provided"
-    # path = pathlib.Path("/tmp/efs/a_book/01_a.md")
-    # medium = MediumEnum.PAPER
-    # location = KeyPath("/mnt/efs/a_book/01_a.md")
+
+    if not slug:
+        resp = flask.Response(
+            response=flask.json.dumps(
+                {"status": "error", "message": "slug parameter is required"}
+            ),
+            status=400,
+            mimetype="application/json",
+        )
+        resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+        resp.headers["Access-Control-Allow-Origin"] = "*"
+        resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+        return resp
     with sqlmodel.Session(db_engine) as session:
         session.add(
             Asset(
-                fp=pathlib.PosixPath("foo/bar/1.txt"),
-                metadata_table="0a7bf8c-0a7b-4b8c-0a7b-f8c0a7bf8c0a",
-                medium=MediumEnum.PAPER,
-                slug="slug",
-                author="author",
-                source="source",
-                location=KeyPath("foo/bar/config.yml"),
-                alttext="alttext",
-                caption="caption",
-                comments="comments",
-                target="target",
-                is_color=True,
-                is_ready=False,
+                **{
+                    "metadata_table": "1a019cdf-d0f1-47e0-b954-ecd2e2aaae33",
+                    "slug": slug,
+                    "author": "",
+                    "source": "",
+                    "alttext": "",
+                    "caption": "",
+                    "orig_caption": "",
+                    "comments": "Looks good",
+                    "target": "",
+                    "is_color": None,
+                    "is_ready": True,
+                    "is_on_paper": False,
+                    "rest": '{"deleteprevious": true}',
+                    "height": None,
+                    "pk": uuid.uuid4().hex,
+                    "loc": "book-content-examples/metadata_extraction.docx",
+                    "fp": "assets/10x10px-img.png",
+                    "medium": "D",
+                    "location": "book-content-examples/metadata_extraction.docx",
+                }
             )
         )
         session.commit()
-
-        # stem=stem, prefix=str(prefix)
-
     resp = flask.Response(
-        response=flask.json.dumps({"a": "1", "b": "2"}),
+        response=flask.json.dumps({"status": "success", "message": "ok"}),
         status=200,
         mimetype="application/json",
     )
@@ -241,17 +256,15 @@ def write() -> flask.Response:
 
 @app.route("/read", methods=["GET"])
 def read() -> flask.Response:
+    logger.info("read")
+    slug = flask.request.args.get("slug")
+    logger.info("slug: %s", slug)
     with sqlmodel.Session(db_engine) as session:
-        stmt = sqlmodel.select(Asset)
-        res = session.exec(stmt)
-        for asset in res:
-            print(asset)
-        assets = res.all()
-        print(assets)
-        asset = res.first()
-        print(asset)
+        stmt = sqlmodel.select(Asset).where(Asset.slug == slug)
+        res = session.exec(stmt).all()
+        assets = [ass.model_dump(mode="json") for ass in res]
     resp = flask.Response(
-        response=flask.json.dumps({"a": "1", "b": "2"}),
+        response=flask.json.dumps(assets),
         status=200,
         mimetype="application/json",
     )

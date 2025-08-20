@@ -4,7 +4,7 @@ import pathlib
 
 from src._common.constants import MediumEnum, MAMMOTH_STYLE_MAP
 from src._common.html2md import convert_to_md
-from src._common.metadata import DocumentMetadata, AssetDatapoint
+from src._common.metadata import DocumentMetadata
 from src._common.models import Asset
 from src._common.keys import KeyPath
 from src._common.state import DocumentState
