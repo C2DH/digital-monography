@@ -1,10 +1,30 @@
-# ===== IMPORTANT =====
+# ====== IMPORTANT ======
 # Remember, the only source of truth for metadata.py is the one defined in
 # `src/_common/metadata.py`. A file with the same name in the src/ folder will be
 # replaced with `src/_common/metadata.py` before building the image.
 # We advise that you always build the containers using Makefile commands,
 # as the copy command is already included.
-# ======================
+# =======================
+# =======================
+# ====== IMPORTANT ======
+# metatada.DocumentMetadata should be deprecated in favor of state.DocumentState
+# and Datapoints should be deprecated in favor of models.
+# Status of the migration:
+# - [v] DocumentState is implemented
+# - [v] Models are implemented
+# - [v] ORM exposes api to list models
+# - [ ] sql DB set up in main environment
+# - [ ] sql DB set up in develop environment
+# - [v] Preparer saves models to DB
+# - [v] Preparer saves models to EFS
+# - [ ] Builder uses the new state/models from EFS (book level)
+# - [v] Wordprocessor uses new state/models from EFS (book level)
+# - [ ] Verifier uses new state/models from html script tag (doc level)
+# - [ ] DocumentMetadata is deprecated
+# - [ ] Datapoints are deprecated
+# =======================
+
+
 import abc
 import bs4
 import json
@@ -25,11 +45,11 @@ else:
     DataclassInstance = None
 
 try:
-    from keys import KeyPath
     from constants import MediumEnum, AUTONUMBER_PLACEHOLDER
+    from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
-    from .keys import KeyPath  # type: ignore
     from .constants import MediumEnum, AUTONUMBER_PLACEHOLDER  # type: ignore
+    from .keys import KeyPath  # type: ignore
 
 
 logger = logging.getLogger()
@@ -209,6 +229,7 @@ class AssetDatapoint(DatapointBase):
     location: KeyPath | None
     alttext: str
     caption: str
+    orig_caption: str
     comments: str
     target: str
     is_color: bool | None
@@ -435,6 +456,7 @@ class SubstitutionDatapoint(DatapointBase):
     is_digital: bool | None
     is_paper: bool | None
     item_type: t.Literal["heading", "equation", "figure", "table", "graph", "ref", ""]
+    location: pathlib.Path | None
     target_fn: str | None
     file_count: int | None
     prefix: str

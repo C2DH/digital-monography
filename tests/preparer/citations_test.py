@@ -1,13 +1,14 @@
 import bs4
 import mammoth
-import pathlib
 
+from src._common.metadata import DocumentMetadata
+from src._common.state import DocumentState
+from src._common.keys import KeyPath
 from src.preparer.citations import add_bibliography, prepare_citations, is_citation
-from src.preparer.metadata import DocumentMetadata
 
 
 class TestCitationsFromFields:
-    fp = pathlib.Path("tests") / "_fixtures" / "citation_in_fields.docx"
+    fp = KeyPath("tests") / "_fixtures" / "citation_in_fields.docx"
 
     @classmethod
     def setup_class(cls):
@@ -15,12 +16,13 @@ class TestCitationsFromFields:
             result = mammoth.convert_to_html(f)
         cls.html_soup = bs4.BeautifulSoup(result.value, "html.parser")
         citations = []
+        cls.dstate = DocumentState(cls.fp)
         cls.metadata = DocumentMetadata()
         for node in cls.html_soup.descendants:
             if is_citation(node):
                 citations.append(node)
         cls.html_soup, cls.bib = prepare_citations(
-            cls.html_soup, cls.metadata, citations
+            cls.html_soup, cls.metadata, cls.dstate, citations
         )
         cls.html_soup = add_bibliography(cls.html_soup, cls.bib)
 
@@ -62,7 +64,7 @@ class TestCitationsFromFields:
 
 
 class TestCitationsFromFootnotes:
-    fp = pathlib.Path("tests") / "_fixtures" / "citation_in_footnotes.docx"
+    fp = KeyPath("tests") / "_fixtures" / "citation_in_footnotes.docx"
 
     @classmethod
     def setup_class(cls):
@@ -70,12 +72,13 @@ class TestCitationsFromFootnotes:
             result = mammoth.convert_to_html(f)
         cls.html_soup = bs4.BeautifulSoup(result.value, "html.parser")
         citations = []
+        cls.dstate = DocumentState(cls.fp)
         cls.metadata = DocumentMetadata()
         for node in cls.html_soup.descendants:
             if is_citation(node):
                 citations.append(node)
         cls.html_soup, cls.bib = prepare_citations(
-            cls.html_soup, cls.metadata, citations
+            cls.html_soup, cls.metadata, cls.dstate, citations
         )
         cls.html_soup = add_bibliography(cls.html_soup, cls.bib)
 

@@ -1,8 +1,8 @@
 import bs4
 import pytest
 
-from src.wordprocessor.constants import DEFAULT_SFS_DIR
-from src.wordprocessor.keys import KeyPath
+from src._common.constants import DEFAULT_SFS_DIR
+from src._common.keys import KeyPath
 
 JB_BUILD_DIR = KeyPath(DEFAULT_SFS_DIR) / "a_book" / "_build" / "html"
 
@@ -38,7 +38,10 @@ class TestAutomaticNumberingInJupyterBookV1:
                 "f-05-conditional-rendering-figfordigital",
                 "link to fig 5.1 (digital only)",
             ),
-            ("f-05-conditional-rendering-figforpaper", "link to fig  (paper only)"),
+            (
+                "f-05-conditional-rendering-figforpaper",
+                "link to fig  (paper only)",
+            ),  # this passes
             (
                 "f-05-conditional-rendering-figfordigitalandpaper",
                 "link to fig 5.2 (digital and paper)",

@@ -1,14 +1,43 @@
-import sqlalchemy.orm as sa_orm
+import uuid
 import sqlmodel
 import typing as t
 
-Base = sa_orm.declarative_base()
+try:
+    from keys import KeyPath
+except (ImportError, ModuleNotFoundError):
+    from ..keys import KeyPath  # type: ignore
 
 
 class MySQLModel(sqlmodel.SQLModel):
     """
-    All db models should inherit from this class.
+    All db models that are stored in
+    should inherit from this class.
+
+    Extending existing tables if needed since the file with this model
+    is duplicated among microservices.
+    https://docs.sqlalchemy.org/en/13/core/metadata.html#sqlalchemy.schema.Table.params.extend_existing
     """
+
+    __table_args__ = {"extend_existing": True}
+
+    pk: str = sqlmodel.Field(
+        primary_key=True, default_factory=lambda: str(uuid.uuid4())
+    )
+    x_loc: str = sqlmodel.Field(alias="loc")
+
+    @property
+    def loc(self) -> KeyPath:
+        return KeyPath(self.x_loc)
+
+    @loc.setter
+    def loc(self, val: KeyPath) -> None:
+        self.x_loc = str(val)
+
+    def __init__(self, **data: t.Dict[str, t.Any]) -> None:
+        for k, v in data.items():
+            if isinstance(v, KeyPath):
+                data[k] = str(v)
+        super().__init__(**data)
 
     def model_dump(self, *args, **kwargs) -> t.Dict[str, t.Any]:
         """
@@ -27,3 +56,7 @@ class MySQLModel(sqlmodel.SQLModel):
             else:
                 dump[k] = v
         return dump
+
+
+# Metadata tables and warnings fit were left to DynamoDB,
+# but maybe they should have a schema as well.

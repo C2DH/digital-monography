@@ -38,18 +38,13 @@ DEFAULT_S3_EVENT = {
 }
 
 
-# from src.wordprocessor.conditional_rendering import (
-#     remove_parts_and_highlights_due_to_conditional_rendering,
-# )
+from src._common.constants import AUTONUMBER_PLACEHOLDER, MAMMOTH_STYLE_MAP
+from src._common.keys import KeyPath
+from src._common.metadata import DocumentMetadata
+from src._common.state import DocumentState
+from src._common.html2md import convert_to_md
 from src.preparer.main import prepare_docx
-from src.wordprocessor.constants import AUTONUMBER_PLACEHOLDER, MAMMOTH_STYLE_MAP
 from src.wordprocessor.main import wordprocess_docx
-from src.wordprocessor.keys import KeyPath
-from src.wordprocessor.metadata import DocumentMetadata
-
-# from src.wordprocessor.numbering_captions import add_chapter_number_to_captions
-# from src.wordprocessor.remove_images import remove_images
-from src.preparer.html2md import convert_to_md
 
 
 class TestWordprocessor:
@@ -65,7 +60,7 @@ class TestWordprocessor:
 
     @classmethod
     def setup_class(cls):
-        cls.book_metadata = {}
+        cls.bookstate: dict[str, DocumentState] = {}
         cls.before_soup, cls.before_md, cls.after_soup, cls.after_md = {}, {}, {}, {}
         cls._prepare_docx(cls.key_a)
         cls._prepare_docx(cls.key_b)
@@ -81,17 +76,19 @@ class TestWordprocessor:
             before_html = mammoth.convert_to_html(f, style_map=MAMMOTH_STYLE_MAP)
             before_soup = bs4.BeautifulSoup(before_html.value, "html.parser")
         # preparer
+        cls.docstate = DocumentState(key)
         metadata = DocumentMetadata(key)
-        _, metadata, _ = prepare_docx(before_html.value, metadata)
-        cls.book_metadata[key.stem] = metadata
+        _, metadata, cls.docstate, _ = prepare_docx(
+            before_html.value, metadata, cls.docstate
+        )
+        cls.bookstate[key.stem] = cls.docstate
         cls.before_soup[key.stem] = before_soup
         cls.before_md[key.stem] = convert_to_md(before_soup)
-        # cls.before_md[key.stem] = before_md
 
     @classmethod
     def _wordprocess_docx(cls, key: KeyPath) -> None:
         # wordprocessor
-        doc = wordprocess_docx(key, cls.book_metadata)
+        doc = wordprocess_docx(key, cls.bookstate)
         # after wordprocessor
         file_stream = io.BytesIO()
         doc.save(file_stream)

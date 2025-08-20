@@ -6,4 +6,9 @@ RUN  pip3 install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
 COPY ./*.py ${LAMBDA_TASK_ROOT}
 COPY /templates ${LAMBDA_TASK_ROOT}/templates
 
+# Copy contents of the shared "src/_common" directory to /var/task/src/_common/
+RUN mkdir -p ${LAMBDA_TASK_ROOT}/src/_common
+RUN --mount=from=common,target=common \
+    cp -r common/constants.py ${LAMBDA_TASK_ROOT}/src/_common/constants.py
+
 CMD [ "main.lambda_handler" ]

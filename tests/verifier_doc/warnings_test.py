@@ -1,6 +1,4 @@
 import bs4
-
-# import pathlib
 import random
 
 from src.verifier_doc.rules_v1 import HtmlVerifier

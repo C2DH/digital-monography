@@ -9,10 +9,17 @@ import docx.document
 import mammoth
 import pathlib
 from PIL import Image
+import sys
 import os
 import typing as t
 
-from constants import (
+
+# Get the parent directory and add it to sys.path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
+
+from src._common.constants import (
     MAMMOTH_STYLE_MAP,
     METADATA_FIELDS,
     FIELD_DIGITAL_SOURCE,

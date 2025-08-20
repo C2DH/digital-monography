@@ -11,97 +11,59 @@ import os
 import sqlmodel
 import typing as t
 import urllib.parse
-
 from mypy_boto3_dynamodb.service_resource import (
     DynamoDBServiceResource as boto3_DynamoDBServiceResource,
 )
 from mypy_boto3_s3.client import S3Client as boto3_S3Client
 from mypy_boto3_sqs import SQSClient as boto3_SQSClient
 
-try:
-    from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
-    from conditional_rendering import is_paper_only, remove_paper_only
-    from constants import (
-        ModuleEnum,
-        S3Event,
-        DB_URL,
-        MAMMOTH_STYLE_MAP,
-        IS_DEBUG,
-    )
-    from citations import add_bibliography, is_citation, prepare_citations
-    from digital_prep import insert_digital_objects, remove_metadata_tables
-    from github_trigger import GithubTriggerMsg, GithubActionEnum
-    from hide_metadata_in_html import hide_metadata_in_html
-    from metadata import DocumentMetadata, AssetDatapoint
-    from metadata_extraction import prepare_metadata_tables
-    from models import (
-        Asset,
-        CitationGroup,
-        CitationItem,
-        Heading,
-        Ref,
-        Substitution,
-        Target,
-    )
-    from remove_empty_tables import remove_empty_tables
-    from replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
-    from refs import (
-        prepare_ref_targets_in_headers,
-        prepare_ref_targets_in_captions,
-        prepare_ref_targets_in_footnotes,
-        prepare_references,
-        is_header,
-        is_caption,
-        is_footnote,
-        is_reference,
-    )
-    from substitutions_prep import count_targets_for_substitutions
-    from html2md import convert_to_md
-    from ipynb_prep import tags_to_myst_crossref_targets
-    from keys import KeyPath
-    from fakers import Faker
-except (ImportError, ModuleNotFoundError):
-    from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
-    from .conditional_rendering import is_paper_only, remove_paper_only
-    from .constants import (
-        ModuleEnum,
-        S3Event,
-        DB_URL,
-        MAMMOTH_STYLE_MAP,
-        IS_DEBUG,
-    )
-    from .citations import add_bibliography, is_citation, prepare_citations
-    from .digital_prep import insert_digital_objects, remove_metadata_tables
-    from .github_trigger import GithubTriggerMsg, GithubActionEnum
-    from .hide_metadata_in_html import hide_metadata_in_html
-    from .metadata import DocumentMetadata, AssetDatapoint
-    from .metadata_extraction import prepare_metadata_tables
-    from .models import (
-        Asset,
-        CitationGroup,
-        CitationItem,
-        Heading,
-        Ref,
-        Substitution,
-        Target,
-    )
-    from .remove_empty_tables import remove_empty_tables
-    from .replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
-    from .refs import (
-        prepare_ref_targets_in_headers,
-        prepare_ref_targets_in_captions,
-        prepare_ref_targets_in_footnotes,
-        prepare_references,
-        is_header,
-        is_caption,
-        is_footnote,
-        is_reference,
-    )
-    from .substitutions_prep import count_targets_for_substitutions
-    from .html2md import convert_to_md
-    from .ipynb_prep import tags_to_myst_crossref_targets
-    from .keys import KeyPath
-    from .fakers import Faker
+# Get the current directory and add it to sys.path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
+
+from src._common.audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
+from src._common.constants import (
+    ModuleEnum,
+    S3Event,
+    DB_URL,
+    MAMMOTH_STYLE_MAP,
+    IS_DEBUG,
+)
+from src._common.metadata import DocumentMetadata, AssetDatapoint
+from src._common.models import (
+    Asset,
+    CitationGroup,
+    CitationItem,
+    Heading,
+    Ref,
+    Substitution,
+    Target,
+)
+from src._common.github_trigger import GithubTriggerMsg, GithubActionEnum
+from src._common.state import DocumentState
+from src._common.keys import KeyPath
+from src._common.html2md import convert_to_md
+from conditional_prep import is_paper_only, remove_paper_only
+from citations import add_bibliography, is_citation, prepare_citations
+from digital_prep import insert_digital_objects, remove_metadata_tables
+from hide_metadata_in_html import hide_metadata_in_html
+from metadata_extraction import prepare_metadata_tables
+from remove_empty_tables import remove_empty_tables
+from replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
+from refs import (
+    prepare_ref_targets_in_headers,
+    prepare_ref_targets_in_captions,
+    prepare_ref_targets_in_footnotes,
+    prepare_references,
+    is_header,
+    is_caption,
+    is_footnote,
+    is_reference,
+)
+from substitutions_prep import count_targets_for_substitutions
+from ipynb_prep import tags_to_myst_crossref_targets
+from fakers import Faker
+
 
 if IS_DEBUG:
     today = datetime.date.today().isoformat()
@@ -137,9 +99,11 @@ def is_table(tag: bs4.element.Tag) -> bool:
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
+    # assert False, "Fetch Assets, Headings and Citations from the dashboard"
     logger.info(f"lambda_handler. Event: {json.dumps(event, default=str)}")
     key = _get_key(event)
     event_name = _get_event_name(event)
+    dstate = DocumentState(key)
     metadata = DocumentMetadata(key)
     ### Handle deletions
     if _is_file_ipynb(key) and _is_deletion(event_name):
@@ -150,9 +114,9 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     if _is_file_docx(key) and _is_deletion(event_name):
         _remove_fileobj(key)
         _remove_assets_info_from_s3(key)
-        _remove_metadata_from_db(key)
-        _remove_metadata_from_efs(key)
-        _remove_records_from_db(key)
+        # _remove_metadata_from_db(key)  # TODO: dstate
+        _remove_state_from_efs(key)
+        _remove_state_from_db(key)
         _remove_processed_html_from_efs(key)
         _remove_html_from_s3(key)
         _remove_processed_md_from_efs(key)
@@ -184,23 +148,23 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         src = _get_source_bucket(event)
         _download_fileobj(src, key)
         html_str = _convert_to_html(key.efs_filepath)
-        html_soup, metadata, tables = prepare_docx(html_str, metadata)
-        html_soup = hide_metadata_in_html(html_soup, metadata)  # last step
+        # TODO: prepare_docx shouldn't have to return "state"
+        html_soup, metadata, dstate, tables = prepare_docx(html_str, metadata, dstate)
+        html_soup = hide_metadata_in_html(html_soup, metadata, dstate)  # last step
         html_soup_str = str(html_soup)
         # IMPORTANT NOTE: other services depend on html produced at this stage, make sure that:
         # 1) all reversible transformations are made before saving html file;
         # 2) irreversible transformations are omited to avoid not being able to recreate a book
         # as html files written at this stage will be the basis for a paper version of a book.
-        html_soup = insert_digital_objects(html_soup, metadata, tables)
-        html_soup = remove_metadata_tables(html_soup, metadata, tables)
-        _write_config_to_efs(metadata, key)
-        _write_assets_info_to_s3(metadata, key)
-        _write_metadata_to_db(metadata, key)
-        _write_metadata_to_efs(metadata, key)
-        # _write_records_to_db(metadata, key)
+        html_soup = insert_digital_objects(html_soup, dstate, tables)
+        html_soup = remove_metadata_tables(html_soup, dstate, tables)
+        _write_assets_info_to_s3(dstate, key)
+        # _write_metadata_to_db(metadata, dstate, key)  # TODO: dstate
+        _write_state_to_efs(dstate, key)
+        _write_state_to_db(dstate, key)
         _write_processed_html_to_efs(html_soup_str, key)
         _put_html_to_s3(html_soup_str, key)
-        md = _convert_to_md(key, html_soup, metadata)
+        md = _convert_to_md(key, html_soup, dstate)
         _write_processed_md_to_efs(md, key)
         _put_md_to_s3(md, key.s3_key.with_suffix(".md"))
         msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
@@ -356,8 +320,8 @@ def _remove_fileobj(key: KeyPath) -> None:
 
 
 def prepare_docx(
-    html_str: str, metadata: DocumentMetadata
-) -> tuple[bs4.BeautifulSoup, DocumentMetadata, list[bs4.element.Tag]]:
+    html_str: str, metadata: DocumentMetadata, dstate: DocumentState
+) -> tuple[bs4.BeautifulSoup, DocumentMetadata, DocumentState, list[bs4.element.Tag]]:
     images_with_alttxt = []
     tables = []
     headers = []
@@ -388,24 +352,25 @@ def prepare_docx(
         for check_if_meets_criteria, container in classifiers:
             if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
                 container.append(node)
-    html_soup, bibliography = prepare_citations(html_soup, metadata, citations)
+    html_soup, bibliography = prepare_citations(html_soup, metadata, dstate, citations)
     html_soup = add_bibliography(html_soup, bibliography)
-    html_soup = prepare_ref_targets_in_headers(html_soup, metadata, headers)
-    html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
-    html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, footnotes)
-    html_soup = prepare_references(html_soup, metadata, references)
-    html_soup = prepare_metadata_tables(html_soup, metadata, tables)
-    html_soup = remove_paper_only(html_soup, metadata, paper_only)
-    html_soup = remove_empty_tables(html_soup, metadata, tables)
-    html_soup = prepare_alt_texts(html_soup, metadata, images_with_alttxt)
-    html_soup = count_targets_for_substitutions(html_soup, metadata)
-    return html_soup, metadata, tables
+    html_soup = prepare_ref_targets_in_headers(html_soup, metadata, dstate, headers)
+    html_soup = prepare_ref_targets_in_captions(html_soup, metadata, dstate, captions)
+    html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, dstate, footnotes)
+    html_soup = prepare_references(html_soup, metadata, dstate, references)
+    html_soup = prepare_metadata_tables(html_soup, metadata, dstate, tables)
+    html_soup = remove_paper_only(html_soup, metadata, dstate, paper_only)
+    html_soup = remove_empty_tables(html_soup, metadata, dstate, tables)
+    html_soup = prepare_alt_texts(html_soup, metadata, dstate, images_with_alttxt)
+    html_soup = count_targets_for_substitutions(html_soup, metadata, dstate)
+    return html_soup, metadata, dstate, tables
 
 
 def _get_char_and_word_count(html_soup: bs4.BeautifulSoup) -> tuple[int, int]:
-    soup_contents_list = []
+    soup_contents_list: list[str] = []
     for elem in html_soup.find_all(text=True):
-        soup_contents_list.append(elem.text.strip())
+        if isinstance(elem, bs4.element.PageElement):
+            soup_contents_list.append(elem.text.strip())
     soup_contents = "".join(soup_contents_list).replace(" ", "")  # minimize spaces
     words = []
     for line in soup_contents_list:
@@ -432,10 +397,12 @@ def _convert_to_html(key: KeyPath) -> str:
 
 
 def _convert_to_md(
-    key: KeyPath, html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata
+    key: KeyPath,
+    html_soup: bs4.BeautifulSoup,
+    dstate: DocumentState,
 ) -> str:
     try:
-        return convert_to_md(html_soup, metadata)
+        return convert_to_md(html_soup, dstate)
     except Exception as e:
         logger.exception(f"Converting to md failed. Error: {repr(e)}")
         _log_audit_event(
@@ -596,13 +563,6 @@ def _enqueue_to_github(msg: GithubTriggerMsg) -> None:
 #         raise
 
 
-def _write_config_to_efs(metadata: DocumentMetadata, key: KeyPath) -> None:
-    # new_efs_filepath = key.efs_filepath.with_suffix(".yml")
-    # substitutions = {subs.placeholder: subs.was for subs in metadata.substitutions}
-    # TODO: set config for a particular file
-    pass
-
-
 def _remove_processed_html_from_efs(key: KeyPath) -> None:
     try:
         new_efs_filepath = key.efs_slug_html_path.with_suffix(".html")
@@ -666,12 +626,13 @@ def _remove_assets_info_from_s3(key: KeyPath) -> None:
         raise
 
 
-def _write_assets_info_to_s3(metadata: DocumentMetadata, key: KeyPath) -> None:
+def _write_assets_info_to_s3(docstate: DocumentState, key: KeyPath) -> None:
     try:
         # TODO: this works, but it's a bad design
         s3_key = AssetDatapoint.get_s3_key(key)
         bucket = os.environ.get("METADATA_ASSETS_BUCKET_NAME", "")
-        body = json.dumps([ass.to_json() for ass in metadata.assets], default=str)
+        assets: list[Asset] = docstate["assets"]
+        body = json.dumps([ass.model_dump(mode="json") for ass in assets], default=str)
         resp = s3.put_object(Body=body, Bucket=bucket, Key=s3_key)
         logger.info(
             f"Response from s3.put_object(Bucket={bucket}, Key={s3_key}): "
@@ -716,7 +677,9 @@ def _remove_metadata_from_db(key: KeyPath) -> None:
         raise
 
 
-def _write_metadata_to_db(metadata: DocumentMetadata, key: KeyPath) -> None:
+def _write_metadata_to_db(
+    metadata: DocumentMetadata, dstate: DocumentState, key: KeyPath
+) -> None:
     if dynamodb is None:
         return
     try:
@@ -754,61 +717,41 @@ def _write_metadata_to_db(metadata: DocumentMetadata, key: KeyPath) -> None:
         raise
 
 
-def _remove_metadata_from_efs(key: KeyPath) -> None:
+def _remove_state_from_efs(key: KeyPath) -> None:
     try:
         fp = key.add_to_efs_slug_dir("_metadata").parent / key.github_path.with_suffix(
             ".json"
         )
-        logger.info(f"File: {fp}")
         fp.unlink(missing_ok=True)  # remove file if it exists
-        # with open(fp, "w") as f:
-        #     json.dump(json_data, f)
         logger.info(f"Metadata was removed from {str(fp)}")
     except Exception as e:
         logger.exception(
             f"Removing metadata in json from /efs directory failed. Error: {repr(e)}"
         )
-        # _log_audit_event(
-        #     key,
-        #     AuditStatus.FAILED.value,
-        #     "Error upon writing metadata.",
-        # )
         raise
 
 
-def _write_metadata_to_efs(metadata: DocumentMetadata, key: KeyPath) -> None:
+def _write_state_to_efs(docstate: DocumentState, key: KeyPath) -> None:
     try:
-        json_data = metadata.to_json()
+        # json_data = metadata.to_json() # TODO: DocumentMetadata should be depracated
         fp = key.add_to_efs_slug_dir("_metadata").parent / key.github_path.with_suffix(
             ".json"
         )
-        logger.info(f"File: {fp}")
-        # logger.info(f"Meta: {json.dumps(json_data)}")
-        # logger.info(f"Meta: {json.dumps(json_data, default=str)}")
         with open(fp, "w") as f:
-            json.dump(json_data, f)
+            json.dump(docstate.to_dict(), f)
         logger.info(f"Metadata was saved to {str(fp)}")
     except Exception as e:
         logger.exception(
             f"Writing metadata in json to /efs directory failed. Error: {repr(e)}"
         )
-        # _log_audit_event(
-        #     key,
-        #     AuditStatus.FAILED.value,
-        #     "Error upon writing metadata.",
-        # )
         raise
 
 
-def _remove_records_from_db(key: KeyPath) -> None:
+def _remove_state_from_db(docstate: DocumentState, key: KeyPath) -> None:
     try:
         with sqlmodel.Session(db_engine) as session:
-            statement = sqlmodel.delete(Asset).where(Asset.x_location == str(key))
-            session.exec(statement)
-            session.commit()
-        logger.info(
-            f"Removing records from database for key: {key.slug}, filename: {key.name}"
-        )
+            docstate.sql_delete_by_key(session, key)
+        logger.info(f"Sent SQL DELETE cmd for {key} without an error.")
         return
     except Exception as e:
         logger.exception(f"Removing records from the database failed. Error: {repr(e)}")
@@ -820,47 +763,15 @@ def _remove_records_from_db(key: KeyPath) -> None:
         raise
 
 
-def _write_records_to_db(metadata: DocumentMetadata, key: KeyPath) -> None:
+def _write_state_to_db(dstate: DocumentState, key: KeyPath) -> None:
     try:
+        # print('len(dstate["refs"])', len(dstate["refs"]))
         with sqlmodel.Session(db_engine) as session:
             # delete existing records for this file so there are no duplicates
-            statement = sqlmodel.delete(Asset).where(Asset.x_location == str(key))
-            session.exec(statement)
-            statement = sqlmodel.delete(CitationGroup).where(
-                CitationGroup.file_name == key.name
-            )
-            session.exec(statement)
-            statement = sqlmodel.delete(CitationItem).where(
-                CitationItem.file_name == key.name
-            )
-            session.exec(statement)
-            statement = sqlmodel.delete(Heading).where(Heading.file_name == key.name)
-            session.exec(statement)
-            statement = sqlmodel.delete(Ref).where(Ref.fn == key.name)
-            session.exec(statement)
-            # TODO: delete Substitution, but I don't see a field to filter by file
-            statement = sqlmodel.delete(Target).where(Target.filename == key.name)
-            session.exec(statement)
-            session.commit()
+            dstate.sql_delete_by_key(session, key)
             # write all assets included in the processed file
-            for dp in metadata.assets:
-                session.add(Asset(**dp.model_dump()))
-            for dp in metadata.citation_groups:
-                session.add(CitationGroup(**dp.model_dump()))
-            for dp in metadata.citation_items:
-                session.add(CitationItem(**dp.model_dump()))
-            for dp in metadata.headings:
-                session.add(Heading(**dp.model_dump()))
-            for dp in metadata.refs:
-                session.add(Ref(**dp.model_dump()))
-            for dp in metadata.substitutions:
-                session.add(Substitution(**dp.model_dump()))
-            for dp in metadata.targets:
-                session.add(Target(**dp.model_dump()))
-            session.commit()
-        logger.info(
-            f"Writing records to the database for key: {key.slug}, filename: {key.name}"
-        )
+            dstate.sql_insert_all(session)
+        logger.info(f"Sent SQL INSERT cmd for {key} without an error.")
         return
     except Exception as e:
         logger.exception(f"Writing records to the database failed. Error: {repr(e)}")

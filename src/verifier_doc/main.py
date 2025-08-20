@@ -1,31 +1,40 @@
-# import bs4
 import boto3
 import datetime
 import json
 import logging
 import os
 import pathlib
+import sys
 import typing as t
 import urllib.parse
-
 from mypy_boto3_dynamodb.service_resource import (
     DynamoDBServiceResource as boto3_DynamoDBServiceResource,
 )
 from mypy_boto3_s3.client import S3Client as boto3_S3Client
 from mypy_boto3_sqs import SQSClient as boto3_SQSClient
 
-try:
-    from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
-    from constants import ModuleEnum, S3Event, IS_DEBUG
-    from fakers import Faker
-    from rules_v1 import HtmlVerifier
-    from keys import KeyPath
-except (ImportError, ModuleNotFoundError):
-    from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
-    from .constants import ModuleEnum, S3Event, IS_DEBUG
-    from .fakers import Faker
-    from .rules_v1 import HtmlVerifier
-    from .keys import KeyPath
+# Get the current directory and add it to sys.path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
+
+from src._common.audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
+from src._common.constants import ModuleEnum, S3Event, IS_DEBUG
+from src._common.keys import KeyPath
+from fakers import Faker
+from rules_v1 import HtmlVerifier
+
+# try:
+#     from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
+#     from constants import ModuleEnum, S3Event, IS_DEBUG
+#     from fakers import Faker
+#     from rules_v1 import HtmlVerifier
+#     from keys import KeyPath
+# except (ImportError, ModuleNotFoundError):
+#     from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
+#     from .constants import ModuleEnum, S3Event, IS_DEBUG
+#     from .fakers import Faker
+#     from .rules_v1 import HtmlVerifier
+#     from .keys import KeyPath
 
 if IS_DEBUG:
     today = datetime.date.today().isoformat()

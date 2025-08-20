@@ -11,29 +11,16 @@ import os
 import requests
 import logging
 import typing as t
-
 from mypy_boto3_dynamodb.service_resource import (
     DynamoDBServiceResource as boto3_DynamoDBServiceResource,
 )
 from mypy_boto3_s3.client import S3Client as boto3_S3Client
 
 
-try:
-    from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
-    from constants import (
-        ModuleEnum,
-        IS_DEBUG,
-    )
-    from keys import KeyPath
-    from logins import LoginEvent, LoginStatus
-except (ImportError, ModuleNotFoundError):
-    from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
-    from .constants import (
-        ModuleEnum,
-        IS_DEBUG,
-    )
-    from .keys import KeyPath
-    from .logins import LoginEvent, LoginStatus
+from src._common.audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
+from src._common.constants import ModuleEnum, IS_DEBUG
+from src._common.keys import KeyPath
+from logins import LoginEvent, LoginStatus
 
 
 if IS_DEBUG:
@@ -50,13 +37,6 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 dynamodb: boto3_DynamoDBServiceResource = boto3.resource("dynamodb")
 s3: boto3_S3Client = boto3.client("s3")
-# if IS_DEBUG:
-#     # TODO: add fakers
-#     dynamodb = None
-#     s3 = None
-# else:
-#     dynamodb = boto3.resource("dynamodb")
-#     s3 = boto3.client("s3")
 
 
 def lambda_handler(event, context):

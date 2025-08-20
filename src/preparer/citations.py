@@ -4,17 +4,16 @@ import json
 import typing as t
 import citeproc
 
-try:
-    from metadata import DocumentMetadata, CitationGroupDatapoint, CitationItemDatapoint
-except (ImportError, ModuleNotFoundError):
-    from .metadata import (
-        DocumentMetadata,
-        CitationGroupDatapoint,
-        CitationItemDatapoint,
-    )
+from src._common.metadata import (
+    DocumentMetadata,
+    CitationGroupDatapoint,
+    CitationItemDatapoint,
+)
+from src._common.models import CitationGroup, CitationItem
+from src._common.state import DocumentState
 
 
-class CitationItem(t.TypedDict):
+class CitationItemTD(t.TypedDict):
     id: t.Union[int, str]
     itemData: dict[str, t.Any]  # TODO: extend itemData with explicit TypedDict
     uris: list[str]
@@ -28,7 +27,7 @@ class CitationItemProps(t.TypedDict):
 
 class Citation(t.TypedDict):
     citationID: str
-    citationItems: list[CitationItem]
+    citationItems: list[CitationItemTD]
     properties: CitationItemProps
     schema: str
 
@@ -40,6 +39,7 @@ def is_citation(tag: bs4.element.Tag) -> bool:
 def prepare_citations(
     html_soup: bs4.BeautifulSoup,
     metadata: DocumentMetadata,
+    dstate: DocumentState,
     citation_tags: list[bs4.element.Tag],
 ) -> tuple[bs4.BeautifulSoup, citeproc.CitationStylesBibliography]:
     citation_style = "harvard1"  # TODO make it configurable
@@ -59,6 +59,19 @@ def prepare_citations(
                 plainCitation=props.get("plainCitation"),
             )
         )
+        dstate.add(
+            CitationGroup(
+                pk=citation_group.get("citationID"),
+                loc=dstate.metadata.key,
+                slug=dstate.metadata.slug,
+                file_name=metadata.filepath.name if metadata.filepath else "",
+                citation_schema=citation_group.get("schema"),
+                formattedCitation=props.get("formattedCitation"),
+                noteIndex=props.get("noteIndex"),
+                plainCitation=props.get("plainCitation"),
+            )
+        )
+        # TODO: link CGroup with CItem with a foreign key
         for citation_item in citation_group["citationItems"]:
             metadata.add_citation_item(
                 CitationItemDatapoint(
@@ -68,6 +81,17 @@ def prepare_citations(
                     citationId=citation_group.get("citationID"),
                     itemData=citation_item.get("itemData"),
                     uris=citation_item.get("uris"),
+                )
+            )
+            dstate.add(
+                CitationItem(
+                    loc=dstate.key,
+                    id=citation_item.get("id"),
+                    file_name=metadata.filepath.name if metadata.filepath else "",
+                    citationId=citation_group.get("citationID"),
+                    itemData=citation_item.get("itemData"),
+                    uris=citation_item.get("uris"),
+                    slug=dstate.metadata.slug,
                 )
             )
             citeproc_input.append(citation_item["itemData"])

@@ -1,8 +1,9 @@
 import bs4
 
 from src.preparer.remove_empty_tables import remove_empty_tables
-from src.preparer.constants import CLS_METADATA_TABLE_JSONDATA
-from src.preparer.metadata import DocumentMetadata
+from src._common.constants import CLS_METADATA_TABLE_JSONDATA, CLS_STATE_TABLE_JSONDATA
+from src._common.metadata import DocumentMetadata
+from src._common.state import DocumentState
 
 
 HTML_STR = f"""<p class="dgt-mon-caption">Table 1: An empty table.</p>
@@ -47,7 +48,9 @@ HTML_STR = f"""<p class="dgt-mon-caption">Table 1: An empty table.</p>
     </td>
   </tr>
 </table>
-<script class="{CLS_METADATA_TABLE_JSONDATA}" hidden="hidden" type="application/json">[]</script>"""
+<script class="{CLS_METADATA_TABLE_JSONDATA}" hidden="hidden" type="application/json">[]</script>
+<script class="{CLS_STATE_TABLE_JSONDATA}" hidden="hidden" type="application/json">[]</script>
+"""
 
 
 class TestRemovingEmptyTables:
@@ -55,8 +58,11 @@ class TestRemovingEmptyTables:
     def setup_class(cls):
         cls.html_soup = bs4.BeautifulSoup(HTML_STR, "html.parser")
         cls.tables = cls.html_soup.find_all("table")
+        cls.dstate = DocumentState()
         metadata = DocumentMetadata()
-        cls.html_soup = remove_empty_tables(cls.html_soup, metadata, cls.tables)
+        cls.html_soup = remove_empty_tables(
+            cls.html_soup, metadata, cls.dstate, cls.tables
+        )
         cls.tables = cls.html_soup.find_all("table")
 
     def test_only_one_table_left(self):

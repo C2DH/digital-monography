@@ -19,6 +19,7 @@ test/copy:
 	cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/book-content-examples/' tests/_fixtures/
 
 test/prep:
+	mkdir -p /tmp/efs/
 	make db/migrate
 	DGTMON_NO_WAIT=1 \
 		IR_APKG_HTML_BUCKET_NAME=_HTML \
@@ -27,8 +28,11 @@ test/prep:
 		VERIFIER_DOC_MSGS=_WARNINGS \
 		python3.12 scripts/prepare_and_build.py book_path="tests/_fixtures/a_book/"
 
-test/run:
-	DGTMON_DEBUG=1 python3.12 -m pytest tests/preparer/ tests/verifier_doc/ tests/builder/ tests/wordprocessor/
+test/unit:
+	DGTMON_DEBUG=1 python3.12 -m pytest tests/common/ tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
+
+test/integration:
+	DGTMON_DEBUG=1 python3.12 -m pytest tests/integration/
 
 test:
 	DGTMON_DEBUG=1 python3.12 -m pytest tests/preparer/ tests/verifier_doc/ tests/builder/ tests/wordprocessor/
@@ -93,80 +97,8 @@ dev/draft:
 	# docker compose run main python3.12 scripts/prepare_and_build.py book_path=data/input/$(SLUG)
 	docker compose run make test/run
 
-copy/audit:
-	cp src/_common/audit.py src/dropbox/audit.py
-	cp src/_common/audit.py src/preparer/audit.py
-	cp src/_common/audit.py src/builder/audit.py
-	cp src/_common/audit.py src/builderv2/audit.py
-	cp src/_common/audit.py src/github/audit.py
-	cp src/_common/audit.py src/verifier_doc/audit.py
-	cp src/_common/audit.py src/wordprocessor/audit.py
-
-copy/constants:
-	cp src/_common/constants.py scripts/constants.py
-	cp src/_common/constants.py src/entrypoint/constants.py
-	cp src/_common/constants.py src/dropbox/constants.py
-	cp src/_common/constants.py src/preparer/constants.py
-	cp src/_common/constants.py src/builder/constants.py
-	cp src/_common/constants.py src/builderv2/constants.py
-	cp src/_common/constants.py src/github/constants.py
-	cp src/_common/constants.py src/verifier_doc/constants.py
-	cp src/_common/constants.py src/gpu/constants.py
-	cp src/_common/constants.py src/orm/constants.py
-	cp src/_common/constants.py src/wordprocessor/constants.py
-
-copy/keys:
-	cp src/_common/keys.py src/dropbox/keys.py
-	cp src/_common/keys.py src/preparer/keys.py
-	cp src/_common/keys.py src/builder/keys.py
-	cp src/_common/keys.py src/builderv2/keys.py
-	cp src/_common/keys.py src/github/keys.py
-	cp src/_common/keys.py src/orm/keys.py
-	cp src/_common/keys.py src/verifier_doc/keys.py
-	cp src/_common/keys.py src/wordprocessor/keys.py
-
-copy/metadata:
-	echo 'Step 1. Copying "metadata" models.'
-	cp src/_common/metadata.py scripts/metadata.py
-	cp src/_common/metadata.py src/preparer/metadata.py
-	cp src/_common/metadata.py src/builder/metadata.py
-	cp src/_common/metadata.py src/verifier_doc/metadata.py
-	cp src/_common/metadata.py src/wordprocessor/metadata.py
-
-copy/html2md:
-	cp src/_common/html2md.py src/preparer/html2md.py
-	cp src/_common/html2md.py src/verifier_doc/html2md.py
-	cp src/_common/html2md.py src/builder/html2md.py
-
-copy/misc:
-	cp src/_common/github_trigger.py src/github/github_trigger.py
-	cp src/_common/github_trigger.py src/preparer/github_trigger.py
-
-copy/db:
-	echo 'Step 1. Copy models'
-	cp -r src/_common/models scripts/
-	cp -r src/_common/models src/preparer/
-	cp -r src/_common/models src/builder/
-	cp -r src/_common/models src/orm/
-	cp -r src/_common/models src/verifier_doc/
-	cp -r src/_common/models src/wordprocessor/
-	echo -r 'Step 2. Copy migration files'
-	cp -r src/_common/migrations scripts/
-	cp -r src/_common/migrations src/preparer/
-	cp -r src/_common/migrations src/builder/
-	cp -r src/_common/migrations src/orm/
-	cp -r src/_common/migrations src/verifier_doc/
-	cp -r src/_common/migrations src/wordprocessor/
-	echo 'Step 3. Copy alembic config'
-	cp src/_common/alembic.ini scripts/alembic.ini
-	cp src/_common/alembic.ini src/preparer/alembic.ini
-	cp src/_common/alembic.ini src/builder/alembic.ini
-	cp src/_common/alembic.ini src/verifier_doc/alembic.ini
-	cp src/_common/alembic.ini src/wordprocessor/alembic.ini
-
 entrypoint/build:
-	cp src/_common/constants.py src/entrypoint/constants.py
-	docker build -t dgtmon-dev-entrypoint src/entrypoint
+	docker build -t dgtmon-dev-entrypoint src/entrypoint --build-context common=src/_common
 
 entrypoint/tag:
 	docker tag dgtmon-dev-entrypoint ${DEV_DOCKER_ECR}/dgtmon-dev-entrypoint:${ENTRYPOINT_LATEST_V}
@@ -181,9 +113,7 @@ entrypoint/push:
 entrypoint/make: entrypoint/build entrypoint/tag entrypoint/push
 
 dropbox/build:
-	cp src/_common/constants.py src/dropbox/constants.py
-	cp src/_common/keys.py src/dropbox/keys.py
-	docker build -t dgtmon-dev-dropbox src/dropbox
+	docker build -t dgtmon-dev-dropbox src/dropbox --build-context common=src/_common
 
 dropbox/tag:
 	docker tag dgtmon-dev-dropbox ${DEV_DOCKER_ECR}/dgtmon-dev-dropbox:${DROPBOX_LATEST_V}
@@ -198,11 +128,7 @@ dropbox/push:
 dropbox/make: dropbox/build dropbox/tag dropbox/push
 
 preparer/build:
-	cp src/_common/constants.py src/preparer/constants.py
-	cp src/_common/keys.py src/preparer/keys.py
-	cp src/_common/metadata.py src/preparer/metadata.py
-	cp src/_common/html2md.py src/preparer/html2md.py
-	docker build -t dgtmon-dev-preparer src/preparer
+	docker build -t dgtmon-dev-preparer src/preparer --build-context common=src/_common
 
 preparer/tag:
 	docker tag dgtmon-dev-preparer ${DEV_DOCKER_ECR}/dgtmon-dev-preparer:${PREPARER_LATEST_V}
@@ -217,10 +143,7 @@ preparer/push:
 preparer/make: preparer/build preparer/tag preparer/push
 
 builder/build:
-	cp src/_common/constants.py src/builder/constants.py
-	cp src/_common/keys.py src/builder/keys.py
-	cp src/_common/metadata.py src/builder/metadata.py
-	docker build -t dgtmon-dev-builder src/builder
+	docker build -t dgtmon-dev-builder src/builder --build-context common=src/_common
 
 builder/tag:
 	docker tag dgtmon-dev-builder ${DEV_DOCKER_ECR}/dgtmon-dev-builder:${BUILDER_LATEST_V}
@@ -250,9 +173,7 @@ builderv2/push:
 builderv2/make: builderv2/build builderv2/tag builderv2/push
 
 github/build:
-	cp src/_common/constants.py src/github/constants.py
-	cp src/_common/keys.py src/github/keys.py
-	docker build -t dgtmon-dev-github src/github
+	docker build -t dgtmon-dev-github src/github --build-context common=src/_common
 
 github/tag:
 	docker tag dgtmon-dev-github ${DEV_DOCKER_ECR}/dgtmon-dev-github:${GITHUB_LATEST_V}
@@ -266,12 +187,8 @@ github/push:
 
 github/make: github/build github/tag github/push
 
-verifier_doc/build:
-	cp src/_common/constants.py src/verifier_doc/constants.py
-	cp src/_common/keys.py src/verifier_doc/keys.py
-	cp src/_common/metadata.py src/verifier_doc/metadata.py
-	cp src/_common/html2md.py src/verifier_doc/html2md.py
-	docker build -t dgtmon-dev-verifier_doc src/verifier_doc
+verifier/build:
+	docker build -t dgtmon-dev-verifier src/verifier --build-context common=src/_common
 
 verifier_doc/tag:
 	docker tag dgtmon-dev-verifier_doc ${DEV_DOCKER_ECR}/dgtmon-dev-verifier:${verifier_doc_LATEST_V}
@@ -286,8 +203,7 @@ verifier_doc/push:
 verifier_doc/make: verifier_doc/build verifier_doc/tag verifier_doc/push
 
 gpu/build:
-	cp src/_common/constants.py src/gpu/constants.py
-	docker build -t dgtmon-dev-gpu src/gpu
+	docker build -t dgtmon-dev-gpu src/gpu --build-context common=src/_common
 
 gpu/tag:
 	docker tag dgtmon-dev-gpu ${DEV_DOCKER_ECR}/dgtmon-dev-gpu:${GPU_LATEST_V}
@@ -302,8 +218,7 @@ gpu/push:
 gpu/make: gpu/build gpu/tag gpu/push
 
 orm/build:
-	# cp src/_common/constants.py src/orm/constants.py
-	docker build -t dgtmon-dev-orm src/orm
+	docker build -t dgtmon-dev-orm src/orm --build-context common=src/_common
 
 orm/tag:
 	docker tag dgtmon-dev-orm ${DEV_DOCKER_ECR}/dgtmon-dev-orm:${GPU_LATEST_V}
@@ -318,8 +233,7 @@ orm/push:
 orm/make: orm/build orm/tag orm/push
 
 wordprocessor/build:
-	cp src/_common/constants.py src/wordprocessor/constants.py
-	docker build -t dgtmon-dev-wordprocessor src/wordprocessor
+	docker build -t dgtmon-dev-wordprocessor src/wordprocessor --build-context common=src/_common
 
 wordprocessor/tag:
 	docker tag dgtmon-dev-wordprocessor ${DEV_DOCKER_ECR}/dgtmon-dev-wordprocessor:${WORDPROCESSOR_LATEST_V}

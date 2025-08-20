@@ -12,10 +12,10 @@ import typing as t
 
 try:
     from constants import CLS_DIGITAL_ONLY
-    from metadata import DocumentMetadata
+    from state import DocumentState
 except (ImportError, ModuleNotFoundError):
     from .constants import CLS_DIGITAL_ONLY
-    from .metadata import DocumentMetadata  # type: ignore
+    from .state import DocumentState
 
 
 line_beginning_re = re.compile(r"^", re.MULTILINE)
@@ -44,10 +44,10 @@ def sub_inline_conversion(markup_fn):
 
 class MystMdConverter(markdownify.MarkdownConverter):
 
-    def __init__(self, metadata: t.Optional[DocumentMetadata], **options):
-        if metadata is None:
-            metadata = DocumentMetadata()
-        self._metadata: DocumentMetadata = metadata
+    def __init__(self, docstate: t.Optional[DocumentState], **options):
+        if docstate is None:
+            docstate = DocumentState()
+        self._docstate: DocumentState = docstate
         self._soup = bs4.BeautifulSoup("", "html.parser")
         super().__init__(**options)
 
@@ -208,8 +208,8 @@ class MystMdConverter(markdownify.MarkdownConverter):
 
 def convert_to_md(
     soup: bs4.BeautifulSoup,
-    metadata: t.Optional[DocumentMetadata] = None,
+    docstate: t.Optional[DocumentState] = None,
     **options,
 ) -> str:
     # TODO: change custom options to be passed to convert_to_md(**options <==)
-    return MystMdConverter(metadata, **options).convert_soup(soup)
+    return MystMdConverter(docstate, **options).convert_soup(soup)

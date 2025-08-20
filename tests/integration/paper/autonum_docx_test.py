@@ -1,24 +1,27 @@
 import bs4
 import mammoth
 
-from src.wordprocessor.constants import (
+from src._common.constants import (
     AUTONUMBER_PLACEHOLDER,
     DEFAULT_SFS_DIR,
     MAMMOTH_STYLE_MAP,
 )
-from src.wordprocessor.keys import KeyPath
-from src.preparer.html2md import convert_to_md
+from src._common.keys import KeyPath
+from src._common.html2md import convert_to_md
 
 DOCX_OUTPUT_DIR = KeyPath(DEFAULT_SFS_DIR) / "a_book" / "_paper"
 
 
-class TestAutomaticNumberingInWordprocessor:
+class TestWordprocessorOutput:
     """
     This sets of tests is similar to, but not identical, to the tests in
-    `wordprocessor/wordprocessor_test.py`.
-    In integrations tests, we can only check for the output, so only
-    "after_soup" and "after_md". When syncing with `wordprocessor_test.py`,
-    you need to remove checking the state before transformations.
+    `tests/wordprocessor/wordprocessor_test.py`. Unlike the unit tests in the
+    `tests/wordprocessor` directory, this class leaves the process and checks
+    the output of this microservice.
+
+    Here, we can only check for the output. When syncing with `wordprocessor_test.py`,
+    you need to remove checking the state before transformations (we only check the
+    "after_soup" and "after_md" state).
     """
 
     key_i = KeyPath(DOCX_OUTPUT_DIR / "00_index.docx")

@@ -1,0 +1,131 @@
+
+> test
+> cypress run --spec 'cypress/e2e/**/*'
+
+
+================================================================================
+
+  (Run Starting)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Cypress:        14.3.3                                                                         │
+  │ Browser:        Electron 130 (headless)                                                        │
+  │ Node Version:   v20.15.0 (/home/ubuntu/.nvm/versions/node/v20.15.0/bin/node)                   │
+  │ Specs:          2 found (home.cy.ts, home/home.cy.ts)                                          │
+  │ Searched:       cypress/e2e/**/*                                                               │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  home.cy.ts                                                                      (1 of 2)
+
+Oops...we found an error preparing this test file:
+
+  > cypress/e2e/home.cy.ts
+
+The error was:
+
+Error: You are attempting to run a TypeScript file, but do not have TypeScript installed. Ensure you have 'typescript' installed to enable TypeScript support.
+
+The file: /home/ubuntu/Projects/digital-monography/tests/dashboard/cypress/e2e/home.cy.ts
+    at Object.handler (/home/ubuntu/.cache/Cypress/14.3.3/Cypress/resources/app/node_modules/@packages/server/node_modules/@cypress/webpack-batteries-included-preprocessor/index.js:190:29)
+    at invoke (/home/ubuntu/.cache/Cypress/14.3.3/Cypress/resources/app/node_modules/@packages/server/lib/plugins/child/run_plugins.js:189:18)
+    at /home/ubuntu/.cache/Cypress/14.3.3/Cypress/resources/app/node_modules/@packages/server/lib/plugins/util.js:59:14
+    at tryCatcher (/home/ubuntu/.cache/Cypress/14.3.3/Cypress/resources/app/node_modules/bluebird/js/release/util.js:16:23)
+    at Promise.attempt.Promise.try (/home/ubuntu/.cache/Cypress/14.3.3/Cypress/resources/app/node_modules/bluebird/js/release/method.js:39:29)
+    at Object.wrapChildPromise (/home/ubuntu/.cache/Cypress/14.3.3/Cypress/resources/app/node_modules/@packages/server/lib/plugins/util.js:58:23)
+    at Object.wrap (/home/ubuntu/.cache/Cypress/14.3.3/Cypress/resources/app/node_modules/@packages/server/lib/plugins/child/preprocessor.js:47:8)
+    at RunPlugins.execute (/home/ubuntu/.cache/Cypress/14.3.3/Cypress/resources/app/node_modules/@packages/server/lib/plugins/child/run_plugins.js:161:29)
+    at EventEmitter.<anonymous> (/home/ubuntu/.cache/Cypress/14.3.3/Cypress/resources/app/node_modules/@packages/server/lib/plugins/child/run_plugins.js:56:12)
+    at EventEmitter.emit (node:events:519:28)
+    at process.<anonymous> (/home/ubuntu/.cache/Cypress/14.3.3/Cypress/resources/app/node_modules/@packages/server/lib/plugins/util.js:33:22)
+    at process.emit (node:events:519:28)
+    at emit (node:internal/child_process:951:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:83:21)
+
+This occurred while Cypress was compiling and bundling your test code. This is usually caused by:
+
+- A missing file or dependency
+- A syntax error in the file or one of its dependencies
+
+Fix the error in your code and re-run your tests.
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        0                                                                                │
+  │ Passing:      0                                                                                │
+  │ Failing:      1                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     0 seconds                                                                        │
+  │ Spec Ran:     home.cy.ts                                                                       │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  home/home.cy.ts                                                                 (2 of 2)
+
+Oops...we found an error preparing this test file:
+
+  > cypress/e2e/home/home.cy.ts
+
+The error was:
+
+Error: You are attempting to run a TypeScript file, but do not have TypeScript installed. Ensure you have 'typescript' installed to enable TypeScript support.
+
+The file: /home/ubuntu/Projects/digital-monography/tests/dashboard/cypress/e2e/home/home.cy.ts
+    at Object.handler (/home/ubuntu/.cache/Cypress/14.3.3/Cypress/resources/app/node_modules/@packages/server/node_modules/@cypress/webpack-batteries-included-preprocessor/index.js:190:29)
+    at invoke (/home/ubuntu/.cache/Cypress/14.3.3/Cypress/resources/app/node_modules/@packages/server/lib/plugins/child/run_plugins.js:189:18)
+    at /home/ubuntu/.cache/Cypress/14.3.3/Cypress/resources/app/node_modules/@packages/server/lib/plugins/util.js:59:14
+    at tryCatcher (/home/ubuntu/.cache/Cypress/14.3.3/Cypress/resources/app/node_modules/bluebird/js/release/util.js:16:23)
+    at Promise.attempt.Promise.try (/home/ubuntu/.cache/Cypress/14.3.3/Cypress/resources/app/node_modules/bluebird/js/release/method.js:39:29)
+    at Object.wrapChildPromise (/home/ubuntu/.cache/Cypress/14.3.3/Cypress/resources/app/node_modules/@packages/server/lib/plugins/util.js:58:23)
+    at Object.wrap (/home/ubuntu/.cache/Cypress/14.3.3/Cypress/resources/app/node_modules/@packages/server/lib/plugins/child/preprocessor.js:47:8)
+    at RunPlugins.execute (/home/ubuntu/.cache/Cypress/14.3.3/Cypress/resources/app/node_modules/@packages/server/lib/plugins/child/run_plugins.js:161:29)
+    at EventEmitter.<anonymous> (/home/ubuntu/.cache/Cypress/14.3.3/Cypress/resources/app/node_modules/@packages/server/lib/plugins/child/run_plugins.js:56:12)
+    at EventEmitter.emit (node:events:519:28)
+    at process.<anonymous> (/home/ubuntu/.cache/Cypress/14.3.3/Cypress/resources/app/node_modules/@packages/server/lib/plugins/util.js:33:22)
+    at process.emit (node:events:519:28)
+    at emit (node:internal/child_process:951:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:83:21)
+
+This occurred while Cypress was compiling and bundling your test code. This is usually caused by:
+
+- A missing file or dependency
+- A syntax error in the file or one of its dependencies
+
+Fix the error in your code and re-run your tests.
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        0                                                                                │
+  │ Passing:      0                                                                                │
+  │ Failing:      1                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     0 seconds                                                                        │
+  │ Spec Ran:     home/home.cy.ts                                                                  │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+================================================================================
+
+  (Run Finished)
+
+
+       Spec                                              Tests  Passing  Failing  Pending  Skipped  
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ ✖  home.cy.ts                                 0ms        -        -        1        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✖  home/home.cy.ts                            0ms        -        -        1        -        - │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+    ✖  2 of 2 failed (100%)                       0ms        -        -        2        -        -  
+

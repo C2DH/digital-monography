@@ -1,6 +1,9 @@
 import pathlib
 import bs4
 
+from src._common.keys import KeyPath
+from src._common.metadata import DocumentMetadata
+from src._common.state import DocumentState
 from src.preparer.main import _convert_to_html
 from src.preparer.refs import (
     is_caption,
@@ -12,8 +15,6 @@ from src.preparer.refs import (
     prepare_ref_targets_in_footnotes,
     prepare_references,
 )
-from src.builder.metadata import DocumentMetadata
-from src.builder.keys import KeyPath
 from src.builder.verif_book import RefsAndTargetsVerifier
 
 
@@ -26,15 +27,16 @@ class TestRefsAndTargetsVerifier:
 
     @classmethod
     def setup_class(cls):
-        cls.multidocs_meta: dict[str, DocumentMetadata] = {}
-        cls.soup_a, cls.meta_a = cls._prepare_docx_for_ref_handing(cls.fp_a)
-        cls.soup_b, cls.meta_b = cls._prepare_docx_for_ref_handing(cls.fp_b)
-        cls.soup_cr, cls.meta_cr = cls._prepare_docx_for_ref_handing(cls.fp_cr)
-        cls.multidocs_meta[cls.fp_a.stem] = cls.meta_a
-        cls.multidocs_meta[cls.fp_b.stem] = cls.meta_b
-        cls.multidocs_meta[cls.fp_cr.stem] = cls.meta_cr
+        cls.soup_a, cls.docstate_a = cls._prepare_docx_for_ref_handing(cls.fp_a)
+        cls.soup_b, cls.docstate_b = cls._prepare_docx_for_ref_handing(cls.fp_b)
+        cls.soup_cr, cls.docstate_cr = cls._prepare_docx_for_ref_handing(cls.fp_cr)
+        cls.bookstate = {
+            cls.fp_a.stem: cls.docstate_a,
+            cls.fp_b.stem: cls.docstate_b,
+            cls.fp_cr.stem: cls.docstate_cr,
+        }
         cls.verifier = RefsAndTargetsVerifier()
-        cls.warnings = cls.verifier.verify(cls.multidocs_meta)
+        cls.warnings = cls.verifier.verify(cls.bookstate)
 
     @classmethod
     def _prepare_docx_for_ref_handing(
@@ -42,6 +44,7 @@ class TestRefsAndTargetsVerifier:
     ) -> tuple[bs4.BeautifulSoup, DocumentMetadata]:
         html_str = _convert_to_html(fp)
         html_soup = bs4.BeautifulSoup(html_str, "html.parser")
+        docstate = DocumentState(fp)
         metadata = DocumentMetadata(fp)
         headers, captions, footnotes, references = [], [], [], []
         classifiers = [
@@ -54,11 +57,17 @@ class TestRefsAndTargetsVerifier:
             for check_if_meets_criteria, container in classifiers:
                 if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
                     container.append(node)
-        html_soup = prepare_ref_targets_in_headers(html_soup, metadata, headers)
-        html_soup = prepare_ref_targets_in_captions(html_soup, metadata, captions)
-        html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, footnotes)
-        html_soup = prepare_references(html_soup, metadata, references)
-        return html_soup, metadata
+        html_soup = prepare_ref_targets_in_headers(
+            html_soup, metadata, docstate, headers
+        )
+        html_soup = prepare_ref_targets_in_captions(
+            html_soup, metadata, docstate, captions
+        )
+        html_soup = prepare_ref_targets_in_footnotes(
+            html_soup, metadata, docstate, footnotes
+        )
+        html_soup = prepare_references(html_soup, metadata, docstate, references)
+        return html_soup, docstate
 
     def test_check_a_is_not_https(self):
         warnings = [

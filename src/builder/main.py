@@ -6,47 +6,37 @@ import subprocess
 import os
 import logging
 import pathlib
+import sqlmodel
 import sys
 import typing as t
 import yaml
 from jupyter_book.cli.main import build
-
 from mypy_boto3_dynamodb.service_resource import (
     DynamoDBServiceResource as boto3_DynamoDBServiceResource,
 )
 from mypy_boto3_s3.client import S3Client as boto3_S3Client
 
-IS_DEBUG = bool(int(os.environ.get("DGTMON_DEBUG", 0)))
-if not IS_DEBUG:
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    sys.path.append(current_dir)
+# Get the current directory and add it to sys.path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
 
-try:
-    from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
-    from constants import (
-        ModuleEnum,
-        IS_DEBUG,
-        DEFAULT_SFS_DIR,
-    )
-    from config_prep import update_with_substitutions
-    from metadata import DocumentMetadata, RefDatapoint
-    from fakers import Faker
-    from keys import KeyPath
-    from verif_book import RefsAndTargetsVerifier
-    from verif_warnings import MessagesJson
-except (ImportError, ModuleNotFoundError):
-    from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
-    from .constants import (
-        ModuleEnum,
-        IS_DEBUG,
-        DEFAULT_SFS_DIR,
-    )
-    from .config_prep import update_with_substitutions
-    from .metadata import DocumentMetadata, RefDatapoint
-    from .fakers import Faker
-    from .keys import KeyPath
-    from .verif_book import RefsAndTargetsVerifier
-    from .verif_warnings import MessagesJson
+from src._common.audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
+from src._common.constants import ModuleEnum, IS_DEBUG, DB_URL, DEFAULT_SFS_DIR
+from src._common.keys import KeyPath
+from src._common.models import (
+    Asset,
+    File,
+    FileService,
+    Substitution,
+    SubstitutionService,
+    Ref,
+    RefService,
+)
+from src._common.state import DocumentState, read_book_metadata
+from config_prep import update_with_substitutions
+from fakers import Faker
+from verif_book import RefsAndTargetsVerifier
+from verif_warnings import MessagesJson
 
 
 if IS_DEBUG:
@@ -69,6 +59,7 @@ if IS_DEBUG:
 else:
     dynamodb: boto3_DynamoDBServiceResource = boto3.resource("dynamodb")
     s3: boto3_S3Client = boto3.client("s3")
+db_engine = sqlmodel.create_engine(DB_URL)
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
@@ -79,7 +70,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     _log_tree(key)
     # _mkdir_read()
     _copy_assets(key)
-    book_metadata = _read_book_metadata(key)
+    book_metadata = read_book_metadata(key)
     _prepare_config(key, book_metadata)
     _make_substitutions(key, book_metadata)
     _build_jb1_book(key)
@@ -93,7 +84,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     # NOTE: post-build phase, this should probably go to another Lambda service
     _connect_assets_to_references_to_assets(book_metadata)
     # _write_assets_info_to_s3(book_metadata, key)
-    _write_metadata_to_db(book_metadata, key)
+    # _write_metadata_to_db(book_metadata, key)
+    _update_refs_in_db(book_metadata, key)
     #
     warnings = _verify_book(book_metadata)
     _put_json_to_s3(key, warnings)
@@ -151,7 +143,7 @@ def _copy_assets(key: KeyPath) -> None:
         raise
 
 
-def _prepare_config(key: KeyPath, book_metadata: dict[str, DocumentMetadata]) -> None:
+def _prepare_config(key: KeyPath, book_metadata: dict[str, DocumentState]) -> None:
     if not (key.efs_slug_dir / "_config.yml").exists():
         logging.info(f"{key.efs_slug_dir / '_config.yml'} was not found.")
         return
@@ -163,9 +155,7 @@ def _prepare_config(key: KeyPath, book_metadata: dict[str, DocumentMetadata]) ->
         yaml.dump(config, f)
 
 
-def _make_substitutions(
-    key: KeyPath, book_metadata: dict[str, DocumentMetadata]
-) -> None:
+def _make_substitutions(key: KeyPath, book_metadata: dict[str, DocumentState]) -> None:
     """
     Replace substitution placeholders in markdown files with new values.
 
@@ -175,6 +165,7 @@ def _make_substitutions(
     I couldn't make JupyterBook to do the substitutions for f2f refs.
     """
     for md in key.efs_slug_dir.glob("*.md"):
+        dstate = book_metadata.get(md.stem)
         try:
             if md.stem not in book_metadata:
                 continue
@@ -184,20 +175,30 @@ def _make_substitutions(
                 # This is suboptimal, but FileDatapoint only knows file stem and prefix.
                 # I could add more data to it, but since user has to correctly
                 # write this data in yaml file by hand, the less data the better :/
-                file_prefices = {}
-                for file in book_metadata[md.stem].files:
-                    file_count = book_metadata[md.stem].get_chapter_number(file.stem)
+                file_prefices: dict[int, str] = {}
+                files: list[File] = dstate["files"]
+                for file in files:
+                    file_count = FileService.get_number_from_filename(file.stem)
                     file_prefices[file_count] = file.prefix
                 # Replace placeholders with new values, incl. file prefix
-                for subs in book_metadata[md.stem].substitutions:
+                substitutions: list[Substitution] = dstate["substitutions"]
+                for subs in substitutions:
                     if subs.file_count in file_prefices:
                         file_prefix = file_prefices[subs.file_count]
                     else:
                         file_prefix = None
                     mdstr = mdstr.replace(
                         r"{{ " + subs.pk + r" }}",
-                        subs.new_value(file_prefix),
+                        SubstitutionService.to_digital_version(subs, file_prefix),
                     )
+                    # NOTE: seems to just repeat "was" attr
+            # post_mdstr = mdstr
+            # if pre_mdstr != post_mdstr:
+            #     diff = difflib.ndiff(
+            #         pre_mdstr.splitlines(keepends=True),
+            #         post_mdstr.splitlines(keepends=True),
+            #     )
+            #     print("".join(diff), end="")
             with open(md, "w") as f:
                 f.write(mdstr)
         except Exception as e:
@@ -439,44 +440,26 @@ def _sync_efs_to_staticws(src: pathlib.Path, dstdir: str, slug: str) -> None:
     p.wait()
 
 
-def _read_book_metadata(key: KeyPath) -> dict[str, DocumentMetadata]:
-    """
-    Read JSON metadata stored in Elastic File System (EFS) and return a dict
-    with all DocumentMetadata objects for a specific book.
-    """
-    book_metadata: dict[str, DocumentMetadata] = {}
-    for meta_file in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
-        meta_file: KeyPath
-        with meta_file.open("r") as f:
-            metadata = DocumentMetadata(meta_file)
-            try:
-                metadata.from_json(json.load(f))
-                book_metadata[meta_file.stem] = metadata
-            except KeyError as e:
-                logger.info(
-                    f"Invalid or obsolete DataPoint structure. Skipping "
-                    f"metadata file {meta_file}. KeyError: {repr(e)}"
-                )
-    return book_metadata
-
-
 def _connect_assets_to_references_to_assets(
-    book_metadata: dict[str, DocumentMetadata],
+    book_metadata: dict[str, DocumentState],
 ) -> None:
     """
     Find asset id for each reference to asset in the book.
     Assign assets' primary keys to references.
+    Note that this updates the "asset_id" field locally. This change
+    has to be written to the database later.
     """
     # internal_links: list[RefDatapoint] = []
-    for _, meta in book_metadata.items():
-        for ref in meta.refs:
-            ref: RefDatapoint
-            if ref.is_internal_infile() or ref.is_internal_f2f():
+    for _, dstate in book_metadata.items():
+        assets: list[Asset] = dstate["assets"]
+        refs: list[Ref] = dstate["refs"]
+        for ref in refs:
+            href = ref.href
+            if RefService.is_internal_infile(href) or RefService.is_internal_f2f(href):
                 try:
-                    asset = next(
-                        ass for ass in meta.assets if ass.target == ref.target_id
-                    )
+                    asset = next(ass for ass in assets if ass.target == ref.target_id)
                     ref.asset_id = asset.pk
+                    ref._was_updated = True
                 except StopIteration:
                     continue
 
@@ -496,29 +479,39 @@ def _connect_assets_to_references_to_assets(
     #             asset.refs = [r for r in internal_links if r.target_id == asset.target]
 
 
-def _write_metadata_to_db(
-    book_metadata: dict[str, DocumentMetadata], key: KeyPath
-) -> None:
-    if dynamodb is None:
-        return
+def _update_refs_in_db(book_metadata: dict[str, DocumentState], key: KeyPath) -> None:
+    """
+    Builder microservice is the aggregating function. Only it sees all the
+    documents that compose a book. Only in this microservice we can get information
+    about the state of the book from all the documents. Because of that, we can
+    use this information to link references to assets and update the db accordingly.
+
+    Fields that can change:
+    * asset_id - from None to uuid of the target asset
+      (see _connect_assets_to_references_to_assets)
+    """
     try:
-        tables = {
-            "refs": os.environ.get("DYNAMODB_REFS_TBL", ""),
-        }
-        for domain, tbl in tables.items():
-            table = dynamodb.Table(tbl)
-            for _, metadata in book_metadata.items():
-                resp = table.put_item(
-                    Item={
-                        "slug": key.slug,
-                        "fn": metadata.filepath.name,
-                        "records": [rec.to_json() for rec in getattr(metadata, domain)],
-                    }
-                )
-                logger.info(
-                    f"Response from dynamodb.Table({tbl}).put_item: {json.dumps(resp, default=str)}"
-                )
-        return
+        with sqlmodel.Session(db_engine) as session:
+            for dstate in book_metadata.values():
+                # Get all changed references
+                changed_refs: list[Ref] = []
+                refs_pk: list[int] = []
+                for ref in dstate["refs"]:
+                    ref: Ref
+                    if ref._was_updated:
+                        changed_refs.append(ref)
+                        refs_pk.append(ref.pk)
+                # Select all references that need to be updated
+                current_refs = session.exec(
+                    sqlmodel.select(Ref).where(sqlmodel.col(Ref.pk).in_(refs_pk))
+                ).all()
+                # Update every ref that needs to be updated
+                for curr_ref in current_refs:
+                    curr_ref.asset_id = next(
+                        (r.asset_id for r in changed_refs if r.pk == curr_ref.pk), None
+                    )
+                    session.add(curr_ref)
+            session.commit()
     except Exception as e:
         logger.exception(f"Writing metadata to database failed. Error: {repr(e)}")
         _log_audit_event(
@@ -529,32 +522,8 @@ def _write_metadata_to_db(
         raise
 
 
-def _write_assets_info_to_s3(
-    book_metadata: dict[str, DocumentMetadata], key: KeyPath
-) -> None:
-    for fn, metadata in book_metadata.items():
-        fn: str
-        try:
-            s3_key = RefDatapoint.get_s3_key(key.slug, fn)
-            bucket = os.environ.get("METADATA_REFS_BUCKET_NAME", "")
-            body = json.dumps([ref.to_json() for ref in metadata.refs], default=str)
-            resp = s3.put_object(Body=body, Bucket=bucket, Key=s3_key)
-            logger.info(
-                f"Response from s3.put_object(Bucket={bucket}, Key={s3_key}): "
-                + json.dumps(resp, default=str)
-            )
-        except Exception as e:
-            logger.exception(f"Putting refs info to s3 bucket failed. Error: {repr(e)}")
-            _log_audit_event(
-                key,
-                AuditStatus.FAILED.value,
-                "Error upon writing assets info from docs.",
-            )
-            raise
-
-
 def _verify_book(
-    book_metadata: dict[KeyPath, DocumentMetadata],
+    book_metadata: dict[KeyPath, DocumentState],
 ) -> list[dict[str, str]]:
     # TODO: stop repeating metadata parsing after _prepare_config()
     # the only difference is just stem str vs pathlib path

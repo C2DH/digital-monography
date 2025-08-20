@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense } from 'react';
-import DynamicTable from "./DynamicTable";
+import DynamicListGroup from './DynamicComponent';
 
 export default function Page() {
     return (
@@ -10,7 +10,7 @@ export default function Page() {
                 <h1 className="mt-5">Citations</h1>
                 <div className="d-flex flex-column p-4 justify-content-center">
                     <Suspense>
-                        <DynamicTable></DynamicTable>
+                        <DynamicListGroup></DynamicListGroup>
                     </Suspense>
                 </div>
             </div>

@@ -10,6 +10,7 @@ import json
 import os
 import logging
 import pathlib
+import sys
 import typing as t
 import urllib
 import urllib.parse
@@ -18,14 +19,6 @@ from aws_lambda_powertools.utilities.data_classes import (
     event_source,
     APIGatewayProxyEventV2,
 )
-
-try:
-    from constants import IS_DEBUG
-    from lambda_wsgi import response as lambda_wsgi_response
-except (ImportError, ModuleNotFoundError):
-    from .constants import IS_DEBUG  # type: ignore
-    from .lambda_wsgi import response as lambda_wsgi_response  # type: ignore
-
 from mypy_boto3_dynamodb.client import DynamoDBClient as boto3_DynamoDBClient
 from mypy_boto3_dynamodb.service_resource import (
     DynamoDBServiceResource as boto3_DynamoDBServiceResource,
@@ -39,6 +32,13 @@ from mypy_boto3_secretsmanager.client import (
     SecretsManagerClient as boto3_SecretsManagerClient,
 )
 from mypy_boto3_sqs import SQSClient as boto3_SQSClient
+
+# Get the current directory and add it to sys.path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
+
+from src._common.constants import IS_DEBUG
+from lambda_wsgi import response as lambda_wsgi_response
 
 if IS_DEBUG:
     today = datetime.date.today().isoformat()

@@ -1,12 +1,18 @@
 from alembic import context
 from logging.config import fileConfig
+import os
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-
-from models import Base
 from sqlmodel import SQLModel
-from models import *  # see models.__init__.py
+import sys
+
+# Get the parent directory and add it to sys.path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
+
 from constants import DB_URL
+from models import *  # see models.__init__.py
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -17,7 +23,7 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-target_metadata = [Base.metadata, SQLModel.metadata]
+target_metadata = [SQLModel.metadata]
 config.set_main_option("sqlalchemy.url", DB_URL)
 
 

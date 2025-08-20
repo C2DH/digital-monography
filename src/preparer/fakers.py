@@ -1,10 +1,7 @@
 import pathlib
 import typing as t
 
-try:
-    from keys import KeyPath
-except (ImportError, ModuleNotFoundError):
-    from .keys import KeyPath
+from src._common.keys import KeyPath
 
 
 class Faker:

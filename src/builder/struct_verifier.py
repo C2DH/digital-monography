@@ -3,12 +3,8 @@ import pathlib
 import yaml
 import typing as t
 
-try:
-    from keys import KeyPath
-    from verif_warnings import VerifierMessages
-except (ImportError, ModuleNotFoundError):
-    from .keys import KeyPath
-    from .verif_warnings import VerifierMessages
+from src._common.keys import KeyPath
+from verif_warnings import VerifierMessages
 
 
 STRUCT = "file_structure"

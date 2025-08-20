@@ -6,7 +6,12 @@ import pathlib
 import pydantic
 import typing as t
 import uuid
+from sqlmodel.main import SQLModelMetaclass
+from sqlmodel import SQLModel
 
+from models._base import MySQLModel
+from models import tables_to_models
+from models.assets import Asset
 from metadata import AssetDatapoint
 from constants import MediumEnum
 from keys import KeyPath
@@ -113,7 +118,7 @@ if __name__ == "__main__":
     dp3 = Bar(**json.loads(dp1.model_dump_json()))
     assert dp1.p == dp3.p
 
-    ad1 = AssetDatapoint(
+    ad1 = Asset(
         fp=pathlib.PosixPath("foo/bar/1.txt"),
         metadata_table="sdofiafjsoisdjfaosjfpafsodij",
         medium=MediumEnum.PAPER,
@@ -131,6 +136,20 @@ if __name__ == "__main__":
     )
 
     assert ad1.is_on_paper is True
-    print(ad1.to_json())
+    # print(ad1.to_json())
 
     # print(dp1.model)
+
+
+class Foo:
+    def __init__(self, *args, **kwargs):
+        self.__dict__ = {
+            "a": 1,
+            "b": 2,
+            "c": 3,
+        }
+
+    def __getitem__(self, item):
+        if item in self.__dict__:
+            return self.__dict__[item]
+        return []

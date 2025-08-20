@@ -9,17 +9,25 @@ import docx.oxml.text.parfmt
 import docx.oxml.text.paragraph
 import docx.oxml.text.run
 import docx.oxml.xmlchemy
+import typing as t
 
-try:
-    from constants import CAPTION_ALLOWED_ITEMS
-    from metadata import DocumentMetadata
-except (ImportError, ModuleNotFoundError):
-    from .constants import CAPTION_ALLOWED_ITEMS  # type: ignore
-    from .metadata import DocumentMetadata  # type: ignore
+from src._common.constants import CAPTION_ALLOWED_ITEMS
+from src._common.models import File, FileService
+from src._common.state import DocumentState
+
+# try:
+#     from constants import CAPTION_ALLOWED_ITEMS
+#     from models import File, FileService
+#     from state import DocumentState  # type: ignore
+# except (ImportError, ModuleNotFoundError):
+#     from .constants import CAPTION_ALLOWED_ITEMS  # type: ignore
+#     from .models import File, FileService  # type: ignore
+#     from .state import DocumentState  # type: ignore
 
 
 def add_chapter_number_to_captions(
-    doc: docx.document.Document, metadata: DocumentMetadata
+    doc: docx.document.Document,
+    docstate: DocumentState,
 ) -> None:
     """
     Find caption paragraphs and add chapter number to the automatic numbering.
@@ -63,6 +71,12 @@ def add_chapter_number_to_captions(
         "//w:p/w:pPr/w:pStyle[@w:val='Caption']"
     )
     for caption_pstyle_el in captions_pstyle_elems:
+        print(
+            "Check if 'caption_pstyle_el' is really of type 'docx.oxml.shared.CT_String'. "
+            "It doesn't seem to have the same attributes :/"
+        )
+        print("type(caption_pstyle_el)", type(caption_pstyle_el))
+        assert isinstance(caption_pstyle_el, docx.oxml.shared.CT_String)
         pPr: docx.oxml.text.parfmt.CT_PPr = caption_pstyle_el.getparent()
         p: docx.oxml.text.paragraph.CT_P = pPr.getparent()
         assert isinstance(p, docx.oxml.text.paragraph.CT_P)
@@ -72,15 +86,30 @@ def add_chapter_number_to_captions(
             prev: docx.oxml.text.run.CT_R = field.getprevious()
             if _is_caption_item(prev):
                 assert isinstance(prev, docx.oxml.text.run.CT_R)
-                try:
-                    file_dp = next(
-                        f for f in metadata.files if f.stem == metadata.filepath.stem
-                    )
-                    prev.text = f"{prev.text}{file_dp.prefix}."
-                except StopIteration:
-                    num = metadata.get_chapter_number()
-                    if num is not None:
-                        prev.text = f"{prev.text}{num}."
+                file = _find_file(docstate)
+                num = FileService.get_number_from_filename(docstate.key.stem)
+                if isinstance(file, File):
+                    prev.text = f"{prev.text}{file.prefix}."
+                elif num is not None:
+                    prev.text = f"{prev.text}{num}."
+
+                # try:
+                #     file_dp = next(
+                #         f for f in docstate["files"] if f.stem == docstate.key.stem
+                #     )
+                #     prev.text = f"{prev.text}{file_dp.prefix}."
+                # except StopIteration:
+                #     num = metadata.get_chapter_number()
+                #     if num is not None:
+                #         prev.text = f"{prev.text}{num}."
+
+
+def _find_file(docstate: DocumentState) -> t.Iterator[File | None]:
+    files: list[File] = docstate["files"]
+    for f in files:
+        if f.stem == docstate.key.stem:
+            yield f
+    yield None
 
 
 def _is_caption_item(node: str) -> bool:

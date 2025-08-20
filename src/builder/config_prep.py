@@ -1,14 +1,12 @@
 import pathlib
 import typing as t
 
-try:
-    from metadata import DocumentMetadata, FileDatapoint, TargetDatapoint
-except (ImportError, ModuleNotFoundError):
-    from .metadata import DocumentMetadata, FileDatapoint, TargetDatapoint
+from src._common.models import File, Substitution, SubstitutionService, Target
+from src._common.state import DocumentState
 
 
 def update_with_substitutions(
-    config: dict[str, t.Any], book_metadata: dict[str, DocumentMetadata]
+    config: dict[str, t.Any], book_metadata: dict[str, DocumentState]
 ) -> dict[str, t.Any]:
     _update_file_count(config, book_metadata)
     update_substitutions_in_refs(book_metadata)
@@ -29,7 +27,7 @@ def update_with_substitutions(
 
 
 def _update_file_count(
-    config: dict[str : t.Any], book_metadata: dict[str, DocumentMetadata]
+    config: dict[str : t.Any], book_metadata: dict[str, DocumentState]
 ) -> None:
     if "dgtmon" not in config or "prefixes" not in config["dgtmon"]:
         return
@@ -39,30 +37,33 @@ def _update_file_count(
     if type(prefixes) != dict or len(prefixes) == 0:
         return
     ###
-    for metadata in book_metadata.values():
+    for dstate in book_metadata.values():
         for stem, prefix in prefixes.items():
-            metadata.add_file(FileDatapoint(stem=stem, prefix=str(prefix)))
+            # metadata.add_file(FileDatapoint(stem=stem, prefix=str(prefix)))
+            dstate.add(File(loc="", slug="", stem=stem, prefix=str(prefix)))
 
 
-def update_substitutions_in_refs(book_metadata: dict[str, DocumentMetadata]) -> None:
+def update_substitutions_in_refs(book_metadata: dict[str, DocumentState]) -> None:
     """
     Update values of substitutions in the references based on targets
     found in all manuscript files. This updating is important for both
     updating the config file and for replacing the placeholders in the
     buiders/main.py procedure.
     """
-    for metadata in book_metadata.values():
-        for dp in metadata.substitutions:
+    for dstate in book_metadata.values():
+        substitutions: list[Substitution] = dstate["substitutions"]
+        for dp in substitutions:
             if dp.item_type == "ref":
                 if dp.target_fn:
                     fn = pathlib.Path(dp.target_fn).stem
                     # fn = dp.target_fn.stem
                     if fn not in book_metadata:
                         continue
-                    target_metadata = book_metadata[fn]
+                    target_dstate = book_metadata[fn]
                 else:
-                    target_metadata = metadata
-                target: TargetDatapoint = target_metadata.get_target(dp.placeholder)
+                    target_dstate = dstate
+                # target: TargetDatapoint = target_metadata.get_target(dp.placeholder)
+                target: Target = target_dstate.get("targets", dp.placeholder)
                 if target:
                     dp.file_count = target.file_count
                     dp.prefix = target.prefix
@@ -70,7 +71,7 @@ def update_substitutions_in_refs(book_metadata: dict[str, DocumentMetadata]) -> 
 
 
 def get_substitutions_mapping(
-    book_metadata: dict[str, DocumentMetadata],
+    book_metadata: dict[str, DocumentState],
 ) -> dict[str, str]:
     """
     Returns mapping of substitutions placeholders (SubstitutionDatapoint.pk) to the new values.
@@ -88,15 +89,20 @@ def get_substitutions_mapping(
     For the paper version, the replacement should be done automatically in MS Word,
     without the need of this mapping.
     """
-    substitutions = {}
-    for metadata in book_metadata.values():
-        assert len([subs.pk for subs in metadata.substitutions]) == len(
-            set([subs.pk for subs in metadata.substitutions])
+    subst_mapping = {}
+    for dstate in book_metadata.values():
+        substitutions: list[Substitution] = dstate["substitutions"]
+        assert len([subs.pk for subs in substitutions]) == len(
+            set([subs.pk for subs in substitutions])
         )
         file_prefix = None
-        for file in metadata.files:
-            if file.stem == metadata.filepath.stem:
+        files: list[File] = dstate["files"]
+        for file in files:
+            if file.stem == dstate.metadata.key.stem:
                 file_prefix = str(file.prefix)
-        for dp in metadata.substitutions:
-            substitutions[dp.pk] = dp.new_value(file_prefix)
-    return substitutions
+        for dp in substitutions:
+            subst_mapping[dp.pk] = SubstitutionService.to_digital_version(
+                dp, file_prefix
+            )
+            # subst_mapping[dp.pk] = dp.new_value(file_prefix)
+    return subst_mapping

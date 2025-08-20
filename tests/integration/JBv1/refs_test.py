@@ -1,10 +1,13 @@
 import bs4
+import sqlmodel
 import pytest
 
-from src.wordprocessor.constants import DEFAULT_SFS_DIR
-from src.wordprocessor.keys import KeyPath
+from src._common.constants import DEFAULT_SFS_DIR, DB_URL
+from src._common.keys import KeyPath
+from src._common.models import Ref
 
 JB_BUILD_DIR = KeyPath(DEFAULT_SFS_DIR) / "a_book" / "_build" / "html"
+db_engine = sqlmodel.create_engine(DB_URL)
 
 
 class TestRefsAndTargetsInJupyterBookV1:
@@ -176,3 +179,22 @@ class TestRefsAndTargetsInJupyterBookV1:
         assert target.text.startswith(
             target_text
         ), f'Expected target text to start with "{target_text}", but got "{target.text}"'
+
+    def test_ref_updated_asset_id(self):
+        ref1_text = "link to figForDigital bookmark"
+        ref2_text = "link to figForPaper bookmark"
+        ref3_text = "link to figForDigitalAndPaper bookmark"
+        with sqlmodel.Session(db_engine) as session:
+            stmt = sqlmodel.select(Ref).where(
+                sqlmodel.or_(
+                    Ref.text == ref1_text, Ref.text == ref2_text, Ref.text == ref3_text
+                )
+            )
+            refs = session.exec(stmt).all()
+        assert len(refs) == 3, "Expected to find three references."
+        ref1 = next(r for r in refs if r.text == ref1_text)
+        ref2 = next(r for r in refs if r.text == ref2_text)
+        ref3 = next(r for r in refs if r.text == ref3_text)
+        assert ref1.asset_id is None
+        assert ref2.asset_id is not None
+        assert ref3.asset_id is not None

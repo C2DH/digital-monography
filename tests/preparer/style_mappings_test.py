@@ -2,7 +2,7 @@ import bs4
 import pathlib
 
 from src.preparer.main import _convert_to_html
-from src.preparer.keys import KeyPath
+from src._common.keys import KeyPath
 
 
 class TestStyleMappings:
