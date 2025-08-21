@@ -15,7 +15,7 @@ from src.preparer.refs import (
     prepare_ref_targets_in_footnotes,
     prepare_references,
 )
-from src.builder.verif_book import RefsAndTargetsVerifier
+from src.builder.main import RefsAndTargetsVerifier
 
 
 class TestRefsAndTargetsVerifier:
