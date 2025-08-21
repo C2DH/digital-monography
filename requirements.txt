@@ -1,9 +1,9 @@
 -r src/entrypoint/requirements.txt
 -r src/preparer/requirements.txt
--r src/verifier_doc/requirements.txt
+-r src/verifier/requirements.txt
 -r src/github/requirements.txt
 -r src/builder/requirements.txt
--r src/builderv3/requirements.txt
+# -r src/builderv3/requirements.txt
 -r src/gpu/requirements.txt
 -r src/orm/requirements.txt
 -r src/wordprocessor/requirements.txt
@@ -29,4 +29,3 @@ types-beautifulsoup4==4.12.*
 # py2ts: Pydantic models to TS interfaces 
 # datamodel-code-generator==0.31.*
 # pydantic2-to-typescript==0.0.1
-

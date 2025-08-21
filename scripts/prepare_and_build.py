@@ -18,8 +18,7 @@ sys.path.append(parent_dir)
 from src._common.keys import KeyPath
 from src.preparer.main import lambda_handler as preparer_handler
 from src.builder.main import lambda_handler as builder_handler
-from src.verifier_doc.main import lambda_handler as verifier_handler
-from src.verifier_doc.keys import KeyPath
+from src.verifier.main import lambda_handler as verifier_handler
 from src.wordprocessor.main import lambda_handler as wordprocessor_handler
 from scripts.sync import listen_for_updates
 

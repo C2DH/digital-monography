@@ -70,12 +70,11 @@ The platform consists of the following microservices (Lambda functions):
 | **entrypoint**    | false   | Exposes REST endpoints, incl. OAuth and webhooks to integrate with Dropbox.  |
 | **dropbox**       | false   | Calls Dropbox API to retrieve files from Dropbox and writes them to s3.      |
 | **preparer**      | true    | Does all the transformations of the files in the author package.             |
-| **verifier_doc**  | true    | Checks the single uploaded document against the verification rules.          |
-| **verifier_book** | true    | Checks the whole author package against the verification rules.              |
+| **verifier**      | true    | Checks the single uploaded document against the verification rules.          |
 | **github**        | false   | Pushes the processed documents to GitHub remote repository.                  |
 | **builder**       | true    | Runs Jupyter Book to build a book out of processed documents.                |
 | **gpu**           | false   | Generates pre-signed url from private S3 bucket.                             |
-| **orm**           | false   | Middleware between microservices and the shared database. |
+| **orm**           | false   | Middleware between microservices and the shared database.                    |
 | **wordprocessor** | false   | Transforms docx files for the paper version.                                 |
 
 Deployment of each microservice should be done in order:
@@ -466,8 +465,7 @@ At the beginning of the project every microservice was type checked and linted. 
 | entrypoint    | true         | 
 | dropbox       | false*       | 
 | preparer      | false        | 
-| verifier_doc  | false        | 
-| verifier_book | false        | 
+| verifier      | false        | 
 | github        | false*       | 
 | builder       | false        | 
 | gpu           | true         | 
@@ -628,7 +626,5 @@ Please consult the internal documentation in the [c2dh backstage](https://c2dh.a
 
 ## TODO
 
-[ ] rename verifier to verifier_doc
-[ ] rename builder to verifier_book
 [ ] make builder (verifier_book) to invoke builder_v1
 [ ] make builder (verifier_book) to invoke builder_v2

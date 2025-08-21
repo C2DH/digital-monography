@@ -564,7 +564,7 @@ def _put_json_to_s3(key: KeyPath, warnings: list[dict[str, str]]) -> None:
         for fn, warnings in warnings_grouped.items():
             s3_key = key.slug + "/" + fn.split(".")[0] + ".json"
             body = json.dumps(warnings, default=str)
-            bucket = os.environ.get("VERIFIER_DOC_MSGS", "")
+            bucket = os.environ.get("VERIFIER_MSGS", "")
             resp = s3.put_object(Body=body, Bucket=bucket, Key=str(s3_key))
             logger.info(
                 f"Response from s3.put_object(Bucket={bucket}, Key={str(s3_key)}): "

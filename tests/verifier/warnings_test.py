@@ -1,9 +1,9 @@
 import bs4
 import random
 
-from src.verifier_doc.rules_v1 import HtmlVerifier
-from src.verifier_doc.main import _fromtimestamp
-from src.verifier_doc.verif_warnings import (
+from src.verifier.main import _fromtimestamp
+from src.verifier.rules_v1 import HtmlVerifier
+from src.verifier.verif_warnings import (
     FileVerificationMessage,
     GeneralVerificationMessage,
 )

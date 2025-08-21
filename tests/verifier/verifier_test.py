@@ -6,8 +6,8 @@ THIS_WORKED_FINE_BUT_THE_VERIFICATION_RULES_NEED_REVIEW = True
 # import mammoth
 # import pathlib
 
-# from src.verifier_doc.rules_v1 import HtmlVerifier
-# from src.verifier_doc.rules_v1 import (
+# from src.verifier.rules_v1 import HtmlVerifier
+# from src.verifier.rules_v1 import (
 #     MSG_PROBLEMS,
 #     ASSETS,
 #     CAPTIONS,
@@ -16,9 +16,9 @@ THIS_WORKED_FINE_BUT_THE_VERIFICATION_RULES_NEED_REVIEW = True
 #     TABLES,
 #     PARAGRAPHS,
 # )
-# from src.verifier_doc.main import _fromtimestamp
-# from src.verifier_doc.path_handler import PathHandler
-# from src.verifier_doc.constants import (
+# from src.verifier.main import _fromtimestamp
+# from src.verifier.path_handler import PathHandler
+# from src.verifier.constants import (
 #     FIELD_DIGITAL_SOURCE,
 #     FIELD_PAPER_SOURCE,
 #     MAMMOTH_STYLE_MAP,

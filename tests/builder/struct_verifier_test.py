@@ -8,8 +8,8 @@
 # from src.builder.struct_verifier import StructVerifier
 # from src.builder.main import _fromtimestamp
 
-# # from src.verifier_doc.html_verifier import HtmlVerifier
-# # from src.verifier_doc.path_handler import PathHandler
+# # from src.verifier.html_verifier import HtmlVerifier
+# # from src.verifier.path_handler import PathHandler
 
 
 # class TestStructBreakingVerificationRules:

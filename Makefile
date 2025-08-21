@@ -4,7 +4,7 @@ BUILDER_LATEST_V := $(shell jq -r '.BUILDER.LATEST' < .versions.json)
 BUILDERv2_LATEST_V := $(shell jq -r '.BUILDERv2.LATEST' < .versions.json)
 PREPARER_LATEST_V := $(shell jq -r '.PREPARER.LATEST' < .versions.json)
 GITHUB_LATEST_V  := $(shell jq -r '.GITHUB.LATEST' < .versions.json)
-VERIFIER_DOC_LATEST_V  := $(shell jq -r '.VERIFIER_DOC.LATEST' < .versions.json)
+VERIFIER_LATEST_V  := $(shell jq -r '.VERIFIER.LATEST' < .versions.json)
 GPU_LATEST_V  := $(shell jq -r '.GPU.LATEST' < .versions.json)
 WORDPROCESSOR_LATEST_V  := $(shell jq -r '.WORDPROCESSOR.LATEST' < .versions.json)
 LOCAL_LATEST_V := $(shell jq -r '.LOCAL_LATEST_V' < .versions.json)
@@ -25,7 +25,7 @@ test/prep:
 		IR_APKG_HTML_BUCKET_NAME=_HTML \
 		IR_APKG_MD_BUCKET_NAME=_MARKDOWN \
 		METADATA_ASSETS_BUCKET_NAME=_METDATA \
-		VERIFIER_DOC_MSGS=_WARNINGS \
+		VERIFIER_MSGS=_WARNINGS \
 		python3.12 scripts/prepare_and_build.py book_path="tests/_fixtures/a_book/"
 
 test/unit:
@@ -35,7 +35,7 @@ test/integration:
 	DGTMON_DEBUG=1 python3.12 -m pytest tests/integration/
 
 test:
-	DGTMON_DEBUG=1 python3.12 -m pytest tests/preparer/ tests/verifier_doc/ tests/builder/ tests/wordprocessor/
+	DGTMON_DEBUG=1 python3.12 -m pytest tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
 
 test/make: test/copy test/prep test/run
 
@@ -68,7 +68,7 @@ show/dominique:
 		IR_APKG_HTML_BUCKET_NAME=_HTML \
 		IR_APKG_MD_BUCKET_NAME=_MARKDOWN \
 		METADATA_ASSETS_BUCKET_NAME=_METDATA \
-		VERIFIER_DOC_MSGS=_WARNINGS \
+		VERIFIER_MSGS=_WARNINGS \
 		python3.12 scripts/prepare_and_build.py book_path="/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/a-colonia-luxemburguesa/"
 
 login:
@@ -190,17 +190,17 @@ github/make: github/build github/tag github/push
 verifier/build:
 	docker build -t dgtmon-dev-verifier src/verifier --build-context common=src/_common
 
-verifier_doc/tag:
-	docker tag dgtmon-dev-verifier_doc ${DEV_DOCKER_ECR}/dgtmon-dev-verifier:${verifier_doc_LATEST_V}
-	docker tag dgtmon-dev-verifier_doc ${MAIN_DOCKER_ECR}/dgtmon-dev-verifier:${verifier_doc_LATEST_V}
-	docker tag dgtmon-dev-verifier_doc ${DOCKER_HUB}/dgtmon-dev-verifier:${verifier_doc_LATEST_V}
+verifier/tag:
+	docker tag dgtmon-dev-verifier ${DEV_DOCKER_ECR}/dgtmon-dev-verifier:${VERIFIER_LATEST_V}
+	docker tag dgtmon-dev-verifier ${MAIN_DOCKER_ECR}/dgtmon-dev-verifier:${VERIFIER_LATEST_V}
+	docker tag dgtmon-dev-verifier ${DOCKER_HUB}/dgtmon-dev-verifier:${VERIFIER_LATEST_V}
 
-verifier_doc/push:
-	docker push ${DEV_DOCKER_ECR}/dgtmon-dev-verifier:${verifier_doc_LATEST_V}
-	docker push ${MAIN_DOCKER_ECR}/dgtmon-dev-verifier:${verifier_doc_LATEST_V}
-	docker push ${DOCKER_HUB}/dgtmon-dev-verifier:${verifier_doc_LATEST_V}
+verifier/push:
+	docker push ${DEV_DOCKER_ECR}/dgtmon-dev-verifier:${VERIFIER_LATEST_V}
+	docker push ${MAIN_DOCKER_ECR}/dgtmon-dev-verifier:${VERIFIER_LATEST_V}
+	docker push ${DOCKER_HUB}/dgtmon-dev-verifier:${VERIFIER_LATEST_V}
 
-verifier_doc/make: verifier_doc/build verifier_doc/tag verifier_doc/push
+verifier/make: verifier/build verifier/tag verifier/push
 
 gpu/build:
 	docker build -t dgtmon-dev-gpu src/gpu --build-context common=src/_common
