@@ -82,5 +82,5 @@ resource "aws_ecr_repository" "orm_repo" {
 }
 
 locals {
-  orm_tag = var.env == "main" ? local.versions_data.ENTRYPOINT.STABLE : local.versions_data.ENTRYPOINT.LATEST
+  orm_tag = var.env == "main" ? local.versions_data.ORM.STABLE : local.versions_data.ORM.LATEST
 }
