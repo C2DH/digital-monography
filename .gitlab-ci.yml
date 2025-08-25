@@ -87,7 +87,7 @@ init:
       - staticws/dashboard/.env.develop
       - staticws/dashboard/.env.main
   tags:
-    - all
+    - local
 
 build-dashboard:
   stage: pre-deploy
@@ -118,7 +118,7 @@ build-dashboard:
       - staticws/dashboard/.next
       - staticws/dashboard/out
   tags:
-    - all
+    - local
 
 deploy:
   stage: deploy
@@ -155,7 +155,7 @@ deploy:
     paths:
       - tf_output.json
   tags:
-    - all
+    - local
 
 upload-dashboard:
   stage: post-deploy
@@ -188,7 +188,7 @@ upload-dashboard:
     - aws s3 sync staticws/dashboard/out s3://$STATICWS_DASHBOARD_S3 --delete --profile oidc
   when: on_success
   tags:
-    - all
+    - local
 
 # test-dashboard:
 #   stage: e2e-tests
@@ -237,4 +237,4 @@ destroy:
     - terraform destroy -auto-approve -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH"
   when: manual
   tags:
-    - all
+    - local
