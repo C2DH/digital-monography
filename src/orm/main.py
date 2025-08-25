@@ -1,4 +1,3 @@
-import uuid
 import alembic
 import alembic.config
 import datetime
@@ -7,13 +6,11 @@ import json
 import os
 import logging
 import pathlib
-
-# import sqlalchemy as sa
-# import sqlalchemy.orm as sa_orm
 import sqlmodel
 import sqlmodel.main
 import sys
 import typing as t
+import uuid
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from aws_lambda_powertools.utilities.data_classes import (
     event_source,
@@ -24,8 +21,7 @@ from aws_lambda_powertools.utilities.data_classes import (
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, current_dir)
 
-from src._common.constants import MediumEnum, DB_URL, IS_DEBUG
-from src._common.keys import KeyPath
+from src._common.constants import DEFAULT_SFS_DIR, DB_URL, IS_DEBUG
 from src._common.models import *
 from lambda_wsgi import response as lambda_wsgi_response
 
@@ -186,6 +182,36 @@ def admin_migrate() -> flask.Response:
     except Exception as e:
         status = 503
         logger.error(f"Error migrating database: {e}")
+        msg = {"status": "error", "message": str(e)}
+    resp = flask.Response(
+        response=flask.json.dumps(msg, default=str),
+        status=status,
+        mimetype="application/json",
+    )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
+
+
+@app.route("/admin/unlink", methods=["GET"])
+def unlink() -> flask.Response:
+    """
+    Delete the database. This is mean only for debugging.
+    TODO: Disable when the db schema stabilizes.
+    """
+    msg = {"status": "success", "message": "ok"}
+    status = 200
+    try:
+        db_path = os.environ.get("DB_PATH")
+        if db_path:
+            db = pathlib.Path(db_path)
+        else:
+            db = pathlib.Path(DEFAULT_SFS_DIR) / "_database.db"
+        db.unlink(missing_ok=True)
+    except Exception as e:
+        status = 503
+        logger.error(f"Error deleting the database: {e}")
         msg = {"status": "error", "message": str(e)}
     resp = flask.Response(
         response=flask.json.dumps(msg, default=str),
