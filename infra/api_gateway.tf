@@ -17,6 +17,12 @@ resource "aws_api_gateway_resource" "gpu" {
   path_part   = "gpu"
 }
 
+resource "aws_api_gateway_resource" "orm" {
+  rest_api_id = aws_api_gateway_rest_api.general_api.id
+  parent_id   = aws_api_gateway_rest_api.general_api.root_resource_id
+  path_part   = "api"
+}
+
 # Lambda permissions
 resource "aws_lambda_permission" "entrypoint" {
   statement_id  = "AllowAPIGatewayInvokeEntrypoint"
@@ -30,6 +36,14 @@ resource "aws_lambda_permission" "gpu" {
   statement_id  = "AllowAPIGatewayInvokeGPU"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.gpu_func.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.general_api.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "orm" {
+  statement_id  = "AllowAPIGatewayInvokeORM"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.orm_func.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.general_api.execution_arn}/*/*"
 }
@@ -85,12 +99,30 @@ resource "aws_api_gateway_integration" "gpu_any" {
   uri                     = aws_lambda_function.gpu_func.invoke_arn
 }
 
+# Method and Integration for /api -> Lambda-orm
+resource "aws_api_gateway_method" "orm_any" {
+  rest_api_id   = aws_api_gateway_rest_api.general_api.id
+  resource_id   = aws_api_gateway_resource.orm.id
+  http_method   = "ANY"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "orm_any" {
+  rest_api_id             = aws_api_gateway_rest_api.general_api.id
+  resource_id             = aws_api_gateway_resource.orm.id
+  http_method             = aws_api_gateway_method.orm_any.http_method
+  integration_http_method = "POST" # Lambda function can only be invoked via POST
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.orm_func.invoke_arn
+}
+
 # Deployment and Stage
 resource "aws_api_gateway_deployment" "deployment" {
   depends_on = [
     aws_api_gateway_integration.root_any,
     aws_api_gateway_integration.proxy_any,
-    aws_api_gateway_integration.gpu_any
+    aws_api_gateway_integration.gpu_any,
+    aws_api_gateway_integration.orm_any
   ]
   rest_api_id = aws_api_gateway_rest_api.general_api.id
 }
