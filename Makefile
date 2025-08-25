@@ -6,6 +6,7 @@ PREPARER_LATEST_V := $(shell jq -r '.PREPARER.LATEST' < .versions.json)
 GITHUB_LATEST_V  := $(shell jq -r '.GITHUB.LATEST' < .versions.json)
 VERIFIER_LATEST_V  := $(shell jq -r '.VERIFIER.LATEST' < .versions.json)
 GPU_LATEST_V  := $(shell jq -r '.GPU.LATEST' < .versions.json)
+ORM_LATEST_V  := $(shell jq -r '.ORM.LATEST' < .versions.json)
 WORDPROCESSOR_LATEST_V  := $(shell jq -r '.WORDPROCESSOR.LATEST' < .versions.json)
 LOCAL_LATEST_V := $(shell jq -r '.LOCAL_LATEST_V' < .versions.json)
 DEV_DOCKER_ECR = 825580929289.dkr.ecr.eu-central-1.amazonaws.com
@@ -221,14 +222,14 @@ orm/build:
 	docker build -t dgtmon-dev-orm src/orm --build-context common=src/_common
 
 orm/tag:
-	docker tag dgtmon-dev-orm ${DEV_DOCKER_ECR}/dgtmon-dev-orm:${GPU_LATEST_V}
-	docker tag dgtmon-dev-orm ${MAIN_DOCKER_ECR}/dgtmon-dev-orm:${GPU_LATEST_V}
-	docker tag dgtmon-dev-orm ${DOCKER_HUB}/dgtmon-dev-orm:${GPU_LATEST_V}
+	docker tag dgtmon-dev-orm ${DEV_DOCKER_ECR}/dgtmon-dev-orm:${ORM_LATEST_V}
+	docker tag dgtmon-dev-orm ${MAIN_DOCKER_ECR}/dgtmon-dev-orm:${ORM_LATEST_V}
+	docker tag dgtmon-dev-orm ${DOCKER_HUB}/dgtmon-dev-orm:${ORM_LATEST_V}
 
 orm/push:
-	docker push ${DEV_DOCKER_ECR}/dgtmon-dev-orm:${GPU_LATEST_V}
-	docker push ${MAIN_DOCKER_ECR}/dgtmon-dev-orm:${GPU_LATEST_V}
-	docker push ${DOCKER_HUB}/dgtmon-dev-orm:${GPU_LATEST_V}
+	docker push ${DEV_DOCKER_ECR}/dgtmon-dev-orm:${ORM_LATEST_V}
+	docker push ${MAIN_DOCKER_ECR}/dgtmon-dev-orm:${ORM_LATEST_V}
+	docker push ${DOCKER_HUB}/dgtmon-dev-orm:${ORM_LATEST_V}
 
 orm/make: orm/build orm/tag orm/push
 
