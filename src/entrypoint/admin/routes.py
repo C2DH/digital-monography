@@ -1,0 +1,74 @@
+import alembic
+import alembic.config
+import flask
+import logging
+import os
+import pathlib
+
+from src._common.constants import DEFAULT_SFS_DIR
+
+
+admin_bp = flask.Blueprint("admin", __name__)
+
+
+@admin_bp.route("/admin/migrate", methods=["GET"])
+def admin_migrate() -> flask.Response:
+    """
+    Migrate the database schema.
+    """
+    msg = {"status": "success", "message": "ok"}
+    status = 200
+    try:
+        alembicArgs = [
+            "-c",
+            os.path.join("src", "_common", "alembic.ini"),
+            # "--sqlalchemy-url",
+            # DB_URL,
+            "--raiseerr",
+            "upgrade",
+            "head",
+        ]
+        alembic.config.main(argv=alembicArgs)
+    except Exception as e:
+        status = 503
+        logging.error(f"Error migrating database: {e}")
+        msg = {"status": "error", "message": str(e)}
+    resp = flask.Response(
+        response=flask.json.dumps(msg, default=str),
+        status=status,
+        mimetype="application/json",
+    )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
+
+
+@admin_bp.route("/admin/unlink", methods=["GET"])
+def unlink() -> flask.Response:
+    """
+    Delete the database. This is mean only for debugging.
+    TODO: Disable when the db schema stabilizes.
+    """
+    msg = {"status": "success", "message": "ok"}
+    status = 200
+    try:
+        db_path = os.environ.get("DB_PATH")
+        if db_path:
+            db = pathlib.Path(db_path)
+        else:
+            db = pathlib.Path(DEFAULT_SFS_DIR) / "_database.db"
+        db.unlink(missing_ok=True)
+    except Exception as e:
+        status = 503
+        logging.error(f"Error deleting the database: {e}")
+        msg = {"status": "error", "message": str(e)}
+    resp = flask.Response(
+        response=flask.json.dumps(msg, default=str),
+        status=status,
+        mimetype="application/json",
+    )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
