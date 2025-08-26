@@ -43,11 +43,15 @@ def create_app():
         from src.entrypoint.admin.routes import admin_bp
         from src.entrypoint.assets.routes import assets_bp
         from src.entrypoint.citations.routes import citations_bp
+        from src.entrypoint.cloud.routes import cloud_bp
+        from src.entrypoint.dropbox.routes import dropbox_bp
         from src.entrypoint.headings.routes import headings_bp
 
         app.register_blueprint(admin_bp)
         app.register_blueprint(assets_bp)
+        app.register_blueprint(cloud_bp)
         app.register_blueprint(citations_bp)
+        app.register_blueprint(dropbox_bp)
         app.register_blueprint(headings_bp)
     return app
 
