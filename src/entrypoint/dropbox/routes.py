@@ -12,7 +12,7 @@ import urllib.parse
 from .aws import dynamodb_set, secretsmanager, send_msg_to_sqs
 
 
-dropbox_bp = flask.Blueprint("dropbox", __name__)
+dropbox_bp = flask.Blueprint("dropbox", __name__, template_folder="templates")
 
 
 @dropbox_bp.route("/")
