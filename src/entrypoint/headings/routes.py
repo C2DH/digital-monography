@@ -4,7 +4,7 @@ import sqlmodel
 
 from src._common.models import Heading
 from ..db import db_engine
-from ..selectors import select_by_slug
+from ..fetchers import select_by_slug
 
 
 headings_bp = flask.Blueprint("headings", __name__)

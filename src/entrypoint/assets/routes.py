@@ -3,7 +3,7 @@ import sqlmodel
 
 from src._common.models import Asset
 from ..db import db_engine
-from ..selectors import select_by_slug
+from ..fetchers import select_by_slug
 
 
 assets_bp = flask.Blueprint("assets", __name__)

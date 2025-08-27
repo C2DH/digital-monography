@@ -3,7 +3,7 @@ import sqlmodel
 
 from src._common.models import CitationGroup, CitationItem
 from ..db import db_engine
-from ..selectors import select_by_slug
+from ..fetchers import select_by_slug
 
 
 citations_bp = flask.Blueprint("citations", __name__)
