@@ -1,6 +1,6 @@
 {
     "ENTRYPOINT": {
-        "LATEST": "0.0.76",
+        "LATEST": "0.0.77",
         "STABLE": "0.0.72"
     },
     "DROPBOX": {
