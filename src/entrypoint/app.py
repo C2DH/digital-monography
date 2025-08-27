@@ -13,12 +13,22 @@ def create_app():
     app.secret_key = os.environ["FLASK_SECRET_KEY"]
     with app.app_context():
         # this is to prevent circular imports
-        from src.entrypoint.admin.routes import admin_bp
-        from src.entrypoint.assets.routes import assets_bp
-        from src.entrypoint.citations.routes import citations_bp
-        from src.entrypoint.cloud.routes import cloud_bp
-        from src.entrypoint.dropbox.routes import dropbox_bp
-        from src.entrypoint.headings.routes import headings_bp
+        try:
+            # in lambda, the directories are copied to the root dir
+            from admin.routes import admin_bp
+            from assets.routes import assets_bp
+            from citations.routes import citations_bp
+            from cloud.routes import cloud_bp
+            from dropbox.routes import dropbox_bp
+            from headings.routes import headings_bp
+        except (ModuleNotFoundError, ImportError):
+            # in local testing, the modules is present in src.<microservice> dir
+            from src.entrypoint.admin.routes import admin_bp
+            from src.entrypoint.assets.routes import assets_bp
+            from src.entrypoint.citations.routes import citations_bp
+            from src.entrypoint.cloud.routes import cloud_bp
+            from src.entrypoint.dropbox.routes import dropbox_bp
+            from src.entrypoint.headings.routes import headings_bp
 
         app.register_blueprint(admin_bp)
         app.register_blueprint(assets_bp)

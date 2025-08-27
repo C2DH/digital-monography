@@ -3,8 +3,15 @@ import logging
 import sqlmodel
 
 from src._common.models import Heading
-from ..db import db_engine
-from ..fetchers import select_by_slug
+
+try:
+    # in microservices, db and fetchers are part of the root dir
+    from db import db_engine
+    from fetchers import select_by_slug
+except (ImportError, ModuleNotFoundError):
+    # in local testing, db and fetchers are one directory up
+    from ..db import db_engine
+    from ..fetchers import select_by_slug
 
 
 headings_bp = flask.Blueprint("headings", __name__)
