@@ -46,7 +46,7 @@ def oauth_callback(*args, **kwargs):
     access_token = auth_result.access_token
     table = os.environ.get("DYNAMODB_TOKENS_TBL", "")
     dynamodb_set(table, **{"account": account, "access_token": access_token})
-    return flask.redirect(get_url("done"))
+    return flask.redirect(get_url("dbx.done"))
 
 
 @dbx_bp.route("/login")
