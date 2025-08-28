@@ -12,10 +12,10 @@ import urllib.parse
 from .aws import dynamodb_set, secretsmanager, send_msg_to_sqs
 
 
-dropbox_bp = flask.Blueprint("dropbox", __name__, template_folder="templates")
+dbx_bp = flask.Blueprint("dbx", __name__, template_folder="templates")
 
 
-@dropbox_bp.route("/")
+@dbx_bp.route("/")
 def index() -> str:
     logging.info("Index REST api endpoint was called.")
     infra_env = os.environ.get("INFRA_ENV")
@@ -24,19 +24,19 @@ def index() -> str:
     )
 
 
-@dropbox_bp.route("/welcome")
+@dbx_bp.route("/welcome")
 def welcome():
     logging.info("Welcome REST api endpoint was called.")
     return flask.render_template(
         "welcome.html",
-        redirect_url=get_url("dropbox.oauth_callback"),
-        webhook_url=get_url("dropbox.webhook"),
-        home_url=get_url("dropbox.index"),
+        redirect_url=get_url("dbx.oauth_callback"),
+        webhook_url=get_url("dbx.webhook"),
+        home_url=get_url("dbx.index"),
         app_key=os.environ["DROPBOX_APP_KEY"],
     )
 
 
-@dropbox_bp.route("/oauth_callback")
+@dbx_bp.route("/oauth_callback")
 def oauth_callback(*args, **kwargs):
     """Callback function for when the user returns from OAuth."""
     logging.info("oauth_callback REST api endpoint was called.")
@@ -49,14 +49,14 @@ def oauth_callback(*args, **kwargs):
     return flask.redirect(get_url("done"))
 
 
-@dropbox_bp.route("/login")
+@dbx_bp.route("/login")
 def login(*args, **kwargs):
     logging.info("Login REST api endpoint was called.")
     authorize_url = get_flow().start()
     return flask.redirect(authorize_url)
 
 
-@dropbox_bp.route("/done")
+@dbx_bp.route("/done")
 def done() -> str:
     logging.info("Done REST api endpoint was called.")
     # url = "https://cpy-dgtmon-dev-staticws-dashboard.s3.eu-west-1.amazonaws.com/index.html"
@@ -73,7 +73,7 @@ def done() -> str:
     )
 
 
-@dropbox_bp.route("/webhook", methods=["GET"])
+@dbx_bp.route("/webhook", methods=["GET"])
 def challenge() -> flask.Response:
     """Respond to the webhook challenge (GET request) by echoing back the challenge parameter."""
     logging.info("Webhook REST api endpoint was called with GET (challenge).")
@@ -83,7 +83,7 @@ def challenge() -> flask.Response:
     return resp
 
 
-@dropbox_bp.route("/webhook", methods=["POST"])
+@dbx_bp.route("/webhook", methods=["POST"])
 def webhook() -> t.Union[t.NoReturn | str]:
     """
     Handle POST webhook requests by sending messages to an SQS queue.
@@ -139,7 +139,7 @@ def get_flow():
     return dropbox.DropboxOAuth2Flow(
         consumer_key=os.environ["DROPBOX_APP_KEY"],
         consumer_secret=dbx_app_secret,
-        redirect_uri=get_url("dropbox.oauth_callback"),
+        redirect_uri=get_url("dbx.oauth_callback"),
         session=flask.session,
         csrf_token_session_key="dropbox-auth-csrf-token",
     )
