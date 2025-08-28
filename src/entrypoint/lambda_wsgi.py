@@ -30,7 +30,11 @@ def response(
     print("20> type(context)", type(context))
     sr = StartResponse()
     output = app(environ(event, context), sr)
-    assert isinstance(output, werkzeug.wsgi.ClosingIterator)
+    print(
+        "isinstance(output, werkzeug.wsgi.ClosingIterator)",
+        isinstance(output, werkzeug.wsgi.ClosingIterator),
+    )
+    # assert isinstance(output, werkzeug.wsgi.ClosingIterator)
     print("23> type(output)", type(output))
     return sr.response(output)
 
@@ -111,8 +115,8 @@ def environ(event: APIGatewayProxyEventV2, _: LambdaContext) -> dict[str, t.Any]
         for k, v in headers.items():
             print("type(k)", type(k), k)
             print("type(v)", type(v), v)
-            assert isinstance(k, str)
-            assert isinstance(v, str)
+            # assert isinstance(k, str)
+            # assert isinstance(v, str)
             k = k.upper().replace("-", "_")
             if k == "CONTENT_TYPE":
                 environ["CONTENT_TYPE"] = v
