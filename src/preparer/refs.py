@@ -113,7 +113,7 @@ def prepare_ref_targets_in_headers(
                         is_digital=is_digital,
                         is_paper=is_paper,
                         filename=dstate.key.name if dstate.key else None,
-                        fragment=child["id"],
+                        fragment=child.get("id"),
                         prefix="",
                         file_count=metadata.get_chapter_number(),  # TODO: get from somewhere else
                         prev_item_num=None,
@@ -139,7 +139,7 @@ def prepare_ref_targets_in_headers(
                 file_name=dstate.key.name if dstate.key else "",
                 h_num=heading_count,
                 text=tag.text,
-                target=link.fragment if link else "",
+                target=link.fragment if link and link.fragment else "",
                 word_count=metadata.word_count,
                 char_count=metadata.char_count,
                 level=h_lvl,
