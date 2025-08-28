@@ -34,7 +34,7 @@ def response(
         "isinstance(output, werkzeug.wsgi.ClosingIterator)",
         isinstance(output, werkzeug.wsgi.ClosingIterator),
     )
-    # assert isinstance(output, werkzeug.wsgi.ClosingIterator)
+    assert isinstance(output, werkzeug.wsgi.ClosingIterator)
     print("23> type(output)", type(output))
     return sr.response(output)
 
@@ -115,7 +115,7 @@ def environ(event: APIGatewayProxyEventV2, _: LambdaContext) -> dict[str, t.Any]
         for k, v in headers.items():
             print("type(k)", type(k), k)
             print("type(v)", type(v), v)
-            # assert isinstance(k, str)
+            assert isinstance(k, str)
             # assert isinstance(v, str)
             k = k.upper().replace("-", "_")
             if k == "CONTENT_TYPE":
@@ -123,6 +123,7 @@ def environ(event: APIGatewayProxyEventV2, _: LambdaContext) -> dict[str, t.Any]
             elif k == "HOST":
                 environ["SERVER_NAME"] = v
             elif k == "X_FORWARDED_FOR":
+                assert isinstance(v, str)
                 environ["REMOTE_ADDR"] = v.split(", ")[0]
             elif k == "X_FORWARDED_PROTO":
                 environ["wsgi.url_scheme"] = v
