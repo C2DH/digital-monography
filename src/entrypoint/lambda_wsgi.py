@@ -86,7 +86,7 @@ class StartResponse:
 
 def environ(event: APIGatewayProxyEventV2, _: LambdaContext) -> dict[str, t.Any]:
     str_body = event.get("body", "")
-    assert isinstance(str_body, str)
+    print("89> type(str_body)", type(str_body), str_body)
     body = bytes(str_body, "utf-8") if str_body else b""
     environ = {
         "REQUEST_METHOD": event["httpMethod"],
