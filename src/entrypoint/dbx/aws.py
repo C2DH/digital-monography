@@ -22,11 +22,16 @@ def dynamodb_set(tbl: str, **kwargs) -> None:
     logging.info(
         f"Setting item in DynamoDB table {tbl} with attributes: {json.dumps(kwargs)}"
     )
+    print(f"Setting item in DynamoDB table {tbl} with attributes: {json.dumps(kwargs)}")
     expire_at = int((datetime.datetime.now() + datetime.timedelta(days=3)).timestamp())
     table = dynamodb_res.Table(tbl)
     logging.info(f"dynamodb_res.Table: {table}")
+    print(f"dynamodb_res.Table: {table}")
     resp = table.put_item(Item={"expire_at": expire_at, **kwargs})
     logging.info(
+        f"Response from dynamodb.Table({tbl}).put_item: {json.dumps(resp, default=str)}"
+    )
+    print(
         f"Response from dynamodb.Table({tbl}).put_item: {json.dumps(resp, default=str)}"
     )
 

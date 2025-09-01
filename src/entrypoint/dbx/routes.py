@@ -40,14 +40,23 @@ def welcome():
 def oauth_callback(*args, **kwargs):
     """Callback function for when the user returns from OAuth."""
     logging.info("oauth_callback REST api endpoint was called.")
+    print("oauth_callback REST api endpoint was called.")
     auth_result = get_flow().finish(flask.request.args)
     logging.info("auth_result get_flow().finish(flask.request.args)")
+    print("auth_result get_flow().finish(flask.request.args)")
     account = auth_result.account_id
     logging.info(f"Account ID: {account}")
+    print(f"Account ID: {account}")
     # Extract and store the access token for this user
     access_token = auth_result.access_token
+    logging.info(f"Access Token: {access_token}")
+    print(f"Access Token: {access_token}")
     table = os.environ.get("DYNAMODB_TOKENS_TBL", "")
+    logging.info(f"Tokens Table: {table}")
+    print(f"Tokens Table: {table}")
     dynamodb_set(table, **{"account": account, "access_token": access_token})
+    logging.info(f'get_url("dbx.done")={get_url("dbx.done")}')
+    print(f'get_url("dbx.done")={get_url("dbx.done")}')
     return flask.redirect(get_url("dbx.done"))
 
 
@@ -55,6 +64,8 @@ def oauth_callback(*args, **kwargs):
 def login(*args, **kwargs):
     logging.info("Login REST api endpoint was called.")
     authorize_url = get_flow().start()
+    logging.info(f"Authorize URL: {authorize_url}")
+    print(f"Authorize URL: {authorize_url}")
     return flask.redirect(authorize_url)
 
 
