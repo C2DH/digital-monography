@@ -147,7 +147,7 @@ When arranging imports from modules within a microservice and from code shared b
 
 To accomodate all those different modes, please follow this pattern.
 
-##### src/<microservice>/Dockerfile
+##### In `src/<microservice>/Dockerfile`
 ```Dockerfile
 FROM public.ecr.aws/lambda/python:3.12
 
@@ -166,7 +166,7 @@ RUN --mount=from=common,target=common \
 CMD [ "main.lambda_handler" ]
 ```
 
-##### src/<microservice>/main.py
+##### In `src/<microservice>/main.py`
 ```py
 # External dependencies
 import os
