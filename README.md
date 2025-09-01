@@ -147,7 +147,7 @@ When arranging imports from modules within a microservice and from code shared b
 
 To accomodate all those different modes, please follow this pattern.
 
-##### src/<microservice>/Dockerfile
+##### `src/<microservice>/Dockerfile`
 ```Dockerfile
 FROM public.ecr.aws/lambda/python:3.12
 
@@ -166,7 +166,7 @@ RUN --mount=from=common,target=common \
 CMD [ "main.lambda_handler" ]
 ```
 
-##### src/<microservice>/main.py
+##### `src/<microservice>/main.py`
 ```py
 # External dependencies
 import os
@@ -498,6 +498,16 @@ I see this as a controversial choice and I encourage to keep looking for a bette
 #### Attempt at adding a schema-based db
 
 We use alembic as the database migration system.
+
+### Return to VPC
+
+Initially, some resources were hidden within a VPC. This was meant to provide a layer of security to files used to build a book. However, with time it turned out no sensitive data were added or planned to be added to the hidden file system. The VPC turned out to be an additional hurdle rather than a useful layer of security. Most of the costs related to the project turned out to be related to the VPC. The costs were unpredictable, doubling in one month in comparision to the previous month. No increased traffic or other reason was noticed that would justify the increase.
+
+Thus, I removed the VPC to simplify access of resources from the Internet.
+
+At some point it might be beneficial to revert this decision and return to the VPC configuration. In this case, please do the following:
+* in Lambda functions settings, add `vpc_config`
+* in EFS `aws_efs_mount_target`, set the `subnet_id` to private subnet and add a security group
 
 ##### TODOs
 

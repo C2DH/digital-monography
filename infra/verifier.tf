@@ -152,6 +152,7 @@ resource "aws_lambda_permission" "allow_ir_apkg_html_to_invoke_lambda" {
   source_arn    = aws_s3_bucket.ir_apkg_html.arn
 }
 
+### VPC
 resource "aws_lambda_permission" "allow_verifier_access_s3_via_vpc_endpoint" {
   statement_id  = "AllowS3AccessViaVPCEndpoint"
   action        = "lambda:InvokeFunction"
@@ -181,10 +182,11 @@ resource "aws_lambda_function" "verifier_func" {
     arn              = aws_efs_access_point.efs_access_point.arn
     local_mount_path = "/mnt/efs"
   }
-  vpc_config {
-    subnet_ids         = [aws_subnet.efs_public.id]
-    security_group_ids = [aws_security_group.efs_access_sg.id]
-  }
+  # ### VPC
+  # vpc_config {
+  #   subnet_ids         = [aws_subnet.efs_public.id]
+  #   security_group_ids = [aws_security_group.efs_access_sg.id]
+  # }
   environment {
     variables = {
       DYNAMODB_AUDIT_TBL            = aws_dynamodb_table.audit_tbl.name
