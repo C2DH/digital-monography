@@ -56,7 +56,6 @@ data "aws_iam_policy_document" "assume_entrypoint_role" {
 }
 
 resource "aws_iam_role" "entrypoint_iam" {
-  # name               = "entrypoint_iam"
   name               = "${var.project}-${var.env}-${var.role_entrypoint}"
   assume_role_policy = data.aws_iam_policy_document.assume_entrypoint_role.json
 }
@@ -156,6 +155,18 @@ data "aws_iam_policy_document" "entrypoint" {
       "sqs:GetQueueUrl"
     ]
   }
+  statement {
+    sid       = "AllowLambdaVPCNetworking"
+    effect    = "Allow"
+    resources = ["*"]
+    actions = [
+      "ec2:DescribeNetworkInterfaces",
+      "ec2:CreateNetworkInterface",
+      "ec2:DeleteNetworkInterface",
+      "ec2:DescribeInstances",
+      "ec2:AttachNetworkInterface"
+    ]
+  }
 }
 
 resource "aws_iam_policy" "entrypoint" {
@@ -176,21 +187,21 @@ resource "aws_iam_role_policy_attachment" "entrypoint" {
 #   source_arn    = aws_s3_bucket.upload_apkg.arn
 # }
 
-# resource "aws_lambda_permission" "allow_entrypoint_access_s3_via_vpc_endpoint" {
-#   statement_id  = "AllowS3AccessViaVPCEndpoint"
-#   action        = "lambda:InvokeFunction"
-#   function_name = aws_lambda_function.entrypoint_func.arn
-#   principal     = "s3.amazonaws.com"
-#   source_arn    = aws_vpc_endpoint.s3_endpoint.arn
-# }
+resource "aws_lambda_permission" "allow_entrypoint_access_s3_via_vpc_endpoint" {
+  statement_id  = "AllowS3AccessViaVPCEndpoint"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.entrypoint_func.arn
+  principal     = "s3.amazonaws.com"
+  source_arn    = aws_vpc_endpoint.s3_endpoint.arn
+}
 
-# resource "aws_lambda_permission" "allow_entrypoint_access_sqs_via_vpc_endpoint" {
-#   statement_id  = "AllowSQSAccessViaVPCEndpoint"
-#   action        = "lambda:SendMessage"
-#   function_name = aws_lambda_function.entrypoint_func.arn
-#   principal     = "sqs.amazonaws.com"
-#   source_arn = aws_sqs_queue.pre_builder_queue.arn
-# }
+resource "aws_lambda_permission" "allow_entrypoint_access_sqs_via_vpc_endpoint" {
+  statement_id  = "AllowSQSAccessViaVPCEndpoint"
+  action        = "lambda:SendMessage"
+  function_name = aws_lambda_function.entrypoint_func.arn
+  principal     = "sqs.amazonaws.com"
+  source_arn    = aws_sqs_queue.entrypoint_to_dropbox.arn
+}
 
 resource "aws_lambda_function" "entrypoint_func" {
   function_name = "${var.project}-${var.env}-${var.lambda_entrypoint_func}"
@@ -199,7 +210,7 @@ resource "aws_lambda_function" "entrypoint_func" {
   role          = aws_iam_role.entrypoint_iam.arn
   depends_on = [
     data.aws_cloudwatch_log_group.general_purpose_logs,
-    # aws_efs_mount_target.efs_mount
+    aws_efs_mount_target.efs_mount
   ]
   architectures = ["x86_64"]
   timeout       = 900
@@ -228,14 +239,14 @@ resource "aws_lambda_function" "entrypoint_func" {
       INFRA_ENV               = var.env
     }
   }
-  #   file_system_config {
-  #     arn              = aws_efs_access_point.efs_access_point.arn
-  #     local_mount_path = "/mnt/efs"
-  #   }
-  #   vpc_config {
-  #     subnet_ids         = [aws_subnet.efs_public.id]
-  #     security_group_ids = [aws_security_group.efs_access_sg.id]
-  #   }
+  file_system_config {
+    arn              = aws_efs_access_point.efs_access_point.arn
+    local_mount_path = "/mnt/efs"
+  }
+  vpc_config {
+    subnet_ids         = [aws_subnet.efs_public.id]
+    security_group_ids = [aws_security_group.efs_access_sg.id]
+  }
 }
 
 # resource "aws_s3_bucket_notification" "upload_apkg_notification" {
