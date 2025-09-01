@@ -41,7 +41,9 @@ def oauth_callback(*args, **kwargs):
     """Callback function for when the user returns from OAuth."""
     logging.info("oauth_callback REST api endpoint was called.")
     auth_result = get_flow().finish(flask.request.args)
+    logging.info("auth_result get_flow().finish(flask.request.args)")
     account = auth_result.account_id
+    logging.info(f"Account ID: {account}")
     # Extract and store the access token for this user
     access_token = auth_result.access_token
     table = os.environ.get("DYNAMODB_TOKENS_TBL", "")
