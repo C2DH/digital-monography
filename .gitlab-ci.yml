@@ -86,8 +86,8 @@ init:
       - secrets/decrypted.tfvars.json
       - staticws/dashboard/.env.develop
       - staticws/dashboard/.env.main
-  tags:
-    - local
+  # tags:
+  #   - local
 
 build-dashboard:
   stage: pre-deploy
@@ -117,8 +117,8 @@ build-dashboard:
     paths:
       - staticws/dashboard/.next
       - staticws/dashboard/out
-  tags:
-    - local
+  # tags:
+  #   - local
 
 deploy:
   stage: deploy
@@ -154,8 +154,8 @@ deploy:
     expire_in: 1 day
     paths:
       - tf_output.json
-  tags:
-    - local
+  # tags:
+  #   - local
 
 upload-dashboard:
   stage: post-deploy
@@ -187,8 +187,8 @@ upload-dashboard:
     - export AWS_CONFIG_FILE=~/.aws/config
     - aws s3 sync staticws/dashboard/out s3://$STATICWS_DASHBOARD_S3 --delete --profile oidc
   when: on_success
-  tags:
-    - local
+  # tags:
+  #   - local
 
 # test-dashboard:
 #   stage: e2e-tests
@@ -236,5 +236,5 @@ destroy:
     - terraform init -backend-config="key=${CI_COMMIT_BRANCH}.tfstate" -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH" -reconfigure
     - terraform destroy -auto-approve -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH"
   when: manual
-  tags:
-    - local
+  # tags:
+  #   - local
