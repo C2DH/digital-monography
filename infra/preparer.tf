@@ -223,10 +223,10 @@ resource "aws_lambda_function" "preparer_func" {
     arn              = aws_efs_access_point.efs_access_point.arn
     local_mount_path = "/mnt/efs"
   }
-  # vpc_config {
-  #   subnet_ids         = [aws_subnet.efs_public.id]
-  #   security_group_ids = [aws_security_group.efs_access_sg.id]
-  # }
+  vpc_config {
+    subnet_ids         = [aws_subnet.efs_public.id]
+    security_group_ids = [aws_security_group.efs_access_sg.id]
+  }
   environment {
     variables = {
       AWS_ACCOUNT_REGION           = var.region

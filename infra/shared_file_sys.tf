@@ -47,15 +47,10 @@ resource "aws_subnet" "efs_public" {
   cidr_block = "10.10.0.0/20"
 }
 
-resource "aws_default_subnet" "default_eu" {
-  availability_zone = "eu-central-1a"
-}
-
 resource "aws_efs_mount_target" "efs_mount" {
-  file_system_id = aws_efs_file_system.shared_file_sys.id
-  subnet_id      = aws_default_subnet.default_eu.id
-  # subnet_id      = aws_subnet.efs_public.id # private subnet, despite the name
-  # security_groups = [aws_security_group.efs_access_sg.id]
+  file_system_id  = aws_efs_file_system.shared_file_sys.id
+  subnet_id       = aws_subnet.efs_public.id
+  security_groups = [aws_security_group.efs_access_sg.id]
 }
 
 resource "aws_efs_file_system" "shared_file_sys" {
