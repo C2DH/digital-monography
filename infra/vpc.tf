@@ -32,6 +32,12 @@ resource "aws_vpc_endpoint" "dynamodb_endpoint" {
   route_table_ids = [aws_route_table.vpc_to_s3_connectivity.id]
 }
 
+resource "aws_vpc_endpoint" "secretsmanager_endpoint" {
+  vpc_id       = aws_vpc.dgtmon_vpc.id
+  service_name = "com.amazonaws.${var.region}.secretsmanager"
+  subnet_ids   = [aws_subnet.efs_public.id]
+}
+
 resource "aws_route_table" "vpc_to_s3_connectivity" {
   vpc_id = aws_vpc.dgtmon_vpc.id
 }

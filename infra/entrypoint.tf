@@ -209,8 +209,9 @@ resource "aws_lambda_function" "entrypoint_func" {
   image_uri     = "${aws_ecr_repository.entrypoint_repo.repository_url}:${local.entrypoint_tag}"
   role          = aws_iam_role.entrypoint_iam.arn
   depends_on = [
+    aws_efs_mount_target.efs_mount,
+    aws_vpc_endpoint.secretsmanager_endpoint,
     data.aws_cloudwatch_log_group.general_purpose_logs,
-    aws_efs_mount_target.efs_mount
   ]
   architectures = ["x86_64"]
   timeout       = 900
