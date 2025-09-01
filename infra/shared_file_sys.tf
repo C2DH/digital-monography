@@ -58,6 +58,9 @@ resource "aws_efs_file_system" "shared_file_sys" {
   performance_mode = "generalPurpose"
   throughput_mode  = "bursting"
   encrypted        = true
+  lifecycle_policy {
+    transition_to_ia = "AFTER_365_DAYS"
+  }
 }
 
 resource "aws_efs_access_point" "efs_access_point" {
