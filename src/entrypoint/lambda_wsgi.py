@@ -108,8 +108,7 @@ def environ(event: APIGatewayProxyEventV2, _: LambdaContext) -> dict[str, t.Any]
         "wsgi.multiprocess": False,
         "wsgi.run_once": False,
     }
-    headers = event.get("headers", {})
-    assert isinstance(headers, dict)
+    headers: dict | None = event.get("headers", {})
     if headers:
         print("105> headers")
         for k, v in headers.items():
