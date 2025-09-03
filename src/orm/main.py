@@ -52,8 +52,38 @@ def index() -> flask.Response:
     return resp
 
 
+@app.route("/api", methods=["GET"])
+@app.route("/api/", methods=["GET"])
+def index() -> flask.Response:
+    slug = flask.request.args.get("slug", "None")
+    resp = flask.Response(
+        response=flask.json.dumps({"site": "home", "slug": slug}),
+        status=200,
+        mimetype="application/json",
+    )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
+
+
 @app.route("/hello", methods=["GET"])
 @app.route("/hello/", methods=["GET"])
+def index() -> flask.Response:
+    slug = flask.request.args.get("slug", "None")
+    resp = flask.Response(
+        response=flask.json.dumps({"site": "home", "slug": slug}),
+        status=200,
+        mimetype="application/json",
+    )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
+
+
+@app.route("/api/hello", methods=["GET"])
+@app.route("/api/hello/", methods=["GET"])
 def index() -> flask.Response:
     slug = flask.request.args.get("slug", "None")
     resp = flask.Response(
