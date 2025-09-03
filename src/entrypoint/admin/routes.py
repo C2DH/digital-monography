@@ -12,6 +12,7 @@ admin_bp = flask.Blueprint("admin", __name__)
 
 
 @admin_bp.route("/admin/migrate", methods=["GET"])
+@admin_bp.route("/admin/migrate/", methods=["GET"])
 def admin_migrate() -> flask.Response:
     """
     Migrate the database schema.
@@ -44,7 +45,8 @@ def admin_migrate() -> flask.Response:
     return resp
 
 
-@admin_bp.route("/admin/unlink", methods=["GET"])
+@admin_bp.route("/admin/unlink", methods=["DELETE"])
+@admin_bp.route("/admin/unlink/", methods=["DELETE"])
 def unlink() -> flask.Response:
     """
     Delete the database. This is mean only for debugging.
