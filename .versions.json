@@ -32,7 +32,7 @@
         "STABLE": "0.0.11"
     },
     "ORM": {
-        "LATEST": "0.0.6",
+        "LATEST": "0.0.7",
         "STABLE": "0.0.1"
     },
     "WORDPROCESSOR": {

@@ -9,6 +9,7 @@ from aws_lambda_powertools.utilities.data_classes import (
     event_source,
     APIGatewayProxyEventV2,
 )
+import flask
 
 # Get the current directory and add it to sys.path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -35,6 +36,35 @@ logger.setLevel(logging.INFO)
 
 
 app = create_app()
+
+
+@app.route("/", methods=["GET"])
+def index() -> flask.Response:
+    slug = flask.request.args.get("slug", "None")
+    resp = flask.Response(
+        response=flask.json.dumps({"site": "home", "slug": slug}),
+        status=200,
+        mimetype="application/json",
+    )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
+
+
+@app.route("/hello", methods=["GET"])
+@app.route("/hello/", methods=["GET"])
+def index() -> flask.Response:
+    slug = flask.request.args.get("slug", "None")
+    resp = flask.Response(
+        response=flask.json.dumps({"site": "home", "slug": slug}),
+        status=200,
+        mimetype="application/json",
+    )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
 
 
 @event_source(data_class=APIGatewayProxyEventV2)

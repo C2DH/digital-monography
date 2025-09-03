@@ -11,6 +11,21 @@ from src._common.constants import DEFAULT_SFS_DIR
 admin_bp = flask.Blueprint("admin", __name__)
 
 
+@admin_bp.route("/hi", methods=["GET"])
+@admin_bp.route("/hi/", methods=["GET"])
+def index() -> flask.Response:
+    # slug = flask.request.args.get("slug", "None")
+    resp = flask.Response(
+        response=flask.json.dumps({"site": "hi"}),
+        status=200,
+        mimetype="application/json",
+    )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
+
+
 @admin_bp.route("/admin/migrate", methods=["GET"])
 @admin_bp.route("/admin/migrate/", methods=["GET"])
 def admin_migrate() -> flask.Response:
