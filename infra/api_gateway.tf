@@ -54,7 +54,7 @@ resource "aws_lambda_permission" "orm" {
   source_arn    = "${aws_api_gateway_rest_api.general_api.execution_arn}/*/*"
 }
 
-# Method and Integration for root ANY -> Lambda-entrypoint
+# Method and Integration for root ANY -> Lambda-orm
 resource "aws_api_gateway_method" "root_any" {
   rest_api_id   = aws_api_gateway_rest_api.general_api.id
   resource_id   = aws_api_gateway_rest_api.general_api.root_resource_id
@@ -71,7 +71,7 @@ resource "aws_api_gateway_integration" "root_any" {
   uri                     = aws_lambda_function.orm_func.invoke_arn
 }
 
-# Method and Integration for /{proxy+} -> Lambda-entrypoint
+# Method and Integration for /{proxy+} -> Lambda-orm
 resource "aws_api_gateway_method" "proxy_any" {
   rest_api_id   = aws_api_gateway_rest_api.general_api.id
   resource_id   = aws_api_gateway_resource.proxy.id
