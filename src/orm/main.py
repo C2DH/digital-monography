@@ -54,7 +54,7 @@ def index() -> flask.Response:
 
 @app.route("/api", methods=["GET"])
 @app.route("/api/", methods=["GET"])
-def index() -> flask.Response:
+def api_index() -> flask.Response:
     slug = flask.request.args.get("slug", "None")
     resp = flask.Response(
         response=flask.json.dumps({"site": "home", "slug": slug}),
@@ -69,7 +69,7 @@ def index() -> flask.Response:
 
 @app.route("/hello", methods=["GET"])
 @app.route("/hello/", methods=["GET"])
-def index() -> flask.Response:
+def hello() -> flask.Response:
     slug = flask.request.args.get("slug", "None")
     resp = flask.Response(
         response=flask.json.dumps({"site": "home", "slug": slug}),
@@ -84,7 +84,7 @@ def index() -> flask.Response:
 
 @app.route("/api/hello", methods=["GET"])
 @app.route("/api/hello/", methods=["GET"])
-def index() -> flask.Response:
+def api_hello() -> flask.Response:
     slug = flask.request.args.get("slug", "None")
     resp = flask.Response(
         response=flask.json.dumps({"site": "home", "slug": slug}),

@@ -13,7 +13,7 @@ admin_bp = flask.Blueprint("admin", __name__)
 
 @admin_bp.route("/hi", methods=["GET"])
 @admin_bp.route("/hi/", methods=["GET"])
-def index() -> flask.Response:
+def hi() -> flask.Response:
     # slug = flask.request.args.get("slug", "None")
     resp = flask.Response(
         response=flask.json.dumps({"site": "hi"}),
@@ -28,7 +28,7 @@ def index() -> flask.Response:
 
 @admin_bp.route("/admin/hi", methods=["GET"])
 @admin_bp.route("/admin/hi/", methods=["GET"])
-def index() -> flask.Response:
+def admin_hi() -> flask.Response:
     # slug = flask.request.args.get("slug", "None")
     resp = flask.Response(
         response=flask.json.dumps({"site": "hi"}),
