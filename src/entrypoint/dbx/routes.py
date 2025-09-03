@@ -41,6 +41,8 @@ def oauth_callback(*args, **kwargs):
     """Callback function for when the user returns from OAuth."""
     logging.info("oauth_callback REST api endpoint was called.")
     print("oauth_callback REST api endpoint was called.")
+    logging.info(json.dumps(flask.request.args, default=str))
+    print(json.dumps(flask.request.args, default=str))
     auth_result = get_flow().finish(flask.request.args)
     logging.info("auth_result get_flow().finish(flask.request.args)")
     print("auth_result get_flow().finish(flask.request.args)")
@@ -146,9 +148,26 @@ def get_url(route) -> str:
     return urllib.parse.urlunparse(url_parts)
 
 
-def get_flow():
+def get_flow() -> dropbox.DropboxOAuth2Flow:
+    """
+    Returns DropboxOAuth2Flow object, which has 2 important methods:
+    * start()
+        Builds an authorization URL, where a user will be
+        automatically redirected to enter his/hers Dropbox credentials.
+        It also saves CSRF token.
+    * finish()
+        After a user has visited the authorize URL and logged in,
+        dropbox will check CSRF token and, if access was not denied,
+        fetch an access token. Returns `dropbox.OAuth2FlowResult`.
+    """
     secret_id = os.environ.get("DROPBOX_SECRET_ID", "")
     dbx_app_secret = get_dbx_app_secret(secret_id)
+    logging.info("len(dbx_app_secret)", len(dbx_app_secret))
+    print("len(dbx_app_secret)", len(dbx_app_secret))
+    logging.info(f'get_url("dbx.oauth_callback")={get_url("dbx.oauth_callback")}')
+    print(f'get_url("dbx.oauth_callback")={get_url("dbx.oauth_callback")}')
+    logging.info(f"flask.session={flask.session}")
+    print(f"flask.session={flask.session}")
     return dropbox.DropboxOAuth2Flow(
         consumer_key=os.environ["DROPBOX_APP_KEY"],
         consumer_secret=dbx_app_secret,
