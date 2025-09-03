@@ -30,13 +30,13 @@ test/prep:
 		python3.12 scripts/prepare_and_build.py book_path="tests/_fixtures/a_book/"
 
 test/unit:
-	DGTMON_DEBUG=1 python3.12 -m pytest tests/entrypoint tests/common/ tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
+	DGTMON_DEBUG=1 python3.12 -m pytest tests/entrypoint tests/orm tests/common/ tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
 
 test/integration:
 	DGTMON_DEBUG=1 python3.12 -m pytest tests/integration/
 
 test:
-	DGTMON_DEBUG=1 python3.12 -m pytest tests/entrypoint tests/common/ tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
+	DGTMON_DEBUG=1 python3.12 -m pytest tests/entrypoint tests/orm tests/common/ tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
 
 test/integration:
 	DGTMON_DEBUG=1 python3.12 -m pytest tests/integration
