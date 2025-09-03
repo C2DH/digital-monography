@@ -128,7 +128,7 @@ resource "aws_api_gateway_deployment" "deployment" {
     aws_api_gateway_integration.root_any,
     aws_api_gateway_integration.proxy_any,
     aws_api_gateway_integration.gpu_any,
-    aws_api_gateway_integration.orm_any
+    aws_api_gateway_integration.entrypoint_any
   ]
   rest_api_id = aws_api_gateway_rest_api.general_api.id
 }
