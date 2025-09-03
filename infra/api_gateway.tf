@@ -11,16 +11,22 @@ resource "aws_api_gateway_resource" "proxy" {
   path_part   = "{proxy+}"
 }
 
+# resource "aws_api_gateway_resource" "orm" {
+#   rest_api_id = aws_api_gateway_rest_api.general_api.id
+#   parent_id   = aws_api_gateway_rest_api.general_api.root_resource_id
+#   path_part   = "api"
+# }
+
+resource "aws_api_gateway_resource" "entrypoint" {
+  rest_api_id = aws_api_gateway_rest_api.general_api.id
+  parent_id   = aws_api_gateway_rest_api.general_api.root_resource_id
+  path_part   = "dbx"
+}
+
 resource "aws_api_gateway_resource" "gpu" {
   rest_api_id = aws_api_gateway_rest_api.general_api.id
   parent_id   = aws_api_gateway_rest_api.general_api.root_resource_id
   path_part   = "gpu"
-}
-
-resource "aws_api_gateway_resource" "orm" {
-  rest_api_id = aws_api_gateway_rest_api.general_api.id
-  parent_id   = aws_api_gateway_rest_api.general_api.root_resource_id
-  path_part   = "api"
 }
 
 # Lambda permissions
@@ -62,7 +68,7 @@ resource "aws_api_gateway_integration" "root_any" {
   http_method             = aws_api_gateway_method.root_any.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.entrypoint_func.invoke_arn
+  uri                     = aws_lambda_function.orm_func.invoke_arn
 }
 
 # Method and Integration for /{proxy+} -> Lambda-entrypoint
@@ -79,7 +85,7 @@ resource "aws_api_gateway_integration" "proxy_any" {
   http_method             = aws_api_gateway_method.proxy_any.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.entrypoint_func.invoke_arn
+  uri                     = aws_lambda_function.orm_func.invoke_arn
 }
 
 # Method and Integration for /gpu -> Lambda-gpu
@@ -99,21 +105,21 @@ resource "aws_api_gateway_integration" "gpu_any" {
   uri                     = aws_lambda_function.gpu_func.invoke_arn
 }
 
-# Method and Integration for /api -> Lambda-orm
-resource "aws_api_gateway_method" "orm_any" {
+# Method and Integration for /dbx -> Lambda-orm
+resource "aws_api_gateway_method" "entrypoint_any" {
   rest_api_id   = aws_api_gateway_rest_api.general_api.id
-  resource_id   = aws_api_gateway_resource.orm.id
+  resource_id   = aws_api_gateway_resource.entrypoint.id
   http_method   = "ANY"
   authorization = "NONE"
 }
 
-resource "aws_api_gateway_integration" "orm_any" {
+resource "aws_api_gateway_integration" "entrypoint_any" {
   rest_api_id             = aws_api_gateway_rest_api.general_api.id
-  resource_id             = aws_api_gateway_resource.orm.id
-  http_method             = aws_api_gateway_method.orm_any.http_method
+  resource_id             = aws_api_gateway_resource.entrypoint.id
+  http_method             = aws_api_gateway_method.entrypoint_any.http_method
   integration_http_method = "POST" # Lambda function can only be invoked via POST
   type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.orm_func.invoke_arn
+  uri                     = aws_lambda_function.entrypoint_func.invoke_arn
 }
 
 # Deployment and Stage
