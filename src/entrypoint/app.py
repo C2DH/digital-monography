@@ -15,25 +15,10 @@ def create_app():
         # this is to prevent circular imports
         try:
             # in lambda, the directories are copied to the root dir
-            from admin.routes import admin_bp
-            from assets.routes import assets_bp
-            from citations.routes import citations_bp
-            from cloud.routes import cloud_bp
             from dbx.routes import dbx_bp
-            from headings.routes import headings_bp
         except (ModuleNotFoundError, ImportError):
             # in local testing, the modules is present in src.<microservice> dir
-            from src.entrypoint.admin.routes import admin_bp
-            from src.entrypoint.assets.routes import assets_bp
-            from src.entrypoint.citations.routes import citations_bp
-            from src.entrypoint.cloud.routes import cloud_bp
             from src.entrypoint.dbx.routes import dbx_bp
-            from src.entrypoint.headings.routes import headings_bp
 
-        app.register_blueprint(admin_bp)
-        app.register_blueprint(assets_bp)
-        app.register_blueprint(cloud_bp)
-        app.register_blueprint(citations_bp)
         app.register_blueprint(dbx_bp)
-        app.register_blueprint(headings_bp)
     return app
