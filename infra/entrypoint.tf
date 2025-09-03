@@ -155,18 +155,18 @@ data "aws_iam_policy_document" "entrypoint" {
       "sqs:GetQueueUrl"
     ]
   }
-  statement {
-    sid       = "AllowLambdaVPCNetworking"
-    effect    = "Allow"
-    resources = ["*"]
-    actions = [
-      "ec2:DescribeNetworkInterfaces",
-      "ec2:CreateNetworkInterface",
-      "ec2:DeleteNetworkInterface",
-      "ec2:DescribeInstances",
-      "ec2:AttachNetworkInterface"
-    ]
-  }
+  # statement {
+  #   sid       = "AllowLambdaVPCNetworking"
+  #   effect    = "Allow"
+  #   resources = ["*"]
+  #   actions = [
+  #     "ec2:DescribeNetworkInterfaces",
+  #     "ec2:CreateNetworkInterface",
+  #     "ec2:DeleteNetworkInterface",
+  #     "ec2:DescribeInstances",
+  #     "ec2:AttachNetworkInterface"
+  #   ]
+  # }
 }
 
 resource "aws_iam_policy" "entrypoint" {
@@ -187,21 +187,21 @@ resource "aws_iam_role_policy_attachment" "entrypoint" {
 #   source_arn    = aws_s3_bucket.upload_apkg.arn
 # }
 
-resource "aws_lambda_permission" "allow_entrypoint_access_s3_via_vpc_endpoint" {
-  statement_id  = "AllowS3AccessViaVPCEndpoint"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.entrypoint_func.arn
-  principal     = "s3.amazonaws.com"
-  source_arn    = aws_vpc_endpoint.s3_endpoint.arn
-}
+# resource "aws_lambda_permission" "allow_entrypoint_access_s3_via_vpc_endpoint" {
+#   statement_id  = "AllowS3AccessViaVPCEndpoint"
+#   action        = "lambda:InvokeFunction"
+#   function_name = aws_lambda_function.entrypoint_func.arn
+#   principal     = "s3.amazonaws.com"
+#   source_arn    = aws_vpc_endpoint.s3_endpoint.arn
+# }
 
-resource "aws_lambda_permission" "allow_entrypoint_access_sqs_via_vpc_endpoint" {
-  statement_id  = "AllowSQSAccessViaVPCEndpoint"
-  action        = "lambda:SendMessage"
-  function_name = aws_lambda_function.entrypoint_func.arn
-  principal     = "sqs.amazonaws.com"
-  source_arn    = aws_sqs_queue.entrypoint_to_dropbox.arn
-}
+# resource "aws_lambda_permission" "allow_entrypoint_access_sqs_via_vpc_endpoint" {
+#   statement_id  = "AllowSQSAccessViaVPCEndpoint"
+#   action        = "lambda:SendMessage"
+#   function_name = aws_lambda_function.entrypoint_func.arn
+#   principal     = "sqs.amazonaws.com"
+#   source_arn    = aws_sqs_queue.entrypoint_to_dropbox.arn
+# }
 
 resource "aws_lambda_function" "entrypoint_func" {
   function_name = "${var.project}-${var.env}-${var.lambda_entrypoint_func}"
@@ -209,8 +209,8 @@ resource "aws_lambda_function" "entrypoint_func" {
   image_uri     = "${aws_ecr_repository.entrypoint_repo.repository_url}:${local.entrypoint_tag}"
   role          = aws_iam_role.entrypoint_iam.arn
   depends_on = [
-    aws_efs_mount_target.efs_mount,
-    aws_vpc_endpoint.secretsmanager_endpoint,
+    # aws_efs_mount_target.efs_mount,
+    # aws_vpc_endpoint.secretsmanager_endpoint,
     data.aws_cloudwatch_log_group.general_purpose_logs,
   ]
   architectures = ["x86_64"]
@@ -222,32 +222,32 @@ resource "aws_lambda_function" "entrypoint_func" {
   }
   environment {
     variables = {
-      DYNAMODB_ALERTS_TBL     = aws_dynamodb_table.alerts_tbl.name
-      DYNAMODB_ASSETS_TBL     = aws_dynamodb_table.assets_tbl.name
-      DYNAMODB_AUDIT_TBL      = aws_dynamodb_table.audit_tbl.name
-      DYNAMODB_CITATIONS_TBL  = aws_dynamodb_table.citations_tbl.name
-      DYNAMODB_HEADINGS_TBL   = aws_dynamodb_table.headings_tbl.name
-      DYNAMODB_REFS_TBL       = aws_dynamodb_table.refs_tbl.name
-      DYNAMODB_TOKENS_TBL     = aws_dynamodb_table.tokens_tbl.name
-      SQS_URL                 = aws_sqs_queue.entrypoint_to_dropbox.url
-      APKG_UPLOAD_BUCKET_NAME = aws_s3_bucket.upload_apkg.bucket
-      VERIFIER_MSGS           = aws_s3_bucket.verification_msg.bucket
-      DASHBOARD_DOMAIN        = aws_s3_bucket.staticws_dashboard.bucket_regional_domain_name
-      FLASK_SECRET_KEY        = var.flask_secret_key
-      DROPBOX_SECRET_ID       = data.aws_secretsmanager_secret.github_api_token.id
-      DROPBOX_APP_DIR         = var.dropbox_app_dir
-      DROPBOX_APP_KEY         = var.dropbox_app_key
-      INFRA_ENV               = var.env
+      DYNAMODB_AUDIT_TBL  = aws_dynamodb_table.audit_tbl.name
+      DYNAMODB_TOKENS_TBL = aws_dynamodb_table.tokens_tbl.name
+      SQS_URL             = aws_sqs_queue.entrypoint_to_dropbox.url
+      DASHBOARD_DOMAIN    = aws_s3_bucket.staticws_dashboard.bucket_regional_domain_name
+      FLASK_SECRET_KEY    = var.flask_secret_key
+      DROPBOX_SECRET_ID   = data.aws_secretsmanager_secret.github_api_token.id
+      DROPBOX_APP_DIR     = var.dropbox_app_dir
+      DROPBOX_APP_KEY     = var.dropbox_app_key
+      INFRA_ENV           = var.env
+      # APKG_UPLOAD_BUCKET_NAME = aws_s3_bucket.upload_apkg.bucket
+      # DYNAMODB_ALERTS_TBL     = aws_dynamodb_table.alerts_tbl.name
+      # DYNAMODB_ASSETS_TBL     = aws_dynamodb_table.assets_tbl.name
+      # DYNAMODB_CITATIONS_TBL  = aws_dynamodb_table.citations_tbl.name
+      # DYNAMODB_HEADINGS_TBL   = aws_dynamodb_table.headings_tbl.name
+      # DYNAMODB_REFS_TBL       = aws_dynamodb_table.refs_tbl.name
+      # VERIFIER_MSGS           = aws_s3_bucket.verification_msg.bucket
     }
   }
-  file_system_config {
-    arn              = aws_efs_access_point.efs_access_point.arn
-    local_mount_path = "/mnt/efs"
-  }
-  vpc_config {
-    subnet_ids         = [aws_subnet.efs_public.id]
-    security_group_ids = [aws_security_group.efs_access_sg.id]
-  }
+  # file_system_config {
+  #   arn              = aws_efs_access_point.efs_access_point.arn
+  #   local_mount_path = "/mnt/efs"
+  # }
+  # vpc_config {
+  #   subnet_ids         = [aws_subnet.efs_public.id]
+  #   security_group_ids = [aws_security_group.efs_access_sg.id]
+  # }
 }
 
 # resource "aws_s3_bucket_notification" "upload_apkg_notification" {
