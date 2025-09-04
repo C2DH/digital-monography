@@ -92,7 +92,7 @@ def environ(event: APIGatewayProxyEventV2, _: LambdaContext) -> dict[str, t.Any]
     str_body = event.get("body", "")
     print("89> type(str_body)", type(str_body), str_body)
     body = bytes(str_body, "utf-8") if str_body else b""
-    environ = {
+    environ: dict[str, t.Any] = {
         "REQUEST_METHOD": event["httpMethod"],
         "SCRIPT_NAME": "",
         "PATH_INFO": event["path"],
@@ -108,7 +108,7 @@ def environ(event: APIGatewayProxyEventV2, _: LambdaContext) -> dict[str, t.Any]
         "wsgi.multiprocess": False,
         "wsgi.run_once": False,
     }
-    headers: dict | None = event.get("headers", {})
+    headers: dict[str, t.Any] | None = event.get("headers", {})
     if headers:
         print("105> headers")
         for k, v in headers.items():
