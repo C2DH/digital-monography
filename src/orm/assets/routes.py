@@ -16,7 +16,7 @@ except (ImportError, ModuleNotFoundError):
 assets_bp = flask.Blueprint("assets", __name__)
 
 
-@assets_bp.route("/assets/list", methods=["GET"])
+@assets_bp.route("/api/assets/list", methods=["GET"])
 def assets_list() -> flask.Response:
     """
     List models.Asset objects by a "slug" parameter. See example URL:

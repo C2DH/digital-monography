@@ -15,7 +15,7 @@ fetching data from s3 object storage and dynamodb database.
 """
 
 
-@cloud_bp.route("/list-warnings", methods=["GET"])
+@cloud_bp.route("/api/list-warnings", methods=["GET"])
 def list_warnings() -> flask.Response:
     """List objects in a warnings bucket."""
     logging.info("List warnings REST api endpoint was called with GET.")
@@ -32,7 +32,7 @@ def list_warnings() -> flask.Response:
     return resp
 
 
-@cloud_bp.route("/list-assets", methods=["GET"])
+@cloud_bp.route("/api/list-assets", methods=["GET"])
 def list_assets_from_s3() -> flask.Response:
     """List objects in a upload slug/assets/* bucket."""
     logging.info("List assets REST api endpoint was called with GET.")
@@ -50,7 +50,7 @@ def list_assets_from_s3() -> flask.Response:
     return resp
 
 
-@cloud_bp.route("/assets", methods=["GET"])
+@cloud_bp.route("/api/assets", methods=["GET"])
 def list_assets_from_dynamodb() -> flask.Response:
     """Retrieve assets from the database and return them to the client."""
     logging.info("Retrieve assets from the database and return them to the client.")
@@ -72,7 +72,7 @@ def list_assets_from_dynamodb() -> flask.Response:
     return resp
 
 
-@cloud_bp.route("/refs", methods=["GET"])
+@cloud_bp.route("/api/refs", methods=["GET"])
 def list_refs_from_dynamodb() -> flask.Response:
     """Retrieve refs from the database and return them to the client."""
     logging.info("Retrieve refs from the database and return them to the client.")
@@ -94,7 +94,7 @@ def list_refs_from_dynamodb() -> flask.Response:
     return resp
 
 
-@cloud_bp.route("/events", methods=["GET"])
+@cloud_bp.route("/api/events", methods=["GET"])
 def query_events() -> flask.Response:
     """Retrieve events from the database and return them to the client."""
     logging.info("Retrieve events from the database and return them to the client.")
@@ -116,7 +116,7 @@ def query_events() -> flask.Response:
     return resp
 
 
-@cloud_bp.route("/alerts", methods=["GET"])
+@cloud_bp.route("/api/alerts", methods=["GET"])
 def query_alerts() -> flask.Response:
     """Retrieve alerts from the database and return them to the client."""
     logging.info("Retrieve alerts from the database and return them to the client.")
@@ -144,7 +144,7 @@ def query_alerts() -> flask.Response:
     return resp
 
 
-@cloud_bp.route("/citations", methods=["GET"])
+@cloud_bp.route("/api/citations", methods=["GET"])
 def query_citations() -> flask.Response:
     """Retrieve citations from the database and return them to the client."""
     logging.info("Retrieve citations from the database and return them to the client.")
@@ -166,7 +166,7 @@ def query_citations() -> flask.Response:
     return resp
 
 
-@cloud_bp.route("/headings", methods=["GET"])
+@cloud_bp.route("/api/headings", methods=["GET"])
 def query_headings() -> flask.Response:
     """Retrieve headings from the database and return them to the client."""
     logging.info("Retrieve headings from the database and return them to the client.")

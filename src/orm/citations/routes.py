@@ -16,7 +16,7 @@ except (ImportError, ModuleNotFoundError):
 citations_bp = flask.Blueprint("citations", __name__)
 
 
-@citations_bp.route("/citations/groups/list", methods=["GET"])
+@citations_bp.route("/api/citations/groups/list", methods=["GET"])
 def citations_groups_list() -> flask.Response:
     """
     List objects.CitationGroup object by a "slug" parameter. See example URL:
@@ -36,7 +36,7 @@ def citations_groups_list() -> flask.Response:
     return resp
 
 
-@citations_bp.route("/citations/items/list", methods=["GET"])
+@citations_bp.route("/api/citations/items/list", methods=["GET"])
 def citations_items_list() -> flask.Response:
     """
     List objects.CitationItems object by a "slug" parameter. See example URL:

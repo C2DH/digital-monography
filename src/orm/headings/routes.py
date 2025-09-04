@@ -17,7 +17,7 @@ except (ImportError, ModuleNotFoundError):
 headings_bp = flask.Blueprint("headings", __name__)
 
 
-@headings_bp.route("/headings/list", methods=["GET"])
+@headings_bp.route("/api/headings/list", methods=["GET"])
 def headings_list() -> flask.Response:
     """
     List models.Heading object by a "slug" parameter. See example URL:

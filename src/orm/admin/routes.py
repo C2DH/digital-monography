@@ -11,27 +11,12 @@ from src._common.constants import DEFAULT_SFS_DIR
 admin_bp = flask.Blueprint("admin", __name__)
 
 
-@admin_bp.route("/hi", methods=["GET"])
-@admin_bp.route("/hi/", methods=["GET"])
-def hi() -> flask.Response:
-    # slug = flask.request.args.get("slug", "None")
-    resp = flask.Response(
-        response=flask.json.dumps({"site": "hi"}),
-        status=200,
-        mimetype="application/json",
-    )
-    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
-    resp.headers["Access-Control-Allow-Origin"] = "*"
-    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
-    return resp
-
-
-@admin_bp.route("/admin/hi", methods=["GET"])
-@admin_bp.route("/admin/hi/", methods=["GET"])
+@admin_bp.route("/api/admin/hi", methods=["GET"])
+@admin_bp.route("/api/admin/hi/", methods=["GET"])
 def admin_hi() -> flask.Response:
-    # slug = flask.request.args.get("slug", "None")
+    slug = flask.request.args.get("slug", "None")
     resp = flask.Response(
-        response=flask.json.dumps({"site": "hi"}),
+        response=flask.json.dumps({"site": "hi", "slug": slug}),
         status=200,
         mimetype="application/json",
     )
@@ -41,8 +26,8 @@ def admin_hi() -> flask.Response:
     return resp
 
 
-@admin_bp.route("/admin/migrate", methods=["GET"])
-@admin_bp.route("/admin/migrate/", methods=["GET"])
+@admin_bp.route("/api/admin/migrate", methods=["GET"])
+@admin_bp.route("/api/admin/migrate/", methods=["GET"])
 def admin_migrate() -> flask.Response:
     """
     Migrate the database schema.
@@ -75,8 +60,8 @@ def admin_migrate() -> flask.Response:
     return resp
 
 
-@admin_bp.route("/admin/unlink", methods=["DELETE"])
-@admin_bp.route("/admin/unlink/", methods=["DELETE"])
+@admin_bp.route("/api/admin/unlink", methods=["DELETE"])
+@admin_bp.route("/api/admin/unlink/", methods=["DELETE"])
 def unlink() -> flask.Response:
     """
     Delete the database. This is mean only for debugging.
