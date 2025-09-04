@@ -38,9 +38,6 @@ test/integration:
 test:
 	DGTMON_DEBUG=1 python3.12 -m pytest tests/entrypoint tests/orm tests/common/ tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
 
-test/integration:
-	DGTMON_DEBUG=1 python3.12 -m pytest tests/integration
-
 test/e2e: test/prep test/integration
 
 typecheck:
