@@ -13,7 +13,6 @@ import werkzeug.wsgi
 
 def convert_str(s: bytes | str):
     """Convert bytes to str, if required"""
-    print("10> type(s)", type(s))
     try:
         if isinstance(s, bytes):
             return s.decode("utf-8")
@@ -25,17 +24,9 @@ def convert_str(s: bytes | str):
 def response(
     app: flask.app.Flask, event: APIGatewayProxyEventV2, context: LambdaContext
 ):
-    print("18> type(app)", type(app))
-    print("19> type(event)", type(event))
-    print("20> type(context)", type(context))
     sr = StartResponse()
     output = app(environ(event, context), sr)
-    print(
-        "isinstance(output, werkzeug.wsgi.ClosingIterator)",
-        isinstance(output, werkzeug.wsgi.ClosingIterator),
-    )
     assert isinstance(output, werkzeug.wsgi.ClosingIterator)
-    print("23> type(output)", type(output))
     return sr.response(output)
 
 
@@ -46,24 +37,14 @@ class StartResponse:
         self.body = io.StringIO()
 
     def __call__(
-        self, status, headers: list, exc_info: t.Any | None = None
+        self, status: t.Any, headers: list, exc_info: t.Any | None = None
     ) -> t.Callable:
-        print("34> type(status)", type(status), status)
-        print("35> type(headers)", type(headers))
-        for h in headers:
-            print("35> type(header)", type(h), h)
-        print("36> type(exc_info)", type(exc_info))
         assert isinstance(status, str)
         self.status = status.split()[0]
-        print("54> type(self.status)", type(self.status), self.status)
         self.headers[:] = headers
-        # return self.body.write
-        res = self.body.write
-        print("41> type(res)", type(res))
-        return res
+        return self.body.write
 
     def response(self, output: werkzeug.wsgi.ClosingIterator):
-        print("45> type(output)", type(output))
         headers: dict[str, str] = dict(self.headers)
         body: str | bytes
         if headers.get("Content-Type") in [
@@ -73,24 +54,19 @@ class StartResponse:
         ]:
             is_base64 = True
             body = base64.b64encode(b"".join(output)).decode("ascii")
-            print("52> type(body)", type(body))
         else:
             is_base64 = False
             body = self.body.getvalue() + "".join(map(convert_str, output))
-            print("53> type(body)", type(body))
-        res = {
+        return {
             "statusCode": str(self.status),
             "headers": headers,
             "body": body,
             "isBase64Encoded": is_base64,
         }
-        print("63> type(res)", type(res))
-        return res
 
 
 def environ(event: APIGatewayProxyEventV2, _: LambdaContext) -> dict[str, t.Any]:
     str_body = event.get("body", "")
-    print("89> type(str_body)", type(str_body), str_body)
     body = bytes(str_body, "utf-8") if str_body else b""
     environ: dict[str, t.Any] = {
         "REQUEST_METHOD": event["httpMethod"],
@@ -110,12 +86,7 @@ def environ(event: APIGatewayProxyEventV2, _: LambdaContext) -> dict[str, t.Any]
     }
     headers: dict[str, t.Any] | None = event.get("headers", {})
     if headers:
-        print("105> headers")
         for k, v in headers.items():
-            print("type(k)", type(k), k)
-            print("type(v)", type(v), v)
-            assert isinstance(k, str)
-            # assert isinstance(v, str)
             k = k.upper().replace("-", "_")
             if k == "CONTENT_TYPE":
                 environ["CONTENT_TYPE"] = v
@@ -129,16 +100,4 @@ def environ(event: APIGatewayProxyEventV2, _: LambdaContext) -> dict[str, t.Any]
             elif k == "X_FORWARDED_PORT":
                 environ["SERVER_PORT"] = v
             environ["HTTP_" + k] = v
-    print("121> environ")
-    for key, val in environ.items():
-        print("type(key)", type(key), key)
-        print("type(val)", type(val), val)
     return environ
-
-
-# import typing as t
-# class ResponseType(t.TypedDict):
-#     statusCode: str
-#     headers: dict[str, str]
-#     body: str
-#     isBase64Encoded: bool
