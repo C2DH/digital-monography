@@ -173,6 +173,10 @@ resource "aws_api_gateway_deployment" "deployment" {
     aws_api_gateway_integration.dbx_proxy_any,
   ]
   rest_api_id = aws_api_gateway_rest_api.general_api.id
+
+  triggers = {
+    redeployment = filesha256("${path.module}/api_gateway.tf")
+  }
 }
 
 resource "aws_api_gateway_stage" "stage_test" {
