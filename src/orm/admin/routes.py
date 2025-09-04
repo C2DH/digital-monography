@@ -1,15 +1,24 @@
 import alembic
 import alembic.config
+import boto3
 import flask
+import json
 import logging
 import os
 import pathlib
+from mypy_boto3_s3.client import S3Client as boto3_S3Client
 
-from src._common.constants import DEFAULT_SFS_DIR
+from src._common.constants import DEFAULT_SFS_DIR, IS_DEBUG
 from src._common.constants import db_path as DB_PATH
 
 
 admin_bp = flask.Blueprint("admin", __name__)
+
+
+if IS_DEBUG:
+    s3 = None
+else:
+    s3: boto3_S3Client = boto3.client("s3")
 
 
 @admin_bp.route("/api/admin/hi", methods=["GET"])
@@ -27,8 +36,8 @@ def admin_hi() -> flask.Response:
     return resp
 
 
-@admin_bp.route("/api/admin/migrate", methods=["GET"])
-@admin_bp.route("/api/admin/migrate/", methods=["GET"])
+@admin_bp.route("/api/admin/db/migrate", methods=["GET"])
+@admin_bp.route("/api/admin/db/migrate/", methods=["GET"])
 def admin_migrate() -> flask.Response:
     """
     Migrate the database schema.
@@ -61,8 +70,8 @@ def admin_migrate() -> flask.Response:
     return resp
 
 
-@admin_bp.route("/api/admin/unlink", methods=["DELETE"])
-@admin_bp.route("/api/admin/unlink/", methods=["DELETE"])
+@admin_bp.route("/api/admin/db/unlink", methods=["DELETE"])
+@admin_bp.route("/api/admin/db/unlink/", methods=["DELETE"])
 def unlink() -> flask.Response:
     """
     Delete the database. This is mean only for debugging.
@@ -92,27 +101,53 @@ def unlink() -> flask.Response:
     return resp
 
 
-@admin_bp.route("/api/admin/download-db", methods=["GET"])
-@admin_bp.route("/api/admin/download-db/", methods=["GET"])
+@admin_bp.route("/api/admin/db/download", methods=["GET"])
+@admin_bp.route("/api/admin/db/download/", methods=["GET"])
 def download_db() -> flask.Response:
-    """
-    TODO: maybe for uploading a file ingest it from S3 using boto3's download_fileobj
-    """
-    # slug = flask.request.args.get("slug", "None")
     fp = pathlib.Path(DB_PATH)
     logging.info(f"File exists: {fp.exists()}")
     logging.info(f"File size: {fp.stat().st_size if fp.exists() else 'N/A'}")
     logging.info(f"File path: {fp.resolve()}")
     logging.info(f"File name: {fp.name}")
-    # data = b""
-    # with open(DB_PATH, "rb") as f:
-    #     data = f.read()
-    # resp = flask.Response(
-    #     response=flask.json.dumps({}),
-    #     status=200,
-    #     mimetype="application/json",
-    # )
-    # resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
-    # resp.headers["Access-Control-Allow-Origin"] = "*"
-    # resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
-    return flask.send_file(fp, as_attachment=True, download_name=fp.name)
+    s3_bucket = os.environ["ADMIN_DATA_BUCKET_NAME"]
+    with open(fp, "rb") as fileobj:
+        s3resp = s3.put_object(Body=fileobj, Bucket=s3_bucket, Key=fp.name)
+        logging.info(
+            f"Response from s3.put_object(Bucket={s3_bucket}, Key={fp.name}): "
+            + json.dumps(s3resp, default=str)
+        )
+    resp = flask.Response(
+        response=flask.json.dumps({}),
+        status=200,
+        mimetype="application/json",
+    )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
+
+
+@admin_bp.route("/api/admin/db/upload", methods=["GET"])
+@admin_bp.route("/api/admin/db/upload/", methods=["GET"])
+def upload_db() -> flask.Response:
+    fp = pathlib.Path(DB_PATH)
+    logging.info(f"File exists: {fp.exists()}")
+    logging.info(f"File size: {fp.stat().st_size if fp.exists() else 'N/A'}")
+    logging.info(f"File path: {fp.resolve()}")
+    logging.info(f"File name: {fp.name}")
+    s3_bucket = os.environ["ADMIN_DATA_BUCKET_NAME"]
+    with open(fp, "wb") as fileobj:
+        s3resp = s3.download_fileobj(Bucket=s3_bucket, Key=fp.name, Fileobj=fileobj)
+        logging.info(
+            f"Response from s3.download_fileobj(Bucket={s3_bucket}, Key={fp.name}): "
+            + json.dumps(s3resp, default=str)
+        )
+    resp = flask.Response(
+        response=flask.json.dumps({}),
+        status=200,
+        mimetype="application/json",
+    )
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return resp
