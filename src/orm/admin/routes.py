@@ -6,6 +6,7 @@ import os
 import pathlib
 
 from src._common.constants import DEFAULT_SFS_DIR
+from src._common.constants import db_path as DB_PATH
 
 
 admin_bp = flask.Blueprint("admin", __name__)
@@ -89,3 +90,29 @@ def unlink() -> flask.Response:
     resp.headers["Access-Control-Allow-Origin"] = "*"
     resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
     return resp
+
+
+@admin_bp.route("/api/admin/download-db", methods=["GET"])
+@admin_bp.route("/api/admin/download-db/", methods=["GET"])
+def download_db() -> flask.Response:
+    """
+    TODO: maybe for uploading a file ingest it from S3 using boto3's download_fileobj
+    """
+    # slug = flask.request.args.get("slug", "None")
+    fp = pathlib.Path(DB_PATH)
+    logging.info(f"File exists: {fp.exists()}")
+    logging.info(f"File size: {fp.stat().st_size if fp.exists() else 'N/A'}")
+    logging.info(f"File path: {fp.resolve()}")
+    logging.info(f"File name: {fp.name}")
+    # data = b""
+    # with open(DB_PATH, "rb") as f:
+    #     data = f.read()
+    # resp = flask.Response(
+    #     response=flask.json.dumps({}),
+    #     status=200,
+    #     mimetype="application/json",
+    # )
+    # resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    # resp.headers["Access-Control-Allow-Origin"] = "*"
+    # resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
+    return flask.send_file(fp, as_attachment=True, download_name=fp.name)
