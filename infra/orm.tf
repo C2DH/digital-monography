@@ -1,3 +1,10 @@
+# S3
+
+# TODO: versioning, delete protection, encryption, etc. to use as db backup storage
+resource "aws_s3_bucket" "admin_data" {
+  bucket = "${var.project}-${var.env}-${var.admin_data_bucket_name}"
+}
+
 ## Lambda (orm)
 
 data "aws_iam_policy_document" "assume_orm_role" {
@@ -49,6 +56,21 @@ data "aws_iam_policy_document" "orm" {
       "ec2:DeleteNetworkInterface",
       "ec2:DescribeInstances",
       "ec2:AttachNetworkInterface"
+    ]
+  }
+  statement {
+    sid    = "AllowAccessToS3WithAdminData"
+    effect = "Allow"
+    resources = [
+      aws_s3_bucket.admin_data.arn,
+      "${aws_s3_bucket.admin_data.arn}/*",
+    ]
+    actions = [
+      "s3:PutObject",
+      "s3:PutObjectAcl",
+      "s3:GetObject",
+      "s3:GetObjectAcl",
+      "s3:ListBucket",
     ]
   }
 }
@@ -105,6 +127,7 @@ resource "aws_lambda_function" "orm_func" {
       DYNAMODB_HEADINGS_TBL   = aws_dynamodb_table.headings_tbl.name
       DYNAMODB_REFS_TBL       = aws_dynamodb_table.refs_tbl.name
       APKG_UPLOAD_BUCKET_NAME = aws_s3_bucket.upload_apkg.bucket
+      ADMIN_DATA_BUCKET_NAME  = aws_s3_bucket.admin_data.bucket
       VERIFIER_MSGS           = aws_s3_bucket.verification_msg.bucket
       FLASK_SECRET_KEY        = var.flask_secret_key
       # DASHBOARD_DOMAIN        = aws_s3_bucket.staticws_dashboard.bucket_regional_domain_name

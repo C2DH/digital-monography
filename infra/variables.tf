@@ -83,6 +83,11 @@ variable "upload_apkg_bucket_name" {
   description = "Name of the bucket for uploading authors' packages (apkg) to AWS cloud."
 }
 
+variable "admin_data_bucket_name" {
+  type        = string
+  description = "Name of the bucket for sharing data from VPC, such as db backups."
+}
+
 variable "metadata_assets_bucket_name" {
   type        = string
   description = "Name of the bucket for storing metadata of assets."
