@@ -106,9 +106,9 @@ def unlink() -> flask.Response:
     return resp
 
 
-@admin_bp.route("/api/admin/db/download", methods=["GET"])
-@admin_bp.route("/api/admin/db/download/", methods=["GET"])
-def download_db() -> flask.Response:
+@admin_bp.route("/api/admin/db/export", methods=["GET"])
+@admin_bp.route("/api/admin/db/export/", methods=["GET"])
+def export_db() -> flask.Response:
     fp = pathlib.Path(DB_PATH)
     logging.info(f"File {fp.name} exists: {fp.exists()}")
     s3_bucket = os.environ["ADMIN_DATA_BUCKET_NAME"]
@@ -148,9 +148,9 @@ def download_db() -> flask.Response:
     return resp
 
 
-@admin_bp.route("/api/admin/db/upload", methods=["GET"])
-@admin_bp.route("/api/admin/db/upload/", methods=["GET"])
-def upload_db() -> flask.Response:
+@admin_bp.route("/api/admin/db/import", methods=["GET"])
+@admin_bp.route("/api/admin/db/import/", methods=["GET"])
+def import_db() -> flask.Response:
     fp = pathlib.Path(DB_PATH)
     logging.info(f"File exists: {fp.exists()}")
     logging.info(f"File size: {fp.stat().st_size if fp.exists() else 'N/A'}")
