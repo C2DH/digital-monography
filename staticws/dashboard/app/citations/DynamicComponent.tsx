@@ -71,7 +71,7 @@ export default function DynamicListGroup(): React.JSX.Element {
                 {data.map((group: ICitationGroup, idx: number) => (
                     <React.Fragment key={idx}>
                         <li className="list-group-item list-group-item-primary" key={idx}>
-                            Citation <i>"{group.plainCitation}"</i> in {group.file_name}
+                            Citation <i>&quot;{group.plainCitation}&quot;</i> in {group.file_name}
                         </li>
                         {group && group.citation_items.map((item: ICitationItem, i: number) => (
                             <li className="list-group-item" key={i}>
