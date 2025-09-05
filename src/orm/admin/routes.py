@@ -1,4 +1,5 @@
 import alembic
+import alembic.command
 import alembic.config
 import alembic.script
 import boto3
@@ -68,9 +69,18 @@ def admin_migrate() -> flask.Response:
         logging.info(
             f"script.version_locations={json.dumps(script.version_locations, default=str)}"
         )
-        logging.info(f"script.versions={script.versions}")
         logging.info(f"script.env_py_location={script.env_py_location}")
-
+        logging.info(f"1) script.versions={script.versions}")
+        logging.info(
+            f"1) script.get_heads()={json.dumps(script.get_heads(), default=str)}"
+        )
+        logging.info(f"1) script.get_current_head()={script.get_current_head()}")
+        alembic.command.upgrade(cfg, "head")
+        logging.info(f"2) script.versions={script.versions}")
+        logging.info(
+            f"2) script.get_heads()={json.dumps(script.get_heads(), default=str)}"
+        )
+        logging.info(f"2) script.get_current_head()={script.get_current_head()}")
     except Exception as e:
         status = 503
         logging.error(f"Error migrating database: {e}")
