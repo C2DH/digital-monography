@@ -43,8 +43,8 @@ export default function DynamicListGroup(): React.JSX.Element {
         const cCount = {};
         const fetchFromDb = async (aSlug: string) => {
             try {
-                // const resp = await fetch(`${API_ENDPOINT}/${API_STAGE}/headings/list?slug=${aSlug}`);
-                const resp = await fetch(`http://localhost:8001/headings/list?slug=${aSlug}`);
+                // const resp = await fetch(`http://localhost:3000/api/headings/list?slug=${aSlug}`);
+                const resp = await fetch(`${API_ENDPOINT}/${API_STAGE}/api/headings/list?slug=${aSlug}`);
                 const dbRecords = await resp.json();
                 const sortedRecords = dbRecords.sort((a: IHeading, b: IHeading) => {
                     if (a.file_num !== b.file_num) {

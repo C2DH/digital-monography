@@ -130,9 +130,9 @@ function getTruncatedCaption(caption: string): string {
 // const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
 // const stage = "test";
 // the paths must be consistent with backend
-const pathAssetMetadata = "assets";
-const pathAssetS3List = "list-assets";
-const pathRefMetadata = "refs";
+const pathAssetMetadata = "api/assets/list";
+const pathAssetS3List = "api/list-assets";
+const pathRefMetadata = "api/refs";
 
 export default function AssetsComponent(): React.JSX.Element {
     const searchParams = useSearchParams();

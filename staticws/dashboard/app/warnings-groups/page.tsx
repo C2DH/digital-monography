@@ -11,7 +11,7 @@ export default function Page() {
                 <div className="d-flex flex-column p-4 justify-content-center">
                     <Suspense>
                         <TnbListObjectsS3
-                            backendPath={"list-warnings"}
+                            backendPath={"api/list-warnings"}
                             targetPath={"/warnings"}>
                         </TnbListObjectsS3>
                     </Suspense>

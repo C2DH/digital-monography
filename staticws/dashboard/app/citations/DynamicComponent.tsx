@@ -35,10 +35,9 @@ export default function DynamicListGroup(): React.JSX.Element {
     useEffect(() => {
         const fetchFromDb = async (aSlug: string) => {
             try {
-
                 const [citationGroups, citationItems] = await Promise.all([
-                    fetch(`http://localhost:8001/citations/groups/list?slug=${aSlug}`),
-                    fetch(`http://localhost:8001/citations/items/list?slug=${aSlug}`),
+                    fetch(`${API_ENDPOINT}/${API_STAGE}/api/citations/groups/list?slug=${aSlug}`),
+                    fetch(`${API_ENDPOINT}/${API_STAGE}/api/citations/items/list?slug=${aSlug}`),
                 ]);
                 const citationGroupsJson = await citationGroups.json();
                 const citationItemsJson = await citationItems.json();
