@@ -1,5 +1,6 @@
 import alembic
 import alembic.config
+import alembic.script
 import boto3
 import datetime
 import flask
@@ -50,16 +51,26 @@ def admin_migrate() -> flask.Response:
     msg = {"status": "success", "message": "ok"}
     status = 200
     try:
-        alembicArgs = [
-            "-c",
-            os.path.join("src", "_common", "alembic.ini"),
-            "--sqlalchemy-url",
-            DB_URL,
-            "--raiseerr",
-            "upgrade",
-            "head",
-        ]
-        alembic.config.main(argv=alembicArgs)
+        # alembicArgs = [
+        #     "-c",
+        #     os.path.join("src", "_common", "alembic.ini"),
+        #     "--raiseerr",
+        #     "upgrade",
+        #     "head",
+        # ]
+        # alembic.config.main(argv=alembicArgs)
+
+        aleini = os.path.join("src", "_common", "alembic.ini")
+        cfg = alembic.config.Config(aleini)
+        cfg.set_main_option("sqlalchemy.url", DB_URL)
+        script = alembic.script.ScriptDirectory.from_config(cfg)
+        logging.info(f"script.env_py_location={script.env_py_location}")
+        logging.info(
+            f"script.version_locations={json.dumps(script.version_locations, default=str)}"
+        )
+        logging.info(f"script.versions={script.versions}")
+        logging.info(f"script.env_py_location={script.env_py_location}")
+
     except Exception as e:
         status = 503
         logging.error(f"Error migrating database: {e}")
@@ -191,3 +202,19 @@ def import_db() -> flask.Response:
     resp.headers["Access-Control-Allow-Origin"] = "*"
     resp.headers["Access-Control-Allow-Methods"] = "OPTIONS,GET"
     return resp
+
+
+# import alembic.command
+# def run_migrations(db_url: str = DB_URL) -> None:
+#     # alembicArgs = [
+#     #     "-c",
+#     #     os.path.join("src", "_common", "alembic.ini"),
+#     #     "--raiseerr",
+#     #     "upgrade",
+#     #     "head",
+#     # ]
+#     alini = os.path.join("src", "_common", "alembic.ini")
+#     cfg = alembic.config.Config(alini)
+#     cfg.set_main_option("sqlalchemy.url", db_url)
+#     alembic.command.upgrade(cfg, "head")
+#     # alembic.config.main(argv=alembicArgs)

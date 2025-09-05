@@ -96,6 +96,43 @@ app = create_app()
 #     return resp
 
 
+# import alembic.context
+# import alembic.command
+# import alembic.config
+# import alembic.script
+# import alembic.runtime.environment
+
+
+# def run_migrations(db_url: str = "sqlite:///./test.db") -> None:
+#     alini = os.path.join("src", "_common", "alembic.ini")
+#     cfg = alembic.config.Config(alini)
+#     cfg.set_main_option("sqlalchemy.url", db_url)
+#     alembic.command.upgrade(cfg, "head")
+
+
+# def run_migrations_2(db_url: str = "sqlite:///./test.db") -> None:
+#     alini = os.path.join("src", "_common", "alembic.ini")
+#     cfg = alembic.config.Config(alini)
+#     cfg.set_main_option("sqlalchemy.url", db_url)
+#     script = alembic.script.ScriptDirectory.from_config(cfg)
+#     script.env_py_location
+#     script.version_locations
+#     script.versions
+#     script.env_py_location
+#     revision = "head"
+#     def _upgrade(rev, context):
+#         return script._upgrade_revs(revision, rev)
+#     with alembic.runtime.environment.EnvironmentContext(
+#         cfg,
+#         script,
+#         fn=_upgrade,
+#         as_sql=False,
+#         starting_rev="base",
+#         destination_rev=revision,
+#     ):
+#         script.run_env()
+
+
 @event_source(data_class=APIGatewayProxyEventV2)
 def lambda_handler(event: APIGatewayProxyEventV2, context: LambdaContext):
     logger.info(f"Event: {json.dumps(event, default=str)}")
