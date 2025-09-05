@@ -73,6 +73,69 @@ data "aws_iam_policy_document" "orm" {
       "s3:ListBucket",
     ]
   }
+  statement {
+    sid       = "AllowSecretsFetching"
+    effect    = "Allow"
+    resources = [data.aws_secretsmanager_secret.github_api_token.arn]
+    # resources = ["arn:aws:secretsmanager:${var.region}:*:secret:dgtmon-${var.environment}-github-api-secrets*"]
+    actions = [
+      "secretsmanager:DescribeSecret",
+      "secretsmanager:GetResourcePolicy",
+      "secretsmanager:GetSecretValue",
+    ]
+  }
+  statement {
+    sid    = "AllowReadAndWriteToDynamoDB"
+    effect = "Allow"
+    resources = [
+      aws_dynamodb_table.tokens_tbl.arn,
+      aws_dynamodb_table.cursors_tbl.arn
+    ]
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+      "dynamodb:DeleteItem",
+      "dynamodb:Scan",
+      "dynamodb:Query"
+    ]
+  }
+  statement {
+    sid    = "AllowReadFromDb"
+    effect = "Allow"
+    resources = [
+      aws_dynamodb_table.audit_tbl.arn,
+      aws_dynamodb_table.assets_tbl.arn,
+      aws_dynamodb_table.alerts_tbl.arn,
+      aws_dynamodb_table.citations_tbl.arn,
+      aws_dynamodb_table.refs_tbl.arn,
+      aws_dynamodb_table.headings_tbl.arn,
+    ]
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:Scan",
+      "dynamodb:Query"
+    ]
+  }
+  statement {
+    sid    = "AllowGettingObjectsFromS3"
+    effect = "Allow"
+    resources = [
+      "${aws_s3_bucket.upload_apkg.arn}",
+      "${aws_s3_bucket.upload_apkg.arn}/*",
+      "${aws_s3_bucket.verification_msg.arn}",
+      "${aws_s3_bucket.verification_msg.arn}/*",
+      "${aws_s3_bucket.metadata_assets_s3.arn}",
+      "${aws_s3_bucket.metadata_assets_s3.arn}/*",
+      "${aws_s3_bucket.metadata_refs_s3.arn}",
+      "${aws_s3_bucket.metadata_refs_s3.arn}/*"
+    ]
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectAcl",
+      "s3:ListBucket",
+    ]
+  }
 }
 
 resource "aws_iam_policy" "orm" {
