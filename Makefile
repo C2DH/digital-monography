@@ -46,8 +46,8 @@ typecheck:
 	mypy src/orm/ --check-untyped-defs --explicit-package-bases
 	# mypy src/wordprocessor/ --check-untyped-defs
 
-db/init:
-	cd src/_common && alembic init migrations
+# db/init:
+# 	cd src/_common && alembic init migrations
 
 db/makemigrations:
 	ls src/_common/migrations/versions
