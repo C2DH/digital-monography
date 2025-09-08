@@ -169,8 +169,8 @@ def get_flow() -> dropbox.DropboxOAuth2Flow:
     """
     secret_id = os.environ.get("DROPBOX_SECRET_ID", "")
     dbx_app_secret = get_dbx_app_secret(secret_id)
-    logging.info("len(dbx_app_secret)", len(dbx_app_secret))
-    print("len(dbx_app_secret)", len(dbx_app_secret))
+    logging.info(f"len(dbx_app_secret)={len(dbx_app_secret)}")
+    print(f"len(dbx_app_secret)={len(dbx_app_secret)}")
     logging.info(f'get_url("dbx.oauth_callback")={get_url("dbx.oauth_callback")}')
     print(f'get_url("dbx.oauth_callback")={get_url("dbx.oauth_callback")}')
     logging.info(f"flask.session={flask.session}")
