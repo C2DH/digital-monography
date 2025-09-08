@@ -144,10 +144,10 @@ def heading_slugs():
 @pytest.mark.parametrize(
     "url,expected_length",
     [
-        ("/assets/list?slug=a_slug", 0),
-        ("/citations/groups/list?slug=a_slug", 0),
-        ("/citations/items/list?slug=a_slug", 0),
-        ("/headings/list?slug=a_slug", 0),
+        ("/api/assets/list?slug=a_slug", 0),
+        ("/api/citations/groups/list?slug=a_slug", 0),
+        ("/api/citations/items/list?slug=a_slug", 0),
+        ("/api/headings/list?slug=a_slug", 0),
     ],
 )
 def test_api_endpoint_accessible(
@@ -159,14 +159,14 @@ def test_api_endpoint_accessible(
 
 def test_assets_list(client: flask.testing.FlaskClient, asset_slugs: tuple[str, str]):
     slug_in, slug_out = asset_slugs
-    url = f"/assets/list?slug={slug_in}"
+    url = f"/api/assets/list?slug={slug_in}"
     response = client.get(url)
     assert response.status_code == 200, f"{url} is unaccesible"
     assert (
         len(response.json) == 2
     ), f"{url} filtering is incorrect. Returned {len(response.json)} items"
     # filter out
-    url = f"/assets/list?slug={slug_out}"
+    url = f"/api/assets/list?slug={slug_out}"
     response = client.get(url)
     assert response.status_code == 200, f"{url} is unaccesible"
     assert (
@@ -178,7 +178,7 @@ def test_headings_list(
     client: flask.testing.FlaskClient, heading_slugs: tuple[str, str]
 ):
     slug_in, slug_out = heading_slugs
-    url = f"/headings/list?slug={slug_in}"
+    url = f"/api/headings/list?slug={slug_in}"
     response = client.get(url)
     assert response.status_code == 200, f"{url} is unaccesible"
     assert (
@@ -188,7 +188,7 @@ def test_headings_list(
     assert h.text == "Important section"
     # filter out
     slug_in, slug_out = heading_slugs
-    url = f"/headings/list?slug={slug_out}"
+    url = f"/api/headings/list?slug={slug_out}"
     response = client.get(url)
     assert response.status_code == 200, f"{url} is unaccesible"
     assert (

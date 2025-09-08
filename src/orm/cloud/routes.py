@@ -32,6 +32,7 @@ def list_warnings() -> flask.Response:
     return resp
 
 
+# TODO: move to assets/
 @cloud_bp.route("/api/list-assets", methods=["GET"])
 def list_assets_from_s3() -> flask.Response:
     """List objects in a upload slug/assets/* bucket."""
@@ -50,6 +51,7 @@ def list_assets_from_s3() -> flask.Response:
     return resp
 
 
+# TODO: do we need it? if not, remove
 @cloud_bp.route("/api/assets", methods=["GET"])
 def list_assets_from_dynamodb() -> flask.Response:
     """Retrieve assets from the database and return them to the client."""
