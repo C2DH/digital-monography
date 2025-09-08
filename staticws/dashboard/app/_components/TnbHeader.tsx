@@ -25,7 +25,7 @@ export default function TnbHeader() {
                             </li>
                             <li className="nav-item">
                                 <a className="nav-link"
-                                    href={`${API_ENDPOINT}/${API_STAGE}/login`}
+                                    href={`${API_ENDPOINT}/${API_STAGE}/dbx/login`}
                                 // href="https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com/test/login"
                                 >Login</a>
                             </li>
