@@ -19,9 +19,12 @@ dbx_bp = flask.Blueprint("dbx", __name__, template_folder="templates")
 @dbx_bp.route("/dbx/", methods=["GET"])
 def index() -> str:
     logging.info("Index REST api endpoint was called.")
-    infra_env = os.environ.get("INFRA_ENV")
+    # infra_env = os.environ.get("INFRA_ENV")
+    login_url = get_url("dbx.login")
     return flask.render_template(
-        "index.html", data={"login_path": f"/{infra_env}/login"}
+        "index.html",
+        data={"login_path": login_url},
+        # "index.html", data={"login_path": f"/{infra_env}/api/login"}
     )
 
 
