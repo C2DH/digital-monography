@@ -20,7 +20,7 @@ export default function Home() {
     // require("bootstrap/dist/js/bootstrap.bundle.min.js");
     async function fetchStatusData() {
       try {
-        const resp = await fetch(`${API_ENDPOINT}/${API_STAGE}/alerts`);
+        const resp = await fetch(`${API_ENDPOINT}/${API_STAGE}/api/alerts`);
         const json = await resp.json();
         console.log("json", json);
         // const preSignedUrl = preSignedUrljson["presigned_url"];
