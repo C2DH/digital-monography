@@ -62,9 +62,21 @@ resource "aws_iam_role" "preparer_iam" {
 
 data "aws_iam_policy_document" "preparer" {
   statement {
-    sid       = "AllowS3Permissions"
-    effect    = "Allow"
-    resources = ["*"] # TODO: limit (since we also want to list buckets, include both "arn:aws:s3:::mybucket/*" and "arn:aws:s3:::mybucket")
+    sid    = "AllowS3Permissions"
+    effect = "Allow"
+    resources = [
+      aws_s3_bucket.ir_apkg_html.arn,
+      aws_s3_bucket.ir_apkg_md.arn,
+      aws_s3_bucket.metadata_assets_s3.arn,
+      aws_s3_bucket.metadata_refs_s3.arn,
+      aws_s3_bucket.upload_apkg.arn,
+      "${aws_s3_bucket.ir_apkg_html.arn}/*",
+      "${aws_s3_bucket.ir_apkg_md.arn}/*",
+      "${aws_s3_bucket.metadata_assets_s3.arn}/*",
+      "${aws_s3_bucket.metadata_refs_s3.arn}/*",
+      "${aws_s3_bucket.upload_apkg.arn}/*",
+      # aws_s3_bucket.verification_msg.arn,
+    ]
     actions = [
       "s3:GetObject",
       "s3:GetObjectAcl",
