@@ -18,8 +18,9 @@ test/copy:
 	cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/a_book/' tests/_fixtures/
 	# echo 'maybe book-content-examples dir can be better utilized'
 	cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/book-content-examples/' tests/_fixtures/
+	cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/split-to-multiple-chapters/' tests/_fixtures/
 
-test/prep:
+prep/book:
 	mkdir -p /tmp/efs/
 	make db/migrate
 	DGTMON_NO_WAIT=1 \
@@ -28,6 +29,16 @@ test/prep:
 		METADATA_ASSETS_BUCKET_NAME=_METDATA \
 		VERIFIER_MSGS=_WARNINGS \
 		python3.12 scripts/prepare_and_build.py book_path="tests/_fixtures/a_book/"
+
+prep/split:
+	mkdir -p /tmp/efs/
+	make db/migrate
+	DGTMON_NO_WAIT=1 \
+		IR_APKG_HTML_BUCKET_NAME=_HTML \
+		IR_APKG_MD_BUCKET_NAME=_MARKDOWN \
+		METADATA_ASSETS_BUCKET_NAME=_METDATA \
+		VERIFIER_MSGS=_WARNINGS \
+		python3.12 scripts/prepare_and_build.py book_path="tests/_fixtures/split-to-multiple-chapters/"
 
 test/unit:
 	DGTMON_DEBUG=1 python3.12 -m pytest tests/entrypoint tests/orm tests/common/ tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
@@ -38,7 +49,7 @@ test/integration:
 test:
 	DGTMON_DEBUG=1 python3.12 -m pytest tests/entrypoint tests/orm tests/common/ tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
 
-test/e2e: test/prep test/integration
+test/e2e: prep/book test/integration
 
 typecheck:
 	mypy src/entrypoint/ --check-untyped-defs
