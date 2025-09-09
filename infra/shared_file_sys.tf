@@ -8,11 +8,10 @@ resource "aws_security_group" "efs_access_sg" {
   name   = "${var.project}-${var.env}-${var.efs_access_security_group}"
   vpc_id = aws_vpc.dgtmon_vpc.id
   ingress {
-    from_port       = 2049
-    to_port         = 2049
-    protocol        = "tcp"
-    security_groups = [aws_security_group.efs_access_sg.id] # allow inbound NFS from the security group itself
-    # cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 2049
+    to_port     = 2049
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
   ingress {
     description = "HTTPS for Endpoint Interface"
