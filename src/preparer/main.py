@@ -105,13 +105,14 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     event_name = _get_event_name(event)
     dstate = DocumentState(key)
     metadata = DocumentMetadata(key)
+    ####################
     ### Handle deletions
-    if _is_file_ipynb(key) and _is_deletion(event_name):
+    if _is_IPYNB(key) and _is_deletion(event_name):
         _remove_fileobj(key)
         msg = GithubTriggerMsg(key=key, action=GithubActionEnum.DELETE_OBJECT)
         _enqueue_to_github(msg)
         return {"statusCode": 200, "body": ""}
-    if _is_file_docx(key) and _is_deletion(event_name):
+    if _is_DOCX(key) and _is_deletion(event_name):
         _remove_fileobj(key)
         _remove_assets_info_from_s3(key)
         # _remove_metadata_from_db(key)  # TODO: dstate
@@ -133,8 +134,9 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         msg = GithubTriggerMsg(key=key, action=GithubActionEnum.DELETE_OBJECT)
         _enqueue_to_github(msg)
         return {"statusCode": 200, "body": ""}
+    ####################################
     ### Handle updates (incl. new files)
-    if _is_file_ipynb(key) and _is_update(event_name):
+    if _is_IPYNB(key) and _is_update(event_name):
         src = _get_source_bucket(event)
         _download_fileobj(src, key)
         ipynb: nbformat.NotebookNode = _unmarshall_json(key.efs_filepath)
@@ -144,7 +146,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _enqueue_to_github(msg)
         # _put_to_archive_s3(key)
         return {"statusCode": 200, "body": ""}
-    if key.suffix.lower() == ".docx" and _is_update(event_name):
+    if _is_DOCX(key) and _is_update(event_name):
         src = _get_source_bucket(event)
         _download_fileobj(src, key)
         html_str = _convert_to_html(key.efs_filepath)
@@ -237,11 +239,11 @@ def _get_source_bucket(event) -> str:
         raise
 
 
-def _is_file_docx(key: KeyPath) -> bool:
+def _is_DOCX(key: KeyPath) -> bool:
     return key.suffix.lower() == ".docx"
 
 
-def _is_file_ipynb(key: KeyPath) -> bool:
+def _is_IPYNB(key: KeyPath) -> bool:
     return key.suffix.lower() == ".ipynb"
 
 
