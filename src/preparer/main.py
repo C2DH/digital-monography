@@ -47,6 +47,7 @@ from conditional_prep import is_paper_only, remove_paper_only
 from citations import add_bibliography, is_citation, prepare_citations
 from digital_prep import insert_digital_objects, remove_metadata_tables
 from hide_metadata_in_html import hide_metadata_in_html
+from frontmatter import extract_frontmatter
 from metadata_extraction import prepare_metadata_tables
 from remove_empty_tables import remove_empty_tables
 from replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
@@ -354,6 +355,7 @@ def prepare_docx(
         for check_if_meets_criteria, container in classifiers:
             if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
                 container.append(node)
+    frontmatter = extract_frontmatter(html_soup, dstate, tables)
     html_soup, bibliography = prepare_citations(html_soup, metadata, dstate, citations)
     html_soup = add_bibliography(html_soup, bibliography)
     html_soup = prepare_ref_targets_in_headers(html_soup, metadata, dstate, headers)
