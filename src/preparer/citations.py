@@ -3,6 +3,7 @@ import bs4
 import json
 import typing as t
 import citeproc
+import citeproc.string
 
 from src._common.metadata import (
     DocumentMetadata,
