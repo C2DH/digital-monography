@@ -4,75 +4,101 @@ import pytest
 
 
 from src._common.state import DocumentState
+from src._common.html2md import convert_to_md
 from src.preparer.main import is_table, _convert_to_html
-from src.preparer.frontmatter import extract_frontmatter, FrontmatterBlob
+from src.preparer.frontmatter import prepare_frontmatter, FrontmatterBlob
 
 
 SLUG = "book-content-examples"
 
 
-@pytest.fixture
-def frontmatter_data():
-    fp = pathlib.Path("tests") / "_fixtures" / SLUG / "frontmatter_extraction.docx"
-    tables = []
-    html_str = _convert_to_html(fp)
-    html_soup = bs4.BeautifulSoup(html_str, "html.parser")
-    classifiers = [
-        (is_table, tables),
-    ]
-    dstate = DocumentState(fp)
-    for node in html_soup.descendants:
-        for check_if_meets_criteria, container in classifiers:
-            if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
-                container.append(node)
-    return extract_frontmatter(html_soup, dstate, tables)
+class TestFrontmatterPreparation:
+    @classmethod
+    def setup_class(cls):
+        fp = pathlib.Path("tests") / "_fixtures" / SLUG / "frontmatter_extraction.docx"
+        tables = []
+        html_str = _convert_to_html(fp)
+        cls.html_soup = bs4.BeautifulSoup(html_str, "html.parser")
+        classifiers = [
+            (is_table, tables),
+        ]
+        dstate = DocumentState(fp)
+        for node in cls.html_soup.descendants:
+            for check_if_meets_criteria, container in classifiers:
+                if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
+                    container.append(node)
+        cls.html_soup, cls.frontmatter = prepare_frontmatter(
+            cls.html_soup, dstate, tables
+        )
+        cls.md = convert_to_md(cls.html_soup, dstate)
 
+    def test_frontmatter_extraction(self):
+        assert isinstance(self.frontmatter, FrontmatterBlob)
+        assert len(self.frontmatter.all_data.keys()) > 0
+        assert len(self.frontmatter.myst_data.keys()) > 0
 
-def test_frontmatter_extraction(frontmatter_data: FrontmatterBlob | None):
-    assert isinstance(frontmatter_data, FrontmatterBlob)
-    assert len(frontmatter_data.all_data.keys()) > 0
-    assert len(frontmatter_data.myst_data.keys()) > 0
-    assert frontmatter_data.all_data["title"] == "Just a book"
+    def test_simple_value_extraction(self):
+        assert self.frontmatter.all_data["title"] == "Just a book"
+        assert self.frontmatter.all_data["license"] == "CC-BY-NC-ND-4.0"
+        assert (
+            self.frontmatter.all_data["github"]
+            == "https://github.com/monograph-prototypes/split-to-multiple-chapters"
+        )
 
+    def test_list_extraction(self):
+        assert isinstance(self.frontmatter.all_data["keywords"], list)
+        assert self.frontmatter.all_data["keywords"][0] == "test"
+        assert self.frontmatter.all_data["keywords"][1] == "e2e"
 
-def test_simple_value_extraction(frontmatter_data: FrontmatterBlob | None):
-    assert frontmatter_data.all_data["title"] == "Just a book"
-    assert frontmatter_data.all_data["license"] == "CC-BY-NC-ND-4.0"
-    assert (
-        frontmatter_data.all_data["github"]
-        == "https://github.com/monograph-prototypes/split-to-multiple-chapters"
-    )
+    def test_dict_as_value_extraction(self):
+        assert isinstance(self.frontmatter.all_data["isbn"], dict)
+        assert len(self.frontmatter.all_data["isbn"].keys()) == 3
+        assert "ebook" in self.frontmatter.all_data["isbn"]
+        assert "hardcover" in self.frontmatter.all_data["isbn"]
+        assert "paperback" in self.frontmatter.all_data["isbn"]
+        assert self.frontmatter.all_data["isbn"]["ebook"] == "9876543210123"
+        assert self.frontmatter.all_data["isbn"]["hardcover"] == "9876543210123"
+        assert self.frontmatter.all_data["isbn"]["paperback"] == "9876543210123"
 
+    def test_list_of_dicts_extraction(self):
+        assert len(self.frontmatter.all_data["authors"]) == 2
+        assert self.frontmatter.all_data["authors"][0] == {
+            "name": "Pawel Kaminski",
+            "affiliations": "University of Luxembourg",
+        }
+        assert self.frontmatter.all_data["authors"][1] == {
+            "name": "Elisabeth Guerard",
+            "affiliations": "Luxembourg Centre for Contemporary and Digital History (C²DH)",
+        }
 
-def test_list_extraction(frontmatter_data: FrontmatterBlob | None):
-    assert isinstance(frontmatter_data.all_data["keywords"], list)
-    assert frontmatter_data.all_data["keywords"][0] == "test"
-    assert frontmatter_data.all_data["keywords"][1] == "e2e"
+    def test_boolean_value_extraction(self):
+        # TODO: should this be converted to bool?
+        assert self.frontmatter.all_data["open_access"] == "True"
 
+    def test_mystmd_frontmatter_has_fields_from_specs(
+        self,
+    ):
+        assert "title" in self.frontmatter.myst_data
+        assert "authors" in self.frontmatter.myst_data
+        assert "keywords" in self.frontmatter.myst_data
+        assert "license" in self.frontmatter.myst_data
+        assert "github" in self.frontmatter.myst_data
+        assert "open_access" in self.frontmatter.myst_data
+        ##
+        assert "isbn" not in self.frontmatter.myst_data
+        assert "isbn" in self.frontmatter.all_data
 
-def test_dict_as_value_extraction(frontmatter_data: FrontmatterBlob | None):
-    assert isinstance(frontmatter_data.all_data["isbn"], dict)
-    assert len(frontmatter_data.all_data["isbn"].keys()) == 3
-    assert "ebook" in frontmatter_data.all_data["isbn"]
-    assert "hardcover" in frontmatter_data.all_data["isbn"]
-    assert "paperback" in frontmatter_data.all_data["isbn"]
-    assert frontmatter_data.all_data["isbn"]["ebook"] == "9876543210123"
-    assert frontmatter_data.all_data["isbn"]["hardcover"] == "9876543210123"
-    assert frontmatter_data.all_data["isbn"]["paperback"] == "9876543210123"
-
-
-def test_list_of_dicts_extraction(frontmatter_data: FrontmatterBlob | None):
-    assert len(frontmatter_data.all_data["authors"]) == 2
-    assert frontmatter_data.all_data["authors"][0] == {
-        "name": "Pawel Kaminski",
-        "affiliations": "University of Luxembourg",
-    }
-    assert frontmatter_data.all_data["authors"][1] == {
-        "name": "Elisabeth Guerard",
-        "affiliations": "Luxembourg Centre for Contemporary and Digital History (C²DH)",
-    }
-
-
-def test_boolean_value_extraction(frontmatter_data: FrontmatterBlob | None):
-    # TODO: should this be converted to True?
-    assert frontmatter_data.all_data["open_access"] == "True"
+    # TODO: implement test
+    # def test_frontmatter_dump_yamlstr(self):
+    #     print("cls.html_soup", self.html_soup)
+    #     print("=" * 75)
+    #     print("=" * 75)
+    #     print("cls.md", self.md)
+    #     print("=" * 75)
+    #     assert isinstance(self.frontmatter, FrontmatterBlob)
+    #     yaml_str = self.frontmatter.dump_yamlstr()
+    #     print(yaml_str)
+    #     assert yaml_str.startswith("---\n")
+    #     assert yaml_str.endswith("\n---\n")
+    #     assert "title: Just a book" in yaml_str
+    #     assert "XXX" in yaml_str
