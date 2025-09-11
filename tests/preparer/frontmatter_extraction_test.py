@@ -88,17 +88,24 @@ class TestFrontmatterPreparation:
         assert "isbn" not in self.frontmatter.myst_data
         assert "isbn" in self.frontmatter.all_data
 
-    # TODO: implement test
-    # def test_frontmatter_dump_yamlstr(self):
-    #     print("cls.html_soup", self.html_soup)
-    #     print("=" * 75)
-    #     print("=" * 75)
-    #     print("cls.md", self.md)
-    #     print("=" * 75)
-    #     assert isinstance(self.frontmatter, FrontmatterBlob)
-    #     yaml_str = self.frontmatter.dump_yamlstr()
-    #     print(yaml_str)
-    #     assert yaml_str.startswith("---\n")
-    #     assert yaml_str.endswith("\n---\n")
-    #     assert "title: Just a book" in yaml_str
-    #     assert "XXX" in yaml_str
+    def test_frontmatter_dump_yamlstr(self):
+        assert self.md.startswith("---\n")
+        assert "chapters\n---\n\n\n\n# Book Title\n" in self.md  # end
+        assert "\ntitle: Just a book\n" in self.md
+        assert (
+            "Luxembourg Centre for Contemporary and Digital History (C²DH)" in self.md
+        )
+        assert (
+            "authors:\n"
+            "- name: Pawel Kaminski\n"
+            "  affiliations: University of Luxembourg\n"
+            "- name: Elisabeth Guerard\n"
+            "  affiliations: Luxembourg Centre for Contemporary and Digital History (C²DH)\n"
+        ) in self.md
+        assert "\nkeywords:\n- test\n- e2e\n" in self.md
+        assert "\nlicense: CC-BY-NC-ND-4.0\n" in self.md
+        assert (
+            "\ngithub: https://github.com/monograph-prototypes/split-to-multiple-chapters\n"
+            in self.md
+        )
+        assert "isbn" not in self.md
