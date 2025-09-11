@@ -39,9 +39,10 @@ prep/bookv2:
 		METADATA_ASSETS_BUCKET_NAME=_METDATA \
 		VERIFIER_MSGS=_WARNINGS \
 		python3.12 scripts/prepare_and_build.py book_path="tests/_fixtures/a_book/"
+	export BUILD_DIR=/tmp/efs/a_book/_build/html
+	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
 	(cd /tmp/efs/a_book && myst build --html)
-	# python3.12 scripts/serve_mystmd.py book_path="/tmp/efs/a_book/"
-	echo '(cd scripts/js && npx serve /tmp/efs/a_book/_build/html)'
+	echo 'npx serve /tmp/efs/a_book/_build/html'
 
 prep/split:
 	mkdir -p /tmp/efs/
