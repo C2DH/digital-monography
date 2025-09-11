@@ -117,7 +117,7 @@ class MystMdConverter(markdownify.MarkdownConverter):
         if text.startswith("% :::{") and text.endswith(":::"):
             return "\n%s\n\n" % text
         elif CLS_FRONTMATTER_TABLE in el.get("class", []):
-            return text
+            return el.text
         elif CLS_DIGITAL_ONLY in el.get("class", []):
             return text
         return super().convert_p(el, text, convert_as_inline)
