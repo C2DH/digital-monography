@@ -1,7 +1,9 @@
 import bs4
 import dataclasses
+import yaml
 
 from src._common.state import DocumentState
+from src._common.constants import CLS_FRONTMATTER_TABLE
 
 
 @dataclasses.dataclass
@@ -10,18 +12,29 @@ class FrontmatterBlob:
     all_data: dict = dataclasses.field(default_factory=dict)
     myst_data: dict = dataclasses.field(default_factory=dict)
 
+    def dump_yamlstr(self) -> str:
+        """
+        Returns a YAML string that will be
+        1. put on top of a markdown file and,
+        2. ingested to Jupyter Book v2 as frontmatter (https://mystmd.org/guide/frontmatter).
+        """
+        body = yaml.dump(self.myst_data, sort_keys=False, allow_unicode=True, indent=2)
+        return f"---\n{body}---\n\n\n\n"
 
-def extract_frontmatter(
+
+def prepare_frontmatter(
     html_soup: bs4.BeautifulSoup, dstate: DocumentState, tables: list[bs4.Tag]
-) -> FrontmatterBlob | None:
+) -> tuple[bs4.BeautifulSoup, FrontmatterBlob | None]:
     """
     Iterate over every table in a document and check if it is a frontmatter table.
-    Extract data from the first frontmatter table found.
+    Extract data from the first frontmatter table found and replace the table
+    element with yaml string representation, which will later used by Jupyter Book v2.
+
     A document must not have more than one frontmatter table.
     It is ok if a document has no frontmatter table.
     """
     if not tables:
-        return None
+        return html_soup, None
     for table in tables:
         rows: bs4.ResultSet[bs4.Tag] = table.find_all("tr")
         if _is_not_frontmatter_table(rows):
@@ -51,13 +64,19 @@ def extract_frontmatter(
                     elif isinstance(li, bs4.Tag):
                         vals.append(_val(li.text))
                 all_data[_key(key)] = vals
-        return FrontmatterBlob(
+        frontmatter = FrontmatterBlob(
             all_data=all_data,
             myst_data={
                 k: v for k, v in all_data.items() if k in mystmd_frontmatter_fields
             },
         )
-    return None
+        # _replace_table_with_yamlstr(html_soup, table, frontmatter)
+        new_tag = html_soup.new_tag("span")
+        new_tag["class"] = CLS_FRONTMATTER_TABLE
+        new_tag.string = frontmatter.dump_yamlstr()
+        table.replace_with(new_tag)
+        return html_soup, frontmatter
+    return html_soup, None
 
 
 def _is_not_frontmatter_table(rows: bs4.ResultSet[bs4.Tag]) -> bool:
@@ -120,6 +139,15 @@ def _parse_dict(txt: str) -> dict[str, str]:
         key, val = item.split(":", 1)
         res[_key(key)] = _val(val)
     return res
+
+
+# def _replace_table_with_yamlstr(
+#     html_soup: bs4.BeautifulSoup, table: bs4.Tag, frontmatter: FrontmatterBlob
+# ) -> None:
+#     new_tag = html_soup.new_tag("span")
+#     new_tag["class"] = CLS_FRONTMATTER_TABLE
+#     new_tag.string = frontmatter.dump_yamlstr()
+#     table.replace_with(new_tag)
 
 
 # https://mystmd.org/guide/frontmatter#available-frontmatter-fields

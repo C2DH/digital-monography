@@ -70,6 +70,7 @@ highlight[color='{COLOR_DIGITAL_ONLY}'] => span.{CLS_DIGITAL_ONLY}
 highlight[color='{COLOR_PAPER_ONLY}'] => span.{CLS_PAPER_ONLY}
 """
 # html classes
+CLS_FRONTMATTER_TABLE = "dgt-mon-frontmatter-table"
 CLS_METADATA_TABLE = "dgt-mon-metadata-table"
 CLS_METADATA_TABLE_JSONDATA = "dgt-mon-hidden-metadata"
 CLS_STATE_TABLE_JSONDATA = "dgt-mon-hidden-state"

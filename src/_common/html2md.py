@@ -11,10 +11,10 @@ import re
 import typing as t
 
 try:
-    from constants import CLS_DIGITAL_ONLY
+    from constants import CLS_DIGITAL_ONLY, CLS_FRONTMATTER_TABLE
     from state import DocumentState
 except (ImportError, ModuleNotFoundError):
-    from .constants import CLS_DIGITAL_ONLY
+    from .constants import CLS_DIGITAL_ONLY, CLS_FRONTMATTER_TABLE
     from .state import DocumentState
 
 
@@ -116,6 +116,8 @@ class MystMdConverter(markdownify.MarkdownConverter):
     def convert_span(self, el, text, convert_as_inline):
         if text.startswith("% :::{") and text.endswith(":::"):
             return "\n%s\n\n" % text
+        elif CLS_FRONTMATTER_TABLE in el.get("class", []):
+            return text
         elif CLS_DIGITAL_ONLY in el.get("class", []):
             return text
         return super().convert_p(el, text, convert_as_inline)
