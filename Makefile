@@ -28,7 +28,7 @@ prep/book:
 		IR_APKG_MD_BUCKET_NAME=_MARKDOWN \
 		METADATA_ASSETS_BUCKET_NAME=_METDATA \
 		VERIFIER_MSGS=_WARNINGS \
-		python3.12 scripts/prepare_and_build.py book_path="tests/_fixtures/a_book/" --skip-build
+		python3.12 scripts/prepare_and_build.py book_path="tests/_fixtures/a_book/"
 
 prep/bookv2:
 	mkdir -p /tmp/efs/
