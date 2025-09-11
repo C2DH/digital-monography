@@ -5,19 +5,27 @@ from src._common.state import DocumentState
 
 
 @dataclasses.dataclass
-class Frontmatter:
+class FrontmatterBlob:
+    # TODO: Make Frontmatter model. Maybe first with only necessary fields?
     all_data: dict = dataclasses.field(default_factory=dict)
     myst_data: dict = dataclasses.field(default_factory=dict)
 
 
 def extract_frontmatter(
     html_soup: bs4.BeautifulSoup, dstate: DocumentState, tables: list[bs4.Tag]
-) -> Frontmatter | None:
+) -> FrontmatterBlob | None:
+    """
+    Iterate over every table in a document and check if it is a frontmatter table.
+    Extract data from the first frontmatter table found.
+    A document must not have more than one frontmatter table.
+    It is ok if a document has no frontmatter table.
+    """
+    if not tables:
+        return None
     for table in tables:
         rows: bs4.ResultSet[bs4.Tag] = table.find_all("tr")
-        frontmatter_row = rows[0].findChild("td", string="Frontmatter")
-        if frontmatter_row is None:
-            return None
+        if _is_not_frontmatter_table(rows):
+            continue
         all_data = {}
         for row in rows:
             cells: bs4.ResultSet[bs4.Tag] = row.find_all("td")
@@ -26,11 +34,9 @@ def extract_frontmatter(
             # dictionary as a value
             if _is_value_a_dict(val_cells):
                 all_data[_key(key)] = _parse_dict(val_cells[0].text)
-                continue
             # simple value
             elif _is_value_a_paragraph(val_cells):
                 all_data[_key(key)] = _val(val_cells[0].text)
-                continue
             # list of values
             elif _is_value_a_list(val_cells):
                 assert isinstance(val_cells[0], bs4.Tag)  # confirmed in check above
@@ -45,11 +51,21 @@ def extract_frontmatter(
                     elif isinstance(li, bs4.Tag):
                         vals.append(_val(li.text))
                 all_data[_key(key)] = vals
-                continue
-    return Frontmatter(
-        all_data=all_data,
-        myst_data={k: v for k, v in all_data.items() if k in mystmd_frontmatter_fields},
-    )
+        return FrontmatterBlob(
+            all_data=all_data,
+            myst_data={
+                k: v for k, v in all_data.items() if k in mystmd_frontmatter_fields
+            },
+        )
+    return None
+
+
+def _is_not_frontmatter_table(rows: bs4.ResultSet[bs4.Tag]) -> bool:
+    """
+    To be a frontmatter table, the first row must include a "Frontmatter" string.
+    """
+    frontmatter_row = rows[0].findChild("td", string="Frontmatter")
+    return frontmatter_row is None
 
 
 def _is_value_a_dict(val_cells: list[bs4.PageElement]) -> bool:
@@ -103,7 +119,6 @@ def _parse_dict(txt: str) -> dict[str, str]:
     for item in items:
         key, val = item.split(":", 1)
         res[_key(key)] = _val(val)
-        # res[key.strip()] = val.strip()
     return res
 
 
