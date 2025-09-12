@@ -1,0 +1,8 @@
+version: 1
+project:
+  toc:
+    - file: manuscript.md
+site:
+  options:
+    folders: true
+  template: book-theme
