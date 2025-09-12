@@ -53,6 +53,10 @@ prep/split:
 		METADATA_ASSETS_BUCKET_NAME=_METDATA \
 		VERIFIER_MSGS=_WARNINGS \
 		python3.12 scripts/prepare_and_build.py book_path="tests/_fixtures/split-to-multiple-chapters/"
+	export BUILD_DIR=/tmp/efs/split-to-multiple-chapters/_build/html
+	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
+	(cd /tmp/efs/split-to-multiple-chapters && myst build --html)
+	echo 'npx serve /tmp/efs/split-to-multiple-chapters/_build/html'
 
 test/unit:
 	DGTMON_DEBUG=1 python3.12 -m pytest tests/entrypoint tests/orm tests/common/ tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
