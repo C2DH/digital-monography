@@ -87,6 +87,10 @@ def _get_config_key(event) -> KeyPath:
         if not pth.exists():
             pth = KeyPath(slug).efs_slug_dir / "_config.yaml"
         if not pth.exists():
+            pth = KeyPath(slug).efs_slug_dir / "myst.yaml"
+        if not pth.exists():
+            pth = KeyPath(slug).efs_slug_dir / "myst.yml"
+        if not pth.exists():
             raise FileNotFoundError(f"Config file not found. File: {pth}")
         return KeyPath(pth)
     except FileNotFoundError as e:
