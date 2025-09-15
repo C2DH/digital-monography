@@ -5,7 +5,7 @@ import pytest
 
 from src._common.state import DocumentState
 from src._common.html2md import convert_to_md
-from src.preparer.main import is_table, _convert_to_html
+from src.preparer.main import _convert_to_html, convert_to_bs
 from src.preparer.frontmatter import prepare_frontmatter, FrontmatterBlob
 
 
@@ -18,18 +18,17 @@ class TestFrontmatterPreparation:
         fp = pathlib.Path("tests") / "_fixtures" / SLUG / "frontmatter_extraction.docx"
         tables = []
         html_str = _convert_to_html(fp)
-        cls.html_soup = bs4.BeautifulSoup(html_str, "html.parser")
-        classifiers = [
-            (is_table, tables),
-        ]
+        html_soup = convert_to_bs(html_str)
+        # cls.html_soup = bs4.BeautifulSoup(html_str, "html.parser")
+        # classifiers = [
+        #     (is_table, tables),
+        # ]
+        # for node in cls.html_soup.descendants:
+        #     for check_if_meets_criteria, container in classifiers:
+        #         if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
+        #             container.append(node)
+        cls.html_soup, cls.frontmatter = prepare_frontmatter(html_soup)
         dstate = DocumentState(fp)
-        for node in cls.html_soup.descendants:
-            for check_if_meets_criteria, container in classifiers:
-                if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
-                    container.append(node)
-        cls.html_soup, cls.frontmatter = prepare_frontmatter(
-            cls.html_soup, dstate, tables
-        )
         cls.md = convert_to_md(cls.html_soup, dstate)
 
     def test_frontmatter_extraction(self):

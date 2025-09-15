@@ -1,7 +1,7 @@
 import bs4
 import pathlib
 
-from src.preparer.main import _convert_to_html, prepare_docx
+from src.preparer.main import _convert_to_html, convert_to_bs, prepare_docx
 from src._common.constants import AUTONUMBER_PLACEHOLDER
 from src._common.metadata import DocumentMetadata
 from src._common.keys import KeyPath
@@ -48,11 +48,12 @@ class TestRefDatapointsCreated:
     def _prepare_docx_for_ref_handing(
         cls, fp: KeyPath
     ) -> tuple[bs4.BeautifulSoup, DocumentMetadata, DocumentState]:
-        dstate = DocumentState(fp)
+        docstate = DocumentState(fp)
         metadata = DocumentMetadata(fp)
         html_str = _convert_to_html(fp)
-        html_soup, metadata, dstate, _ = prepare_docx(html_str, metadata, dstate)
-        return html_soup, metadata, dstate
+        html_soup = convert_to_bs(html_str)
+        html_soup, metadata, docstate, _ = prepare_docx(html_soup, metadata, docstate)
+        return html_soup, metadata, docstate
 
     def test_target_as_a_user_placed_bookmark(self):
         target: Target = self.bookstate[self.fp_a.stem].get(
@@ -441,7 +442,8 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         docstate = DocumentState(fp)
         metadata = DocumentMetadata(fp)
         html_str = _convert_to_html(fp)
-        html_soup, metadata, docstate, _ = prepare_docx(html_str, metadata, docstate)
+        html_soup = convert_to_bs(html_str)
+        html_soup, metadata, docstate, _ = prepare_docx(html_soup, metadata, docstate)
         return html_soup, docstate
 
     def test_target_for_digital(self):

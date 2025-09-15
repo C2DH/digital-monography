@@ -61,6 +61,7 @@ from refs import (
     is_footnote,
     is_reference,
 )
+from split_into_chapters import split_docx_into_multiple_chapters
 from substitutions_prep import count_targets_for_substitutions
 from ipynb_prep import tags_to_myst_crossref_targets
 from fakers import Faker
@@ -104,8 +105,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info(f"lambda_handler. Event: {json.dumps(event, default=str)}")
     key = _get_key(event)
     event_name = _get_event_name(event)
-    dstate = DocumentState(key)
-    metadata = DocumentMetadata(key)
+    # dstate = DocumentState(key)
+    # metadata = DocumentMetadata(key)
     ####################
     ### Handle deletions
     if _is_IPYNB(key) and _is_deletion(event_name):
@@ -151,35 +152,44 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         src = _get_source_bucket(event)
         _download_fileobj(src, key)
         html_str = _convert_to_html(key.efs_filepath)
-        # TODO: prepare_docx shouldn't have to return "state"
-        html_soup, metadata, dstate, tables = prepare_docx(html_str, metadata, dstate)
-        html_soup = hide_metadata_in_html(html_soup, metadata, dstate)  # last step
-        html_soup_str = str(html_soup)
-        # IMPORTANT NOTE: other services depend on html produced at this stage, make sure that:
-        # 1) all reversible transformations are made before saving html file;
-        # 2) irreversible transformations are omited to avoid not being able to recreate a book
-        # as html files written at this stage will be the basis for a paper version of a book.
-        html_soup = insert_digital_objects(html_soup, dstate, tables)
-        html_soup = remove_metadata_tables(html_soup, dstate, tables)
-        _write_assets_info_to_s3(dstate, key)
-        # _write_metadata_to_db(metadata, dstate, key)  # TODO: dstate
-        _write_state_to_efs(dstate, key)
-        _write_state_to_db(dstate, key)
-        _write_processed_html_to_efs(html_soup_str, key)
-        _put_html_to_s3(html_soup_str, key)
-        md = _convert_to_md(key, html_soup, dstate)
-        _write_processed_md_to_efs(md, key)
-        _put_md_to_s3(md, key.s3_key.with_suffix(".md"))
-        msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
-        msg_md = GithubTriggerMsg(
-            key=key.s3_key.with_suffix(".md"), action=GithubActionEnum.UPDATE_OBJECT
-        )
-        msg_html = GithubTriggerMsg(
-            key=key.s3_key.with_suffix(".html"), action=GithubActionEnum.UPDATE_OBJECT
-        )
-        _enqueue_to_github(msg)
-        _enqueue_to_github(msg_md)
-        _enqueue_to_github(msg_html)
+        html_soup = convert_to_bs(html_str)
+        html_soup, frontmatter = prepare_frontmatter(html_soup)
+        html_soups = split_docx_into_multiple_chapters(html_soup, frontmatter)
+        for _html_soup in html_soups:
+            dstate = DocumentState(key)  # TODO: not key, use val from frontmatter
+            metadata = DocumentMetadata(key)  # TODO: not key, use val from frontmatter
+            # TODO: prepare_docx shouldn't have to return "state"
+            html_soup, metadata, dstate, tables = prepare_docx(
+                _html_soup, metadata, dstate
+            )
+            html_soup = hide_metadata_in_html(html_soup, metadata, dstate)  # last step
+            html_soup_str = str(html_soup)
+            # IMPORTANT NOTE: other services depend on html produced at this stage, make sure that:
+            # 1) all reversible transformations are made before saving html file;
+            # 2) irreversible transformations are omited to avoid not being able to recreate a book
+            # as html files written at this stage will be the basis for a paper version of a book.
+            html_soup = insert_digital_objects(html_soup, dstate, tables)
+            html_soup = remove_metadata_tables(html_soup, dstate, tables)
+            _write_assets_info_to_s3(dstate, key)
+            # _write_metadata_to_db(metadata, dstate, key)  # TODO: dstate
+            _write_state_to_efs(dstate, key)
+            _write_state_to_db(dstate, key)
+            _write_processed_html_to_efs(html_soup_str, key)
+            _put_html_to_s3(html_soup_str, key)
+            md = _convert_to_md(key, html_soup, dstate)
+            _write_processed_md_to_efs(md, key)
+            _put_md_to_s3(md, key.s3_key.with_suffix(".md"))
+            msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
+            msg_md = GithubTriggerMsg(
+                key=key.s3_key.with_suffix(".md"), action=GithubActionEnum.UPDATE_OBJECT
+            )
+            msg_html = GithubTriggerMsg(
+                key=key.s3_key.with_suffix(".html"),
+                action=GithubActionEnum.UPDATE_OBJECT,
+            )
+            _enqueue_to_github(msg)
+            _enqueue_to_github(msg_md)
+            _enqueue_to_github(msg_html)
         # _put_to_archive_s3(key.s3_key.with_suffix(".md"), md)
         _log_audit_event(
             key,
@@ -322,9 +332,39 @@ def _remove_fileobj(key: KeyPath) -> None:
         raise
 
 
+def convert_to_bs(html_str: str) -> bs4.BeautifulSoup:
+    return bs4.BeautifulSoup(html_str, "html.parser")
+
+
+# def split_docx_into_multiple_docs(
+#     html_soup: bs4.BeautifulSoup, frontmatter: FrontmatterBlob | None
+# ) -> list[bs4.BeautifulSoup]:
+#     if frontmatter is None or frontmatter.should_be_splitted is False:
+#         return [html_soup]
+#     html_soups = []
+#     current = None
+#     for elem in html_soup.contents:
+#         # skip whitespace-only strings at top level
+#         if isinstance(elem, bs4.NavigableString) and not elem.strip():
+#             continue
+#         # start a new soup with this H1
+#         if isinstance(elem, bs4.Tag) and elem.name == "h1":
+#             current = bs4.BeautifulSoup("", "html.parser")
+#             current.append(elem.__copy__())
+#             html_soups.append(current)
+#         else:
+#             # if no current H1 yet, skip or collect (depending on desired behavior)
+#             if current is None:
+#                 # optional: start a group without H1 for leading content
+#                 continue
+#             current.append(elem.__copy__())
+#     return html_soups
+
+
 def prepare_docx(
-    html_str: str, metadata: DocumentMetadata, dstate: DocumentState
+    html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata, dstate: DocumentState
 ) -> tuple[bs4.BeautifulSoup, DocumentMetadata, DocumentState, list[bs4.element.Tag]]:
+    # TODO: pass bs instead of str
     images_with_alttxt = []
     tables = []
     headers = []
@@ -334,7 +374,7 @@ def prepare_docx(
     references = []
     paper_only = []
     # html_str = _convert_to_html(key.efs_filepath)
-    html_soup = bs4.BeautifulSoup(html_str, "html.parser")
+    # html_soup = bs4.BeautifulSoup(html_str, "html.parser")
     metadata.char_count, metadata.word_count = _get_char_and_word_count(html_soup)
     classifiers = [
         (is_img_with_alt_text, images_with_alttxt),
@@ -355,7 +395,7 @@ def prepare_docx(
         for check_if_meets_criteria, container in classifiers:
             if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
                 container.append(node)
-    html_soup, frontmatter = prepare_frontmatter(html_soup, dstate, tables)
+    # html_soup, frontmatter = prepare_frontmatter(html_soup, dstate, tables)
     html_soup, bibliography = prepare_citations(html_soup, metadata, dstate, citations)
     html_soup = add_bibliography(html_soup, bibliography)
     html_soup = prepare_ref_targets_in_headers(html_soup, metadata, dstate, headers)
@@ -769,7 +809,6 @@ def _remove_state_from_db(docstate: DocumentState, key: KeyPath) -> None:
 
 def _write_state_to_db(dstate: DocumentState, key: KeyPath) -> None:
     try:
-        # print('len(dstate["refs"])', len(dstate["refs"]))
         with sqlmodel.Session(db_engine) as session:
             # delete existing records for this file so there are no duplicates
             dstate.sql_delete_by_key(session, key)
