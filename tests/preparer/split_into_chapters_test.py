@@ -7,7 +7,7 @@ from src.preparer.frontmatter import FrontmatterBlob
 
 
 def _html_equal(a: bs4.BeautifulSoup, b: bs4.BeautifulSoup) -> bool:
-    # Compare normalized string representations
+    "Compare normalized string representations"
     return a.decode().strip() == b.decode().strip()
 
 
@@ -55,7 +55,7 @@ complex_expected_split = [
     """,
 ]
 # Test if it includes content before the first <h1>.
-no_h1_input_html = """
+with_intro_input_html = """
 <span class="dgt-mon-frontmatter-table">---
 title: Frontmatter example
 ---
@@ -65,7 +65,7 @@ title: Frontmatter example
 <h1>Main</h1>
 <p>Main content</p>
 """
-no_h1_expected_split = [
+with_intro_expected_split = [
     """<span class="dgt-mon-frontmatter-table">---
 title: Frontmatter example
 ---
@@ -108,7 +108,7 @@ bookmarked_expected_split = [
 """,
 ]
 # Before h1 there is content and bookmark
-bookmarked_with_into_input_html = """
+bookmarked_with_intro_input_html = """
 <p>Don't forget about me</p>
 <pre>(f-filename-bookmark-to-h2)=</pre>
 <h2>intro</h2>
@@ -121,7 +121,7 @@ bookmarked_with_into_input_html = """
 <h1>Heading2</h1>
 <p>yyy</p>
 """
-bookmarked_with_into_expected_split = [
+bookmarked_with_intro_expected_split = [
     """
 <p>Don't forget about me</p>
 <pre>(f-filename-bookmark-to-h2)=</pre>
@@ -146,26 +146,15 @@ bookmarked_with_into_expected_split = [
     [
         (basic_input_html, basic_expected_split),
         (complex_input_html, complex_expected_split),
-        (no_h1_input_html, no_h1_expected_split),
-        # TODO: remove duplicated <pre> tags and restore tests
-        # (bookmarked_input_html, bookmarked_expected_split),
-        # (bookmarked_with_into_input_html, bookmarked_with_into_expected_split),
+        (with_intro_input_html, with_intro_expected_split),
+        (bookmarked_input_html, bookmarked_expected_split),
+        (bookmarked_with_intro_input_html, bookmarked_with_intro_expected_split),
     ],
 )
 def test_split(input_html: str, expected: list[str]):
     html_soup = convert_to_bs(input_html)
     frontmatter = FrontmatterBlob({"split": "True"})
     html_soups = split_docx_into_multiple_chapters(html_soup, frontmatter)
-    for i in range(len(expected)):
-        print("=" * 50)
-        print(html_soups[i])
-        print("-" * 50)
-        print(expected[i])
-    print("#" * 75)
     assert len(html_soups) == len(expected)
     for i in range(len(expected)):
-        print("=" * 50)
-        print(html_soups[i])
-        print("-" * 50)
-        print(expected[i])
         assert _html_equal(html_soups[i], convert_to_bs(expected[i]))
