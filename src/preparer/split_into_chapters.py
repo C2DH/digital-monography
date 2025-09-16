@@ -62,10 +62,37 @@ def split_docx_into_multiple_chapters(
     groups = []
 
     # find all h1 elements in document order
-    h1s = html_soup.find_all("h1")
+    h1s: bs4.ResultSet[bs4.Tag] = html_soup.find_all("h1")
+    boundaries: list[bs4.Tag] = []
+    for h1 in h1s:
+        print("*" * 25)
+        boundary = h1
+        prev = h1.previous_sibling
+        while prev is not None:
+            print("\tboundary", repr(boundary))
+            if isinstance(prev, bs4.NavigableString) and prev.string.strip() == "":
+                prev = prev.previous_sibling
+                continue
+            elif isinstance(prev, bs4.Comment):
+                prev = prev.previous_sibling
+                continue
+            elif isinstance(prev, bs4.Tag) and prev.name == "pre":
+                boundary = prev
+                prev = prev.previous_sibling
+                continue
+            else:
+                print(".. prev", repr(prev), type(prev))
+                break
+                # is_directly_before_h1 = False
+                # prev_nodes.append(prev)
+                # prev = prev.previous_sibling
+        print("appending boundary")
+        boundaries.append(boundary)
+        print("\tboundaries", boundaries)
 
     #######################################################
     # Include everything before the first <h1> as the first group.
+    include_everything_before_the_first_h1 = """
     first_h1 = h1s[0] if h1s else None
     # print("first_h1", repr(first_h1), type(first_h1))
     prev_nodes = []
@@ -99,10 +126,23 @@ def split_docx_into_multiple_chapters(
     # print("fragment_html", repr(fragment_html))
     if fragment_html.strip():
         groups.append(bs4.BeautifulSoup(fragment_html, "html.parser"))
+    """
     # print("&" * 75)
     # print("&" * 75)
 
     ##################
+    first_boundary = boundaries[0] if boundaries else None
+    prev = first_boundary.previous_sibling if first_boundary else None
+    prev_nodes = []
+    while prev is not None:
+        prev_nodes.append(prev)
+        prev = prev.previous_sibling
+    print("prev_nodes", prev_nodes)
+    fragment_html = "".join(str(n) for n in reversed(prev_nodes))
+    print("fragment_html", repr(fragment_html))
+    if fragment_html.strip():
+        groups.append(bs4.BeautifulSoup(fragment_html, "html.parser"))
+
     # for elem in html_soup.contents:
     #     if elem is first_h1:
     #         print("\n\nnodes", nodes, "\n\n")
@@ -126,17 +166,22 @@ def split_docx_into_multiple_chapters(
     # if fragment_html.strip() and tags != {"pre"}:
     #     groups.append(bs4.BeautifulSoup(fragment_html, "html.parser"))
     #######################################################
-    for i, h1 in enumerate(h1s):
+    for i, boundary in enumerate(boundaries):
+        # for i, h1 in enumerate(h1s):
 
         # determine end boundary: next h1 or None
-        next_h1 = h1s[i + 1] if i + 1 < len(h1s) else None
+        # next_boundary = h1s[i + 1] if i + 1 < len(h1s) else None
+        next_boundary = boundaries[i + 1] if i + 1 < len(boundaries) else None
+        print("\n\nh1", repr(boundary), type(boundary))
+        print("next_boundary", repr(next_boundary), type(next_boundary))
+        print("groups", groups)
 
         # collect nodes that belong to this group
         nodes = []
-
-        # First, capture any preceding consecutive <pre> siblings immediately before this h1.
+        # LOOKBEHIND
+        # First, capture any preceding consecutive <pre> siblings immediately before this boundary.
         # Walk backwards through previous_sibling while siblings are <pre> (and possibly whitespace text nodes).
-        prev = h1.previous_sibling
+        prev = boundary.previous_sibling
         # Collect candidate <pre> elements in reverse order then reverse at the end
         pre_stack = []
         while prev is not None:
@@ -156,16 +201,20 @@ def split_docx_into_multiple_chapters(
             break
         # add the collected <pre> tags in document order
         # print("reversed(pre_stack)", list(reversed(pre_stack)))
+        # if pre_stack:
+        #     next_boundary = pre_stack[-1]
+        # print("pre_stack", pre_stack)
         nodes.extend(reversed(pre_stack))
 
         # Now add the h1 itself
         # print(h1)
-        nodes.append(h1)
+        nodes.append(boundary)
         # print("nodes after adding h1", nodes)
 
-        # Then add all following siblings until (but not including) next_h1
-        cur = h1.next_sibling
-        while cur is not None and cur is not next_h1:
+        # Then add all following siblings until (but not including) next_boundary
+        cur = boundary.next_sibling
+        print("cur", repr(cur), type(cur))
+        while cur is not None and cur is not next_boundary:
             # include everything (tags, strings, comments)
             nodes.append(cur)
             cur = cur.next_sibling
