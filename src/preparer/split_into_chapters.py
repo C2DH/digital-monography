@@ -181,6 +181,7 @@ def split_docx_into_multiple_chapters(
         # LOOKBEHIND
         # First, capture any preceding consecutive <pre> siblings immediately before this boundary.
         # Walk backwards through previous_sibling while siblings are <pre> (and possibly whitespace text nodes).
+        LOOKBEHIND = """
         prev = boundary.previous_sibling
         # Collect candidate <pre> elements in reverse order then reverse at the end
         pre_stack = []
@@ -205,6 +206,7 @@ def split_docx_into_multiple_chapters(
         #     next_boundary = pre_stack[-1]
         # print("pre_stack", pre_stack)
         nodes.extend(reversed(pre_stack))
+        """
 
         # Now add the h1 itself
         # print(h1)
