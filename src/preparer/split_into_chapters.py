@@ -1,6 +1,6 @@
 import bs4
 
-from frontmatter import FrontmatterBlob
+from prep_frontmatter import FrontmatterBlob
 
 
 def split_docx_into_multiple_chapters(

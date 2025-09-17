@@ -47,7 +47,7 @@ from conditional_prep import is_paper_only, remove_paper_only
 from citations import add_bibliography, is_citation, prepare_citations
 from digital_prep import insert_digital_objects, remove_metadata_tables
 from hide_metadata_in_html import hide_metadata_in_html
-from frontmatter import prepare_frontmatter
+from prep_frontmatter import prepare_frontmatter
 from metadata_extraction import prepare_metadata_tables
 from remove_empty_tables import remove_empty_tables
 from replace_alt_texts import is_img_with_alt_text, prepare_alt_texts

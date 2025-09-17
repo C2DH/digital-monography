@@ -3,7 +3,7 @@ import pytest
 
 from src.preparer.main import convert_to_bs
 from src.preparer.split_into_chapters import split_docx_into_multiple_chapters
-from src.preparer.frontmatter import FrontmatterBlob
+from src.preparer.prep_frontmatter import FrontmatterBlob
 
 
 def _html_equal(a: bs4.BeautifulSoup, b: bs4.BeautifulSoup) -> bool:

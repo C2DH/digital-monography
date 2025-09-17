@@ -1,12 +1,10 @@
-import bs4
 import pathlib
-import pytest
 
 
 from src._common.state import DocumentState
 from src._common.html2md import convert_to_md
 from src.preparer.main import _convert_to_html, convert_to_bs
-from src.preparer.frontmatter import prepare_frontmatter, FrontmatterBlob
+from src.preparer.prep_frontmatter import prepare_frontmatter, FrontmatterBlob
 
 
 SLUG = "book-content-examples"
