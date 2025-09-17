@@ -18,7 +18,7 @@ def split_docx_into_multiple_chapters(
         groups.append(bs4.BeautifulSoup(html_before_first_boundary, "html.parser"))
     for i, start_bnd in enumerate(boundaries):
         end_bnd = boundaries[i + 1] if i + 1 < len(boundaries) else None
-        fragment_html = _extract_content_between_two_boundaries(i, start_bnd, end_bnd)
+        fragment_html = _extract_content_between_two_boundaries(start_bnd, end_bnd)
         groups.append(bs4.BeautifulSoup(fragment_html, "html.parser"))
     return groups
 
@@ -69,7 +69,6 @@ def _extract_content_before_first_boundary(boundaries: list[bs4.Tag]) -> str:
 
 
 def _extract_content_between_two_boundaries(
-    i: int,
     start_boundary: bs4.Tag,
     end_boundary: bs4.Tag,
 ) -> str:
