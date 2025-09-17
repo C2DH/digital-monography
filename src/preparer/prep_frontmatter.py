@@ -2,7 +2,6 @@ import bs4
 import yaml
 import typing as t
 
-from src._common.state import DocumentState
 from src._common.constants import CLS_FRONTMATTER_TABLE
 from src._common.models import Chapter, ChapterService
 
@@ -36,6 +35,9 @@ class FrontmatterBlob:
     def should_be_splitted(self) -> bool:
         return self.dgtmon_data["_split"] if "_split" in self.dgtmon_data else False
 
+    def toc(self) -> list[Chapter]:
+        return self.dgtmon_data["_toc"] if "_toc" in self.dgtmon_data else []
+
 
 def prepare_frontmatter(
     html_soup: bs4.BeautifulSoup,
@@ -52,12 +54,7 @@ def prepare_frontmatter(
     table = _find_frontmatter_table(html_soup)
     if not table:
         return html_soup, None
-    # if not tables:
-    #     return html_soup, None
-    # for table in tables:
     rows: bs4.ResultSet[bs4.Tag] = table.find_all("tr")
-    # if _is_not_frontmatter_table(rows):
-    #     continue
     all_data = {}
     for row in rows:
         cells: bs4.ResultSet[bs4.Tag] = row.find_all("td")
@@ -84,14 +81,12 @@ def prepare_frontmatter(
                     vals.append(_val(li.text))
             all_data[_key(key)] = vals
     frontmatter = FrontmatterBlob(all_data)
-    # myst_data={k: v for k, v in all_data.items() if k in mystmd_frontmatter_fields},
     # _replace_table_with_yamlstr(html_soup, table, frontmatter)
     new_tag = html_soup.new_tag("span")
     new_tag["class"] = CLS_FRONTMATTER_TABLE
     new_tag.string = frontmatter.dump_yamlstr()
     table.replace_with(new_tag)
     return html_soup, frontmatter
-    # return html_soup, None
 
 
 def _find_frontmatter_table(html_soup: bs4.BeautifulSoup) -> bs4.Tag | None:
