@@ -4,6 +4,7 @@ import sqlmodel
 from .assets import Asset, AssetService  # noqa
 from .citation_groups import CitationGroup
 from .citation_items import CitationItem
+from .chapters import Chapter, ChapterService  # noqa
 from .files import File, FileService  # noqa
 from .headings import Heading, HeadingService  # noqa
 from .doc_metadata import DocumentMetadata
@@ -18,6 +19,7 @@ __all__ = [
     "Asset",
     "CitationGroup",
     "CitationItem",
+    "Chapter",
     "File",
     "Heading",
     "DocumentMetadata",
@@ -30,6 +32,7 @@ tables_to_models: dict[str, ModelMeta] = {
     "assets": Asset,
     "citation_groups": CitationGroup,
     "citation_items": CitationItem,
+    "chapters": Chapter,
     "files": File,
     "headings": Heading,
     "document_metadata": DocumentMetadata,

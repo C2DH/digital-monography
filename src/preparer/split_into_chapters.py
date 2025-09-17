@@ -9,7 +9,7 @@ def split_docx_into_multiple_chapters(
     """
     Split the HTML document into multiple chapters based on <h1> tags.
     """
-    if frontmatter is None or frontmatter.should_be_splitted is False:
+    if frontmatter is None or frontmatter.should_be_splitted() is False:
         return [html_soup]
     groups = []
     boundaries = _find_boundaries_where_to_split(html_soup)

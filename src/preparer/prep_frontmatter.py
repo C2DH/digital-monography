@@ -4,6 +4,7 @@ import typing as t
 
 from src._common.state import DocumentState
 from src._common.constants import CLS_FRONTMATTER_TABLE
+from src._common.models import Chapter, ChapterService
 
 
 class FrontmatterBlob:
@@ -16,8 +17,12 @@ class FrontmatterBlob:
         for k, v in data.items():
             if k in MYSTMD_FRONTMATTER_FIELDS:
                 self.myst_data[k] = v  # if necessary, init Frontmatter model
-            else:
+                continue
+            field = next((f for f in CUSTOM_FRONTMATTER_FIELDS if f["key"] == k), None)
+            if field is None:
                 self.dgtmon_data[k] = v
+            else:
+                self.dgtmon_data[k] = field["fun"](v)
 
     def dump_yamlstr(self) -> str:
         """
@@ -28,15 +33,8 @@ class FrontmatterBlob:
         body = yaml.dump(self.myst_data, sort_keys=False, allow_unicode=True, indent=2)
         return f"---\n{body}---\n\n\n\n"
 
-    @property
     def should_be_splitted(self) -> bool:
-        try:
-            split = next(v for k, v in self.all_data.items() if k == "split")
-            if split in ["false", "no", "0"]:
-                return False
-            return bool(split)
-        except StopIteration:
-            return False
+        return self.dgtmon_data["_split"] if "_split" in self.dgtmon_data else False
 
 
 def prepare_frontmatter(
@@ -178,14 +176,41 @@ def _parse_dict(txt: str) -> dict[str, str]:
 #     table.replace_with(new_tag)
 
 
+def to_bool(val: str) -> bool:
+    val = val.lower()
+    if val in ["true", "yes", "1"]:
+        return True
+    elif val in ["false", "no", "0"]:
+        return False
+    else:
+        raise ValueError(f"Cannot convert '{val}' to bool.")
+
+
+T = t.TypeVar("T")
+# Type annotation for a custom frontmatter field
+CustomFrontmatterFieldType = t.TypedDict(
+    "CustomFrontmatterFieldType",
+    {
+        "key": str,
+        # "field": str, # again, what was the purpose of this?
+        "type": T,
+        "fun": t.Callable[[str], T],
+        "desc": str,
+    },
+)
 # For now this is just for documentation.
 CUSTOM_FRONTMATTER_FIELDS = [
     {
-        "key": "split",
-        "field": "split",
-        "aliases": [],
+        "key": "_split",
         "type": bool,
+        "fun": to_bool,
         "desc": "Indicates whether the file contains multiple chapters that should be split into separate parts. Each part will be a separate page in the digital version.",
+    },
+    {
+        "key": "_toc",
+        "type": list[Chapter],
+        "fun": ChapterService.parse_toc,
+        "desc": "",
     },
 ]
 

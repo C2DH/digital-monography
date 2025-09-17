@@ -1,8 +1,10 @@
 import pathlib
+import pytest
 
 
 from src._common.state import DocumentState
 from src._common.html2md import convert_to_md
+from src._common.models import Chapter
 from src.preparer.main import _convert_to_html, convert_to_bs
 from src.preparer.prep_frontmatter import prepare_frontmatter, FrontmatterBlob
 
@@ -106,3 +108,25 @@ class TestFrontmatterPreparation:
             in self.md
         )
         assert "isbn" not in self.md
+
+    @pytest.mark.parametrize(
+        "i, bookmark, slug, prefix, fn",
+        [
+            (0, "h1_index", "h1-index", "I", None),  # slug is auto-generated
+            (1, "h1_infile", "in-file", "1", None),
+            (
+                2,
+                "h1_isunicode",
+                "is-unicode-handled-well",
+                "2",
+                "isunicode_with_custom_file_name",
+            ),
+        ],
+    )
+    def test_chapters_extracted_from_toc(self, i, bookmark, slug, prefix, fn):
+        assert len(self.frontmatter.dgtmon_data["_toc"]) == 3
+        assert isinstance(self.frontmatter.dgtmon_data["_toc"][i], Chapter)
+        assert self.frontmatter.dgtmon_data["_toc"][i].bookmark == bookmark
+        assert self.frontmatter.dgtmon_data["_toc"][i].slug == slug
+        assert self.frontmatter.dgtmon_data["_toc"][i].prefix == prefix
+        assert self.frontmatter.dgtmon_data["_toc"][i].fn == fn
