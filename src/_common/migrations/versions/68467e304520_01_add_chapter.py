@@ -1,8 +1,8 @@
 """01_add_chapter
 
-Revision ID: 1e698cd20b23
+Revision ID: 68467e304520
 Revises: 4380d71c4121
-Create Date: 2025-09-18 10:07:51.210223
+Create Date: 2025-09-18 14:10:27.177396
 
 """
 from typing import Sequence, Union
@@ -15,7 +15,7 @@ import sqlmodel.sql.sqltypes
 
 
 # revision identifiers, used by Alembic.
-revision: str = '1e698cd20b23'
+revision: str = '68467e304520'
 down_revision: Union[str, Sequence[str], None] = '4380d71c4121'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -28,8 +28,10 @@ def upgrade() -> None:
     sa.Column('pk', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('x_loc', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('bookmark', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('slug', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('book_slug', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('chapter_slug', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('prefix', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('curr_file', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('x_fp', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('fn', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.PrimaryKeyConstraint('pk')

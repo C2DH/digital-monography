@@ -1,10 +1,10 @@
-import pathlib
 import pytest
 
 
 from src._common.state import DocumentState
 from src._common.html2md import convert_to_md
 from src._common.models import Chapter
+from src._common.keys import KeyPath
 from src.preparer.main import _convert_to_html, convert_to_bs
 from src.preparer.prep_frontmatter import prepare_frontmatter, FrontmatterBlob
 
@@ -15,8 +15,8 @@ SLUG = "book-content-examples"
 class TestFrontmatterPreparation:
     @classmethod
     def setup_class(cls):
-        fp = pathlib.Path("tests") / "_fixtures" / SLUG / "frontmatter_extraction.docx"
-        tables = []
+        fp = KeyPath("tests") / "_fixtures" / SLUG / "frontmatter_extraction.docx"
+        key = KeyPath("/tmp/efs") / SLUG / fp.name
         html_str = _convert_to_html(fp)
         html_soup = convert_to_bs(html_str)
         # cls.html_soup = bs4.BeautifulSoup(html_str, "html.parser")
@@ -27,8 +27,8 @@ class TestFrontmatterPreparation:
         #     for check_if_meets_criteria, container in classifiers:
         #         if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
         #             container.append(node)
-        cls.html_soup, cls.frontmatter = prepare_frontmatter(html_soup)
-        dstate = DocumentState(fp)
+        cls.html_soup, cls.frontmatter = prepare_frontmatter(html_soup, key)
+        dstate = DocumentState(key)
         cls.md = convert_to_md(cls.html_soup, dstate)
 
     def test_frontmatter_extraction(self):
@@ -110,23 +110,41 @@ class TestFrontmatterPreparation:
         assert "isbn" not in self.md
 
     @pytest.mark.parametrize(
-        "i, bookmark, slug, prefix, fn",
+        "i, bookmark, slug, prefix, fn, fp",
         [
-            (0, "h1_index", "h1-index", "I", None),  # slug is auto-generated
-            (1, "h1_infile", "in-file", "1", None),
+            (
+                0,
+                "h1_index",
+                "h1-index",
+                "I",
+                None,
+                KeyPath(f"/tmp/efs/{SLUG}/h1-index.docx"),
+            ),  # slug is auto-generated
+            (
+                1,
+                "h1_infile",
+                "in-file",
+                "1",
+                None,
+                KeyPath(f"/tmp/efs/{SLUG}/in-file.docx"),
+            ),
             (
                 2,
                 "h1_isunicode",
                 "is-unicode-handled-well",
                 "2",
                 "isunicode_with_custom_file_name",
+                KeyPath(f"/tmp/efs/{SLUG}/isunicode_with_custom_file_name.docx"),
             ),
         ],
     )
-    def test_chapters_extracted_from_toc(self, i, bookmark, slug, prefix, fn):
+    def test_chapters_extracted_from_toc(self, i, bookmark, slug, prefix, fn, fp):
         assert len(self.frontmatter.dgtmon_data["_toc"]) == 3
         assert isinstance(self.frontmatter.dgtmon_data["_toc"][i], Chapter)
         assert self.frontmatter.dgtmon_data["_toc"][i].bookmark == bookmark
-        assert self.frontmatter.dgtmon_data["_toc"][i].slug == slug
+        assert self.frontmatter.dgtmon_data["_toc"][i].chapter_slug == slug
+        assert self.frontmatter.dgtmon_data["_toc"][i].book_slug == SLUG
         assert self.frontmatter.dgtmon_data["_toc"][i].prefix == prefix
         assert self.frontmatter.dgtmon_data["_toc"][i].fn == fn
+        assert isinstance(self.frontmatter.dgtmon_data["_toc"][i].fp, KeyPath)
+        assert self.frontmatter.dgtmon_data["_toc"][i].fp == fp

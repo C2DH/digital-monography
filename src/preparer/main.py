@@ -153,7 +153,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _download_fileobj(src, key)
         html_str = _convert_to_html(key.efs_filepath)
         html_soup = convert_to_bs(html_str)
-        html_soup, frontmatter = prepare_frontmatter(html_soup)
+        html_soup, frontmatter = prepare_frontmatter(html_soup, key)
         html_soups = split_docx_into_multiple_chapters(html_soup, frontmatter)
         for _html_soup in html_soups:
             dstate = DocumentState(key)  # TODO: not key, use val from frontmatter

@@ -4,16 +4,24 @@ import typing as t
 
 from src._common.constants import CLS_FRONTMATTER_TABLE
 from src._common.models import Chapter, ChapterService
+from src._common.keys import KeyPath
 
 
 class FrontmatterBlob:
     # TODO: Make Frontmatter model. Maybe first with only necessary fields?
 
-    def __init__(self, data: dict[str, t.Any]):
+    def __init__(self, data: dict[str, t.Any], key: KeyPath):
         self.all_data: dict[str, t.Any] = data
         self.myst_data: dict[str, t.Any] = {}
         self.dgtmon_data: dict[str, t.Any] = {}
+        for chapter in data.get("_toc", []):
+            assert isinstance(key, KeyPath)
+            chapter["_curr_file"] = key
         for k, v in data.items():
+            # print("v", v, type(v))
+            # for chapter in v:
+            #     print("chapter", chapter, type(chapter))
+            #     chapter["_key"] = key
             if k in MYSTMD_FRONTMATTER_FIELDS:
                 self.myst_data[k] = v  # if necessary, init Frontmatter model
                 continue
@@ -40,7 +48,7 @@ class FrontmatterBlob:
 
 
 def prepare_frontmatter(
-    html_soup: bs4.BeautifulSoup,
+    html_soup: bs4.BeautifulSoup, curr_file: KeyPath
 ) -> tuple[bs4.BeautifulSoup, FrontmatterBlob | None]:
     # html_soup: bs4.BeautifulSoup, tables: list[bs4.Tag]
     """
@@ -80,7 +88,7 @@ def prepare_frontmatter(
                 elif isinstance(li, bs4.Tag):
                     vals.append(_val(li.text))
             all_data[_key(key)] = vals
-    frontmatter = FrontmatterBlob(all_data)
+    frontmatter = FrontmatterBlob(all_data, curr_file)
     # _replace_table_with_yamlstr(html_soup, table, frontmatter)
     new_tag = html_soup.new_tag("span")
     new_tag["class"] = CLS_FRONTMATTER_TABLE

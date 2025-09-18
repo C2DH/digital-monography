@@ -1,3 +1,5 @@
+import random
+import string
 import sqlmodel
 
 try:
@@ -16,8 +18,10 @@ class Chapter(MySQLModel, table=True):
     __tablename__ = "chapters"
 
     bookmark: str
-    slug: str
+    book_slug: str
+    chapter_slug: str
     prefix: str
+    curr_file: str
     x_fp: str = sqlmodel.Field(alias="fp")
     fn: str | None = sqlmodel.Field(default=None)
 
@@ -32,7 +36,7 @@ class Chapter(MySQLModel, table=True):
 
 class ChapterService:
     @staticmethod
-    def parse_toc(toc: list[dict[str, str]]) -> list[Chapter]:
+    def parse_toc(toc: list[dict[str, str | KeyPath]]) -> list[Chapter]:
         """
         Parse the '_toc' frontmatter field into a list of Chapter objects.
         Note that this couldn't be done in the Chapter class itself,
@@ -40,11 +44,30 @@ class ChapterService:
         """
         chapters = []
         for i, chapter in enumerate(toc, 1):
-            if "slug" not in chapter:
-                chapter["slug"] = chapter["bookmark"].replace("_", "-").lower()
-            if "prefix" not in chapter or not chapter["prefix"]:
-                chapter["prefix"] = str(i)
-            if chapter["fn"]:
-                chapter["fp"] = KeyPath(DEFAULT_SFS_DIR) / chapter["fn"]
+            chapter["chapter_slug"] = _get_chapter_slug(i, chapter)
+            chapter["prefix"] = chapter["prefix"] if "prefix" in chapter else str(i)
+            chapter["fp"] = _get_fp(chapter)
+            chapter["book_slug"] = chapter["fp"].slug
+            chapter["curr_file"] = str(chapter["_curr_file"])
             chapters.append(Chapter(**chapter))
         return chapters
+
+
+def _get_chapter_slug(i: int, chapter: dict[str, str]) -> str:
+    if not chapter.get("slug"):
+        return chapter.get("bookmark", f"{i}-chapter").replace("_", "-").lower()
+    slug = chapter["slug"]
+    del chapter["slug"]
+    return slug
+
+
+def _get_fp(chapter: dict[str, str | KeyPath]) -> KeyPath:
+    curr_file = chapter.get("_curr_file")
+    if isinstance(curr_file, KeyPath):
+        slug = curr_file.slug
+    else:
+        slug = "".join(random.choices(string.ascii_lowercase, k=8))
+    fn = chapter["fn"].lower() if "fn" in chapter else chapter["chapter_slug"].lower()
+    fn = "".join(ch for ch in fn if ch.isalnum() or ch in ("-", "_"))
+    key: KeyPath = KeyPath(DEFAULT_SFS_DIR) / slug / fn
+    return key.with_suffix(".docx")
