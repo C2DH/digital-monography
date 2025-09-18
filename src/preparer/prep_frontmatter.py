@@ -44,6 +44,7 @@ class FrontmatterBlob:
         return self.dgtmon_data["_split"] if "_split" in self.dgtmon_data else False
 
     def toc(self) -> list[Chapter]:
+        """Returns Table of Contents."""
         return self.dgtmon_data["_toc"] if "_toc" in self.dgtmon_data else []
 
 

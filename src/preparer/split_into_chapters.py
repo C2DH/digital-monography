@@ -1,5 +1,6 @@
 import bs4
 
+from src._common.models import Chapter
 from prep_frontmatter import FrontmatterBlob
 
 
@@ -7,32 +8,38 @@ def split_docx_into_multiple_chapters(
     html_soup: bs4.BeautifulSoup, frontmatter: FrontmatterBlob | None
 ) -> list[bs4.BeautifulSoup]:
     """
-    Split the HTML document into multiple chapters based on <h1> tags.
+    Split the HTML document into multiple chapters based on `<h1>` tags.
     """
     if frontmatter is None or frontmatter.should_be_splitted() is False:
         return [html_soup]
     groups = []
-    boundaries = _find_boundaries_where_to_split(html_soup)
+    boundaries, chapters = _find_boundaries_where_to_split(html_soup, frontmatter.toc())
     html_before_first_boundary = _extract_content_before_first_boundary(boundaries)
     if html_before_first_boundary.strip():
         groups.append(bs4.BeautifulSoup(html_before_first_boundary, "html.parser"))
     for i, start_bnd in enumerate(boundaries):
         end_bnd = boundaries[i + 1] if i + 1 < len(boundaries) else None
         fragment_html = _extract_content_between_two_boundaries(start_bnd, end_bnd)
-        groups.append(bs4.BeautifulSoup(fragment_html, "html.parser"))
+        soup = bs4.BeautifulSoup(fragment_html, "html.parser")
+        soup.attrs["chapter"] = chapters[i]
+        groups.append(soup)
     return groups
 
 
-def _find_boundaries_where_to_split(html_soup: bs4.BeautifulSoup) -> list[bs4.Tag]:
+def _find_boundaries_where_to_split(
+    html_soup: bs4.BeautifulSoup, toc: list[Chapter]
+) -> tuple[list[bs4.Tag], list[Chapter | None]]:
     """
     Find the actual boundary tags where to split the document.
-    By default, these are the <h1> tags.
-    However, if there are <pre> tags (bookmarks) immediately preceding an <h1> tag,
-    set the most outer <pre> tag as the boundary.
+    By default, these are the `<h1>` tags.
+    However, if there are `<pre>` tags (bookmarks) immediately preceding an `<h1>` tag,
+    set the most outer `<pre>` tag as the boundary.
     """
     h1s: bs4.ResultSet[bs4.Tag] = html_soup.find_all("h1")
     boundaries: list[bs4.Tag] = []
+    chapters: list[Chapter | None] = []
     for h1 in h1s:
+        chapter_info = _find_chapter_info_for_h1(h1, toc)
         boundary = h1
         prev = h1.previous_sibling
         while prev is not None:
@@ -49,7 +56,16 @@ def _find_boundaries_where_to_split(html_soup: bs4.BeautifulSoup) -> list[bs4.Ta
             else:
                 break
         boundaries.append(boundary)
-    return boundaries
+        chapters.append(chapter_info)
+    return boundaries, chapters
+
+
+def _find_chapter_info_for_h1(h1: bs4.Tag, toc: list[Chapter]) -> Chapter | None:
+    for chapter in toc:
+        bookmark = h1.find("a", id=chapter.bookmark)
+        if bookmark:
+            return chapter
+    return None
 
 
 def _extract_content_before_first_boundary(boundaries: list[bs4.Tag]) -> str:
