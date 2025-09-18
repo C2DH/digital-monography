@@ -1,7 +1,13 @@
+import sqlmodel
+
 try:
-    from _base import MySQLModel
+    from ._base import MySQLModel
+    from keys import KeyPath
+    from constants import DEFAULT_SFS_DIR
 except (ImportError, ModuleNotFoundError):
     from ._base import MySQLModel  # type: ignore
+    from ..keys import KeyPath  # type: ignore
+    from ..constants import DEFAULT_SFS_DIR
 
 
 class Chapter(MySQLModel, table=True):
@@ -12,7 +18,16 @@ class Chapter(MySQLModel, table=True):
     bookmark: str
     slug: str
     prefix: str
-    fn: str | None
+    x_fp: str = sqlmodel.Field(alias="fp")
+    fn: str | None = sqlmodel.Field(default=None)
+
+    @property
+    def fp(self) -> KeyPath:
+        return KeyPath(self.x_fp)
+
+    @fp.setter
+    def fp(self, val: KeyPath) -> None:
+        self.x_fp = str(val)
 
 
 class ChapterService:
@@ -29,5 +44,7 @@ class ChapterService:
                 chapter["slug"] = chapter["bookmark"].replace("_", "-").lower()
             if "prefix" not in chapter or not chapter["prefix"]:
                 chapter["prefix"] = str(i)
+            if chapter["fn"]:
+                chapter["fp"] = KeyPath(DEFAULT_SFS_DIR) / chapter["fn"]
             chapters.append(Chapter(**chapter))
         return chapters
