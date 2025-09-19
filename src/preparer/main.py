@@ -34,6 +34,7 @@ from src._common.models import (
     Asset,
     CitationGroup,
     CitationItem,
+    Chapter,
     Heading,
     Ref,
     Substitution,
@@ -155,12 +156,30 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_soup = convert_to_bs(html_str)
         html_soup, frontmatter = prepare_frontmatter(html_soup, key)
         html_soups = split_docx_into_multiple_chapters(html_soup, frontmatter)
-        for _html_soup in html_soups:
+        # toc = frontmatter.toc()
+        # assert len(toc) == len(html_soups)
+        # print("len(toc)", len(toc))
+        # print("len(html_soups)", len(html_soups))
+        # for chapter in toc:
+        #     print("chapter", chapter)
+        #     print("-" * 75)
+        # print("=" * 75)
+        # for soup in html_soups:
+        #     print(">>>>", soup.attrs.get("chapter"))
+        #     print("soup", str(soup)[:250])
+        #     print("-" * 75)
+        # for i in range(len(html_soups)):
+        #     html_soup = html_soups[i]
+        #     key = toc[i].fp
+        for html_soup in html_soups:
+            if len(html_soups) != 1:
+                chapter: Chapter = html_soup.attrs.get("chapter")
+                key = chapter.fp
             dstate = DocumentState(key)  # TODO: not key, use val from frontmatter
             metadata = DocumentMetadata(key)  # TODO: not key, use val from frontmatter
             # TODO: prepare_docx shouldn't have to return "state"
             html_soup, metadata, dstate, tables = prepare_docx(
-                _html_soup, metadata, dstate
+                html_soup, metadata, dstate
             )
             html_soup = hide_metadata_in_html(html_soup, metadata, dstate)  # last step
             html_soup_str = str(html_soup)

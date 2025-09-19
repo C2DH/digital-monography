@@ -1,6 +1,7 @@
 import bs4
 
-from src._common.models import Chapter
+from src._common.models import Chapter, ChapterService
+from src._common.keys import KeyPath
 from prep_frontmatter import FrontmatterBlob
 
 
@@ -13,10 +14,13 @@ def split_docx_into_multiple_chapters(
     if frontmatter is None or frontmatter.should_be_splitted() is False:
         return [html_soup]
     groups = []
-    boundaries, chapters = _find_boundaries_where_to_split(html_soup, frontmatter.toc())
+    curr_file = frontmatter.current_file
+    boundaries, chapters = _find_boundaries_where_to_split(html_soup, frontmatter)
     html_before_first_boundary = _extract_content_before_first_boundary(boundaries)
     if html_before_first_boundary.strip():
-        groups.append(bs4.BeautifulSoup(html_before_first_boundary, "html.parser"))
+        soup = bs4.BeautifulSoup(html_before_first_boundary, "html.parser")
+        soup.attrs["chapter"] = _generate_chapter(0, curr_file)
+        groups.append(soup)
     for i, start_bnd in enumerate(boundaries):
         end_bnd = boundaries[i + 1] if i + 1 < len(boundaries) else None
         fragment_html = _extract_content_between_two_boundaries(start_bnd, end_bnd)
@@ -27,8 +31,10 @@ def split_docx_into_multiple_chapters(
 
 
 def _find_boundaries_where_to_split(
-    html_soup: bs4.BeautifulSoup, toc: list[Chapter]
-) -> tuple[list[bs4.Tag], list[Chapter | None]]:
+    html_soup: bs4.BeautifulSoup,
+    frontmatter: FrontmatterBlob,
+    # html_soup: bs4.BeautifulSoup, toc: list[Chapter]
+) -> tuple[list[bs4.Tag], list[Chapter]]:
     """
     Find the actual boundary tags where to split the document.
     By default, these are the `<h1>` tags.
@@ -37,9 +43,9 @@ def _find_boundaries_where_to_split(
     """
     h1s: bs4.ResultSet[bs4.Tag] = html_soup.find_all("h1")
     boundaries: list[bs4.Tag] = []
-    chapters: list[Chapter | None] = []
-    for h1 in h1s:
-        chapter_info = _find_chapter_info_for_h1(h1, toc)
+    chapters: list[Chapter] = []
+    for i, h1 in enumerate(h1s):
+        chapter_info = _find_chapter_info_for_h1(i, h1, frontmatter)
         boundary = h1
         prev = h1.previous_sibling
         while prev is not None:
@@ -60,12 +66,38 @@ def _find_boundaries_where_to_split(
     return boundaries, chapters
 
 
-def _find_chapter_info_for_h1(h1: bs4.Tag, toc: list[Chapter]) -> Chapter | None:
-    for chapter in toc:
+# def _find_chapter_info_for_h1(i: int, h1: bs4.Tag, toc: list[Chapter]) -> Chapter:
+def _find_chapter_info_for_h1(
+    i: int, h1: bs4.Tag, frontmatter: FrontmatterBlob
+) -> Chapter:
+    for chapter in frontmatter.toc():
         bookmark = h1.find("a", id=chapter.bookmark)
         if bookmark:
             return chapter
-    return None
+    return _generate_chapter(i, frontmatter.current_file, h1)
+
+
+def _generate_chapter(i, curr_file: KeyPath, tag: bs4.Tag | None = None) -> Chapter:
+    if i == 0 and tag is None:
+        chapter_slug = "0-index"
+    elif tag is None:
+        chapter_slug = f"{i}-chapter"
+    else:
+        tag_text = tag.get_text().strip().replace(" ", "-").lower()
+        chapter_slug = "".join(
+            ch for ch in tag_text if ch.isalnum() or ch in ("-", "_")
+        )
+    chapter = {
+        "bookmark": "",  # if this func is called, there is no bookmark
+        "book_slug": curr_file.slug,
+        "chapter_slug": chapter_slug,
+        "prefix": str(i),
+        "curr_file": curr_file,
+        "_curr_file": curr_file,
+        "fn": chapter_slug,
+    }
+    chapter["fp"] = ChapterService.get_chapter_filepath(chapter)
+    return Chapter(**chapter)
 
 
 def _extract_content_before_first_boundary(boundaries: list[bs4.Tag]) -> str:

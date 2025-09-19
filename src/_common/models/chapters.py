@@ -44,30 +44,34 @@ class ChapterService:
         """
         chapters = []
         for i, chapter in enumerate(toc, 1):
-            chapter["chapter_slug"] = _get_chapter_slug(i, chapter)
+            chapter["chapter_slug"] = ChapterService._get_chapter_slug(i, chapter)
             chapter["prefix"] = chapter["prefix"] if "prefix" in chapter else str(i)
-            chapter["fp"] = _get_fp(chapter)
+            chapter["fp"] = ChapterService.get_chapter_filepath(chapter)
             chapter["book_slug"] = chapter["fp"].slug
             chapter["curr_file"] = str(chapter["_curr_file"])
             chapters.append(Chapter(**chapter))
         return chapters
 
+    @staticmethod
+    def get_chapter_filepath(chapter: dict[str, str | KeyPath]) -> KeyPath:
+        curr_file = chapter.get("_curr_file")
+        if isinstance(curr_file, KeyPath):
+            slug = curr_file.slug
+        else:
+            slug = "".join(random.choices(string.ascii_lowercase, k=8))
+        fn = (
+            chapter["fn"].lower()
+            if "fn" in chapter
+            else chapter["chapter_slug"].lower()
+        )
+        fn = "".join(ch for ch in fn if ch.isalnum() or ch in ("-", "_"))
+        key: KeyPath = KeyPath(DEFAULT_SFS_DIR) / slug / fn
+        return key.with_suffix(".docx")
 
-def _get_chapter_slug(i: int, chapter: dict[str, str]) -> str:
-    if not chapter.get("slug"):
-        return chapter.get("bookmark", f"{i}-chapter").replace("_", "-").lower()
-    slug = chapter["slug"]
-    del chapter["slug"]
-    return slug
-
-
-def _get_fp(chapter: dict[str, str | KeyPath]) -> KeyPath:
-    curr_file = chapter.get("_curr_file")
-    if isinstance(curr_file, KeyPath):
-        slug = curr_file.slug
-    else:
-        slug = "".join(random.choices(string.ascii_lowercase, k=8))
-    fn = chapter["fn"].lower() if "fn" in chapter else chapter["chapter_slug"].lower()
-    fn = "".join(ch for ch in fn if ch.isalnum() or ch in ("-", "_"))
-    key: KeyPath = KeyPath(DEFAULT_SFS_DIR) / slug / fn
-    return key.with_suffix(".docx")
+    @staticmethod
+    def _get_chapter_slug(i: int, chapter: dict[str, str]) -> str:
+        if not chapter.get("slug"):
+            return chapter.get("bookmark", f"{i}-chapter").replace("_", "-").lower()
+        slug = chapter["slug"]
+        del chapter["slug"]
+        return slug

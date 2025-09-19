@@ -11,6 +11,7 @@ class FrontmatterBlob:
     # TODO: Make Frontmatter model. Maybe first with only necessary fields?
 
     def __init__(self, data: dict[str, t.Any], key: KeyPath):
+        self.current_file: KeyPath = key
         self.all_data: dict[str, t.Any] = data
         self.myst_data: dict[str, t.Any] = {}
         self.dgtmon_data: dict[str, t.Any] = {}
