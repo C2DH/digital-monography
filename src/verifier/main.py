@@ -61,6 +61,7 @@ else:
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info("Handler was invoked successfully.")
     key = _get_key(event)
+    TEMP_DISABLED_FOR_BUILDER_WARNINGS = """
     event_name = _get_event_name(event)
     timestamp = _get_timestamp(event)
     if key.suffix.lower() == ".html" and event_name == S3Event.OBJ_REMOVED.value:
@@ -79,7 +80,6 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         )
         verifer.sort()
         warnings_json = verifer.to_json(md=True)
-        TEMP_DISABLED_FOR_BUILDER_WARNINGS = """
         _write_json_to_efs(warnings_json, key)
         # _make_warnings_report(verifer.soup, warnings_json, timestamp, key)
         _put_json_to_s3(json.dumps(warnings_json, default=str), key)
