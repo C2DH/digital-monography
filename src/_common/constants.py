@@ -43,6 +43,8 @@ if IS_DEBUG:
     DEFAULT_SFS_DIR = "/tmp/efs"  # local execution
 else:
     DEFAULT_SFS_DIR = "/mnt/efs"  # AWS EFS
+JB_DIR = "_JB"
+PAPER_DIR = "_PAPER"
 # database
 db_user = os.environ.get("DB_USER")
 db_pass = os.environ.get("DB_PASS")

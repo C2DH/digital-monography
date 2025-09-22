@@ -11,6 +11,16 @@ def test_short_efs_slug_dir():
     assert key.efs_slug_dir == KeyPath("/tmp/efs/myslug")
 
 
+def test_short_efs_paper_dir():
+    key = KeyPath("myslug/text.md")
+    assert key.efs_paper_dir == KeyPath("/tmp/efs/_PAPER/myslug")
+
+
+def test_short_efs_jb_dir():
+    key = KeyPath("myslug/text.md")
+    assert key.efs_jb_dir == KeyPath("/tmp/efs/_JB/myslug")
+
+
 def test_short_efs_filepath():
     key = KeyPath("myslug/text.md")
     assert key.efs_filepath.s3_key == KeyPath("myslug/text.md")

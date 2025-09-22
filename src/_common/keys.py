@@ -10,9 +10,9 @@ import pathlib
 from functools import cached_property
 
 try:
-    from constants import DEFAULT_SFS_DIR
+    from constants import DEFAULT_SFS_DIR, JB_DIR, PAPER_DIR
 except (ImportError, ModuleNotFoundError):
-    from .constants import DEFAULT_SFS_DIR  # type: ignore
+    from .constants import DEFAULT_SFS_DIR, JB_DIR, PAPER_DIR  # type: ignore
 
 
 class InvalidKey(Exception):
@@ -45,6 +45,16 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
     def efs_slug_dir(self) -> "KeyPath":
         """Returns /mnt/efs/my-slug"""
         return self.abs_root / self.slug
+
+    @cached_property
+    def efs_jb_dir(self) -> "KeyPath":
+        """Returns /mnt/efs/_JB/my-slug"""
+        return self.abs_root / JB_DIR / self.slug
+
+    @cached_property
+    def efs_paper_dir(self) -> "KeyPath":
+        """Returns /mnt/efs/_PAPER/my-slug"""
+        return self.abs_root / PAPER_DIR / self.slug
 
     @cached_property
     def s3_key(self) -> "KeyPath":
