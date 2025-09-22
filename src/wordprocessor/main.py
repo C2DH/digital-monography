@@ -61,17 +61,23 @@ def lambda_handler(event, context) -> None:
     bookstate = read_book_metadata(config_key)
     config = _prepare_config(config_key)
     _update_file_count(config, bookstate)
-    # TODO: read config file
-    # TODO: update file_count from values in _config
+
+    # TODO: aggregate all chapters in builder, verifier and wordprocessor
+    # in a consistent way, with config read from frontmatter
+    SKIP_FOR_MIGRATING_TO_JB2 = """
     for key in config_key.efs_slug_dir.glob("*.docx"):
         doc = wordprocess_docx(key, bookstate)
         doc.save(key.efs_slug_paper_path)
+    """
 
 
 def wordprocess_docx(
     key: KeyPath, bookstate: dict[str, DocumentState]
 ) -> docx.document.Document:
     doc = _read_document(key)
+    # print("bookstate", bookstate)
+    # for k in bookstate.keys():
+    #     print(k)
     metadata = bookstate[key.stem]
     _remove_parts_and_highlights_due_to_conditional_rendering(key, doc)
     _add_chapter_number_to_captions(key, doc, metadata)
