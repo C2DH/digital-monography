@@ -1,38 +1,37 @@
-import subprocess
+# prep before
+
 import boto3
 import datetime
-import logging
 import json
+import logging
+import os
 import pathlib
+import sqlmodel
+import sys
 import typing as t
 from mypy_boto3_dynamodb.service_resource import (
     DynamoDBServiceResource as boto3_DynamoDBServiceResource,
 )
-
-# I cannot just install and import jupyter-book v2, because it would cause
-# conflicts with jupyter-book v1, which is used in builder. I wouldn't be able to
-# run both versions in the same environment.
+from mypy_boto3_s3.client import S3Client as boto3_S3Client
 
 
-try:
-    from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
-    from constants import (
-        IS_DEBUG,
-        ModuleEnum,
-    )
-    from keys import KeyPath
-except (ImportError, ModuleNotFoundError):
-    from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
-    from .constants import (
-        IS_DEBUG,
-        ModuleEnum,
-    )
-    from .keys import KeyPath
+# Get the current directory and add it to sys.path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
+
+
+from src._common.constants import DB_URL, IS_DEBUG
+from fakers import Faker
+
+# from src._common.audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
+# from src._common.keys import KeyPath
+# from src._common.models import File
+# from src._common.state import DocumentState, read_book_metadata
 
 
 if IS_DEBUG:
     today = datetime.date.today().isoformat()
-    log_target = pathlib.Path(f"/tmp/efs/_LOGS/{today}_builderv2.log")
+    log_target = pathlib.Path(f"/tmp/efs/_LOGS/{today}_builder.log")
     log_target.parent.mkdir(parents=True, exist_ok=True)
     logging.basicConfig(
         filename=log_target,
@@ -42,65 +41,18 @@ if IS_DEBUG:
     )
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+
+
 if IS_DEBUG:
     dynamodb = None  # TODO: add fakers
+    s3 = Faker("s3")
 else:
     dynamodb: boto3_DynamoDBServiceResource = boto3.resource("dynamodb")
+    s3: boto3_S3Client = boto3.client("s3")
+db_engine = sqlmodel.create_engine(DB_URL)
 
 
-def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
+def lambda_handler(event, context) -> None:
     logger.info("Event: " + json.dumps(event, default=str))
     logger.info("Context: " + json.dumps(context, default=str))
-    key = KeyPath("/tmp/efs/aslug/test.txt")
-    _build_jb2_book(key)
-
-
-def _build_jb2_book(key: KeyPath) -> None:
-    try:
-        result = subprocess.run(["myst", "build", "--html", "--ci"])
-        print("result", result)
-    except Exception as e:
-        msg = f"Unable to build JBv2 book. Error: {repr(e)}"
-        logging.exception(msg)
-        _log_audit_event(
-            key,
-            AuditStatus.FAILED.value,
-            "Error while Jupyter Book v2 build operation.",
-        )
-        raise
-
-
-def _distribute_jb2_book(key: KeyPath) -> None:
-    try:
-        pass
-        # probably just send sqs message with new status to github microservice to:
-
-        # 1. call github api to create Github Pages site
-        # https://docs.github.com/en/rest/pages/pages?apiVersion=2022-11-28#create-a-github-pages-site
-
-        # 2. (maybe) call github api to update information about the site
-        # https://docs.github.com/en/rest/pages/pages?apiVersion=2022-11-28#update-information-about-a-github-pages-site
-    except Exception as e:
-        msg = f"Failed to distribute JBv2 book build. Error: {repr(e)}"
-        logging.exception(msg)
-        _log_audit_event(
-            key,
-            AuditStatus.FAILED.value,
-            "Error while updating the digital version (JBv2).",
-        )
-        raise
-
-
-def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:
-    event = AuditEvent(
-        slug=key.slug,
-        module=ModuleEnum.BUILDER.value,
-        filename="",
-        status=status,
-        msg=msg,
-    )
-    event.send(dynamodb)
-    if status == AuditStatus.FAILED.value:
-        alert = AlertLog(slug=key.slug, status=AlertStatus.FAIL.value)
-        alert.send(dynamodb)
-    logger.info(f"Audit event logged: {event}")
+    raise Exception("Not implemented yet")
