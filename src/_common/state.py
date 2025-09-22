@@ -182,7 +182,6 @@ def read_book_metadata(key: KeyPath) -> dict[str, DocumentState]:
     return book_metadata
 
 
-MAYBE_BOOK_STATE_SHOULD_BE_AN_OBJECT_LIKE_THIS = '''
 class BookState(collections.abc.MutableMapping):
     """
     Collection of DocumentState objects.
@@ -193,38 +192,53 @@ class BookState(collections.abc.MutableMapping):
     """
 
     def __init__(self) -> None:
-        self.__dict__: dict[str, DocumentState] = {}
+        self.docstates: dict[str, DocumentState] = {}
+        self.all_records: DocumentState | None = None
 
     def __contains__(self, name: str) -> bool:
-        return name in self.__dict__
+        return name in self.docstates
 
     def __getitem__(self, name: str) -> DocumentState:
-        return self.__dict__[name]
+        return self.docstates[name]
 
     def __setitem__(self, name: str, value: DocumentState):
-        self.__dict__[name] = value
+        self.docstates[name] = value
 
     def __delitem__(self, name: str):
-        del self.__dict__[name]
+        del self.docstates[name]
 
     def __iter__(self):
-        return iter(self.__dict__)
+        return iter(self.docstates)
 
     def __len__(self):
-        return len(self.__dict__)
+        return len(self.docstates)
 
     def load_from_file(self, key: KeyPath) -> None:
         """
-        Read JSON state stored in Elastic File System (EFS) and update the __dict__
-        with all DocumentState objects for a specific book.
+        Read JSON state stored in a file system, i.e.
+        * from Elastic File System (EFS) in AWS and
+        * from /tmp directory during local development,
+        and update the docstates with all DocumentState objects for a specific book.
+        Creates new DocumentState object that contains all the records.
         """
         for meta_file in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
             meta_file: KeyPath
             with meta_file.open("r") as f:
                 state = DocumentState(meta_file)
                 state.from_dict(json.load(f))
-                self.__dict__[meta_file.stem] = state
-'''
+                self.docstates[meta_file.stem] = state
+
+    def merge_docstate(self, key: KeyPath) -> DocumentState:
+        """
+        Merge all DocumentState objects into one.
+        Used by aggregation microservices to have an overview of the whole book.
+        """
+        self.all_records = DocumentState(key)
+        for docstate in self.docstates.values():
+            for records in docstate.__dict__.values():
+                for record in records:
+                    self.all_records.add(record)
+        return self.all_records
 
 
 def has_db_table(model: sqlmodel.SQLModel | sqlmodel.main.SQLModelMetaclass) -> bool:
