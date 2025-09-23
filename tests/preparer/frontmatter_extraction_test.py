@@ -1,6 +1,7 @@
 import pytest
 
 
+from src._common.constants import JB_DIR, PAPER_DIR
 from src._common.state import DocumentState
 from src._common.html2md import convert_to_md
 from src._common.models import Chapter
@@ -16,7 +17,7 @@ class TestFrontmatterPreparation:
     @classmethod
     def setup_class(cls):
         fp = KeyPath("tests") / "_fixtures" / SLUG / "frontmatter_extraction.docx"
-        key = KeyPath("/tmp/efs") / SLUG / fp.name
+        cls.key = KeyPath("/tmp/efs") / SLUG / fp.name
         html_str = _convert_to_html(fp)
         html_soup = convert_to_bs(html_str)
         # cls.html_soup = bs4.BeautifulSoup(html_str, "html.parser")
@@ -27,8 +28,8 @@ class TestFrontmatterPreparation:
         #     for check_if_meets_criteria, container in classifiers:
         #         if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
         #             container.append(node)
-        cls.html_soup, cls.frontmatter = prepare_frontmatter(html_soup, key)
-        dstate = DocumentState(key)
+        cls.html_soup, cls.frontmatter = prepare_frontmatter(html_soup, cls.key)
+        dstate = DocumentState(cls.key)
         cls.md = convert_to_md(cls.html_soup, dstate)
 
     def test_frontmatter_extraction(self):
@@ -110,7 +111,7 @@ class TestFrontmatterPreparation:
         assert "isbn" not in self.md
 
     @pytest.mark.parametrize(
-        "i, bookmark, slug, prefix, fn, fp",
+        "i, bookmark, slug, prefix, fn, jb_key, docx_key",
         [
             (
                 0,
@@ -118,7 +119,8 @@ class TestFrontmatterPreparation:
                 "h1-index",
                 "I",
                 None,
-                KeyPath(f"/tmp/efs/{SLUG}/h1-index.docx"),
+                KeyPath(f"/tmp/efs/{JB_DIR}/{SLUG}/h1-index.md"),
+                KeyPath(f"/tmp/efs/{PAPER_DIR}/{SLUG}/h1-index.docx"),
             ),  # slug is auto-generated
             (
                 1,
@@ -126,7 +128,8 @@ class TestFrontmatterPreparation:
                 "in-file",
                 "1",
                 None,
-                KeyPath(f"/tmp/efs/{SLUG}/in-file.docx"),
+                KeyPath(f"/tmp/efs/{JB_DIR}/{SLUG}/in-file.md"),
+                KeyPath(f"/tmp/efs/{PAPER_DIR}/{SLUG}/in-file.docx"),
             ),
             (
                 2,
@@ -134,17 +137,28 @@ class TestFrontmatterPreparation:
                 "is-unicode-handled-well",
                 "2",
                 "isunicode_with_custom_file_name",
-                KeyPath(f"/tmp/efs/{SLUG}/isunicode_with_custom_file_name.docx"),
+                KeyPath(f"/tmp/efs/{JB_DIR}/{SLUG}/isunicode_with_custom_file_name.md"),
+                KeyPath(
+                    f"/tmp/efs/{PAPER_DIR}/{SLUG}/isunicode_with_custom_file_name.docx"
+                ),
             ),
         ],
     )
-    def test_chapters_extracted_from_toc(self, i, bookmark, slug, prefix, fn, fp):
+    def test_chapters_extracted_from_toc(
+        self, i, bookmark, slug, prefix, fn, jb_key, docx_key
+    ):
         assert len(self.frontmatter.dgtmon_data["_toc"]) == 3
-        assert isinstance(self.frontmatter.dgtmon_data["_toc"][i], Chapter)
-        assert self.frontmatter.dgtmon_data["_toc"][i].bookmark == bookmark
-        assert self.frontmatter.dgtmon_data["_toc"][i].chapter_slug == slug
-        assert self.frontmatter.dgtmon_data["_toc"][i].book_slug == SLUG
-        assert self.frontmatter.dgtmon_data["_toc"][i].prefix == prefix
-        assert self.frontmatter.dgtmon_data["_toc"][i].fn == fn
-        assert isinstance(self.frontmatter.dgtmon_data["_toc"][i].fp, KeyPath)
-        assert self.frontmatter.dgtmon_data["_toc"][i].fp == fp
+        chapter = self.frontmatter.dgtmon_data["_toc"][i]
+        assert isinstance(chapter, Chapter)
+        assert chapter.bookmark == bookmark
+        assert chapter.chapter_slug == slug
+        assert chapter.book_slug == SLUG
+        assert chapter.prefix == prefix
+        assert chapter.fn == fn
+        assert isinstance(chapter.fm_key, KeyPath)
+        assert isinstance(chapter.jb_key, KeyPath)
+        assert isinstance(chapter.docx_key, KeyPath)
+        assert chapter.fm_key == self.key
+        assert chapter.fm_key.name == "frontmatter_extraction.docx"
+        assert chapter.jb_key == jb_key
+        assert chapter.docx_key == docx_key

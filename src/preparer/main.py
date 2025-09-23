@@ -176,6 +176,15 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
                 chapter: Chapter = html_soup.attrs.get("chapter")
                 key = chapter.fp
             dstate = DocumentState(key)  # TODO: not key, use val from frontmatter
+            # print("chapter.bookmark", chapter.bookmark)
+            # print("chapter.book_slug", chapter.book_slug)
+            # print("chapter.chapter_slug", chapter.chapter_slug)
+            # print("chapter.prefix", chapter.prefix)
+            # print("chapter.curr_file", chapter.curr_file)
+            # print("chapter.x_fp", chapter.x_fp)
+            # print("chapter.fn", chapter.fn)
+            # print("-" * 75)
+            # dstate.add(chapter)
             metadata = DocumentMetadata(key)  # TODO: not key, use val from frontmatter
             # TODO: prepare_docx shouldn't have to return "state"
             html_soup, metadata, dstate, tables = prepare_docx(

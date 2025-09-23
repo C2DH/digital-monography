@@ -2,7 +2,12 @@ import bs4
 import yaml
 import typing as t
 
-from src._common.constants import CLS_FRONTMATTER_TABLE
+from src._common.constants import (
+    CLS_FRONTMATTER_TABLE,
+    FM_FIELD_FRONTMATTER_KEYPATH,
+    FM_FIELD_IS_SPLIT,
+    FM_FIELD_TOC,
+)
 from src._common.models import Chapter, ChapterService
 from src._common.keys import KeyPath
 
@@ -17,7 +22,7 @@ class FrontmatterBlob:
         self.dgtmon_data: dict[str, t.Any] = {}
         for chapter in data.get("_toc", []):
             assert isinstance(key, KeyPath)
-            chapter["_curr_file"] = key
+            chapter[FM_FIELD_FRONTMATTER_KEYPATH] = key
         for k, v in data.items():
             # print("v", v, type(v))
             # for chapter in v:
@@ -42,11 +47,17 @@ class FrontmatterBlob:
         return f"---\n{body}---\n\n\n\n"
 
     def should_be_splitted(self) -> bool:
-        return self.dgtmon_data["_split"] if "_split" in self.dgtmon_data else False
+        return (
+            self.dgtmon_data[FM_FIELD_IS_SPLIT]
+            if FM_FIELD_IS_SPLIT in self.dgtmon_data
+            else False
+        )
 
     def toc(self) -> list[Chapter]:
         """Returns Table of Contents."""
-        return self.dgtmon_data["_toc"] if "_toc" in self.dgtmon_data else []
+        return (
+            self.dgtmon_data[FM_FIELD_TOC] if FM_FIELD_TOC in self.dgtmon_data else []
+        )
 
 
 def prepare_frontmatter(
@@ -206,19 +217,18 @@ CustomFrontmatterFieldType = t.TypedDict(
 # For now this is just for documentation.
 CUSTOM_FRONTMATTER_FIELDS = [
     {
-        "key": "_split",
+        "key": FM_FIELD_IS_SPLIT,
         "type": bool,
         "fun": to_bool,
         "desc": "Indicates whether the file contains multiple chapters that should be split into separate parts. Each part will be a separate page in the digital version.",
     },
     {
-        "key": "_toc",
+        "key": FM_FIELD_TOC,
         "type": list[Chapter],
-        "fun": ChapterService.parse_toc,
+        "fun": ChapterService.generate_chapters_from_toc,
         "desc": "",
     },
 ]
-
 
 # https://mystmd.org/guide/frontmatter#available-frontmatter-fields
 MYSTMD_FRONTMATTER_FIELDS = [

@@ -72,6 +72,10 @@ p[style-name='Caption'] => p.{CLS_CAPTION}:fresh
 highlight[color='{COLOR_DIGITAL_ONLY}'] => span.{CLS_DIGITAL_ONLY}
 highlight[color='{COLOR_PAPER_ONLY}'] => span.{CLS_PAPER_ONLY}
 """
+# frontmatter fields
+FM_FIELD_FRONTMATTER_KEYPATH = "frontmatter_key"
+FM_FIELD_IS_SPLIT = "_split"
+FM_FIELD_TOC = "_toc"
 # html classes
 CLS_FRONTMATTER_TABLE = "dgt-mon-frontmatter-table"
 CLS_METADATA_TABLE = "dgt-mon-metadata-table"
