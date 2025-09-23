@@ -31,9 +31,14 @@ def test_short_efs_paper_path():
     assert key.efs_paper_path == KeyPath("/tmp/efs/_PAPER/myslug/text.md")
 
 
-# def test_short_efs_state_dir():
-#     key = KeyPath("myslug/text.md")
-#     assert key.efs_state_dir == KeyPath("/tmp/efs/_STATE/myslug")
+def test_short_efs_state_dir():
+    key = KeyPath("myslug/text.md")
+    assert key.efs_state_dir == KeyPath("/tmp/efs/_STATE/myslug")
+
+
+def test_short_efs_state_path():
+    key = KeyPath("myslug/text.md")
+    assert key.efs_state_path == KeyPath("/tmp/efs/_STATE/myslug/text.md")
 
 
 def test_short_efs_filepath():

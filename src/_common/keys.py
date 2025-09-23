@@ -10,9 +10,9 @@ import pathlib
 from functools import cached_property
 
 try:
-    from constants import DEFAULT_SFS_DIR, JB_DIR, PAPER_DIR
+    from constants import DEFAULT_SFS_DIR, JB_DIR, PAPER_DIR, STATE_DIR
 except (ImportError, ModuleNotFoundError):
-    from .constants import DEFAULT_SFS_DIR, JB_DIR, PAPER_DIR  # type: ignore
+    from .constants import DEFAULT_SFS_DIR, JB_DIR, PAPER_DIR, STATE_DIR  # type: ignore
 
 
 class InvalidKey(Exception):
@@ -52,19 +52,29 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
         return self.abs_root / JB_DIR / self.slug
 
     @cached_property
-    def efs_paper_dir(self) -> "KeyPath":
-        """Returns /mnt/efs/_PAPER/my-slug"""
-        return self.abs_root / PAPER_DIR / self.slug
-
-    @cached_property
     def efs_jb_path(self) -> "KeyPath":
         """Returns /mnt/efs/_JB/my-slug/path/to/file.txt"""
         return self.efs_jb_dir / self.github_path
 
     @cached_property
+    def efs_paper_dir(self) -> "KeyPath":
+        """Returns /mnt/efs/_PAPER/my-slug"""
+        return self.abs_root / PAPER_DIR / self.slug
+
+    @cached_property
     def efs_paper_path(self) -> "KeyPath":
         """Returns /mnt/efs/_PAPER/my-slug/path/to/file.txt"""
         return self.efs_paper_dir / self.github_path
+
+    @cached_property
+    def efs_state_dir(self) -> "KeyPath":
+        """Returns /mnt/efs/_STATE/my-slug"""
+        return self.abs_root / STATE_DIR / self.slug
+
+    @cached_property
+    def efs_state_path(self) -> "KeyPath":
+        """Returns /mnt/efs/_STATE/my-slug/path/to/file.txt"""
+        return self.efs_state_dir / self.github_path
 
     @cached_property
     def s3_key(self) -> "KeyPath":

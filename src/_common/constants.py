@@ -45,6 +45,7 @@ else:
     DEFAULT_SFS_DIR = "/mnt/efs"  # AWS EFS
 JB_DIR = "_JB"
 PAPER_DIR = "_PAPER"
+STATE_DIR = "_STATE"
 ASSETS_DIR = "assets"
 # database
 db_user = os.environ.get("DB_USER")
