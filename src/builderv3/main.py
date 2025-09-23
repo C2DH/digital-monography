@@ -24,6 +24,7 @@ sys.path.insert(0, current_dir)
 from src._common.audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
 from src._common.constants import ASSETS_DIR, DB_URL, IS_DEBUG, ModuleEnum
 from src._common.keys import KeyPath
+from src._common.state import BookState
 from fakers import Faker
 
 # from src._common.models import File
@@ -60,8 +61,7 @@ def lambda_handler(event, context) -> None:
     _log_audit_event(key, AuditStatus.PENDING.value, "Building book has started.")
     _copy_assets(key)
     _copy_manuscript(key)
-    # copy assets
-    # read all book state
+    bookstate = _load_book_state(key)
     # make substitutions
     # build book <== no
     # distribute book <== no
@@ -118,6 +118,20 @@ def _copy_file_to_jb_dir(src: KeyPath) -> None:
         logger.exception(f"Unable to copy file {src} to {dst}. Error: {repr(e)}")
         _log_audit_event(
             src, AuditStatus.FAILED.value, f"Error while copying chapter {src}."
+        )
+        raise
+
+
+def _load_book_state(key: KeyPath) -> BookState:
+    try:
+        bookstate = BookState()
+        bookstate.load_from_file(key)
+        bookstate.merge_docstate(key)
+        return bookstate
+    except Exception as e:
+        logging.exception(f"Loading book state failed. Error: {repr(e)}")
+        _log_audit_event(
+            key, AuditStatus.FAILED.value, "Error while loading book state."
         )
         raise
 
