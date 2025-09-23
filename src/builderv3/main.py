@@ -60,7 +60,6 @@ def lambda_handler(event, context) -> None:
     _log_audit_event(key, AuditStatus.PENDING.value, "Building book has started.")
     _copy_assets(key)
     _copy_manuscript(key)
-
     # copy assets
     # read all book state
     # make substitutions
@@ -111,14 +110,15 @@ def _copy_manuscript(key: KeyPath) -> None:
 def _copy_file_to_jb_dir(src: KeyPath) -> None:
     try:
         relative_path = src.relative_to(src.efs_slug_dir)
-        print("relative_path", relative_path)
         dst = src.efs_jb_dir / relative_path
-        print(f"Copying {src} to {dst}.")
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dst)
         logger.info(f"Copied {src} to {dst}.")
     except Exception as e:
         logger.exception(f"Unable to copy file {src} to {dst}. Error: {repr(e)}")
+        _log_audit_event(
+            src, AuditStatus.FAILED.value, f"Error while copying chapter {src}."
+        )
         raise
 
 
