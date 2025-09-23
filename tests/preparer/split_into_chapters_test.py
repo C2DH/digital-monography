@@ -1,6 +1,7 @@
 import bs4
 import pytest
 
+from src._common.keys import KeyPath
 from src.preparer.main import convert_to_bs
 from src.preparer.split_into_chapters import split_docx_into_multiple_chapters
 from src.preparer.prep_frontmatter import FrontmatterBlob
@@ -153,7 +154,8 @@ bookmarked_with_intro_expected_split = [
 )
 def test_split(input_html: str, expected: list[str]):
     html_soup = convert_to_bs(input_html)
-    frontmatter = FrontmatterBlob({"split": "True"})
+    key = KeyPath("/tmp/efs/a-book/manuscript.docx")
+    frontmatter = FrontmatterBlob({"_split": "True"}, key)
     html_soups = split_docx_into_multiple_chapters(html_soup, frontmatter)
     assert len(html_soups) == len(expected)
     for i in range(len(expected)):
