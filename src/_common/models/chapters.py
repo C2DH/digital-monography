@@ -12,18 +12,29 @@ except (ImportError, ModuleNotFoundError):
     from ..constants import DEFAULT_SFS_DIR
 
 
+DESCRIPTIONS = {
+    "bookmark": "Bookmark in a `.docx` file where a chapter begins. Serves as a target in table of contents. Should be defined in the frontmatter.",
+    "book_slug": "Slug of the book the chapter belongs to. Automatically derived from the file path.",
+    "chapter_slug": "Slug of the chapter. Serves as a path to a webpage in the digital version of a book.",
+    "prefix": "Prefix of the chapter, e.g. '1', '1.1', 'A', 'A.1'. Used in handling numbers, both refs and targets.",
+    "curr_file": "Location of the frontmatter where the chapter is defined.",
+    "fp": "File path of the chapter, derived from other values.",
+    "fn": "An author can optionally define a custom file name for a chapter. If not defined, the chapter slug is used. Should be set in the frontmatter.",
+}
+
+
 class Chapter(MySQLModel, table=True):
     "Entry in the '_toc' field from a frontmatter table."
 
     __tablename__ = "chapters"
 
-    bookmark: str
-    book_slug: str
-    chapter_slug: str
-    prefix: str
-    curr_file: str
-    x_fp: str = sqlmodel.Field(alias="fp")
-    fn: str | None = sqlmodel.Field(default=None)
+    bookmark: str = sqlmodel.Field(description=DESCRIPTIONS["bookmark"])
+    book_slug: str = sqlmodel.Field(description=DESCRIPTIONS["book_slug"])
+    chapter_slug: str = sqlmodel.Field(description=DESCRIPTIONS["chapter_slug"])
+    prefix: str = sqlmodel.Field(description=DESCRIPTIONS["prefix"])
+    curr_file: str = sqlmodel.Field(description=DESCRIPTIONS["curr_file"])
+    x_fp: str = sqlmodel.Field(alias="fp", description=DESCRIPTIONS["fp"])
+    fn: str | None = sqlmodel.Field(default=None, description=DESCRIPTIONS["fn"])
 
     @property
     def fp(self) -> KeyPath:
@@ -65,6 +76,8 @@ class ChapterService:
             else chapter["chapter_slug"].lower()
         )
         fn = "".join(ch for ch in fn if ch.isalnum() or ch in ("-", "_"))
+        # NOTE: this is /tmp/efs/slug/fn so NOT jb or paper dir
+        # TODO: change to include jb dir and paper dir
         key: KeyPath = KeyPath(DEFAULT_SFS_DIR) / slug / fn
         return key.with_suffix(".docx")
 
