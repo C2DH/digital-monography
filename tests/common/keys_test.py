@@ -21,6 +21,21 @@ def test_short_efs_jb_dir():
     assert key.efs_jb_dir == KeyPath("/tmp/efs/_JB/myslug")
 
 
+def test_short_efs_jb_path():
+    key = KeyPath("myslug/text.md")
+    assert key.efs_jb_path == KeyPath("/tmp/efs/_JB/myslug/text.md")
+
+
+def test_short_efs_paper_path():
+    key = KeyPath("myslug/text.md")
+    assert key.efs_paper_path == KeyPath("/tmp/efs/_PAPER/myslug/text.md")
+
+
+# def test_short_efs_state_dir():
+#     key = KeyPath("myslug/text.md")
+#     assert key.efs_state_dir == KeyPath("/tmp/efs/_STATE/myslug")
+
+
 def test_short_efs_filepath():
     key = KeyPath("myslug/text.md")
     assert key.efs_filepath.s3_key == KeyPath("myslug/text.md")
@@ -38,6 +53,9 @@ def test_short_slug():
 
 def test_short_efs_slug_html_path():
     key = KeyPath("myslug/text.md")
+    assert (
+        1 == 666
+    ), "Didn't make assertion initially, need to add assert key = something"
 
 
 def test_long_n_nested_efs_filepath():
