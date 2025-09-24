@@ -56,13 +56,6 @@ def test_short_slug():
     assert key.slug == "myslug"
 
 
-def test_short_efs_slug_html_path():
-    key = KeyPath("myslug/text.md")
-    assert (
-        1 == 666
-    ), "Didn't make assertion initially, need to add assert key = something"
-
-
 def test_long_n_nested_efs_filepath():
     key = KeyPath("myslug/path/to/text.pdf.xmld")
     assert key.efs_filepath == KeyPath("/tmp/efs/myslug/path/to/text.pdf.xmld")
