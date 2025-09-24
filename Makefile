@@ -13,7 +13,7 @@ DEV_DOCKER_ECR = 825580929289.dkr.ecr.eu-central-1.amazonaws.com
 MAIN_DOCKER_ECR = 875551125547.dkr.ecr.eu-central-1.amazonaws.com
 DOCKER_HUB = c2dhunilu
 
-test/copy:
+prep/copy:
 	# rm -r tests/_fixtures/a_book/
 	cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/a_book/' tests/_fixtures/
 	# echo 'maybe book-content-examples dir can be better utilized'
@@ -52,7 +52,7 @@ prep/split:
 		IR_APKG_MD_BUCKET_NAME=_MARKDOWN \
 		METADATA_ASSETS_BUCKET_NAME=_METDATA \
 		VERIFIER_MSGS=_WARNINGS \
-		python3.12 scripts/prepare_and_build.py book_path="tests/_fixtures/split-to-multiple-chapters/"
+		python3.12 scripts/prepare_and_build_jb2.py book_path="tests/_fixtures/split-to-multiple-chapters/"
 	export BUILD_DIR=/tmp/efs/split-to-multiple-chapters/_build/html
 	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
 	(cd /tmp/efs/split-to-multiple-chapters && myst build --html)
