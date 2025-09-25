@@ -10,9 +10,9 @@ import pathlib
 from functools import cached_property
 
 try:
-    from constants import DEFAULT_SFS_DIR, JB_DIR, PAPER_DIR, STATE_DIR
+    from constants import DEFAULT_SFS_DIR, JB_DIR, PAPER_DIR, STATE_DIR, WORK_DIR
 except (ImportError, ModuleNotFoundError):
-    from .constants import DEFAULT_SFS_DIR, JB_DIR, PAPER_DIR, STATE_DIR  # type: ignore
+    from .constants import DEFAULT_SFS_DIR, JB_DIR, PAPER_DIR, STATE_DIR, WORK_DIR  # type: ignore
 
 
 class InvalidKey(Exception):
@@ -20,9 +20,28 @@ class InvalidKey(Exception):
 
 
 class KeyPath(type(pathlib.Path())):  # type: ignore
+    """
+    Abstraction over `pathlib.Path` to handle files in local and EFS file systems.
+    Note:
+        - No files should be stored directly in the abs_root directory.
+        - When running locally, s3 buckets are simulated as a subdirectories of abs_root.
+          Interaction with them should be done via s3 client faker and not via KeyPath directly.
+        - It is still open whether _STATE_DIR should be a domain directory.
+        - It is still open whether some file processing (e.g. changing format to json)
+          should be a KeyPath method or run outside of KeyPath.
+        - Methods ending with `_path` return full paths to files,
+          while methods ending with `_dir` return paths to directories.
 
-    # def __init__(self):
-    #     self.abs_root = KeyPath(DEFAULT_SFS_DIR)
+    A usual KeyPath consists of the following elements:
+        `abs_root / domain / slug / path`
+    where
+        - `abs_root` is the absolute root directory, e.g. /mnt/efs or /tmp/efs
+        - `domain` is one of the domain directories (e.g. _JB, _PAPER, _STATE, _WORK)
+        - `slug` is the unique book identifier
+        - `path` is the relative path to a file within a book (e.g. chapter1.md, assets/image.png)
+    """
+
+    domain_dirs = [WORK_DIR, JB_DIR, PAPER_DIR, STATE_DIR]
 
     def __new__(cls, *pathsegments):
         return super().__new__(cls, *pathsegments)
@@ -80,6 +99,7 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
     def s3_key(self) -> "KeyPath":
         """Returns my-slug/path/to/file.txt"""
         try:
+            # NOTE: this will not work with domain directories :/
             return KeyPath(self.relative_to(self.abs_root))
         except ValueError:
             return KeyPath(self)
@@ -103,25 +123,35 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
     @cached_property
     def efs_slug_html_path(self) -> "KeyPath":
         """Adds '_html' in slug, /mnt/efs/my-slug/_html/path/to/file.txt"""
-        return self.add_to_efs_slug_dir("_html")
+        # TODO: remove
+        return self._add_to_efs_slug_dir("_html")
 
     @cached_property
     def efs_slug_metadata_path(self) -> "KeyPath":
         # TODO: not used, make stuff use it
         """Adds '_metadata' in slug, /mnt/efs/my-slug/_metadata/path/to/file.txt"""
-        return self.add_to_efs_slug_dir("_metadata")
+        # TODO: remove
+        return self._add_to_efs_slug_dir("_metadata")
 
     @cached_property
     def efs_slug_paper_path(self) -> "KeyPath":
         """Adds '_paper' in slug, /mnt/efs/my-slug/_paper/path/to/file.txt"""
-        return self.add_to_efs_slug_dir("_paper")
+        # TODO: remove
+        return self._add_to_efs_slug_dir("_paper")
 
     @cached_property
     def efs_slug_jb_path(self) -> "KeyPath":
         """Adds '_jb' in slug, /mnt/efs/my-slug/_jb/path/to/file.txt"""
-        return self.add_to_efs_slug_dir("_jb")
+        # TODO: remove
+        return self._add_to_efs_slug_dir("_jb")
 
-    def add_to_efs_slug_dir(self, fldr: str) -> "KeyPath":
+    @cached_property
+    def efs_slug_warnings_path(self) -> "KeyPath":
+        """Adds '_warnings' in slug, /mnt/efs/my-slug/_warnings/path/to/file.txt"""
+        # TODO: remove
+        return self._add_to_efs_slug_dir("_warnings")
+
+    def _add_to_efs_slug_dir(self, fldr: str) -> "KeyPath":
         """Adds <fldr> folder to slug dir, /mnt/efs/my-slug/<fldr>/path/to/file.txt"""
         if not (self.efs_slug_dir / fldr).exists():
             (self.efs_slug_dir / fldr).mkdir(parents=True)

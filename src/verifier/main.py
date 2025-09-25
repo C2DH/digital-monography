@@ -139,9 +139,7 @@ def _get_timestamp(event) -> datetime.datetime:
 
 def _write_json_to_efs(json_data: t.Any, key: KeyPath) -> None:
     try:
-        fp = key.add_to_efs_slug_dir("_warnings").parent / key.github_path.with_suffix(
-            ".json"
-        )
+        fp = key.efs_slug_warnings_path.parent / key.github_path.with_suffix(".json")
         with open(fp, "w") as f:
             json.dump(json_data, f)
         logger.info(f"Warnings raw data was saved to {str(fp)}")

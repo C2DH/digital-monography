@@ -156,6 +156,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_soup = convert_to_bs(html_str)
         html_soup, frontmatter = prepare_frontmatter(html_soup, key)
         html_soups = split_docx_into_multiple_chapters(html_soup, frontmatter)
+        print("key", key)
+        print("key.efs_filepath", key.efs_filepath)
         # toc = frontmatter.toc()
         # assert len(toc) == len(html_soups)
         # print("len(toc)", len(toc))
@@ -174,6 +176,9 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         for html_soup in html_soups:
             if len(html_soups) != 1:
                 chapter: Chapter = html_soup.attrs.get("chapter")
+                print("chapter.jb_key", chapter.jb_key)
+                print("chapter.fm_key", chapter.fm_key)
+                print("chapter.docx_key", chapter.docx_key)
                 key = chapter.fp
             dstate = DocumentState(key)  # TODO: not key, use val from frontmatter
             # print("chapter.bookmark", chapter.bookmark)
@@ -797,9 +802,7 @@ def _write_metadata_to_db(
 
 def _remove_state_from_efs(key: KeyPath) -> None:
     try:
-        fp = key.add_to_efs_slug_dir("_metadata").parent / key.github_path.with_suffix(
-            ".json"
-        )
+        fp = key.efs_slug_metadata_path.parent / key.github_path.with_suffix(".json")
         fp.unlink(missing_ok=True)  # remove file if it exists
         logger.info(f"Metadata was removed from {str(fp)}")
     except Exception as e:
@@ -812,9 +815,7 @@ def _remove_state_from_efs(key: KeyPath) -> None:
 def _write_state_to_efs(docstate: DocumentState, key: KeyPath) -> None:
     try:
         # json_data = metadata.to_json() # TODO: DocumentMetadata should be depracated
-        fp = key.add_to_efs_slug_dir("_metadata").parent / key.github_path.with_suffix(
-            ".json"
-        )
+        fp = key.efs_slug_metadata_path.parent / key.github_path.with_suffix(".json")
         with open(fp, "w") as f:
             json.dump(docstate.to_dict(), f)
         logger.info(f"Metadata was saved to {str(fp)}")
