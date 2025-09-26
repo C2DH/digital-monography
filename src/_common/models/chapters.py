@@ -78,7 +78,7 @@ class ChapterService:
             fm_key = chapter["frontmatter_key"]
             chapter["book_slug"] = fm_key.slug
             chapter["prefix"] = chapter["prefix"] if "prefix" in chapter else str(idx)
-            chapter["fm_key"] = fm_key
+            chapter["fm_key"] = fm_key.efs_work_path
             chapter["chapter_slug"] = _get_chapter_slug_from_toc(idx, chapter)
             chapter["jb_key"] = _get_jb_key(chapter)
             chapter["docx_key"] = _get_docx_key(chapter)
@@ -102,7 +102,7 @@ class ChapterService:
             "chapter_slug": chapter_slug,
             "prefix": str(idx),
             "fn": chapter_slug,
-            "fm_key": frontmatter_key,
+            "fm_key": frontmatter_key.efs_work_path,
         }
         chapter["jb_key"] = _get_jb_key(chapter)
         chapter["docx_key"] = _get_docx_key(chapter)
