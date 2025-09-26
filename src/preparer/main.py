@@ -868,6 +868,9 @@ def _write_processed_ipynb_to_efs(ipynb: nbformat.NotebookNode, key: KeyPath) ->
 
 
 def _unmarshall_json(key: KeyPath) -> nbformat.NotebookNode:
+    """
+    Read a Jupyter notebook from a file and return the nbformat.NotebookNode object.
+    """
     with open(key, "r") as f:
         nb = nbformat.read(f, as_version=nbformat.NO_CONVERT)
     return nb
