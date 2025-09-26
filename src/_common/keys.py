@@ -8,6 +8,7 @@
 
 import pathlib
 from functools import cached_property
+import typing as t
 
 try:
     from constants import DEFAULT_SFS_DIR, JB_DIR, PAPER_DIR, STATE_DIR, WORK_DIR
@@ -19,6 +20,68 @@ class InvalidKey(Exception):
     pass
 
 
+# domain_dirs = [
+#     ("jb", JB_DIR),
+#     ("paper", PAPER_DIR),
+#     ("state", STATE_DIR),
+#     ("work", WORK_DIR),
+# ]
+
+
+# def _make__efs_domain_dir(
+#     domain_name: str, domain_dir: str
+# ) -> t.Callable[[object], "KeyPath"]:
+#     """Factory to create `efs_<domain>_dir` KeyPath methods."""
+
+#     @cached_property
+#     def prop(self) -> "KeyPath":
+#         return self.abs_root / domain_dir / self.slug
+
+#     prop.__name__ = f"efs_{domain_name}_dir"
+#     prop.__doc__ = f"Returns /mnt/efs/{domain_dir}/my-slug"
+#     return prop
+
+
+# def _make__efs_domain_path(
+#     domain_name: str, domain_dir: str
+# ) -> t.Callable[[object], "KeyPath"]:
+#     """Factory to create `efs_<domain>_path` KeyPath methods."""
+
+#     @cached_property
+#     def prop(self) -> "KeyPath":
+#         return self.abs_root / domain_dir / self.slug / self.github_path
+
+#     prop.__name__ = f"efs_{domain_name}_path"
+#     prop.__doc__ = f"Returns /mnt/efs/{domain_dir}/my-slug/path/to/file.txt"
+#     return prop
+
+
+# def add_efs_methods(domain_dirs: list[tuple[str, str]]):
+#     def decorator_f(cls):
+#         for domain_name, domain_dir in domain_dirs:
+#             dir_prop = _make__efs_domain_dir(domain_name, domain_dir)
+#             setattr(
+#                 cls,
+#                 f"efs_{domain_name}_dir",
+#                 dir_prop,
+#             )
+#             if hasattr(dir_prop, "__set_name__"):
+#                 dir_prop.__set_name__(cls, domain_name)
+
+#             path_prop = _make__efs_domain_path(domain_name, domain_dir)
+#             setattr(
+#                 cls,
+#                 f"efs_{domain_name}_path",
+#                 path_prop,
+#             )
+#             if hasattr(path_prop, "__set_name__"):
+#                 path_prop.__set_name__(cls, domain_name)
+#         return cls
+
+#     return decorator_f
+
+
+# @add_efs_methods(domain_dirs)
 class KeyPath(type(pathlib.Path())):  # type: ignore
     """
     Abstraction over `pathlib.Path` to handle files in local and EFS file systems.
@@ -61,41 +124,6 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
         return self.abs_root / self
 
     @cached_property
-    def efs_slug_dir(self) -> "KeyPath":
-        """Returns /mnt/efs/my-slug"""
-        return self.abs_root / self.slug
-
-    @cached_property
-    def efs_jb_dir(self) -> "KeyPath":
-        """Returns /mnt/efs/_JB/my-slug"""
-        return self.abs_root / JB_DIR / self.slug
-
-    @cached_property
-    def efs_jb_path(self) -> "KeyPath":
-        """Returns /mnt/efs/_JB/my-slug/path/to/file.txt"""
-        return self.efs_jb_dir / self.github_path
-
-    @cached_property
-    def efs_paper_dir(self) -> "KeyPath":
-        """Returns /mnt/efs/_PAPER/my-slug"""
-        return self.abs_root / PAPER_DIR / self.slug
-
-    @cached_property
-    def efs_paper_path(self) -> "KeyPath":
-        """Returns /mnt/efs/_PAPER/my-slug/path/to/file.txt"""
-        return self.efs_paper_dir / self.github_path
-
-    @cached_property
-    def efs_state_dir(self) -> "KeyPath":
-        """Returns /mnt/efs/_STATE/my-slug"""
-        return self.abs_root / STATE_DIR / self.slug
-
-    @cached_property
-    def efs_state_path(self) -> "KeyPath":
-        """Returns /mnt/efs/_STATE/my-slug/path/to/file.txt"""
-        return self.efs_state_dir / self.github_path
-
-    @cached_property
     def s3_key(self) -> "KeyPath":
         """Returns my-slug/path/to/file.txt"""
         try:
@@ -119,6 +147,60 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
     def slug(self) -> str:
         """Returns my-slug"""
         return self.s3_key.parts[0]
+
+    # dirs
+
+    @cached_property
+    def efs_jb_dir(self) -> "KeyPath":
+        """Returns /mnt/efs/_JB/my-slug"""
+        return self.abs_root / JB_DIR / self.slug
+
+    @cached_property
+    def efs_paper_dir(self) -> "KeyPath":
+        """Returns /mnt/efs/_PAPER/my-slug"""
+        return self.abs_root / PAPER_DIR / self.slug
+
+    @cached_property
+    def efs_state_dir(self) -> "KeyPath":
+        """Returns /mnt/efs/_STATE/my-slug"""
+        return self.abs_root / STATE_DIR / self.slug
+
+    @cached_property
+    def efs_work_dir(self) -> "KeyPath":
+        """Returns /mnt/efs/_WORK/my-slug"""
+        return self.abs_root / WORK_DIR / self.slug
+
+    # paths
+
+    @cached_property
+    def efs_jb_path(self) -> "KeyPath":
+        """Returns /mnt/efs/_JB/my-slug/path/to/file.txt"""
+        return self.efs_jb_dir / self.github_path
+
+    @cached_property
+    def efs_paper_path(self) -> "KeyPath":
+        """Returns /mnt/efs/_PAPER/my-slug/path/to/file.txt"""
+        print("self.efs_paper_dir", self.efs_paper_dir)
+        return self.efs_paper_dir / self.github_path
+
+    @cached_property
+    def efs_state_path(self) -> "KeyPath":
+        """Returns /mnt/efs/_STATE/my-slug/path/to/file.txt"""
+        print("self.efs_state_dir", self.efs_state_dir)
+        return self.efs_state_dir / self.github_path
+
+    @cached_property
+    def efs_work_path(self) -> "KeyPath":
+        """Returns /mnt/efs/_WORK/my-slug/path/to/file.txt"""
+        return self.efs_work_dir / self.github_path
+
+    # legacy
+
+    @cached_property
+    def efs_slug_dir(self) -> "KeyPath":
+        """Returns /mnt/efs/my-slug"""
+        # TODO: remove, illegal
+        return self.abs_root / self.slug
 
     @cached_property
     def efs_slug_html_path(self) -> "KeyPath":
@@ -156,3 +238,16 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
         if not (self.efs_slug_dir / fldr).exists():
             (self.efs_slug_dir / fldr).mkdir(parents=True)
         return self.efs_slug_dir / fldr / self.github_path
+
+
+# for domain_name, domain_dir in domain_dirs:
+#     setattr(
+#         KeyPath,
+#         f"efs_{domain_name}_dir",
+#         _make__efs_domain_dir(domain_name, domain_dir),
+#     )
+#     setattr(
+#         KeyPath,
+#         f"efs_{domain_name}_path",
+#         _make__efs_domain_path(domain_name, domain_dir),
+#     )
