@@ -1,14 +1,5 @@
-# ===== IMPORTANT =====
-# Remember, the only source of truth for keys.py is the one defined in
-# `src/_common/keys.py`. KeyPaths defined in other directories in
-# the src/ folder should be replaced with `src/_common/keys.py` before
-# building the image. We advise that you always build the containers
-# using Makefile commands, as the copy command is already included.
-# ======================
-
 import pathlib
 from functools import cached_property
-import typing as t
 
 try:
     from constants import DEFAULT_SFS_DIR, JB_DIR, PAPER_DIR, STATE_DIR, WORK_DIR
@@ -26,66 +17,8 @@ domain_dirs = [
     STATE_DIR,
     WORK_DIR,
 ]
-# ("jb", JB_DIR),
-# ("paper", PAPER_DIR),
-# ("state", STATE_DIR),
-# ("work", WORK_DIR),
 
 
-# def _make__efs_domain_dir(
-#     domain_name: str, domain_dir: str
-# ) -> t.Callable[[object], "KeyPath"]:
-#     """Factory to create `efs_<domain>_dir` KeyPath methods."""
-
-#     @cached_property
-#     def prop(self) -> "KeyPath":
-#         return self.abs_root / domain_dir / self.slug
-
-#     prop.__name__ = f"efs_{domain_name}_dir"
-#     prop.__doc__ = f"Returns /mnt/efs/{domain_dir}/my-slug"
-#     return prop
-
-
-# def _make__efs_domain_path(
-#     domain_name: str, domain_dir: str
-# ) -> t.Callable[[object], "KeyPath"]:
-#     """Factory to create `efs_<domain>_path` KeyPath methods."""
-
-#     @cached_property
-#     def prop(self) -> "KeyPath":
-#         return self.abs_root / domain_dir / self.slug / self.github_path
-
-#     prop.__name__ = f"efs_{domain_name}_path"
-#     prop.__doc__ = f"Returns /mnt/efs/{domain_dir}/my-slug/path/to/file.txt"
-#     return prop
-
-
-# def add_efs_methods(domain_dirs: list[tuple[str, str]]):
-#     def decorator_f(cls):
-#         for domain_name, domain_dir in domain_dirs:
-#             dir_prop = _make__efs_domain_dir(domain_name, domain_dir)
-#             setattr(
-#                 cls,
-#                 f"efs_{domain_name}_dir",
-#                 dir_prop,
-#             )
-#             if hasattr(dir_prop, "__set_name__"):
-#                 dir_prop.__set_name__(cls, domain_name)
-
-#             path_prop = _make__efs_domain_path(domain_name, domain_dir)
-#             setattr(
-#                 cls,
-#                 f"efs_{domain_name}_path",
-#                 path_prop,
-#             )
-#             if hasattr(path_prop, "__set_name__"):
-#                 path_prop.__set_name__(cls, domain_name)
-#         return cls
-
-#     return decorator_f
-
-
-# @add_efs_methods(domain_dirs)
 class KeyPath(type(pathlib.Path())):  # type: ignore
     """
     Abstraction over `pathlib.Path` to handle files in local and EFS file systems.
@@ -244,16 +177,3 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
         if not (self.efs_slug_dir / fldr).exists():
             (self.efs_slug_dir / fldr).mkdir(parents=True)
         return self.efs_slug_dir / fldr / self.github_path
-
-
-# for domain_name, domain_dir in domain_dirs:
-#     setattr(
-#         KeyPath,
-#         f"efs_{domain_name}_dir",
-#         _make__efs_domain_dir(domain_name, domain_dir),
-#     )
-#     setattr(
-#         KeyPath,
-#         f"efs_{domain_name}_path",
-#         _make__efs_domain_path(domain_name, domain_dir),
-#     )
