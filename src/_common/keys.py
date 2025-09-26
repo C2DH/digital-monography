@@ -20,12 +20,16 @@ class InvalidKey(Exception):
     pass
 
 
-# domain_dirs = [
-#     ("jb", JB_DIR),
-#     ("paper", PAPER_DIR),
-#     ("state", STATE_DIR),
-#     ("work", WORK_DIR),
-# ]
+domain_dirs = [
+    JB_DIR,
+    PAPER_DIR,
+    STATE_DIR,
+    WORK_DIR,
+]
+# ("jb", JB_DIR),
+# ("paper", PAPER_DIR),
+# ("state", STATE_DIR),
+# ("work", WORK_DIR),
 
 
 # def _make__efs_domain_dir(
@@ -127,8 +131,10 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
     def s3_key(self) -> "KeyPath":
         """Returns my-slug/path/to/file.txt"""
         try:
-            # NOTE: this will not work with domain directories :/
-            return KeyPath(self.relative_to(self.abs_root))
+            parts = self.relative_to(self.abs_root).parts
+            if parts[0] in self.domain_dirs:
+                return KeyPath(*parts[1:])
+            return KeyPath(*parts)
         except ValueError:
             return KeyPath(self)
 

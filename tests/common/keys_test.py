@@ -20,6 +20,11 @@ def test_short_efs_paper_dir():
     assert key.efs_paper_dir == KeyPath("/tmp/efs/_PAPER/myslug")
 
 
+def test_short_efs_paper_path():
+    key = KeyPath("myslug/text.md")
+    assert key.efs_paper_path == KeyPath("/tmp/efs/_PAPER/myslug/text.md")
+
+
 def test_short_efs_jb_dir():
     key = KeyPath("myslug/text.md")
     assert key.efs_jb_dir == KeyPath("/tmp/efs/_JB/myslug")
@@ -28,11 +33,6 @@ def test_short_efs_jb_dir():
 def test_short_efs_jb_path():
     key = KeyPath("myslug/text.md")
     assert key.efs_jb_path == KeyPath("/tmp/efs/_JB/myslug/text.md")
-
-
-def test_short_efs_paper_path():
-    key = KeyPath("myslug/text.md")
-    assert key.efs_paper_path == KeyPath("/tmp/efs/_PAPER/myslug/text.md")
 
 
 def test_short_efs_state_dir():
@@ -58,6 +58,42 @@ def test_short_github_path():
 def test_short_slug():
     key = KeyPath("myslug/text.md")
     assert key.slug == "myslug"
+
+
+def test_short_efs_slug_jb():
+    key = KeyPath("myslug/text.md")
+    assert key.efs_jb_path == KeyPath(f"/tmp/efs/{JB_DIR}/myslug/text.md")
+    assert key.efs_jb_dir == KeyPath(f"/tmp/efs/{JB_DIR}/myslug")
+    assert key.efs_jb_path.slug == "myslug"
+    assert key.efs_jb_dir.slug == "myslug"
+
+
+def test_short_efs_paper():
+    key = KeyPath("myslug/text.md")
+    assert key.efs_paper_path == KeyPath(f"/tmp/efs/{PAPER_DIR}/myslug/text.md")
+    assert key.efs_paper_dir == KeyPath(f"/tmp/efs/{PAPER_DIR}/myslug")
+    assert key.efs_paper_path.slug == "myslug"
+    assert key.efs_paper_dir.slug == "myslug"
+
+
+def test_short_efs_state():
+    key = KeyPath("myslug/text.md")
+    assert key.efs_state_path == KeyPath(f"/tmp/efs/{STATE_DIR}/myslug/text.md")
+    assert key.efs_state_dir == KeyPath(f"/tmp/efs/{STATE_DIR}/myslug")
+    assert key.efs_state_path.s3_key == KeyPath("myslug/text.md")
+    assert key.efs_state_dir.s3_key == KeyPath("myslug")
+    assert key.efs_state_path.slug == "myslug"
+    assert key.efs_state_dir.slug == "myslug"
+
+
+def test_short_efs_work():
+    key = KeyPath("myslug/text.md")
+    assert key.efs_work_path == KeyPath(f"/tmp/efs/{WORK_DIR}/myslug/text.md")
+    assert key.efs_work_dir == KeyPath(f"/tmp/efs/{WORK_DIR}/myslug")
+    assert key.efs_work_path.s3_key == KeyPath("myslug/text.md")
+    assert key.efs_work_dir.s3_key == KeyPath("myslug")
+    assert key.efs_work_path.slug == "myslug"
+    assert key.efs_work_dir.slug == "myslug"
 
 
 ## long file path examples
@@ -88,8 +124,46 @@ def test_long_n_nested_slug():
     assert key.slug == "myslug"
 
 
-def test_long_n_nested_efs_slug_html_path():
+def test_long_n_efs_slug_jb():
     key = KeyPath("myslug/path/to/text.pdf.xmld")
+    assert key.efs_jb_path == KeyPath(f"/tmp/efs/{JB_DIR}/myslug/path/to/text.pdf.xmld")
+    assert key.efs_jb_dir == KeyPath(f"/tmp/efs/{JB_DIR}/myslug")
+    assert key.efs_jb_path.slug == "myslug"
+    assert key.efs_jb_dir.slug == "myslug"
+
+
+def test_long_n_efs_paper():
+    key = KeyPath("myslug/path/to/text.pdf.xmld")
+    assert key.efs_paper_path == KeyPath(
+        f"/tmp/efs/{PAPER_DIR}/myslug/path/to/text.pdf.xmld"
+    )
+    assert key.efs_paper_dir == KeyPath(f"/tmp/efs/{PAPER_DIR}/myslug")
+    assert key.efs_paper_path.slug == "myslug"
+    assert key.efs_paper_dir.slug == "myslug"
+
+
+def test_long_n_efs_state():
+    key = KeyPath("myslug/path/to/text.pdf.xmld")
+    assert key.efs_state_path == KeyPath(
+        f"/tmp/efs/{STATE_DIR}/myslug/path/to/text.pdf.xmld"
+    )
+    assert key.efs_state_dir == KeyPath(f"/tmp/efs/{STATE_DIR}/myslug")
+    assert key.efs_state_path.s3_key == KeyPath("myslug/path/to/text.pdf.xmld")
+    assert key.efs_state_dir.s3_key == KeyPath("myslug")
+    assert key.efs_state_path.slug == "myslug"
+    assert key.efs_state_dir.slug == "myslug"
+
+
+def test_long_n_efs_work():
+    key = KeyPath("myslug/path/to/text.pdf.xmld")
+    assert key.efs_work_path == KeyPath(
+        f"/tmp/efs/{WORK_DIR}/myslug/path/to/text.pdf.xmld"
+    )
+    assert key.efs_work_dir == KeyPath(f"/tmp/efs/{WORK_DIR}/myslug")
+    assert key.efs_work_path.s3_key == KeyPath("myslug/path/to/text.pdf.xmld")
+    assert key.efs_work_dir.s3_key == KeyPath("myslug")
+    assert key.efs_work_path.slug == "myslug"
+    assert key.efs_work_dir.slug == "myslug"
 
 
 ## tmp root examples
@@ -124,6 +198,8 @@ def test_tmprootpath_efs_slug_jb():
     key = KeyPath("/tmp/efs/myslug/path/to/text.pdf.xmld")
     assert key.efs_jb_path == KeyPath(f"/tmp/efs/{JB_DIR}/myslug/path/to/text.pdf.xmld")
     assert key.efs_jb_dir == KeyPath(f"/tmp/efs/{JB_DIR}/myslug")
+    assert key.efs_jb_path.slug == "myslug"
+    assert key.efs_jb_dir.slug == "myslug"
 
 
 def test_tmprootpath_efs_paper():
@@ -132,6 +208,8 @@ def test_tmprootpath_efs_paper():
         f"/tmp/efs/{PAPER_DIR}/myslug/path/to/text.pdf.xmld"
     )
     assert key.efs_paper_dir == KeyPath(f"/tmp/efs/{PAPER_DIR}/myslug")
+    assert key.efs_paper_path.slug == "myslug"
+    assert key.efs_paper_dir.slug == "myslug"
 
 
 def test_tmprootpath_efs_state():
@@ -140,6 +218,10 @@ def test_tmprootpath_efs_state():
         f"/tmp/efs/{STATE_DIR}/myslug/path/to/text.pdf.xmld"
     )
     assert key.efs_state_dir == KeyPath(f"/tmp/efs/{STATE_DIR}/myslug")
+    assert key.efs_state_path.s3_key == KeyPath("myslug/path/to/text.pdf.xmld")
+    assert key.efs_state_dir.s3_key == KeyPath("myslug")
+    assert key.efs_state_path.slug == "myslug"
+    assert key.efs_state_dir.slug == "myslug"
 
 
 def test_tmprootpath_efs_work():
@@ -148,3 +230,7 @@ def test_tmprootpath_efs_work():
         f"/tmp/efs/{WORK_DIR}/myslug/path/to/text.pdf.xmld"
     )
     assert key.efs_work_dir == KeyPath(f"/tmp/efs/{WORK_DIR}/myslug")
+    assert key.efs_work_path.s3_key == KeyPath("myslug/path/to/text.pdf.xmld")
+    assert key.efs_work_dir.s3_key == KeyPath("myslug")
+    assert key.efs_work_path.slug == "myslug"
+    assert key.efs_work_dir.slug == "myslug"
