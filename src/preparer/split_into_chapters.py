@@ -5,12 +5,26 @@ from prep_frontmatter import FrontmatterBlob
 
 
 def split_docx_into_multiple_chapters(
-    html_soup: bs4.BeautifulSoup, frontmatter: FrontmatterBlob | None
+    html_soup: bs4.BeautifulSoup,
+    frontmatter: FrontmatterBlob,
+    # html_soup: bs4.BeautifulSoup, frontmatter: FrontmatterBlob | None
 ) -> list[bs4.BeautifulSoup]:
     """
     Split the HTML document into multiple chapters based on `<h1>` tags.
     """
-    if frontmatter is None or frontmatter.should_be_splitted() is False:
+    # raise Exception("Add Chapter obj to each soup, even if there is no frontmatter.")
+
+    # if frontmatter is None:
+    #     return [html_soup]
+    assert (
+        frontmatter is not None
+    ), "I thought I made frontmatter always be there, even if empty"
+
+    if frontmatter.should_be_splitted() is False:
+        key = frontmatter.current_file
+        html_soup.attrs["chapter"] = ChapterService.generate_chapter_from_key(key)
+        # print("frontmatter.toc()", frontmatter.toc())
+        # html_soup.attrs["chapter"] = None
         return [html_soup]
     groups = []
     curr_file = frontmatter.current_file

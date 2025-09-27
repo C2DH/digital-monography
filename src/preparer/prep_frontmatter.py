@@ -43,8 +43,12 @@ class FrontmatterBlob:
         1. put on top of a markdown file and,
         2. ingested to Jupyter Book v2 as frontmatter (https://mystmd.org/guide/frontmatter).
         """
-        body = yaml.dump(self.myst_data, sort_keys=False, allow_unicode=True, indent=2)
-        return f"---\n{body}---\n\n\n\n"
+        if self.myst_data:
+            body = yaml.dump(
+                self.myst_data, sort_keys=False, allow_unicode=True, indent=2
+            )
+            return f"---\n{body}---\n\n\n\n"
+        return ""
 
     def should_be_splitted(self) -> bool:
         return (
@@ -62,7 +66,8 @@ class FrontmatterBlob:
 
 def prepare_frontmatter(
     html_soup: bs4.BeautifulSoup, curr_file: KeyPath
-) -> tuple[bs4.BeautifulSoup, FrontmatterBlob | None]:
+) -> tuple[bs4.BeautifulSoup, FrontmatterBlob]:
+    # ) -> tuple[bs4.BeautifulSoup, FrontmatterBlob | None]:
     # html_soup: bs4.BeautifulSoup, tables: list[bs4.Tag]
     """
     Iterate over every table in a document and check if it is a frontmatter table.
@@ -74,7 +79,7 @@ def prepare_frontmatter(
     """
     table = _find_frontmatter_table(html_soup)
     if not table:
-        return html_soup, None
+        return html_soup, FrontmatterBlob({}, curr_file)
     rows: bs4.ResultSet[bs4.Tag] = table.find_all("tr")
     all_data = {}
     for row in rows:

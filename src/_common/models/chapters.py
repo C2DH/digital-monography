@@ -1,6 +1,7 @@
 import bs4
 import sqlmodel
 
+
 try:
     from ._base import MySQLModel
     from keys import KeyPath
@@ -65,6 +66,25 @@ class Chapter(MySQLModel, table=True):
 
 class ChapterService:
     @staticmethod
+    def get_number_from_filename(s: str) -> int:
+        """
+        Extract `int(1)` from file name '01_book_chapter'.
+        Similar (or identical) implementation to FileService.
+        """
+        assert type(s) == str, "Only accepts string"
+        number = ""
+        default = -1
+        for ch in s:
+            if number and not ch.isdigit():
+                return int(number)
+            elif ch.isdigit():
+                number += ch
+        try:
+            return int(number)
+        except ValueError:
+            return default
+
+    @staticmethod
     def generate_chapters_from_toc(
         toc: list[dict[str, str | KeyPath]],
     ) -> list[Chapter]:
@@ -84,6 +104,19 @@ class ChapterService:
             chapter["docx_key"] = _get_docx_key(chapter)
             chapters.append(Chapter(**chapter))
         return chapters
+
+    @staticmethod
+    def generate_chapter_from_key(key: KeyPath) -> Chapter:
+        chapter = {}
+        chapter["bookmark"] = ""
+        chapter["book_slug"] = key.slug
+        chapter["chapter_slug"] = _naive_slugify(key.stem)
+        chapter["prefix"] = ChapterService.get_number_from_filename(key.stem)
+        chapter["fn"] = key.name
+        chapter["fm_key"] = key.efs_work_path
+        chapter["jb_key"] = _get_jb_key(chapter)
+        chapter["docx_key"] = _get_docx_key(chapter)
+        return Chapter(**chapter)
 
     @staticmethod
     def generate_chapter_from_h1(
@@ -109,11 +142,16 @@ class ChapterService:
         return Chapter(**chapter)
 
 
+def _naive_slugify(s: str) -> str:
+    s = s.lower().replace(" ", "-")
+    return "".join(ch for ch in s if ch.isalnum() or ch in ("-", "_"))
+
+
 def _get_chapter_filename(chapter: dict[str, str | KeyPath]) -> str:
     # TODO: consider a smarter way to add fn prefix, e.g. 01 in 01_first_chapter
-    fn = chapter["fn"].lower() if "fn" in chapter else chapter["chapter_slug"].lower()
-    fn = "".join(ch for ch in fn if ch.isalnum() or ch in ("-", "_"))
-    return fn
+    fn = chapter["fn"] if "fn" in chapter else chapter["chapter_slug"]
+    # fn = "".join(ch for ch in fn if ch.isalnum() or ch in ("-", "_"))
+    return _naive_slugify(fn)
 
 
 def _get_jb_key(chapter: dict[str, str | KeyPath]) -> KeyPath:
@@ -158,8 +196,9 @@ def _get_chapter_slug_from_h1(idx: int, h1: bs4.Tag | None) -> str:
     elif h1 is None:
         chapter_slug = f"{idx}-chapter"
     else:
-        tag_text = h1.get_text().strip().replace(" ", "-").lower()
-        chapter_slug = "".join(
-            ch for ch in tag_text if ch.isalnum() or ch in ("-", "_")
-        )
+        tag_text = h1.get_text().strip()
+        chapter_slug = _naive_slugify(tag_text)
+        # chapter_slug = "".join(
+        #     ch for ch in tag_text if ch.isalnum() or ch in ("-", "_")
+        # )
     return chapter_slug

@@ -57,8 +57,11 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
 
     @property
     def efs_filepath(self) -> "KeyPath":
-        """Returns /mnt/efs/my-slug/path/to/file.txt"""
-        return self.abs_root / self
+        """Returns /mnt/efs/_WORK/my-slug/path/to/file.txt"""
+        # """Returns /mnt/efs/my-slug/path/to/file.txt"""
+        # TODO: remove, illegal
+        # return self.abs_root / self
+        return self.efs_work_path
 
     @cached_property
     def s3_key(self) -> "KeyPath":
@@ -137,9 +140,11 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
 
     @cached_property
     def efs_slug_dir(self) -> "KeyPath":
-        """Returns /mnt/efs/my-slug"""
+        """Returns /mnt/efs/_WORK/my-slug"""
+        # """Returns /mnt/efs/my-slug"""
         # TODO: remove, illegal
-        return self.abs_root / self.slug
+        return self.efs_work_dir
+        # return self.abs_root / self.slug
 
     @cached_property
     def efs_slug_html_path(self) -> "KeyPath":

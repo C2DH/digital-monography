@@ -142,6 +142,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     if _is_IPYNB(key) and _is_update(event_name):
         src = _get_source_bucket(event)
         _download_fileobj(src, key)
+        _create_domain_dirs(key)
         ipynb: nbformat.NotebookNode = _unmarshall_json(key.efs_filepath)
         tags_to_myst_crossref_targets(ipynb)
         _write_processed_ipynb_to_efs(ipynb, key)
@@ -158,6 +159,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_soups = split_docx_into_multiple_chapters(html_soup, frontmatter)
         print("key", key)
         print("key.efs_filepath", key.efs_filepath)
+        print("frontmatter", frontmatter)
         # toc = frontmatter.toc()
         # assert len(toc) == len(html_soups)
         # print("len(toc)", len(toc))
@@ -173,13 +175,20 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         # for i in range(len(html_soups)):
         #     html_soup = html_soups[i]
         #     key = toc[i].fp
+        print("\n\n")
         for html_soup in html_soups:
+            print('> html_soup.attrs.get("chapter")', html_soup.attrs.get("chapter"))
             if len(html_soups) != 1:
                 chapter: Chapter = html_soup.attrs.get("chapter")
                 print("chapter.jb_key", chapter.jb_key)
                 print("chapter.fm_key", chapter.fm_key)
                 print("chapter.docx_key", chapter.docx_key)
-                key = chapter.fp
+                key = chapter.jb_key
+            # else:
+            #     raise Exception(
+            #         "Even if there is one html_soup, it should still have a Chapter obj assigned to it."
+            #     )
+            _create_domain_dirs(key)
             dstate = DocumentState(key)  # TODO: not key, use val from frontmatter
             # print("chapter.bookmark", chapter.bookmark)
             # print("chapter.book_slug", chapter.book_slug)
@@ -206,12 +215,14 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
             _write_assets_info_to_s3(dstate, key)
             # _write_metadata_to_db(metadata, dstate, key)  # TODO: dstate
             _write_state_to_efs(dstate, key)
+            CHANGING_DIR_STRUCT = """
             _write_state_to_db(dstate, key)
             _write_processed_html_to_efs(html_soup_str, key)
             _put_html_to_s3(html_soup_str, key)
             md = _convert_to_md(key, html_soup, dstate)
             _write_processed_md_to_efs(md, key)
             _put_md_to_s3(md, key.s3_key.with_suffix(".md"))
+            # TODO: send to GitHub after all processing is done, just before the myst build step
             msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
             msg_md = GithubTriggerMsg(
                 key=key.s3_key.with_suffix(".md"), action=GithubActionEnum.UPDATE_OBJECT
@@ -223,6 +234,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
             _enqueue_to_github(msg)
             _enqueue_to_github(msg_md)
             _enqueue_to_github(msg_html)
+            """
         # _put_to_archive_s3(key.s3_key.with_suffix(".md"), md)
         _log_audit_event(
             key,
@@ -233,6 +245,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     elif _is_update(event_name):
         src = _get_source_bucket(event)
         _download_fileobj(src, key)
+        _create_domain_dirs(key)
         msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
         _enqueue_to_github(msg)
         return {"statusCode": 200, "body": ""}
@@ -397,6 +410,23 @@ def convert_to_bs(html_str: str) -> bs4.BeautifulSoup:
 #                 continue
 #             current.append(elem.__copy__())
 #     return html_soups
+
+
+def _create_domain_dirs(key: KeyPath) -> None:
+    try:
+        key.efs_jb_dir.mkdir(parents=True, exist_ok=True)
+        key.efs_paper_dir.mkdir(parents=True, exist_ok=True)
+        key.efs_state_dir.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        logger.exception(
+            f"Creating directories for {str(key)} failed. Error: {repr(e)}"
+        )
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            "Error upon creating directories in the file system.",
+        )
+        raise
 
 
 def prepare_docx(
@@ -815,7 +845,7 @@ def _remove_state_from_efs(key: KeyPath) -> None:
 def _write_state_to_efs(docstate: DocumentState, key: KeyPath) -> None:
     try:
         # json_data = metadata.to_json() # TODO: DocumentMetadata should be depracated
-        fp = key.efs_slug_metadata_path.parent / key.github_path.with_suffix(".json")
+        fp = key.efs_state_path.with_suffix(".json")
         with open(fp, "w") as f:
             json.dump(docstate.to_dict(), f)
         logger.info(f"Metadata was saved to {str(fp)}")

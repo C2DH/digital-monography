@@ -21,7 +21,10 @@ class File(MySQLModel, table=True):
 class FileService:
     @staticmethod
     def get_number_from_filename(s: str) -> int:
-        """Extract `int(1)` from file name '01_book_chapter'."""
+        """
+        Extract `int(1)` from file name '01_book_chapter'.
+        Similar (or identical) implementation to FileService.
+        """
         assert type(s) == str, "Only accepts string"
         number = ""
         default = -1
