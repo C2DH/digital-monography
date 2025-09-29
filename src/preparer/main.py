@@ -254,10 +254,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
         _enqueue_to_github(msg)
         return {"statusCode": 200, "body": ""}
-    elif _is_deletion(event_name):
-        _remove_fileobj(key)
-        msg = GithubTriggerMsg(key=key, action=GithubActionEnum.DELETE_OBJECT)
-        _enqueue_to_github(msg)
+    else:
+        logger.warning(f"Event {event_name} is not supported.")
         return {"statusCode": 200, "body": ""}
 
 
