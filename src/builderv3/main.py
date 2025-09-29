@@ -10,6 +10,7 @@ import sqlmodel
 import sys
 import shutil
 import typing as t
+import yaml
 from mypy_boto3_dynamodb.service_resource import (
     DynamoDBServiceResource as boto3_DynamoDBServiceResource,
 )
@@ -23,12 +24,16 @@ sys.path.insert(0, current_dir)
 
 from src._common.audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
 from src._common.constants import ASSETS_DIR, DB_URL, IS_DEBUG, ModuleEnum
+from src._common.models import (
+    File,
+    FileService,
+    Substitution,
+    SubstitutionService,
+)
 from src._common.keys import KeyPath
-from src._common.state import BookState
+from src._common.state import BookState, read_book_metadata
 from fakers import Faker
-
-# from src._common.models import File
-# from src._common.state import DocumentState, read_book_metadata
+from prep_config import create_myst_config_file
 
 
 if IS_DEBUG:
@@ -62,6 +67,8 @@ def lambda_handler(event, context) -> None:
     _copy_assets(key)
     _copy_manuscript(key)
     bookstate = _load_book_state(key)
+    _create_myst_config_file(key)
+    _make_substitutions(key, bookstate)
     # make substitutions
     # build book <== no
     # distribute book <== no
@@ -134,6 +141,80 @@ def _load_book_state(key: KeyPath) -> BookState:
             key, AuditStatus.FAILED.value, "Error while loading book state."
         )
         raise
+
+
+def _create_myst_config_file(key: KeyPath) -> None:
+    """
+    Write "myst.yml" config file for Jupyter Book v2 build.
+    """
+    try:
+        create_myst_config_file(key)
+        logger.info(f"Successfully created myst config file.")
+    except Exception as e:
+        logging.exception(f'Creating "myst.yml" config file failed. Error: {repr(e)}')
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            "Error while creating Jupyter Book config file.",
+        )
+        raise
+
+
+def _make_substitutions(key: KeyPath, bookstate: BookState) -> None:
+    """
+    Replace substitution placeholders in markdown files with new values.
+
+    I don't like this implementation because it should be done for .md and .ipynb
+    by JupyterBook. Also, I don't like having too many slow IO operations.
+    However, I needed some solution fast and I didn't have time to fight with JupyterBook.
+    I couldn't make JupyterBook to do the substitutions for f2f refs.
+    """
+    for md in key.efs_jb_dir.glob("*.md"):
+        print(f"Making substitutions in {md}.")
+        print(bookstate.docstates.keys())
+        dstate = bookstate.docstates.get(md.stem, None)
+        print("dstate", dstate.__dict__.keys() if dstate else None)
+
+    # THIS_IS_HOW_IT_WAS_IN_JB1 = """
+    book_metadata = read_book_metadata(key)
+    for md in key.efs_slug_dir.glob("*.md"):
+        dstate = book_metadata.get(md.stem)
+        try:
+            if md.stem not in book_metadata:
+                continue
+            with open(md, "r") as f:
+                mdstr = f.read()
+                # Make mapping of file_count to file prefix.
+                # This is suboptimal, but FileDatapoint only knows file stem and prefix.
+                # I could add more data to it, but since user has to correctly
+                # write this data in yaml file by hand, the less data the better :/
+                file_prefices: dict[int, str] = {}
+                files: list[File] = dstate["files"]
+                for file in files:
+                    file_count = FileService.get_number_from_filename(file.stem)
+                    file_prefices[file_count] = file.prefix
+                # Replace placeholders with new values, incl. file prefix
+                substitutions: list[Substitution] = dstate["substitutions"]
+                for subs in substitutions:
+                    if subs.file_count in file_prefices:
+                        file_prefix = file_prefices[subs.file_count]
+                    else:
+                        file_prefix = None
+                    mdstr = mdstr.replace(
+                        r"{{ " + subs.pk + r" }}",
+                        SubstitutionService.to_digital_version(subs, file_prefix),
+                    )
+                    # NOTE: seems to just repeat "was" attr
+            with open(md, "w") as f:
+                f.write(mdstr)
+        except Exception as e:
+            logger.exception(f"Replacing placeholders in {md} failed. Error: {repr(e)}")
+            _log_audit_event(
+                key,
+                AuditStatus.FAILED.value,
+                "Error upon updating automatic numbering.",
+            )
+    # """
 
 
 RESTORE_FOR_SAVING_WARNINGS = """
