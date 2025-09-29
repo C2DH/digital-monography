@@ -1,10 +1,10 @@
 import pytest
 
 
-from src._common.constants import JB_DIR, PAPER_DIR
+from src._common.constants import JB_DIR, PAPER_DIR, WORK_DIR
 from src._common.state import DocumentState
 from src._common.html2md import convert_to_md
-from src._common.models import Chapter
+from src._common.models import Chapter, ChapterService
 from src._common.keys import KeyPath
 from src.preparer.main import _convert_to_html, convert_to_bs
 from src.preparer.prep_frontmatter import prepare_frontmatter, FrontmatterBlob
@@ -13,11 +13,11 @@ from src.preparer.prep_frontmatter import prepare_frontmatter, FrontmatterBlob
 SLUG = "book-content-examples"
 
 
-class TestFrontmatterPreparation:
+class TestFrontmatterPreparationAndGenChaptersFromToC:
     @classmethod
     def setup_class(cls):
         fp = KeyPath("tests") / "_fixtures" / SLUG / "frontmatter_extraction.docx"
-        cls.key = KeyPath("/tmp/efs") / SLUG / fp.name
+        cls.key = KeyPath("/tmp/efs") / WORK_DIR / SLUG / fp.name
         html_str = _convert_to_html(fp)
         html_soup = convert_to_bs(html_str)
         # cls.html_soup = bs4.BeautifulSoup(html_str, "html.parser")
@@ -144,9 +144,12 @@ class TestFrontmatterPreparation:
             ),
         ],
     )
-    def test_chapters_extracted_from_toc(
+    def test_generate_chapters_from_toc(
         self, i, bookmark, slug, prefix, fn, jb_key, docx_key
     ):
+        """
+        Test ChepterService.generate_chapters_from_toc
+        """
         assert len(self.frontmatter.dgtmon_data["_toc"]) == 3
         chapter = self.frontmatter.dgtmon_data["_toc"][i]
         assert isinstance(chapter, Chapter)
@@ -162,3 +165,59 @@ class TestFrontmatterPreparation:
         assert chapter.fm_key.name == "frontmatter_extraction.docx"
         assert chapter.jb_key == jb_key
         assert chapter.docx_key == docx_key
+
+
+class TestFrontmatterPreparationAndGenChapterFromKey:
+    @classmethod
+    def setup_class(cls):
+        fp = KeyPath("tests") / "_fixtures" / SLUG / "index.docx"
+        cls.key = KeyPath("/tmp/efs") / WORK_DIR / SLUG / fp.name
+        html_str = _convert_to_html(fp)
+        html_soup = convert_to_bs(html_str)
+        cls.html_soup, cls.frontmatter = prepare_frontmatter(html_soup, cls.key)
+        # dstate = DocumentState(cls.key)
+        # cls.md = convert_to_md(cls.html_soup, dstate)
+
+    def test_frontmatter_is_empty(self):
+        # there is no frontmatter in this file
+        assert len(self.frontmatter.all_data) == 0
+        assert self.frontmatter.should_be_splitted() == False
+
+    def test_fm_curr_file_points_to_work_dir(self):
+        assert self.frontmatter.current_file == self.key
+
+    @pytest.mark.parametrize(
+        "key, book_slug, chapter_slug, prefix, fn, fm_key, jb_key, docx_key",
+        [
+            (
+                KeyPath(f"{SLUG}/01_chapter_slug.docx"),
+                SLUG,
+                "01_chapter_slug",
+                1,
+                "01_chapter_slug",
+                KeyPath(f"/tmp/efs/{WORK_DIR}/{SLUG}/01_chapter_slug.docx"),
+                KeyPath(f"/tmp/efs/{JB_DIR}/{SLUG}/01_chapter_slug.md"),
+                KeyPath(f"/tmp/efs/{PAPER_DIR}/{SLUG}/01_chapter_slug.docx"),
+            )
+        ],
+    )
+    def test_generate_chapter_from_key(
+        self, key, book_slug, chapter_slug, prefix, fn, fm_key, jb_key, docx_key
+    ):
+        """
+        Test ChepterService.generate_chapter_from_key
+        """
+        chapter = ChapterService.generate_chapter_from_key(key)
+
+        assert isinstance(chapter, Chapter)
+        assert chapter.bookmark == ""
+        assert chapter.book_slug == book_slug
+        assert chapter.chapter_slug == chapter_slug
+        assert chapter.prefix == prefix
+        assert chapter.fn == fn
+        assert chapter.fm_key == fm_key
+        assert chapter.jb_key == jb_key
+        assert chapter.docx_key == docx_key
+        assert isinstance(chapter.fm_key, KeyPath)
+        assert isinstance(chapter.jb_key, KeyPath)
+        assert isinstance(chapter.docx_key, KeyPath)
