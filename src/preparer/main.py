@@ -66,7 +66,10 @@ from refs import (
     is_footnote,
     is_reference,
 )
-from split_into_chapters import split_docx_into_multiple_chapters
+from split_into_chapters import (
+    split_docx_into_multiple_chapters,
+    prepend_htmls_with_frontmatter,
+)
 from substitutions_prep import count_targets_for_substitutions
 from ipynb_prep import tags_to_myst_crossref_targets
 from fakers import Faker
@@ -164,9 +167,10 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_soup = convert_to_bs(html_str)
         html_soup, frontmatter = prepare_frontmatter(html_soup, key)
         html_soups = split_docx_into_multiple_chapters(html_soup, frontmatter)
-        print("key", key)
-        print("key.efs_filepath", key.efs_filepath)
-        print("frontmatter", frontmatter)
+        prepend_htmls_with_frontmatter(html_soups, frontmatter)
+        # print("key", key)
+        # print("key.efs_filepath", key.efs_filepath)
+        # print("frontmatter", frontmatter)
         # toc = frontmatter.toc()
         # assert len(toc) == len(html_soups)
         # print("len(toc)", len(toc))

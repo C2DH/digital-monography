@@ -1,5 +1,6 @@
 import bs4
 
+from src._common.constants import CLS_FRONTMATTER_TABLE
 from src._common.models import Chapter, ChapterService
 from prep_frontmatter import FrontmatterBlob
 
@@ -120,3 +121,18 @@ def _extract_content_between_two_boundaries(
         nodes.append(cur)
         cur = cur.next_sibling
     return "".join(str(n) for n in nodes)
+
+
+def prepend_htmls_with_frontmatter(
+    html_soups: list[bs4.BeautifulSoup], frontmatter: FrontmatterBlob
+) -> None:
+    """
+    All html_soups are modified in place to include the frontmatter that was
+    originally present in the document before splitting.
+    """
+    fm_str = frontmatter.dump_yamlstr()
+    for html_soup in html_soups:
+        new_tag = html_soup.new_tag("span")
+        new_tag["class"] = CLS_FRONTMATTER_TABLE
+        new_tag.string = fm_str
+        html_soup.insert(0, new_tag)
