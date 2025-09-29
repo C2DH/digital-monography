@@ -10,6 +10,10 @@ except (ImportError, ModuleNotFoundError):
     from ..keys import KeyPath  # type: ignore
 
 
+# TODO: I don't like the way functions take dicts as arguments and they pick
+# values from the dict. It would be better to have str / KeyPath arguments.
+
+
 DESC = {
     "bookmark": "Bookmark in a `.docx` file where a chapter begins. Serves as a target in table of contents. Should be defined in the frontmatter.",
     "book_slug": "Slug of the book the chapter belongs to. Automatically derived from the file path.",
@@ -112,7 +116,7 @@ class ChapterService:
         chapter["book_slug"] = key.slug
         chapter["chapter_slug"] = _naive_slugify(key.stem)
         chapter["prefix"] = ChapterService.get_number_from_filename(key.stem)
-        chapter["fn"] = key.name
+        chapter["fn"] = key.stem
         chapter["fm_key"] = key.efs_work_path
         chapter["jb_key"] = _get_jb_key(chapter)
         chapter["docx_key"] = _get_docx_key(chapter)
@@ -144,10 +148,16 @@ class ChapterService:
 
 def _naive_slugify(s: str) -> str:
     s = s.lower().replace(" ", "-")
-    return "".join(ch for ch in s if ch.isalnum() or ch in ("-", "_"))
+    res = ""
+    for ch in s:
+        if ch.isalnum() or ch in ("-", "_"):
+            res += ch
+        if ch == ".":
+            return res
+    return res
 
 
-def _get_chapter_filename(chapter: dict[str, str | KeyPath]) -> str:
+def _get_chapter_stem(chapter: dict[str, str | KeyPath]) -> str:
     # TODO: consider a smarter way to add fn prefix, e.g. 01 in 01_first_chapter
     fn = chapter["fn"] if "fn" in chapter else chapter["chapter_slug"]
     # fn = "".join(ch for ch in fn if ch.isalnum() or ch in ("-", "_"))
@@ -158,7 +168,7 @@ def _get_jb_key(chapter: dict[str, str | KeyPath]) -> KeyPath:
     """Returns /mnt/efs/_JB/my-slug/filename.md"""
     fm_key = chapter["fm_key"]
     assert isinstance(fm_key, KeyPath)
-    fn = _get_chapter_filename(chapter)
+    fn = _get_chapter_stem(chapter)
     key = fm_key.efs_jb_dir / fn
     return key.with_suffix(".md")
 
@@ -167,7 +177,7 @@ def _get_docx_key(chapter: dict[str, str | KeyPath]) -> KeyPath:
     """Returns /mnt/efs/_PAPER/my-slug/filename.docx"""
     fm_key = chapter["fm_key"]
     assert isinstance(fm_key, KeyPath)
-    fn = _get_chapter_filename(chapter)
+    fn = _get_chapter_stem(chapter)
     key = fm_key.efs_paper_dir / fn
     return key.with_suffix(".docx")
 
