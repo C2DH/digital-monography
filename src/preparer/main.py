@@ -9,6 +9,7 @@ import mammoth
 import nbformat
 import os
 import sqlmodel
+import shutil
 import typing as t
 import urllib.parse
 from mypy_boto3_dynamodb.service_resource import (
@@ -28,6 +29,7 @@ from src._common.constants import (
     DB_URL,
     MAMMOTH_STYLE_MAP,
     IS_DEBUG,
+    ASSETS_DIR,
     JB_DIR,
     DEFAULT_SFS_DIR,
 )
@@ -150,7 +152,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _create_domain_dirs(key)
         ipynb: nbformat.NotebookNode = _unmarshall_json(key.efs_filepath)
         tags_to_myst_crossref_targets(ipynb)
-        _write_processed_ipynb_to_efs(ipynb, key)
+        _write_processed_ipynb_to_efs_jb(ipynb, key)
         msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
         _enqueue_to_github(msg)
         # _put_to_archive_s3(key)
@@ -222,10 +224,11 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
             _write_state_to_efs(dstate, key)
             CHANGING_DIR_STRUCT = """
             _write_state_to_db(dstate, key)
-            _write_processed_html_to_efs(html_soup_str, key)
+            # _write_processed_html_to_efs(html_soup_str, key)
             _put_html_to_s3(html_soup_str, key)
             md = _convert_to_md(key, html_soup, dstate)
-            _write_processed_md_to_efs(md, key)
+            _write_processed_md_to_efs_jb(md, key)
+            CHANGING_DIR_STRUCT = """
             _put_md_to_s3(md, key.s3_key.with_suffix(".md"))
             # TODO: send to GitHub after all processing is done, just before the myst build step
             msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
@@ -251,6 +254,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         src = _get_source_bucket(event)
         _download_fileobj(src, key)
         _create_domain_dirs(key)
+        _copy_other_files_to_efs_jb(key)
+        # raise NotImplementedError("Other files should also be copied to _JB")
         msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
         _enqueue_to_github(msg)
         return {"statusCode": 200, "body": ""}
@@ -420,6 +425,10 @@ def _create_domain_dirs(key: KeyPath) -> None:
         key.efs_jb_dir.mkdir(parents=True, exist_ok=True)
         key.efs_paper_dir.mkdir(parents=True, exist_ok=True)
         key.efs_state_dir.mkdir(parents=True, exist_ok=True)
+        # assets dir
+        (key.efs_jb_dir / ASSETS_DIR).mkdir(parents=True, exist_ok=True)
+        (key.efs_paper_dir / ASSETS_DIR).mkdir(parents=True, exist_ok=True)
+        # state dir does not need assets subdir
     except Exception as e:
         logger.exception(
             f"Creating directories for {str(key)} failed. Error: {repr(e)}"
@@ -716,7 +725,7 @@ def _remove_file_from_efs_domain_dirs(key: KeyPath) -> None:
         raise
 
 
-def _write_processed_md_to_efs(md: str, key: KeyPath) -> None:
+def _write_processed_md_to_efs_jb(md: str, key: KeyPath) -> None:
     try:
         new_efs_filepath = key.efs_jb_path.with_suffix(".md")
         with open(new_efs_filepath, "w") as f:
@@ -900,7 +909,9 @@ def _write_state_to_db(dstate: DocumentState, key: KeyPath) -> None:
         raise
 
 
-def _write_processed_ipynb_to_efs(ipynb: nbformat.NotebookNode, key: KeyPath) -> None:
+def _write_processed_ipynb_to_efs_jb(
+    ipynb: nbformat.NotebookNode, key: KeyPath
+) -> None:
     if key.parts[-2] != ".ipynb_checkpoints":
         nbformat.write(ipynb, key.efs_jb_path)
 
@@ -912,6 +923,26 @@ def _unmarshall_json(key: KeyPath) -> nbformat.NotebookNode:
     with open(key, "r") as f:
         nb = nbformat.read(f, as_version=nbformat.NO_CONVERT)
     return nb
+
+
+def _copy_other_files_to_efs_jb(key: KeyPath) -> None:
+    try:
+        if not key.efs_jb_path.parent.exists():
+            key.efs_jb_path.parent.mkdir(parents=True)
+        shutil.copy2(key.efs_work_path, key.efs_jb_path)
+        logger.info(
+            f"File {str(key.efs_work_path)} was copied to {str(key.efs_jb_path)}"
+        )
+    except Exception as e:
+        logger.exception(
+            f"Copying file to {DEFAULT_SFS_DIR}/{JB_DIR} failed. Error: {repr(e)}"
+        )
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            "Error upon copying non-manuscript file to the file server.",
+        )
+        raise
 
 
 def _log_audit_event(key: KeyPath, status: int, msg: str) -> None:
