@@ -108,10 +108,7 @@ def prepare_frontmatter(
             all_data[_key(key)] = vals
     frontmatter = FrontmatterBlob(all_data, curr_file)
     # _replace_table_with_yamlstr(html_soup, table, frontmatter)
-    new_tag = html_soup.new_tag("span")
-    new_tag["class"] = CLS_FRONTMATTER_TABLE
-    new_tag.string = frontmatter.dump_yamlstr()
-    table.replace_with(new_tag)
+    table.decompose()
     return html_soup, frontmatter
 
 
@@ -186,15 +183,6 @@ def _parse_dict(txt: str) -> dict[str, str]:
         key, val = item.split(":", 1)
         res[_key(key)] = _val(val)
     return res
-
-
-# def _replace_table_with_yamlstr(
-#     html_soup: bs4.BeautifulSoup, table: bs4.Tag, frontmatter: FrontmatterBlob
-# ) -> None:
-#     new_tag = html_soup.new_tag("span")
-#     new_tag["class"] = CLS_FRONTMATTER_TABLE
-#     new_tag.string = frontmatter.dump_yamlstr()
-#     table.replace_with(new_tag)
 
 
 def to_bool(val: str) -> bool:
