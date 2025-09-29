@@ -41,8 +41,8 @@ prep/bookv2:
 		python3.12 scripts/prepare_and_build.py book_path="tests/_fixtures/a_book/"
 	export BUILD_DIR=/tmp/efs/a_book/_build/html
 	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
-	(cd /tmp/efs/a_book && myst build --html)
-	echo 'npx serve /tmp/efs/a_book/_build/html'
+	(cd /tmp/efs/_JB/a_book && myst build --html)
+	echo 'npx serve /tmp/efs/_JB/a_book/_build/html'
 
 prep/split:
 	mkdir -p /tmp/efs/
@@ -53,10 +53,10 @@ prep/split:
 		METADATA_ASSETS_BUCKET_NAME=_METDATA \
 		VERIFIER_MSGS=_WARNINGS \
 		python3.12 scripts/prepare_and_build_jb2.py book_path="tests/_fixtures/split-to-multiple-chapters/"
-	export BUILD_DIR=/tmp/efs/split-to-multiple-chapters/_build/html
+	export BUILD_DIR=/tmp/efs/_JB/split-to-multiple-chapters/_build/html
 	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
-	(cd /tmp/efs/split-to-multiple-chapters && myst build --html)
-	echo 'npx serve /tmp/efs/split-to-multiple-chapters/_build/html'
+	(cd /tmp/efs/_JB/split-to-multiple-chapters && myst build --html)
+	echo 'npx serve /tmp/efs/_JB/split-to-multiple-chapters/_build/html'
 
 test/unit:
 	DGTMON_DEBUG=1 python3.12 -m pytest tests/entrypoint tests/orm tests/common/ tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
@@ -95,6 +95,19 @@ show/dominique:
 		METADATA_ASSETS_BUCKET_NAME=_METDATA \
 		VERIFIER_MSGS=_WARNINGS \
 		python3.12 scripts/prepare_and_build.py book_path="/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/a-colonia-luxemburguesa/"
+
+show/guidelines:
+	make db/migrate
+	DGTMON_NO_WAIT=1 \
+		IR_APKG_HTML_BUCKET_NAME=_HTML \
+		IR_APKG_MD_BUCKET_NAME=_MARKDOWN \
+		METADATA_ASSETS_BUCKET_NAME=_METDATA \
+		VERIFIER_MSGS=_WARNINGS \
+		python3.12 scripts/prepare_and_build_jb2.py book_path="/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/guidelines-for-drafting-manuscripts-v2/"
+	export BUILD_DIR=/tmp/efs/_JB/guidelines-for-drafting-manuscripts-v2/_build/html
+	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
+	(cd /tmp/efs/_JB/guidelines-for-drafting-manuscripts-v2 && myst build --html)
+	echo 'npx serve /tmp/efs/_JB/guidelines-for-drafting-manuscripts-v2/_build/html'
 
 login:
 	aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin ${MAIN_DOCKER_ECR}
