@@ -1,7 +1,8 @@
 version: 1
 project:
-  toc:
-    - file: manuscript.md
+  downloads:
+    - file: ./assets/thumbnail.svg
+      title: A smiley face
 site:
   options:
     folders: true
