@@ -186,15 +186,18 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         # for i in range(len(html_soups)):
         #     html_soup = html_soups[i]
         #     key = toc[i].fp
-        print("\n\n")
+        # print("\n\n")
         for html_soup in html_soups:
-            print('> html_soup.attrs.get("chapter")', html_soup.attrs.get("chapter"))
-            if len(html_soups) != 1:
-                chapter: Chapter = html_soup.attrs.get("chapter")
-                print("chapter.jb_key", chapter.jb_key)
-                print("chapter.fm_key", chapter.fm_key)
-                print("chapter.docx_key", chapter.docx_key)
-                key = chapter.jb_key
+            # print('> html_soup.attrs.get("chapter")', html_soup.attrs.get("chapter"))
+            chapter: Chapter = html_soup.attrs.get("chapter")
+            key = chapter.jb_key
+
+            # if len(html_soups) != 1:
+            #     chapter: Chapter = html_soup.attrs.get("chapter")
+            #     print("chapter.jb_key", chapter.jb_key)
+            #     print("chapter.fm_key", chapter.fm_key)
+            #     print("chapter.docx_key", chapter.docx_key)
+            #     key = chapter.jb_key
             # else:
             #     raise Exception(
             #         "Even if there is one html_soup, it should still have a Chapter obj assigned to it."
@@ -205,9 +208,10 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
             # print("chapter.book_slug", chapter.book_slug)
             # print("chapter.chapter_slug", chapter.chapter_slug)
             # print("chapter.prefix", chapter.prefix)
-            # print("chapter.curr_file", chapter.curr_file)
-            # print("chapter.x_fp", chapter.x_fp)
             # print("chapter.fn", chapter.fn)
+            # print("chapter.fm_key", chapter.fm_key)
+            # print("chapter.jb_key", chapter.jb_key)
+            # print("chapter.docx_key", chapter.docx_key)
             # print("-" * 75)
             # dstate.add(chapter)
             metadata = DocumentMetadata(key)  # TODO: not key, use val from frontmatter
