@@ -124,7 +124,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         # _remove_metadata_from_db(key)  # TODO: dstate
         _remove_state_from_efs(key)
         _remove_state_from_db(key)
-        _remove_processed_html_from_efs(key)  # TODO: think if needed
+        # _remove_processed_html_from_efs(key)
         _remove_html_from_s3(key)
         # _remove_processed_md_from_efs(key)
         _remove_file_from_efs_domain_dirs(key.with_suffix(".md"))
@@ -681,6 +681,8 @@ def _enqueue_to_github(msg: GithubTriggerMsg) -> None:
 
 
 def _remove_processed_html_from_efs(key: KeyPath) -> None:
+    # TODO: consider if _write_processed_html_to_efs is needed at all.
+    # If not, remove this function as well.
     try:
         new_efs_filepath = key.efs_slug_html_path.with_suffix(".html")
         new_efs_filepath.unlink(missing_ok=True)
@@ -691,6 +693,7 @@ def _remove_processed_html_from_efs(key: KeyPath) -> None:
 
 
 def _write_processed_html_to_efs(html: str, key: KeyPath) -> None:
+    # TODO: consider if this is needed at all. Maybe for verification???
     try:
         new_efs_filepath = key.efs_slug_html_path.with_suffix(".html")
         new_efs_filepath.parent.mkdir(exist_ok=True)
