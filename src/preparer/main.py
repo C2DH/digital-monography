@@ -222,13 +222,11 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
             _write_assets_info_to_s3(dstate, key)
             # _write_metadata_to_db(metadata, dstate, key)  # TODO: dstate
             _write_state_to_efs(dstate, key)
-            CHANGING_DIR_STRUCT = """
             _write_state_to_db(dstate, key)
             # _write_processed_html_to_efs(html_soup_str, key)
             _put_html_to_s3(html_soup_str, key)
             md = _convert_to_md(key, html_soup, dstate)
             _write_processed_md_to_efs_jb(md, key)
-            CHANGING_DIR_STRUCT = """
             _put_md_to_s3(md, key.s3_key.with_suffix(".md"))
             # TODO: send to GitHub after all processing is done, just before the myst build step
             msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
@@ -242,7 +240,6 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
             _enqueue_to_github(msg)
             _enqueue_to_github(msg_md)
             _enqueue_to_github(msg_html)
-            """
         # _put_to_archive_s3(key.s3_key.with_suffix(".md"), md)
         _log_audit_event(
             key,
@@ -427,8 +424,10 @@ def _create_domain_dirs(key: KeyPath) -> None:
         key.efs_state_dir.mkdir(parents=True, exist_ok=True)
         # assets dir
         (key.efs_jb_dir / ASSETS_DIR).mkdir(parents=True, exist_ok=True)
-        (key.efs_paper_dir / ASSETS_DIR).mkdir(parents=True, exist_ok=True)
-        # state dir does not need assets subdir
+        # NOTE: maybe you don't need to create assets dir in paper dir
+        # just copy the whole assets dir ONLY WHEN you need to download the paper package
+        # (key.efs_paper_dir / ASSETS_DIR).mkdir(parents=True, exist_ok=True)
+        # NOTE: state dir does not need assets subdir
     except Exception as e:
         logger.exception(
             f"Creating directories for {str(key)} failed. Error: {repr(e)}"
