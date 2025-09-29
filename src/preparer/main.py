@@ -114,7 +114,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     ### Handle deletions
     if _is_IPYNB(key) and _is_deletion(event_name):
         _remove_fileobj(key)
-        _remove_file_from_efs_jb(key)
+        _remove_file_from_efs_domain_dirs(key)
         msg = GithubTriggerMsg(key=key, action=GithubActionEnum.DELETE_OBJECT)
         _enqueue_to_github(msg)
         return {"statusCode": 200, "body": ""}
@@ -127,7 +127,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _remove_processed_html_from_efs(key)  # TODO: think if needed
         _remove_html_from_s3(key)
         # _remove_processed_md_from_efs(key)
-        _remove_file_from_efs_jb(key.efs_jb_path.with_suffix(".md"))
+        _remove_file_from_efs_domain_dirs(key.with_suffix(".md"))
         _remove_md_from_s3(key.s3_key.with_suffix(".md"))
         msg = GithubTriggerMsg(key=key, action=GithubActionEnum.DELETE_OBJECT)
         msg_md = GithubTriggerMsg(
@@ -138,7 +138,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         return {"statusCode": 200, "body": ""}
     if _is_deletion(event_name):
         _remove_fileobj(key)
-        _remove_file_from_efs_jb(key)
+        _remove_file_from_efs_domain_dirs(key)
         msg = GithubTriggerMsg(key=key, action=GithubActionEnum.DELETE_OBJECT)
         _enqueue_to_github(msg)
         return {"statusCode": 200, "body": ""}
@@ -701,24 +701,17 @@ def _write_processed_html_to_efs(html: str, key: KeyPath) -> None:
         raise
 
 
-def _remove_file_from_efs_jb(key: KeyPath) -> None:
+def _remove_file_from_efs_domain_dirs(key: KeyPath) -> None:
     try:
         key.efs_jb_path.unlink(missing_ok=True)
+        key.efs_paper_path.unlink(missing_ok=True)
+        key.efs_state_path.unlink(missing_ok=True)
+        key.efs_work_path.unlink(missing_ok=True)
         logger.info(f"{str(key.efs_jb_path)} was removed from EFS.")
     except Exception as e:
         logger.exception(
             f"Deleting file from {DEFAULT_SFS_DIR}/{JB_DIR} failed. Error: {repr(e)}"
         )
-        raise
-
-
-def _remove_processed_md_from_efs(key: KeyPath) -> None:
-    try:
-        new_efs_filepath = key.efs_jb_path.with_suffix(".md")
-        new_efs_filepath.unlink(missing_ok=True)
-        logger.info(f"{new_efs_filepath} was removed from EFS.")
-    except Exception as e:
-        logger.exception(f"Deleting md from /efs failed. Error: {repr(e)}")
         raise
 
 
