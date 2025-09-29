@@ -708,8 +708,7 @@ def _remove_processed_md_from_efs(key: KeyPath) -> None:
 
 def _write_processed_md_to_efs(md: str, key: KeyPath) -> None:
     try:
-        # new_efs_filepath = key.efs_filepath.with_suffix(".md")
-        new_efs_filepath = key.efs_slug_jb_path.with_suffix(".md")
+        new_efs_filepath = key.efs_jb_path.with_suffix(".md")
         with open(new_efs_filepath, "w") as f:
             f.write(md)
     except Exception as e:
@@ -892,8 +891,9 @@ def _write_state_to_db(dstate: DocumentState, key: KeyPath) -> None:
 
 
 def _write_processed_ipynb_to_efs(ipynb: nbformat.NotebookNode, key: KeyPath) -> None:
-    if key.efs_slug_jb_path.parts[-2] != ".ipynb_checkpoints":
-        nbformat.write(ipynb, key.efs_slug_jb_path)
+    if key.parts[-2] != ".ipynb_checkpoints":
+        nbformat.write(ipynb, key.efs_jb_path)
+        # nbformat.write(ipynb, key.efs_slug_jb_path)
     # nbformat.write(ipynb, key.efs_filepath)
 
 
