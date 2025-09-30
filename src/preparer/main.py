@@ -109,12 +109,9 @@ def is_table(tag: bs4.element.Tag) -> bool:
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
-    # assert False, "Fetch Assets, Headings and Citations from the dashboard"
     logger.info(f"lambda_handler. Event: {json.dumps(event, default=str)}")
     key = _get_key(event)
     event_name = _get_event_name(event)
-    # dstate = DocumentState(key)
-    # metadata = DocumentMetadata(key)
     ####################
     ### Handle deletions
     if _is_IPYNB(key) and _is_deletion(event_name):
@@ -310,10 +307,6 @@ def _download_fileobj(src: str, key: KeyPath) -> None:
         key = key.efs_filepath
         # NOTE: this commented out code shouldn't be necassary.
         # It was just a temp to fix my error when I uploaded the "assets" file instead of dir.
-        # assets_dir = pathlib.Path("/mnt/efs/{key.slug}/assets")
-        # if assets_dir.exists() and not assets_dir.is_dir() and assets_dir.is_file():
-        #     assets_dir.unlink()
-        # end temp
         key.parent.mkdir(parents=True, exist_ok=True)
         with open(key, "wb") as fileobj:
             logger.info(f"sys.getsizeof(fileobj): {str(sys.getsizeof(fileobj))}")
@@ -369,37 +362,11 @@ def convert_to_bs(html_str: str) -> bs4.BeautifulSoup:
     return bs4.BeautifulSoup(html_str, "html.parser")
 
 
-# def split_docx_into_multiple_docs(
-#     html_soup: bs4.BeautifulSoup, frontmatter: FrontmatterBlob | None
-# ) -> list[bs4.BeautifulSoup]:
-#     if frontmatter is None or frontmatter.should_be_splitted is False:
-#         return [html_soup]
-#     html_soups = []
-#     current = None
-#     for elem in html_soup.contents:
-#         # skip whitespace-only strings at top level
-#         if isinstance(elem, bs4.NavigableString) and not elem.strip():
-#             continue
-#         # start a new soup with this H1
-#         if isinstance(elem, bs4.Tag) and elem.name == "h1":
-#             current = bs4.BeautifulSoup("", "html.parser")
-#             current.append(elem.__copy__())
-#             html_soups.append(current)
-#         else:
-#             # if no current H1 yet, skip or collect (depending on desired behavior)
-#             if current is None:
-#                 # optional: start a group without H1 for leading content
-#                 continue
-#             current.append(elem.__copy__())
-#     return html_soups
-
-
 def _create_domain_dirs(key: KeyPath) -> None:
     try:
         key.efs_jb_dir.mkdir(parents=True, exist_ok=True)
         key.efs_paper_dir.mkdir(parents=True, exist_ok=True)
         key.efs_state_dir.mkdir(parents=True, exist_ok=True)
-        # assets dir
         (key.efs_jb_dir / ASSETS_DIR).mkdir(parents=True, exist_ok=True)
         # NOTE: maybe you don't need to create assets dir in paper dir
         # just copy the whole assets dir ONLY WHEN you need to download the paper package
@@ -429,8 +396,6 @@ def prepare_docx(
     footnotes = []
     references = []
     paper_only = []
-    # html_str = _convert_to_html(key.efs_filepath)
-    # html_soup = bs4.BeautifulSoup(html_str, "html.parser")
     metadata.char_count, metadata.word_count = _get_char_and_word_count(html_soup)
     classifiers = [
         (is_img_with_alt_text, images_with_alttxt),
@@ -451,7 +416,6 @@ def prepare_docx(
         for check_if_meets_criteria, container in classifiers:
             if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
                 container.append(node)
-    # html_soup, frontmatter = prepare_frontmatter(html_soup, dstate, tables)
     html_soup, bibliography = prepare_citations(html_soup, metadata, dstate, citations)
     html_soup = add_bibliography(html_soup, bibliography)
     html_soup = prepare_ref_targets_in_headers(html_soup, metadata, dstate, headers)
