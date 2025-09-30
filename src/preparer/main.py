@@ -168,40 +168,9 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_soup, frontmatter = prepare_frontmatter(html_soup, key)
         html_soups = split_docx_into_multiple_chapters(html_soup, frontmatter)
         prepend_htmls_with_frontmatter(html_soups, frontmatter)
-        # print("key", key)
-        # print("key.efs_filepath", key.efs_filepath)
-        # print("frontmatter", frontmatter)
-        # toc = frontmatter.toc()
-        # assert len(toc) == len(html_soups)
-        # print("len(toc)", len(toc))
-        # print("len(html_soups)", len(html_soups))
-        # for chapter in toc:
-        #     print("chapter", chapter)
-        #     print("-" * 75)
-        # print("=" * 75)
-        # for soup in html_soups:
-        #     print(">>>>", soup.attrs.get("chapter"))
-        #     print("soup", str(soup)[:250])
-        #     print("-" * 75)
-        # for i in range(len(html_soups)):
-        #     html_soup = html_soups[i]
-        #     key = toc[i].fp
-        # print("\n\n")
         for html_soup in html_soups:
-            # print('> html_soup.attrs.get("chapter")', html_soup.attrs.get("chapter"))
             chapter: Chapter = html_soup.attrs.get("chapter")
             key = chapter.jb_key
-
-            # if len(html_soups) != 1:
-            #     chapter: Chapter = html_soup.attrs.get("chapter")
-            #     print("chapter.jb_key", chapter.jb_key)
-            #     print("chapter.fm_key", chapter.fm_key)
-            #     print("chapter.docx_key", chapter.docx_key)
-            #     key = chapter.jb_key
-            # else:
-            #     raise Exception(
-            #         "Even if there is one html_soup, it should still have a Chapter obj assigned to it."
-            #     )
             _create_domain_dirs(key)
             dstate = DocumentState(key)  # TODO: not key, use val from frontmatter
             # print("chapter.bookmark", chapter.bookmark)
