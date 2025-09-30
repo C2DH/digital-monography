@@ -2,11 +2,11 @@ import bs4
 import sqlmodel
 import pytest
 
-from src._common.constants import DEFAULT_SFS_DIR, DB_URL
+from src._common.constants import DEFAULT_SFS_DIR, DB_URL, JB_DIR
 from src._common.keys import KeyPath
 from src._common.models import Ref
 
-JB_BUILD_DIR = KeyPath(DEFAULT_SFS_DIR) / "a_book" / "_build" / "html"
+JB_BUILD_DIR = KeyPath(DEFAULT_SFS_DIR) / JB_DIR / "a_book" / "_build" / "html"
 db_engine = sqlmodel.create_engine(DB_URL)
 
 

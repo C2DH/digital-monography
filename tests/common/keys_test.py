@@ -12,7 +12,7 @@ def test_short_efs_filepath():
 
 def test_short_efs_slug_dir():
     key = KeyPath("myslug/text.md")
-    assert key.efs_slug_dir == KeyPath("/tmp/efs/myslug")
+    assert key.efs_slug_dir == KeyPath(f"/tmp/efs/{WORK_DIR}/myslug")
 
 
 def test_short_efs_paper_dir():
@@ -106,7 +106,7 @@ def test_long_n_nested_efs_filepath():
 
 def test_long_n_nested_efs_slug_dir():
     key = KeyPath("myslug/path/to/text.pdf.xmld")
-    assert key.efs_slug_dir == KeyPath("/tmp/efs/myslug")
+    assert key.efs_slug_dir == KeyPath(f"/tmp/efs/{WORK_DIR}/myslug")
 
 
 def test_long_n_nested_efs_filepath():
@@ -176,7 +176,7 @@ def test_tmprootpath_efs_filepath():
 
 def test_tmprootpath_efs_slug_dir():
     key = KeyPath("/tmp/efs/myslug/path/to/text.pdf.xmld")
-    assert key.efs_slug_dir == KeyPath("/tmp/efs/myslug")
+    assert key.efs_slug_dir == KeyPath(f"/tmp/efs/{WORK_DIR}/myslug")
 
 
 def test_tmprootpath_efs_filepath():

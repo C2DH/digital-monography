@@ -2,7 +2,7 @@ import bs4
 import pathlib
 import mammoth
 
-from src._common.constants import MAMMOTH_STYLE_MAP
+from src._common.constants import MAMMOTH_STYLE_MAP, WORK_DIR
 from src._common.keys import KeyPath
 from src._common.html2md import convert_to_md
 from src._common.metadata import DocumentMetadata
@@ -21,9 +21,7 @@ from src.preparer.refs import (
 
 
 class TestConditionalRendering:
-    fp = KeyPath(
-        pathlib.Path("/tmp") / "efs" / "a_book" / "05_conditional_rendering.docx"
-    )
+    fp = KeyPath("/tmp") / "efs" / WORK_DIR / "a_book" / "05_conditional_rendering.docx"
 
     @classmethod
     def setup_class(cls):

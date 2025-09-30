@@ -8,6 +8,7 @@ from src._common.models import Chapter, ChapterService
 from src._common.keys import KeyPath
 from src.preparer.main import _convert_to_html, convert_to_bs
 from src.preparer.prep_frontmatter import prepare_frontmatter, FrontmatterBlob
+from src.preparer.split_into_chapters import prepend_htmls_with_frontmatter
 
 
 SLUG = "book-content-examples"
@@ -29,6 +30,7 @@ class TestFrontmatterPreparationAndGenChaptersFromToC:
         #         if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
         #             container.append(node)
         cls.html_soup, cls.frontmatter = prepare_frontmatter(html_soup, cls.key)
+        prepend_htmls_with_frontmatter([cls.html_soup], cls.frontmatter)
         dstate = DocumentState(cls.key)
         cls.md = convert_to_md(cls.html_soup, dstate)
 
@@ -89,6 +91,7 @@ class TestFrontmatterPreparationAndGenChaptersFromToC:
         assert "isbn" in self.frontmatter.all_data
 
     def test_frontmatter_dump_yamlstr(self):
+        print("self.md", self.md)
         assert self.md.startswith("---\n")
         assert "chapters\n---\n\n\n\n# Book Title\n" in self.md  # end
         assert "\ntitle: Just a book\n" in self.md
@@ -193,7 +196,7 @@ class TestFrontmatterPreparationAndGenChapterFromKey:
                 KeyPath(f"{SLUG}/01_chapter_slug.docx"),
                 SLUG,
                 "01_chapter_slug",
-                1,
+                "1",
                 "01_chapter_slug",
                 KeyPath(f"/tmp/efs/{WORK_DIR}/{SLUG}/01_chapter_slug.docx"),
                 KeyPath(f"/tmp/efs/{JB_DIR}/{SLUG}/01_chapter_slug.md"),
