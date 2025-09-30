@@ -70,21 +70,22 @@ class Chapter(MySQLModel, table=True):
 
 class ChapterService:
     @staticmethod
-    def get_number_from_filename(s: str) -> int:
+    def get_number_from_filename(s: str) -> str:
         """
-        Extract `int(1)` from file name '01_book_chapter'.
-        Similar (or identical) implementation to FileService.
+        Extract '1' from file name '01_book_chapter'.
+        Similar implementation to FileService, except the str return type.
+        Here we need the filename prefix without the leading zeroes.
         """
         assert type(s) == str, "Only accepts string"
-        number = ""
+        number: str = ""
         default = -1
         for ch in s:
             if number and not ch.isdigit():
-                return int(number)
+                return number.lstrip("0")
             elif ch.isdigit():
                 number += ch
         try:
-            return int(number)
+            return number.lstrip("0")
         except ValueError:
             return default
 
@@ -102,6 +103,7 @@ class ChapterService:
             fm_key = chapter["frontmatter_key"]
             chapter["book_slug"] = fm_key.slug
             chapter["prefix"] = chapter["prefix"] if "prefix" in chapter else str(idx)
+            chapter["loc"] = fm_key
             chapter["fm_key"] = fm_key.efs_work_path
             chapter["chapter_slug"] = _get_chapter_slug_from_toc(idx, chapter)
             chapter["jb_key"] = _get_jb_key(chapter)
@@ -117,6 +119,7 @@ class ChapterService:
         chapter["chapter_slug"] = _naive_slugify(key.stem)
         chapter["prefix"] = ChapterService.get_number_from_filename(key.stem)
         chapter["fn"] = key.stem
+        chapter["loc"] = key
         chapter["fm_key"] = key.efs_work_path
         chapter["jb_key"] = _get_jb_key(chapter)
         chapter["docx_key"] = _get_docx_key(chapter)
@@ -139,6 +142,7 @@ class ChapterService:
             "chapter_slug": chapter_slug,
             "prefix": str(idx),
             "fn": chapter_slug,
+            "loc": frontmatter_key,
             "fm_key": frontmatter_key.efs_work_path,
         }
         chapter["jb_key"] = _get_jb_key(chapter)

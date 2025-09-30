@@ -213,7 +213,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
             # print("chapter.jb_key", chapter.jb_key)
             # print("chapter.docx_key", chapter.docx_key)
             # print("-" * 75)
-            # dstate.add(chapter)
+            dstate.add(chapter)
             metadata = DocumentMetadata(key)  # TODO: not key, use val from frontmatter
             # TODO: prepare_docx shouldn't have to return "state"
             html_soup, metadata, dstate, tables = prepare_docx(
