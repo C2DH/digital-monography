@@ -30,7 +30,7 @@ prep/book:
 		VERIFIER_MSGS=_s3_warnings \
 		python3.12 scripts/prepare_and_build.py book_path="tests/_fixtures/a_book/"
 
-prep/bookv2:
+prep/book2:
 	mkdir -p /tmp/efs/
 	make db/migrate
 	DGTMON_NO_WAIT=1 \
@@ -38,7 +38,7 @@ prep/bookv2:
 		IR_APKG_MD_BUCKET_NAME=_s3_md \
 		METADATA_ASSETS_BUCKET_NAME=_s3_assets_state \
 		VERIFIER_MSGS=_s3_warnings \
-		python3.12 scripts/prepare_and_build.py book_path="tests/_fixtures/a_book/"
+		python3.12 scripts/prepare_and_build_jb2.py book_path="tests/_fixtures/a_book/"
 	export BUILD_DIR=/tmp/efs/a_book/_build/html
 	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
 	(cd /tmp/efs/_JB/a_book && myst build --html)
