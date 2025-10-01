@@ -53,6 +53,8 @@ def _read_myst_config(key: KeyPath) -> dict[str, t.Any]:
 
 
 def _overwrite_myst_config_file(cfg: dict[str, t.Any]) -> dict[str, t.Any]:
+    if "version" not in cfg:
+        cfg["version"] = 1
     if "site" not in cfg:
         cfg["site"] = {}
     # site.template = book-theme
