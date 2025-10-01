@@ -1,3 +1,4 @@
+import datetime
 import logging
 import typing as t
 import yaml
@@ -53,13 +54,22 @@ def _read_myst_config(key: KeyPath) -> dict[str, t.Any]:
 
 
 def _overwrite_myst_config_file(cfg: dict[str, t.Any]) -> dict[str, t.Any]:
+    """
+    To be a valid myst config file for Jupyter Book v2, "myst.yml" has to have
+    certain structure with version: 1 and site or project keys.
+    """
     if "version" not in cfg:
         cfg["version"] = 1
+    # project
+    if "project" not in cfg:
+        cfg["project"] = {}
+    if "date" not in cfg["project"]:
+        cfg["project"]["date"] = datetime.date.today().isoformat()
+    cfg["project"]["open_access"] = True  # always open access
+    # site
     if "site" not in cfg:
         cfg["site"] = {}
-    # site.template = book-theme
     cfg["site"]["template"] = "book-theme"
-    # site.options.folders = true
     if "options" not in cfg["site"]:
         cfg["site"]["options"] = {}
     cfg["site"]["options"]["folders"] = True
