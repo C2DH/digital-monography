@@ -59,12 +59,16 @@ from replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
 from refs import (
     prepare_ref_targets_in_headers,
     prepare_ref_targets_in_captions,
-    prepare_ref_targets_in_footnotes,
     prepare_references,
     is_header,
     is_caption,
-    is_footnote,
     is_reference,
+)
+from footnotes import (
+    is_ref_footnote,
+    is_target_footnote,
+    prepare_refs_in_footnotes,
+    prepare_targets_in_footnotes,
 )
 from split_into_chapters import (
     split_docx_into_multiple_chapters,
@@ -393,7 +397,8 @@ def prepare_docx(
     headers = []
     captions = []
     citations = []
-    footnotes = []
+    ref_footnotes = []
+    target_footnotes = []
     references = []
     paper_only = []
     metadata.char_count, metadata.word_count = _get_char_and_word_count(html_soup)
@@ -403,9 +408,11 @@ def prepare_docx(
         (is_table, tables),
         (is_header, headers),
         (is_caption, captions),
-        (is_footnote, footnotes),
         (is_reference, references),
+        (is_ref_footnote, ref_footnotes),
+        (is_target_footnote, target_footnotes),
         (is_paper_only, paper_only),
+        # is_ref_footnote, is_target_footnote, prepare_refs_in_footnotes, prepare_targets_in_footnotes
     ]
     """
     Before applying the processing, this subprocedure traverses the tree
@@ -420,7 +427,9 @@ def prepare_docx(
     html_soup = add_bibliography(html_soup, bibliography)
     html_soup = prepare_ref_targets_in_headers(html_soup, metadata, dstate, headers)
     html_soup = prepare_ref_targets_in_captions(html_soup, metadata, dstate, captions)
-    html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, dstate, footnotes)
+    html_soup = prepare_targets_in_footnotes(html_soup, dstate, target_footnotes)
+    # html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, dstate, footnotes)
+    html_soup = prepare_refs_in_footnotes(html_soup, dstate, ref_footnotes)
     html_soup = prepare_references(html_soup, metadata, dstate, references)
     html_soup = prepare_metadata_tables(html_soup, metadata, dstate, tables)
     html_soup = remove_paper_only(html_soup, metadata, dstate, paper_only)
