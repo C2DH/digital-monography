@@ -4,6 +4,9 @@ It is a mess of functions and classes that do not follow any particular pattern.
 Dear future me, please refactor it at the next time you need to touch referencing logic.
 """
 
+# This module handles references and targets compliant with the old
+# Jupyter Book v1 specification.
+
 import pathlib
 import bs4
 import docutils.nodes
@@ -53,6 +56,11 @@ def is_footnote(tag: bs4.element.Tag) -> bool:
 def is_reference(tag: bs4.element.Tag) -> bool:
     # "a", href=True
     return bool(tag.name == "a" and tag.attrs.get("href"))
+    # return bool(
+    #     tag.name == "a"
+    #     and tag.attrs.get("href")
+    #     and tag.attrs.get("id", "").startswith("footnote")
+    # )
 
 
 # targets ############
@@ -377,27 +385,6 @@ def _get_isdigital_and_ispaper(caption: bs4.Tag, identifier: str) -> tuple[bool,
     return is_digital, is_paper
 
 
-def prepare_ref_targets_in_footnotes(
-    html_soup: bs4.BeautifulSoup,
-    metadata: DocumentMetadata,
-    dstate: DocumentState,
-    footnotes: list[bs4.element.Tag],
-) -> bs4.BeautifulSoup:
-    for li_tag in footnotes:
-        li_tag: bs4.element.Tag
-        footnote = FootnoteMystifier()
-        footnote.set_filepath(metadata.filepath)
-        footnote.from_target(li_tag["id"])
-        li_tag["id"] = footnote.id
-        for tag in li_tag.descendants:
-            if isinstance(tag, bs4.element.Tag) and tag.attrs.get(
-                "href", ""
-            ).startswith("#footnote-ref-"):
-                tag["href"] = footnote.href
-                break
-    return html_soup
-
-
 # references ############
 
 
@@ -410,12 +397,13 @@ def prepare_references(
     for a_tag in references:
         a_tag: bs4.element.Tag
         if _is_ref_footnote(a_tag):
-            footnote = FootnoteMystifier()
-            footnote.set_filepath(metadata.filepath)
-            footnote.from_ref(a_tag["id"])
-            a_tag["href"] = footnote.href
-            a_tag["id"] = footnote.id
-            a_tag.string = footnote.string
+            # footnote = FootnoteMystifier()
+            # footnote.set_filepath(metadata.filepath)
+            # footnote.from_ref(a_tag["id"])
+            # a_tag["href"] = footnote.href
+            # a_tag["id"] = footnote.id
+            # a_tag.string = footnote.string
+            pass
         elif _is_target_footnote(a_tag):
             pass
         else:
