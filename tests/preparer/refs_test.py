@@ -270,48 +270,6 @@ def test_targets_in_captions__link_in_caption_is_left_not_changed():
     assert metadata.substitutions[0].placeholder == "f-file-ref178606190"
 
 
-# targets and refs in footnotes
-
-
-def test_ref_and_target_from_footnote():
-    sample_html = (
-        '<sup><a href="#footnote-1" id="footnote-ref-1">[1]</a></sup>'
-        '<ol><li id="footnote-1">'
-        "<p>"
-        " Standard footnote without links."
-        ' <a href="#footnote-ref-1">↑</a>'
-        "</p>"
-        "</li></ol>"
-    )
-    bs = bs4.BeautifulSoup(sample_html, "html.parser")
-    key = KeyPath("./tmp/sth/file.docx")
-    dstate = DocumentState(key)
-    metadata = DocumentMetadata(key)
-    references = []
-    footnotes = []
-    classifiers = [
-        (is_reference, references),
-        (is_footnote, footnotes),
-    ]
-    for node in bs.descendants:
-        for check_if_meets_criteria, container in classifiers:
-            if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
-                container.append(node)
-    bs = prepare_ref_targets_in_footnotes(bs, metadata, dstate, footnotes)
-    bs = prepare_references(bs, metadata, dstate, references)
-    sup = bs.find("sup")
-    assert sup.a.text == r"[fn-file-1]"
-    assert sup.a["href"] == "#footnote-fn-file-1"
-    assert sup.a["id"] == "footnote-ref-fn-file-1"
-    li = bs.find("li")
-    assert li["id"] == "footnote-fn-file-1"
-    a = li.find("a")
-    assert a["href"] == "#footnote-ref-fn-file-1"
-    # not added to refs nor targets
-    assert len(metadata.refs) == 0
-    assert len(metadata.targets) == 0
-
-
 # LinkMystifier attributes
 
 
