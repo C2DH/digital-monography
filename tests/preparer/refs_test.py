@@ -3,11 +3,9 @@ import bs4
 from src.preparer.refs import (
     is_caption,
     is_header,
-    is_footnote,
     is_reference,
     prepare_ref_targets_in_headers,
     prepare_ref_targets_in_captions,
-    prepare_ref_targets_in_footnotes,
     prepare_references,
     LinkMystifier,
 )

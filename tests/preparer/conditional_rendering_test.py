@@ -1,5 +1,4 @@
 import bs4
-import pathlib
 import mammoth
 
 from src._common.constants import MAMMOTH_STYLE_MAP, WORK_DIR
@@ -8,14 +7,18 @@ from src._common.html2md import convert_to_md
 from src._common.metadata import DocumentMetadata
 from src._common.state import DocumentState
 from src.preparer.conditional_prep import is_paper_only, remove_paper_only
+from src.preparer.footnotes import (
+    is_ref_footnote,
+    is_target_footnote,
+    prepare_refs_in_footnotes,
+    prepare_targets_in_footnotes,
+)
 from src.preparer.refs import (
     is_header,
     is_caption,
-    is_footnote,
     is_reference,
     prepare_ref_targets_in_headers,
     prepare_ref_targets_in_captions,
-    prepare_ref_targets_in_footnotes,
     prepare_references,
 )
 
@@ -36,15 +39,14 @@ class TestConditionalRendering:
         key = cls.fp.relative_to(cls.fp.parent.parent)
         cls.dstate = DocumentState(key)
         cls.metadata = DocumentMetadata(key)
-        headers = []
-        captions = []
-        footnotes = []
-        references = []
+        headers, captions, target_footnotes = [], [], []
+        ref_footnotes, references = [], []
         paper_only = []
         classifiers = [
             (is_header, headers),
             (is_caption, captions),
-            (is_footnote, footnotes),
+            (is_target_footnote, target_footnotes),
+            (is_ref_footnote, ref_footnotes),
             (is_reference, references),
             (is_paper_only, paper_only),
         ]
@@ -58,13 +60,15 @@ class TestConditionalRendering:
         cls.after_soup = prepare_ref_targets_in_captions(
             cls.after_soup, cls.metadata, cls.dstate, captions
         )
-        cls.after_soup = prepare_ref_targets_in_footnotes(
-            cls.after_soup, cls.metadata, cls.dstate, footnotes
+        cls.after_soup = prepare_targets_in_footnotes(
+            cls.after_soup, cls.dstate, target_footnotes
+        )
+        cls.after_soup = prepare_refs_in_footnotes(
+            cls.after_soup, cls.dstate, ref_footnotes
         )
         cls.after_soup = prepare_references(
             cls.after_soup, cls.metadata, cls.dstate, references
         )
-        # html_soup = prepare_metadata_tables(html_soup, metadata, tables)
         cls.after_soup = remove_paper_only(
             cls.after_soup, cls.metadata, cls.dstate, paper_only
         )
