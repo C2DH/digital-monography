@@ -21,7 +21,7 @@ def is_ref_footnote(tag: bs4.element.Tag) -> bool:
     """
     return bool(
         tag.name == "a"
-        and "footnote" in tag["href"]
+        and "footnote" in tag.get("href", "")
         and tag.attrs.get("id", "").startswith("footnote-ref-")
     )
 
