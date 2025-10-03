@@ -64,11 +64,9 @@ def lambda_handler(event, context) -> None:
 
     # TODO: aggregate all chapters in builder, verifier and wordprocessor
     # in a consistent way, with config read from frontmatter
-    SKIP_FOR_MIGRATING_TO_JB2 = """
-    for key in config_key.efs_slug_dir.glob("*.docx"):
+    for key in config_key.efs_work_dir.glob("*.docx"):
         doc = wordprocess_docx(key, bookstate)
-        doc.save(key.efs_slug_paper_path)
-    """
+        doc.save(key.efs_paper_path)
 
 
 def wordprocess_docx(
@@ -89,13 +87,13 @@ def wordprocess_docx(
 def _get_config_key(event) -> KeyPath:
     try:
         slug = event["Records"][0]["body"]
-        pth = KeyPath(slug).efs_slug_dir / "_config.yml"
+        pth = KeyPath(slug).efs_work_dir / "_config.yml"
         if not pth.exists():
-            pth = KeyPath(slug).efs_slug_dir / "_config.yaml"
+            pth = KeyPath(slug).efs_work_dir / "_config.yaml"
         if not pth.exists():
-            pth = KeyPath(slug).efs_slug_dir / "myst.yaml"
+            pth = KeyPath(slug).efs_work_dir / "myst.yaml"
         if not pth.exists():
-            pth = KeyPath(slug).efs_slug_dir / "myst.yml"
+            pth = KeyPath(slug).efs_work_dir / "myst.yml"
         if not pth.exists():
             raise FileNotFoundError(f"Config file not found. File: {pth}")
         return KeyPath(pth)
