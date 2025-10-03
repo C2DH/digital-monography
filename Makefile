@@ -61,13 +61,13 @@ prep/split:
 test/unit:
 	DGTMON_DEBUG=1 python3.12 -m pytest tests/entrypoint tests/orm tests/common/ tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
 
-test/integration:
-	DGTMON_DEBUG=1 python3.12 -m pytest tests/integration/
+test/snapshot:
+	DGTMON_DEBUG=1 python3.12 -m pytest tests/snapshot/
 
 test:
 	DGTMON_DEBUG=1 python3.12 -m pytest tests/entrypoint tests/orm tests/common/ tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
 
-test/e2e: prep/book test/integration
+test/e2e: prep/book test/snapshot
 
 typecheck:
 	mypy src/entrypoint/ --check-untyped-defs
