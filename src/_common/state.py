@@ -173,7 +173,7 @@ def read_book_metadata(key: KeyPath) -> dict[str, DocumentState]:
     with all DocumentState objects for a specific book.
     """
     book_metadata: dict[str, DocumentState] = {}
-    for meta_file in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
+    for meta_file in key.efs_state_dir.glob("**/*.json"):
         meta_file: KeyPath
         with meta_file.open("r") as f:
             state = DocumentState(meta_file)
@@ -221,7 +221,7 @@ class BookState(collections.abc.MutableMapping):
         and update the docstates with all DocumentState objects for a specific book.
         Creates new DocumentState object that contains all the records.
         """
-        for meta_file in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
+        for meta_file in key.efs_state_dir.glob("**/*.json"):
             meta_file: KeyPath
             with meta_file.open("r") as f:
                 state = DocumentState(meta_file)
