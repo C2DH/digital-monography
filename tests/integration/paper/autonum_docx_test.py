@@ -5,11 +5,12 @@ from src._common.constants import (
     AUTONUMBER_PLACEHOLDER,
     DEFAULT_SFS_DIR,
     MAMMOTH_STYLE_MAP,
+    PAPER_DIR,
 )
 from src._common.keys import KeyPath
 from src._common.html2md import convert_to_md
 
-DOCX_OUTPUT_DIR = KeyPath(DEFAULT_SFS_DIR) / "a_book" / "_paper"
+DOCX_OUTPUT_DIR = KeyPath(DEFAULT_SFS_DIR) / PAPER_DIR / "a_book"
 
 
 class TestWordprocessorOutput:

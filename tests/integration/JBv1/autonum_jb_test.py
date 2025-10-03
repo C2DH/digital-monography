@@ -1,10 +1,10 @@
 import bs4
 import pytest
 
-from src._common.constants import DEFAULT_SFS_DIR
+from src._common.constants import DEFAULT_SFS_DIR, JB_DIR
 from src._common.keys import KeyPath
 
-JB_BUILD_DIR = KeyPath(DEFAULT_SFS_DIR) / "a_book" / "_build" / "html"
+JB_BUILD_DIR = KeyPath(DEFAULT_SFS_DIR) / JB_DIR / "a_book" / "_build" / "html"
 
 
 class TestAutomaticNumberingInJupyterBookV1:
