@@ -129,7 +129,7 @@ def _copy_assets(key: KeyPath) -> None:
         # for dirname in SUPPORTED_ASSET_DIR:
         dirname = "assets"
         src = key.efs_slug_dir / dirname
-        dst = key.efs_slug_dir / "_build" / "html" / dirname
+        dst = key.efs_jb_dir / "_build" / "html" / dirname
         logger.info(f"copy assets from {str(src)} to {str(dst)}")
         if dst.exists():
             logger.info(f"BEFORE COPY - assets in {str(dst)}: {str(os.listdir(dst))}")
@@ -144,14 +144,14 @@ def _copy_assets(key: KeyPath) -> None:
 
 
 def _prepare_config(key: KeyPath, book_metadata: dict[str, DocumentState]) -> None:
-    if not (key.efs_slug_dir / "_config.yml").exists():
-        logging.info(f"{key.efs_slug_dir / '_config.yml'} was not found.")
+    if not (key.efs_jb_dir / "_config.yml").exists():
+        logging.info(f"{key.efs_jb_dir / '_config.yml'} was not found.")
         return
-    with open(key.efs_slug_dir / "_config.yml") as f:
+    with open(key.efs_jb_dir / "_config.yml") as f:
         config = yaml.safe_load(f)
     # TODO: update file_count from values in _config
     config = update_with_substitutions(config, book_metadata)
-    with open(key.efs_slug_dir / "_config.yml", "w") as f:
+    with open(key.efs_jb_dir / "_config.yml", "w") as f:
         yaml.dump(config, f)
 
 
@@ -164,7 +164,7 @@ def _make_substitutions(key: KeyPath, book_metadata: dict[str, DocumentState]) -
     However, I needed some solution fast and I didn't have time to fight with JupyterBook.
     I couldn't make JupyterBook to do the substitutions for f2f refs.
     """
-    for md in key.efs_slug_dir.glob("*.md"):
+    for md in key.efs_jb_dir.glob("*.md"):
         dstate = book_metadata.get(md.stem)
         try:
             if md.stem not in book_metadata:
@@ -215,21 +215,21 @@ def _log_tree(key: KeyPath) -> None:
     Log the directory tree of the book.
     """
     try:
-        flist = [str(f) for f in key.efs_slug_dir.rglob("*")]
-        logger.info(f"Files in dir {key.efs_slug_dir}:\n{flist}")
+        flist = [str(f) for f in key.efs_jb_dir.rglob("*")]
+        logger.info(f"Files in dir {key.efs_jb_dir}:\n{flist}")
     except Exception as e:
         logger.exception(f"Logging directory tree failed. Error: {repr(e)}")
 
 
 def _build_jb1_book(key: KeyPath) -> None:
     try:
-        logger.info(f"key.efs_slug_dir: {str(key.efs_slug_dir)}")
+        logger.info(f"key.efs_slug_dir: {str(key.efs_jb_dir)}")
         logger.info(
-            f"Files in {str(key.efs_slug_dir)}: {str(os.listdir(key.efs_slug_dir))}"
+            f"Files in {str(key.efs_jb_dir)}: {str(os.listdir(key.efs_jb_dir))}"
         )
-        if not (key.efs_slug_dir / "_config.yml").exists():
+        if not (key.efs_jb_dir / "_config.yml").exists():
             logging.info(
-                f"{key.efs_slug_dir / '_config.yml'} was not found. Skipping build."
+                f"{key.efs_jb_dir / '_config.yml'} was not found. Skipping build."
             )
             _log_audit_event(
                 key,
@@ -237,9 +237,9 @@ def _build_jb1_book(key: KeyPath) -> None:
                 "Invalid configuration. Operation aborted.",
             )
             return
-        if not (key.efs_slug_dir / "_toc.yml").exists():
+        if not (key.efs_jb_dir / "_toc.yml").exists():
             logging.info(
-                f"{key.efs_slug_dir / '_toc.yml'} was not found. Skipping build."
+                f"{key.efs_jb_dir / '_toc.yml'} was not found. Skipping build."
             )
             _log_audit_event(
                 key,
@@ -248,10 +248,10 @@ def _build_jb1_book(key: KeyPath) -> None:
             )
             return
         params = {
-            "path_source": key.efs_slug_dir,
-            "path_output": key.efs_slug_dir,
-            "config": key.efs_slug_dir / "_config.yml",
-            "toc": key.efs_slug_dir / "_toc.yml",
+            "path_source": key.efs_jb_dir,
+            "path_output": key.efs_jb_dir,
+            "config": key.efs_jb_dir / "_config.yml",
+            "toc": key.efs_jb_dir / "_toc.yml",
             "warningiserror": False,
             "nitpick": False,
             "keep_going": False,
@@ -269,7 +269,7 @@ def _build_jb1_book(key: KeyPath) -> None:
             # https://github.com/sphinx-doc/sphinx/blob/4fbd3682d5cdf606159630f7daf6f818d58de05e/tests/test_util/test_util_logging.py#L56
             # params["verbose"] = 2
         build.callback(**params)
-        logging.info(f"Builder finished building the JBv1 book at {key.efs_slug_dir}.")
+        logging.info(f"Builder finished building the JBv1 book at {key.efs_jb_dir}.")
     except RuntimeError as e:
         logging.exception(f"Unable to build JBv1 book. Error: {repr(e)}")
         _log_audit_event(
@@ -348,7 +348,7 @@ def _build_jb1_book(key: KeyPath) -> None:
 
 
 def _distribute_jb1_book(key: KeyPath) -> None:
-    src = key.efs_slug_dir / "_build" / "html"
+    src = key.efs_jb_dir / "_build" / "html"
     try:
         if IS_DEBUG:
             _cp_efs_to_data_dir(src, "output", key.slug)
