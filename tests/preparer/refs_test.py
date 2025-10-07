@@ -13,7 +13,11 @@ from src.preparer.refs import (
     prepare_references,
     LinkMystifier,
 )
-from src.preparer.targets import prepare_ref_targets_in_headers, _get_target_label
+from src.preparer.targets import (
+    prepare_ref_targets_in_headers,
+    _get_target_label,
+    _create_pre_elem_for_target_label,
+)
 
 # targets in headers
 
@@ -456,8 +460,14 @@ def test_markownify_anchor_if_is_not_external_url_nor_cross_file_ref_nor_inner_r
     assert link.make_destination() == "example.com"
 
 
-def test_get_target_label_1():
+def test_target_label_and_create_pre_elem():
     sample_html = '<a id="_Heading"></a>'
     bs = bs4.BeautifulSoup(sample_html, "html.parser")
     key = KeyPath("a_slug") / "01_a.docx"
-    assert _get_target_label(key, bs.a) == "f-01-a-heading"
+    target_label = _get_target_label(key, bs.a)
+    assert target_label == "f-01-a-heading"
+    target_tag = _create_pre_elem_for_target_label(bs, target_label)
+    assert target_tag.name == "pre"
+    assert target_tag.string == "(f-01-a-heading)="
+    bs.a.insert_before(target_tag)
+    assert str(bs) == '<pre>(f-01-a-heading)=</pre><a id="_Heading"></a>'
