@@ -57,7 +57,7 @@ from metadata_extraction import prepare_metadata_tables
 from remove_empty_tables import remove_empty_tables
 from replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
 from refs import (
-    prepare_ref_targets_in_headers,
+    # prepare_ref_targets_in_headers,
     prepare_ref_targets_in_captions,
     prepare_references,
     is_header,
@@ -70,6 +70,7 @@ from footnotes import (
     prepare_refs_in_footnotes,
     prepare_targets_in_footnotes,
 )
+from targets import prepare_ref_targets_in_headers
 from split_into_chapters import (
     split_docx_into_multiple_chapters,
     prepend_htmls_with_frontmatter,

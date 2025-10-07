@@ -1,17 +1,19 @@
 import bs4
 
+from src._common.metadata import DocumentMetadata, TargetDatapoint
+from src._common.keys import KeyPath
+from src._common.state import DocumentState
+from src._common.models import Ref
 from src.preparer.refs import (
     is_caption,
     is_header,
     is_reference,
-    prepare_ref_targets_in_headers,
+    # prepare_ref_targets_in_headers,
     prepare_ref_targets_in_captions,
     prepare_references,
     LinkMystifier,
 )
-from src._common.metadata import DocumentMetadata, TargetDatapoint
-from src._common.keys import KeyPath
-from src._common.state import DocumentState
+from src.preparer.targets import prepare_ref_targets_in_headers, _get_target_label
 
 # targets in headers
 
@@ -113,15 +115,19 @@ def test_targets_in_headers__refs_and_targets_written_to_metadata():
                 container.append(node)
     bs = prepare_ref_targets_in_headers(bs, metadata, dstate, headers)
     bs = prepare_references(bs, metadata, dstate, references)
-    assert len(metadata.targets) == 3
-    assert len(metadata.refs) == 2
-    assert metadata.get_target("f-file-heading") is not None
-    assert metadata.get_target("f-file-heading-2") is not None
-    assert metadata.get_target("f-file-heading-3") is not None
+    assert dstate.len("targets") == 3
+    assert dstate.len("refs") == 2
+    assert dstate.get("targets", "f-file-heading") is not None
+    assert dstate.get("targets", "f-file-heading-2") is not None
+    assert dstate.get("targets", "f-file-heading-3") is not None
     ref = metadata.get_ref(attrib="href", val="#f-file-heading")
+    # ref: Ref = dstate.get("refs", val="#f-file-heading", attrib="href")
     assert ref is not None
     assert ref.target_id == "f-file-heading"
     ref = metadata.get_ref(attrib="href", val="./other_file.md#f-other-file-heading")
+    # ref: Ref = dstate.get(
+    #     "refs", val="./other_file.md#f-other-file-heading", attrib="href"
+    # )
     assert ref is not None
     assert ref.target_id == ""  # no target found since it is in another file
 
@@ -448,3 +454,10 @@ def test_markownify_anchor_if_is_not_external_url_nor_cross_file_ref_nor_inner_r
     link.set_from_href(bs.a["href"])
     assert link.make_text(bs.a.text) == "the website"
     assert link.make_destination() == "example.com"
+
+
+def test_get_target_label_1():
+    sample_html = '<a id="_Heading"></a>'
+    bs = bs4.BeautifulSoup(sample_html, "html.parser")
+    key = KeyPath("a_slug") / "01_a.docx"
+    assert _get_target_label(key, bs.a) == "f-01-a-heading"
