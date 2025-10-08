@@ -364,6 +364,8 @@ class TargetDatapoint(DatapointBase):
         else:
             return ""
 
+    # TODO: delete parse_ref_stack and roman num handling
+    # The function has been moved to src/preparer/targets.py
     @staticmethod
     def parse_ref_stack(
         ref_stack: list[bs4.PageElement],
