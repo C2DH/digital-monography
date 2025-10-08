@@ -77,14 +77,28 @@ def prepare_ref_targets_in_headers(
         tag: bs4.element.Tag
         anchors = []
         link = None
+        print("=" * 75)
+        print("tag", tag)
+        # look for <a> tags inside a heading tag
         for child in tag.children:
+            # TODO: better to check isinstanceof Tag, PageElement isn't really helping
             child: bs4.element.PageElement
             if child.name == "a":
+                print("-" * 75)
+                print("child", child)
                 target_tag = html_soup.new_tag("pre")
                 link = LinkMystifier()
+                # so basically make a new label from current filename + id from <a> tag
+                # here LinkMystifier only returns:
+                #  * id: f-01-a-heading
+                #  * fragment: f-01-a-heading
+                #  * label: (f-01-a-heading)=
                 link.set_filepath(metadata.filepath)
+                print('child.get("id")', child.get("id"))  # _Heading
                 link.set_from_id(child.get("id"))
                 target_tag.string = link.mystify_target()
+                print("target_tag.string", target_tag.string)  # (f-01-a-heading)=
+                # so basically, take id from <a> tag and get new string
                 tag.insert_before(target_tag)
                 anchors.append(child)
                 is_digital, is_paper = _get_isdigital_and_ispaper(tag, "")
@@ -93,67 +107,81 @@ def prepare_ref_targets_in_headers(
                 # print("link.FRAGMENT????", link)
                 # print("-" * 50)
 
+                # TODO: remove datapoint
                 tdata = {
-                    "pk": link.id if link.id else uuid.uuid4().hex,
-                    "html": str(tag),
-                    "text": tag.text,
-                    "elem": str(tag),
+                    "pk": link.id if link.id else uuid.uuid4().hex,  # 'f-01-a-heading'
+                    "html": str(
+                        tag
+                    ),  # '<h2><a id="_Heading"></a><a id="a_heading"></a>Heading</h2>'
+                    "text": tag.text,  # 'Heading'
+                    "elem": str(
+                        tag
+                    ),  # '<h2><a id="_Heading"></a><a id="a_heading"></a>Heading</h2>'
                     "item_type": "heading",
                     "is_digital": is_digital,
                     "is_paper": is_paper,
-                    "filename": metadata.filepath.name if metadata.filepath else None,
-                    "fragment": child.get("id"),
+                    "filename": (
+                        metadata.filepath.name if metadata.filepath else None
+                    ),  # '01_a.md'
+                    "fragment": child.get("id"),  # '_Heading'
                     "prefix": "",
-                    "file_count": metadata.get_chapter_number(),
+                    "file_count": metadata.get_chapter_number(),  # 1
                     "prev_item_num": None,
                 }
+                print("TargetDatapoint", tdata)
                 target = TargetDatapoint(**tdata)
                 metadata.add_target(target)
-                dstate.add(
-                    Target(
-                        loc=dstate.key,
-                        pk=link.id,
-                        html=str(tag),
-                        # text=link.id,
-                        text=tag.text,
-                        elem=str(tag),
-                        item_type="heading",
-                        is_digital=is_digital,
-                        is_paper=is_paper,
-                        filename=dstate.key.name if dstate.key else None,
-                        fragment=child.get("id"),
-                        prefix="",
-                        file_count=metadata.get_chapter_number(),  # TODO: get from somewhere else
-                        prev_item_num=None,
-                    )
+                targetdata = Target(
+                    loc=dstate.key,
+                    pk=link.id,  # 'f-01-a-heading'
+                    html=str(tag),
+                    # text=link.id,
+                    text=tag.text,  # 'Heading'
+                    elem=str(tag),
+                    item_type="heading",
+                    is_digital=is_digital,
+                    is_paper=is_paper,
+                    filename=dstate.key.name if dstate.key else None,
+                    fragment=child.get("id"),  # '_Heading'
+                    prefix="",
+                    file_count=metadata.get_chapter_number(),  # 1 # TODO: get from somewhere else
+                    prev_item_num=None,
                 )
+                print("add_target", targetdata.model_dump())
+                dstate.add(targetdata)
         h_lvl = "".join(ch for ch in tag.name if ch.isdigit())
+        # TODO: remove datapoint
         hdata = {
             "file_name": metadata.filepath.name if metadata.filepath else "",
-            "text": tag.text,
-            "target": link.fragment if link and link.fragment else "",
-            "word_count": metadata.word_count,
-            "char_count": metadata.char_count,
+            "text": tag.text,  # 'Heading'
+            "target": (
+                link.fragment if link and link.fragment else ""
+            ),  # 'f-01-a-a-heading'
+            "word_count": metadata.word_count,  # 258
+            "char_count": metadata.char_count,  # 1039
             "level": h_lvl,
             "elem": str(tag),
         }
+        print("HeadingDatapoint", hdata)
         heading = HeadingDatapoint(**hdata)
         metadata.add_heading(heading)
         heading_count += 1
-        dstate.add(
-            Heading(
-                loc=dstate.metadata.key,
-                slug=dstate.metadata.slug,
-                file_name=dstate.key.name if dstate.key else "",
-                h_num=heading_count,
-                text=tag.text,
-                target=link.fragment if link and link.fragment else "",
-                word_count=metadata.word_count,
-                char_count=metadata.char_count,
-                level=h_lvl,
-                elem=str(tag),
-            )
+        hdata2 = Heading(
+            loc=dstate.metadata.key,
+            slug=dstate.metadata.slug,
+            file_name=dstate.key.name if dstate.key else "",  # 1
+            h_num=heading_count,  # 2
+            text=tag.text,  # 'Heading'
+            target=(
+                link.fragment if link and link.fragment else ""
+            ),  # 'f-01-a-a-heading'
+            word_count=metadata.word_count,  # 258
+            char_count=metadata.char_count,  # 1039
+            level=h_lvl,  # 2
+            elem=str(tag),
         )
+        print("Heading", hdata2.model_dump())
+        dstate.add(hdata2)
         for a in anchors:
             a.extract()
     return html_soup
@@ -168,8 +196,23 @@ def prepare_ref_targets_in_captions(
     captions: list[bs4.element.Tag],
 ) -> bs4.BeautifulSoup:
     for caption in captions:
+        print("=" * 75)
+        print("caption", caption)
+        """
+        <p class="dgt-mon-caption">
+        <a id="_Ref193102947"></a>
+        <a id="figForDigital"></a>
+        <strong>
+        <span class="dgt-mon-digital-only">Figure <data value=" SEQ Figure \* ARABIC ">1</data>:</span>
+        </strong>
+        <span class="dgt-mon-digital-only"> Drawing of an orange by Franz Eugen Köhler, 1887.</span>
+        </p>
+        """
         anchors = _extract_anchor_tags(html_soup, caption)
-        item_type = _get_item_type(caption)
+        print(
+            "anchors", anchors
+        )  # [<a id="_Ref193102947"></a>, <a id="figForDigital"></a>]
+        # item_type = _get_item_type(caption)
         unique_id = []
         ref_stack = []
 
@@ -188,7 +231,11 @@ def prepare_ref_targets_in_captions(
             if not hasattr(tag, "children"):
                 return
             for child in tag.children:
+                print("-" * 75)
                 if child.name == "data" and not ref_stack:
+                    print(
+                        "1-st data tag", child
+                    )  # <data value=" SEQ Figure \* ARABIC ">1</data>
                     # handle 1-st <data> tag
                     escaped_id = (
                         a_id.replace("-", "")
@@ -196,11 +243,15 @@ def prepare_ref_targets_in_captions(
                         .replace("#", "")
                         .replace("_", "")
                     )
+                    print(
+                        "escaped_id", escaped_id
+                    )  # f05conditionalrenderingref193102947
                     child.replace_with("{{ %s }}" % escaped_id)
                     unique_id.append(escaped_id)
                     sep = ""
                     ref_stack.append(child)
                 elif child.name == "data":
+                    print("n-th data tag", child)
                     # handle separator
                     if len(sep) > 0 and len(sep) < 3:
                         prev.extract()
@@ -209,23 +260,41 @@ def prepare_ref_targets_in_captions(
                     ref_stack.append(child)
                     child.extract()
                 elif prev and prev.name == "data":
+                    print("after data tag", child)
                     sep += child.string
                 prev = child
+                print("prev", prev)
                 _replace_data_tag(child, prev, sep, a_id)
+                print("-" * 75)
 
         link = LinkMystifier()
+        # we init LinkMystifier for each caption and for each <a> tag inside the caption
+        # for caption we input current file and first <a> tag id
+        # and get out link.id == fragment == f-05-conditional-rendering-ref193102947
         link.set_filepath(metadata.filepath)
+        print('anchors[0]["id"]', anchors[0]["id"])  # _Ref193102947
         link.set_from_id(anchors[0]["id"])
+        print("link.id", link.id)  # f-05-conditional-rendering-ref193102947
         _replace_data_tag(caption, None, "", link.id)
 
         # TODO: maybe there should be some id for the caption
         # to group bookmarks that relate to the same object
         # breakpoint()
         for a in anchors:
+            print("." * 75)
+            print("a", a)  # <a id="_Ref193102947"></a>
             link = LinkMystifier()
             link.set_filepath(metadata.filepath)
+            # LinkMystifier gets current file and id from <a> tag
+            # it generates:
+            #  * id == fragment
+            #  * identifier == id without special chars
+            #  * (fragment)=
+            print('a["id"]', a["id"])  # _Ref193102947
             link.set_from_id(a["id"])
+            print("link.id", link.id)  # f-05-conditional-rendering-ref193102947
             identifier = link.id.replace("-", "") if not unique_id else unique_id[0]
+            print("identifier", identifier)  # f05conditionalrenderingref193102947
             is_digital, is_paper = _get_isdigital_and_ispaper(caption, identifier)
             # plain_text_num = _get_plain_text_numbering(ref_stack)
 
@@ -251,29 +320,57 @@ def prepare_ref_targets_in_captions(
                 prefix=seq["prefix"],  # calc from ref_stack
                 prev_item_num=seq["prev_item_num"],  # calc from ref_stack
             )
+            print("TargetDatapoint", target)
             metadata.add_target(target)
-            dstate.add(
-                Target(
-                    # html="".join(str(elem) for elem in ref_stack),
-                    loc=dstate.key,
-                    pk=link.id,
-                    html=seq["html"],
-                    text=seq["plain_text_num"],  # calc from ref_stack
-                    elem=str(caption),
-                    item_type=seq["item_type"],
-                    is_digital=is_digital,  # calc from caption and identifier
-                    is_paper=is_paper,  # calc from caption and identifier
-                    filename=dstate.key.name if dstate.key else None,
-                    fragment=a["id"],
-                    file_count=metadata.get_chapter_number(),  # TODO: get from somewhere else
-                    prefix=seq["prefix"],  # calc from ref_stack
-                    prev_item_num=seq["prev_item_num"],  # calc from ref_stack
-                )
+            ntarget = Target(
+                # html="".join(str(elem) for elem in ref_stack),
+                loc=dstate.key,
+                pk=link.id,
+                html=seq["html"],
+                text=seq["plain_text_num"],  # calc from ref_stack
+                elem=str(caption),
+                item_type=seq["item_type"],
+                is_digital=is_digital,  # calc from caption and identifier
+                is_paper=is_paper,  # calc from caption and identifier
+                filename=dstate.key.name if dstate.key else None,
+                fragment=a["id"],
+                file_count=metadata.get_chapter_number(),  # TODO: get from somewhere else
+                prefix=seq["prefix"],  # calc from ref_stack
+                prev_item_num=seq["prev_item_num"],  # calc from ref_stack
             )
+            print("ntarget.model_dump()", ntarget.model_dump())
+            targeet_dump = """{
+            'pk': 'f-05-conditional-rendering-ref193102947',
+            'html': '<data value=" SEQ Figure \\* ARABIC ">1</data>',
+            'text': '1',
+            'elem': """<p class="dgt-mon-caption">
+                <strong><span class="dgt-mon-digital-only">Figure {{ f05conditionalrenderingref193102947 }}:</span></strong>
+                <span class="dgt-mon-digital-only"> Drawing of an orange by Franz Eugen Köhler, 1887.</span>
+            </p>""",
+            'is_paper': False,
+            'is_digital': True,
+            'filename': '05_conditional_rendering.md',
+            'fragment': '_Ref193102947',
+            'item_type': 'figure',
+            'file_count': 5,
+            'prefix': '',
+            'prev_item_num': 1,
+            'new_item_num': None,
+            'loc': '/tmp/efs/_JB/a_book/05_conditional_rendering.md'
+            }"""
+            dstate.add(ntarget)
+            print("unique_id", unique_id)  # ['f05conditionalrenderingref193102947']
+            print("unique_id[0]", unique_id[0])  # f05conditionalrenderingref193102947
+            print(
+                "metadata.get_substitution(unique_id[0])",
+                metadata.get_substitution(unique_id[0]),
+            )  # None
             if unique_id and metadata.get_substitution(unique_id[0]) is None:
                 target_fn = metadata.filepath.name if metadata.filepath else None
-                # print("target_fn", target_fn, type(target_fn))
-                # assert isinstance(target_fn, str)
+                print(
+                    "target_fn", target_fn, type(target_fn)
+                )  # 05_conditional_rendering.md <class 'str'>
+                assert isinstance(target_fn, str)
                 metadata.add_substitution(
                     SubstitutionDatapoint(
                         pk=unique_id[0],
@@ -292,27 +389,48 @@ def prepare_ref_targets_in_captions(
                         prev_item_num=target.prev_item_num,
                     )
                 )
-                dstate.add(
-                    Substitution(
-                        loc=dstate.key,
-                        pk=unique_id[0],
-                        was=target.text,
-                        placeholder=target.pk,
-                        # placeholder=unique_id[0],
-                        # item_type=item_type,
-                        item_type=target.item_type,
-                        is_digital=is_digital,
-                        is_paper=is_paper,
-                        file_count=metadata.get_chapter_number(),
-                        # new
-                        location=metadata.filepath,
-                        target_fn=target_fn,
-                        prefix=target.prefix,
-                        prev_item_num=target.prev_item_num,
-                    )
+                subst1 = Substitution(
+                    loc=dstate.key,
+                    pk=unique_id[0],
+                    was=target.text,
+                    placeholder=target.pk,
+                    # placeholder=unique_id[0],
+                    # item_type=item_type,
+                    item_type=target.item_type,
+                    is_digital=is_digital,
+                    is_paper=is_paper,
+                    file_count=metadata.get_chapter_number(),
+                    # new
+                    location=metadata.filepath,
+                    target_fn=target_fn,
+                    prefix=target.prefix,
+                    prev_item_num=target.prev_item_num,
                 )
+                print("Substitution", subst1.model_dump())
+                subst_dump = """{
+                'pk': 'f05conditionalrenderingref193102947',
+                'was': '1',
+                'placeholder': 'f-05-conditional-rendering-ref193102947',
+                'is_digital': True,
+                'is_paper': False,
+                'item_type': 'figure',
+                'target_fn': '05_conditional_rendering.md',
+                'file_count': 5,
+                'prefix': '',
+                'prev_item_num': 1,
+                'new_item_num': None,
+                'fprefix': None,
+                'loc': '/tmp/efs/_JB/a_book/05_conditional_rendering.md',
+                'location': '/tmp/efs/_JB/a_book/05_conditional_rendering.md'}"""
+                dstate.add(subst1)
             target_tag = html_soup.new_tag("pre")
             target_tag.string = link.mystify_target()
+            print(
+                "target_tag.string", target_tag.string
+            )  # (f-05-conditional-rendering-ref193102947)=
+            print(
+                "target_tag", target_tag
+            )  # <pre>(f-05-conditional-rendering-ref193102947)=</pre>
             try:
                 caption.insert_before(target_tag)
             except ValueError:
@@ -436,18 +554,29 @@ def prepare_references(
                 elem=str(a_tag.parent),
             )
             metadata.add_ref(ref)
-            dstate.add(
-                Ref(
-                    loc=dstate.key,
-                    target_id=target.pk if target else "",
-                    fn=dstate.key.name if dstate.key else "",
-                    text=link_text,
-                    href=link_dest,
-                    prev_string=prev_string,
-                    prev_href=prev_href,
-                    elem=str(a_tag.parent),
-                )
+            data = Ref(
+                loc=dstate.key,
+                target_id=target.pk if target else "",
+                fn=dstate.key.name if dstate.key else "",
+                text=link_text,
+                href=link_dest,
+                prev_string=prev_string,
+                prev_href=prev_href,
+                elem=str(a_tag.parent),
             )
+            # print(">>", data.model_dump())
+            dstate.add(data)
+            # Ref(
+            #     loc=dstate.key,
+            #     target_id=target.pk if target else "",
+            #     fn=dstate.key.name if dstate.key else "",
+            #     text=link_text,
+            #     href=link_dest,
+            #     prev_string=prev_string,
+            #     prev_href=prev_href,
+            #     elem=str(a_tag.parent),
+            # )
+            # )
             if link.unique_id and metadata.get_substitution(link.unique_id) is None:
                 # get chapter number from the href if f2f else number from current file
                 target_chapter_number = (
@@ -481,6 +610,22 @@ def prepare_references(
                         prev_item_num=None,
                     )
                 )
+                data = Substitution(
+                    loc=dstate.key,
+                    pk=link.unique_id,
+                    was=link.text_to_replace,
+                    # placeholder=link.unique_id,
+                    placeholder=link.id,
+                    item_type="ref",
+                    is_digital=None,
+                    is_paper=None,
+                    location=metadata.filepath,
+                    target_fn=target_fn,
+                    file_count=target_chapter_number,
+                    prefix="",
+                    prev_item_num=None,
+                )
+                # print("S>", data.model_dump())
                 dstate.add(
                     Substitution(
                         loc=dstate.key,
