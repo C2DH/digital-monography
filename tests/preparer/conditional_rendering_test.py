@@ -18,10 +18,13 @@ from src.preparer.refs import (
     is_caption,
     is_reference,
     # prepare_ref_targets_in_headers,
-    prepare_ref_targets_in_captions,
+    # prepare_ref_targets_in_captions,
     prepare_references,
 )
-from src.preparer.targets import prepare_ref_targets_in_headers
+from src.preparer.targets import (
+    prepare_ref_targets_in_headers,
+    prepare_ref_targets_in_captions,
+)
 
 
 class TestConditionalRendering:

@@ -321,7 +321,7 @@ class TestRefDatapointsCreated:
         ref = self.soup_a.find("a", href="#f-01-a-ref177044323")
         assert ref.text == r"Table {{ f01aref177044323 }}"
 
-    def test_substitution_tbl1(self):
+    def test_substitution_tbl2(self):
         file_stem = self.fp_a.stem
         substitutions: list[Substitution] = self.bookstate[file_stem]["substitutions"]
         subst = next(

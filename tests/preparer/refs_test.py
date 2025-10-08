@@ -9,12 +9,13 @@ from src.preparer.refs import (
     is_header,
     is_reference,
     # prepare_ref_targets_in_headers,
-    prepare_ref_targets_in_captions,
+    # prepare_ref_targets_in_captions,
     prepare_references,
     LinkMystifier,
 )
 from src.preparer.targets import (
     prepare_ref_targets_in_headers,
+    prepare_ref_targets_in_captions,
     _get_target_label,
     _create_pre_elem_for_target_label,
 )
@@ -124,10 +125,14 @@ def test_targets_in_headers__refs_and_targets_written_to_metadata():
     assert dstate.get("targets", "f-file-heading") is not None
     assert dstate.get("targets", "f-file-heading-2") is not None
     assert dstate.get("targets", "f-file-heading-3") is not None
-    ref = metadata.get_ref(attrib="href", val="#f-file-heading")
-    # ref: Ref = dstate.get("refs", val="#f-file-heading", attrib="href")
+    ref1 = metadata.get_ref(attrib="href", val="#f-file-heading")
+    print("ref1", ref1)
+    ref: Ref = dstate.get("refs", val="#f-file-heading", attrib="href")
+    print("ref", ref)
     assert ref is not None
+    assert ref.target_id != "", "Why is the target_id empty???"
     assert ref.target_id == "f-file-heading"
+    assert 1 == 666
     ref = metadata.get_ref(attrib="href", val="./other_file.md#f-other-file-heading")
     # ref: Ref = dstate.get(
     #     "refs", val="./other_file.md#f-other-file-heading", attrib="href"

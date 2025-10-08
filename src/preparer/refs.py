@@ -65,7 +65,7 @@ def is_reference(tag: bs4.element.Tag) -> bool:
 
 # targets ############
 
-
+REPLACED_BY_TARGETS_MODULE_1 = """
 def prepare_ref_targets_in_headers(
     html_soup: bs4.BeautifulSoup,
     metadata: DocumentMetadata,
@@ -157,8 +157,10 @@ def prepare_ref_targets_in_headers(
         for a in anchors:
             a.extract()
     return html_soup
+"""
 
 
+REPLACED_BY_TARGETS_MODULE_2 = '''
 def prepare_ref_targets_in_captions(
     html_soup: bs4.BeautifulSoup,
     metadata: DocumentMetadata,
@@ -316,6 +318,7 @@ def prepare_ref_targets_in_captions(
             except ValueError:
                 caption.insert(0, target_tag)
     return html_soup
+'''
 
 
 def _extract_anchor_tags(
