@@ -83,21 +83,44 @@ def prepare_ref_targets_in_captions(
     captions: list[bs4.Tag],
 ) -> bs4.BeautifulSoup:
     """
-    Iterate over captions.
+    Iterate over captions, register a Target and Substitution objects,
+    add a substitution placeholder to be replaced with desired value at later stages.
+
+    A) Example caption in "02_b.docx" file, referenced via a bookmark and a cross-reference:
+        <p class="dgt-mon-caption">
+        <a id="_Ref177053494"></a>
+        <a id="tblSimpleTable"></a>
+        <strong>Table <data value=" SEQ Table \* ARABIC ">1</data>:</strong>
+        Table.
+        </p>
+    This function makes it into:
+        <pre>(f-02-b-ref177053494)=</pre>
+        <pre>(f-02-b-tblsimpletable)=</pre>
+        <p class="dgt-mon-caption">
+        <strong>Table {{ f02bref177053494 }}:</strong>
+        Table.
+        </p>
+    (note only first target label is used for substitution id).
+    After html2md conversion, we want to have:
+        (f-02-b-ref177053494)=
+        (f-02-b-tblsimpletable)=
+        **Table {{ f02bref177053494 }}:** Table.
+
+    B) Example caption in "00_index.docx" file, to which no reference is pointing to:
+        <p class="dgt-mon-caption">
+        <strong>Table <data value=" SEQ Table \* ARABIC ">1</data>:</strong>
+        A sample table.
+        </p>
+    This function makes it into:
+        <pre>(f-00-index-unref341190179)=</pre>
+        <p class="dgt-mon-caption">
+        <strong>Table {{ f00indexunref341190179 }}:</strong> A sample table.
+        </p>
+    After html2md conversion, we want to have:
+        (f-00-index-unref341190179)=
+        **Table {{ f00indexunref341190179 }}:** A sample table.
     """
     for caption in captions:
-        print("=" * 75)
-        print("caption", caption)
-        """
-        <p class="dgt-mon-caption">
-        <a id="_Ref193102947"></a>
-        <a id="figForDigital"></a>
-        <strong>
-        <span class="dgt-mon-digital-only">Figure <data value=" SEQ Figure \* ARABIC ">1</data>:</span>
-        </strong>
-        <span class="dgt-mon-digital-only"> Drawing of an orange by Franz Eugen Köhler, 1887.</span>
-        </p>
-        """
         anchors = _extract_anchor_tags(html_soup, caption)
         print(
             "anchors", anchors
