@@ -5,8 +5,8 @@ from src._common.keys import KeyPath
 from src._common.state import DocumentState
 from src._common.models import Ref
 from src.preparer.refs import (
-    is_caption,
-    is_header,
+    # is_caption,
+    # is_header,
     is_reference,
     # prepare_ref_targets_in_headers,
     # prepare_ref_targets_in_captions,
@@ -14,6 +14,8 @@ from src.preparer.refs import (
     LinkMystifier,
 )
 from src.preparer.targets import (
+    is_caption,
+    is_header,
     prepare_ref_targets_in_headers,
     prepare_ref_targets_in_captions,
     _get_target_label,

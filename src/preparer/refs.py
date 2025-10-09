@@ -39,18 +39,18 @@ from src._common.keys import KeyPath
 from src._common.state import DocumentState
 
 
-def is_header(tag: bs4.element.Tag) -> bool:
-    return bool(re.match(r"^h[1-6]$", tag.name))
+# def is_header(tag: bs4.element.Tag) -> bool:
+#     return bool(re.match(r"^h[1-6]$", tag.name))
 
 
-def is_caption(tag: bs4.element.Tag) -> bool:
-    # "p", {"class": "dgt-mon-caption"}
-    # return bool(tag.name == "p" and "dgt-mon-caption" in tag.attrs.get("class", []))
-    return bool(tag.name == "p" and CLS_CAPTION in tag.attrs.get("class", []))
+# def is_caption(tag: bs4.element.Tag) -> bool:
+#     # "p", {"class": "dgt-mon-caption"}
+#     # return bool(tag.name == "p" and "dgt-mon-caption" in tag.attrs.get("class", []))
+#     return bool(tag.name == "p" and CLS_CAPTION in tag.attrs.get("class", []))
 
 
-def is_footnote(tag: bs4.element.Tag) -> bool:
-    return bool(tag.name == "li" and tag.attrs.get("id", "").startswith("footnote-"))
+# def is_footnote(tag: bs4.element.Tag) -> bool:
+#     return bool(tag.name == "li" and tag.attrs.get("id", "").startswith("footnote-"))
 
 
 def is_reference(tag: bs4.element.Tag) -> bool:

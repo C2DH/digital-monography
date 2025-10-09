@@ -13,14 +13,16 @@ from src.preparer.footnotes import (
     prepare_targets_in_footnotes,
 )
 from src.preparer.refs import (
-    is_caption,
-    is_header,
+    # is_caption,
+    # is_header,
     is_reference,
     # prepare_ref_targets_in_headers,
     # prepare_ref_targets_in_captions,
     prepare_references,
 )
 from src.preparer.targets import (
+    is_caption,
+    is_header,
     prepare_ref_targets_in_headers,
     prepare_ref_targets_in_captions,
 )

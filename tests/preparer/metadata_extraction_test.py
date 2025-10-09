@@ -13,10 +13,10 @@ from src.preparer.metadata_extraction import prepare_metadata_tables
 from src.preparer.refs import (
     # prepare_ref_targets_in_captions,
     prepare_references,
-    is_caption,
+    # is_caption,
     is_reference,
 )
-from src.preparer.targets import prepare_ref_targets_in_captions
+from src.preparer.targets import is_caption, prepare_ref_targets_in_captions
 
 SLUG = "book-content-examples"
 

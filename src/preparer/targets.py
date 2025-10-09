@@ -1,10 +1,12 @@
-import secrets
-import string
 import bs4
 import docutils.nodes
+import re
+import secrets
+import string
 import typing as t
 
 from src._common.constants import (
+    CLS_CAPTION,
     CLS_DIGITAL_ONLY,
     CLS_PAPER_ONLY,
 )
@@ -15,6 +17,14 @@ from src._common.models import Heading, Substitution, Target
 from src._common.metadata import SubstitutionDatapoint, TargetDatapoint
 from src._common.keys import KeyPath
 from src._common.state import DocumentState
+
+
+def is_header(tag: bs4.element.Tag) -> bool:
+    return bool(re.match(r"^h[1-6]$", tag.name))
+
+
+def is_caption(tag: bs4.element.Tag) -> bool:
+    return bool(tag.name == "p" and CLS_CAPTION in tag.attrs.get("class", []))
 
 
 def prepare_ref_targets_in_headers(
@@ -85,7 +95,8 @@ def prepare_ref_targets_in_captions(
     Iterate over captions, register a Target and Substitution objects,
     add a substitution placeholder to be replaced with desired value at later stages.
 
-    A) Example caption in "02_b.docx" file, referenced via a bookmark and a cross-reference:
+    A) Example caption in "02_b.docx" file, referenced via a bookmark "tblSimpleTable"
+    and a cross-reference (hence automatic reference "_Ref177053494"):
         <p class="dgt-mon-caption">
         <a id="_Ref177053494"></a>
         <a id="tblSimpleTable"></a>
@@ -249,7 +260,7 @@ def prepare_ref_targets_in_captions(
                         prev_item_num=target.prev_item_num,
                     )
                 )
-                subst1: Substitution = Substitution(
+                subst: Substitution = Substitution(
                     loc=docstate.key,
                     pk=unique_id[0],
                     was=target.text,
@@ -263,7 +274,7 @@ def prepare_ref_targets_in_captions(
                     prefix=target.prefix,
                     prev_item_num=target.prev_item_num,
                 )
-                docstate.add(subst1)
+                docstate.add(subst)
 
             target_tag = _create_pre_elem_for_target_label(html_soup, anchor_label)
             try:
