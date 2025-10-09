@@ -439,44 +439,44 @@ def prepare_ref_targets_in_captions(
 '''
 
 
-def _extract_anchor_tags(
-    html_soup: bs4.BeautifulSoup, caption: bs4.element.Tag
-) -> list[bs4.element.Tag]:
-    """
-    Return an anchor tag like `<a id="_Ref178606187">`
-    or `<a id="_Unref723089458">` if a caption had no bookmark
-    extracted from a caption (after this func anchor is not in caption).
-    In later functs, the contents of anchor tag will be wrapped into this anchor.
-    """
-    anchors = caption.find_all("a", id=True)
-    if not anchors:
-        a = html_soup.new_tag("a")
-        a_id = "".join(secrets.choice(string.digits) for i in range(9))
-        a["id"] = "_Unref" + a_id
-        return [a]
-    else:
-        for a in anchors:
-            a = a.extract()
-    return anchors
+# def _extract_anchor_tags(
+#     html_soup: bs4.BeautifulSoup, caption: bs4.element.Tag
+# ) -> list[bs4.element.Tag]:
+#     """
+#     Return an anchor tag like `<a id="_Ref178606187">`
+#     or `<a id="_Unref723089458">` if a caption had no bookmark
+#     extracted from a caption (after this func anchor is not in caption).
+#     In later functs, the contents of anchor tag will be wrapped into this anchor.
+#     """
+#     anchors = caption.find_all("a", id=True)
+#     if not anchors:
+#         a = html_soup.new_tag("a")
+#         a_id = "".join(secrets.choice(string.digits) for i in range(9))
+#         a["id"] = "_Unref" + a_id
+#         return [a]
+#     else:
+#         for a in anchors:
+#             a = a.extract()
+#     return anchors
 
 
-def _get_item_type(caption: bs4.element.Tag) -> str:
-    caption_match = re.match(r"^\s*(\w+) (\d+)", caption.text)
-    if caption_match is not None:
-        item = caption_match.group(1)
-        item = item.lower() if item else item
-    else:
-        return CAPTION_ITEM_TYPE_OTHER
-    item_types_mapping = {
-        "fig": CAPTION_ITEM_TYPE_FIGURE,
-        "figure": CAPTION_ITEM_TYPE_FIGURE,
-        "table": CAPTION_ITEM_TYPE_TABLE,
-        "tbl": CAPTION_ITEM_TYPE_TABLE,
-        "graph": CAPTION_ITEM_TYPE_GRAPH,
-    }
-    if item not in item_types_mapping.keys():
-        return CAPTION_ITEM_TYPE_OTHER
-    return item_types_mapping[item]
+# def _get_item_type(caption: bs4.element.Tag) -> str:
+#     caption_match = re.match(r"^\s*(\w+) (\d+)", caption.text)
+#     if caption_match is not None:
+#         item = caption_match.group(1)
+#         item = item.lower() if item else item
+#     else:
+#         return CAPTION_ITEM_TYPE_OTHER
+#     item_types_mapping = {
+#         "fig": CAPTION_ITEM_TYPE_FIGURE,
+#         "figure": CAPTION_ITEM_TYPE_FIGURE,
+#         "table": CAPTION_ITEM_TYPE_TABLE,
+#         "tbl": CAPTION_ITEM_TYPE_TABLE,
+#         "graph": CAPTION_ITEM_TYPE_GRAPH,
+#     }
+#     if item not in item_types_mapping.keys():
+#         return CAPTION_ITEM_TYPE_OTHER
+#     return item_types_mapping[item]
 
 
 # def _get_plain_text_numbering(ref_stack: list[bs4.element.PageElement]) -> str:
@@ -489,21 +489,21 @@ def _get_item_type(caption: bs4.element.Tag) -> str:
 #     return res
 
 
-def _get_isdigital_and_ispaper(caption: bs4.Tag, identifier: str) -> tuple[bool, bool]:
-    css_classes = [
-        tag.get("class", [])
-        for tag in caption.descendants
-        if isinstance(tag, bs4.element.Tag) and (identifier in tag.text)
-    ]
-    css_classes: list[str] = [item for sublist in css_classes for item in sublist]
-    is_digital = is_paper = True
-    if CLS_DIGITAL_ONLY in css_classes and CLS_PAPER_ONLY in css_classes:
-        is_digital = is_paper = None
-    elif CLS_DIGITAL_ONLY in css_classes:
-        is_paper = False
-    elif CLS_PAPER_ONLY in css_classes:
-        is_digital = False
-    return is_digital, is_paper
+# def _get_isdigital_and_ispaper(caption: bs4.Tag, identifier: str) -> tuple[bool, bool]:
+#     css_classes = [
+#         tag.get("class", [])
+#         for tag in caption.descendants
+#         if isinstance(tag, bs4.element.Tag) and (identifier in tag.text)
+#     ]
+#     css_classes: list[str] = [item for sublist in css_classes for item in sublist]
+#     is_digital = is_paper = True
+#     if CLS_DIGITAL_ONLY in css_classes and CLS_PAPER_ONLY in css_classes:
+#         is_digital = is_paper = None
+#     elif CLS_DIGITAL_ONLY in css_classes:
+#         is_paper = False
+#     elif CLS_PAPER_ONLY in css_classes:
+#         is_digital = False
+#     return is_digital, is_paper
 
 
 # references ############
@@ -512,106 +512,146 @@ def _get_isdigital_and_ispaper(caption: bs4.Tag, identifier: str) -> tuple[bool,
 def prepare_references(
     html_soup: bs4.BeautifulSoup,
     metadata: DocumentMetadata,
-    dstate: DocumentState,
-    references: list[bs4.element.Tag],
+    docstate: DocumentState,
+    references: list[bs4.Tag],
 ) -> bs4.BeautifulSoup:
+    """
+    There are 4 types of references:
+    * footnotes, handled in footnotes.py
+    * external, e.g. email or http link
+    * internal in-file, e.g. #some-id
+    * internal file-to-file, e.g. otherfile.md#some-id
+
+    Input for external:
+        <a href="http:/example.com">link to a website</a>
+    Expected output (no change):
+        <a href="http:/example.com">link to a website</a>
+
+    Input for internal in-file:
+        <a href="#_Ref193102947">Figure 1</a>
+    Expected output:
+        <a href="#f-01-my-file-ref193102947">Figure {{ f01myfileref193102947 }}</a>
+
+    Input for internal file-to-file:
+        <a href="01_a.docx#bookmarkToTbl">link to a table in chapter 1</a>
+    Expected output:
+        <a href="./01_a.md#f-01-a-bookmarktotbl">link to a table in chapter {{ 01adocxf01abookmarktotbl }}</a>
+    """
     for a_tag in references:
-        a_tag: bs4.element.Tag
-        if _is_ref_footnote(a_tag):
-            # footnote = FootnoteMystifier()
-            # footnote.set_filepath(metadata.filepath)
-            # footnote.from_ref(a_tag["id"])
-            # a_tag["href"] = footnote.href
-            # a_tag["id"] = footnote.id
-            # a_tag.string = footnote.string
-            pass
-        elif _is_target_footnote(a_tag):
-            pass
-        else:
-            if _check_if_link_marked_as_paper_only(a_tag):
-                # a_tag.extract()
-                tag_class = a_tag.get("class", [])
-                tag_class.append(CLS_PAPER_ONLY)
-                a_tag["class"] = tag_class
+        print("=" * 75)
+        print("a_tag", a_tag)
+        if _is_ref_footnote(a_tag) or _is_target_footnote(a_tag):
+            # handled in footnotes.py
+            continue
+        print(
+            "_check_if_link_marked_as_paper_only(a_tag)",
+            _check_if_link_marked_as_paper_only(a_tag),
+        )
+        if _check_if_link_marked_as_paper_only(a_tag):
 
-            link = LinkMystifier()
-            link.set_filepath(metadata.filepath)
-            link.set_from_href(a_tag["href"])
-            target = metadata.get_target(link.id) if link.is_inner_reference() else None
-            link_text = link.make_text(a_tag.text, target)
-            link_dest = link.make_destination()
-            prev_string = a_tag.string if a_tag.string is not None else ""
-            prev_href = a_tag["href"]
-            a_tag.string = link_text
-            a_tag["href"] = link_dest
-            ref = RefDatapoint(
-                target_id=target.pk if target else "",
-                fn=metadata.filepath.name,
-                text=link_text,
-                href=link_dest,
-                prev_string=prev_string,
-                prev_href=prev_href,
-                elem=str(a_tag.parent),
-            )
-            metadata.add_ref(ref)
-            data = Ref(
-                loc=dstate.key,
-                target_id=target.pk if target else "",
-                fn=dstate.key.name if dstate.key else "",
-                text=link_text,
-                href=link_dest,
-                prev_string=prev_string,
-                prev_href=prev_href,
-                elem=str(a_tag.parent),
-            )
-            # print(">>", data.model_dump())
-            dstate.add(data)
-            # Ref(
-            #     loc=dstate.key,
-            #     target_id=target.pk if target else "",
-            #     fn=dstate.key.name if dstate.key else "",
-            #     text=link_text,
-            #     href=link_dest,
-            #     prev_string=prev_string,
-            #     prev_href=prev_href,
-            #     elem=str(a_tag.parent),
-            # )
-            # )
-            if link.unique_id and metadata.get_substitution(link.unique_id) is None:
-                # get chapter number from the href if f2f else number from current file
-                target_chapter_number = (
-                    metadata.get_chapter_number(link.path)
-                    if link.path and link.is_cross_file_reference()
-                    else metadata.get_chapter_number()
-                )
+            tag_class = a_tag.get("class", [])
+            tag_class.append(CLS_PAPER_ONLY)
+            a_tag["class"] = tag_class
 
-                if link.path and link.is_cross_file_reference():
-                    target_fn = KeyPath(link.path).name
-                elif metadata.filepath and link.is_inner_reference():
-                    target_fn = metadata.filepath.name
-                else:
-                    target_fn = None
-                # target_fn = (
-                #     link.path if link.path and link.is_cross_file_reference() else None
-                # )
-                metadata.add_substitution(
-                    SubstitutionDatapoint(
-                        pk=link.unique_id,
-                        was=link.text_to_replace,
-                        # placeholder=link.unique_id,
-                        placeholder=link.id,
-                        item_type="ref",
-                        is_digital=None,
-                        is_paper=None,
-                        location=metadata.filepath,
-                        target_fn=target_fn,
-                        file_count=target_chapter_number,
-                        prefix="",
-                        prev_item_num=None,
-                    )
-                )
-                data = Substitution(
-                    loc=dstate.key,
+        print(
+            "a_tag > after paperonly handling", a_tag
+        )  # <a class="dgt-mon-paper-only" href="#figForPaper"><span class="dgt-mon-paper-only">link to figForPaper bookmark</span></a>
+        link = LinkMystifier()
+        # take current file and href from <a> tag
+        # use urllib.urlsplit to parse href
+        print("metadata.filepath", metadata.filepath)
+        link.set_filepath(metadata.filepath)
+        print('a_tag["href"]', a_tag["href"])
+        link.set_from_href(a_tag["href"])
+        # if is inner reference, get a target
+        target = metadata.get_target(link.id) if link.is_inner_reference() else None
+        # target = docstate.get("targets", link.id) if link.is_inner_reference() else None
+        print("target", target)
+        # get text to put into [text](...)
+        link_text = link.make_text(a_tag.text, target)
+        print("link_text", link_text)
+        # get dest to put into [...](destination)
+        link_dest = link.make_destination()
+        print("link_dest", link_dest)
+        prev_string = a_tag.string if a_tag.string is not None else ""
+
+        print("prev_string", prev_string)
+        print("a_tag.string", a_tag.string)
+        print('a_tag["href"]', a_tag["href"])
+        print(
+            "a_tag > before string replacement", a_tag
+        )  # <a class="dgt-mon-paper-only" href="#figForPaper"><span class="dgt-mon-paper-only">link to figForPaper bookmark</span></a>
+        prev_href = a_tag["href"]
+        a_tag.string = link_text
+        a_tag["href"] = link_dest
+        print(
+            "a_tag > after string replacement", a_tag
+        )  # <a class="dgt-mon-paper-only" href="#f-05-conditional-rendering-figforpaper">link to figForPaper bookmark</a>
+        ref = RefDatapoint(
+            target_id=target.pk if target else "",
+            fn=metadata.filepath.name,
+            text=link_text,
+            href=link_dest,
+            prev_string=prev_string,
+            prev_href=prev_href,
+            elem=str(a_tag.parent),
+        )
+        print("RefDatapoint", ref)
+        metadata.add_ref(ref)
+        data = Ref(
+            loc=docstate.key,
+            target_id=target.pk if target else "",
+            fn=docstate.key.name if docstate.key else "",
+            text=link_text,
+            href=link_dest,
+            prev_string=prev_string,
+            prev_href=prev_href,
+            elem=str(a_tag.parent),
+        )
+        print("Ref", data.model_dump())
+        docstate.add(data)
+        # Ref(
+        #     loc=dstate.key,
+        #     target_id=target.pk if target else "",
+        #     fn=dstate.key.name if dstate.key else "",
+        #     text=link_text,
+        #     href=link_dest,
+        #     prev_string=prev_string,
+        #     prev_href=prev_href,
+        #     elem=str(a_tag.parent),
+        # )
+        # )
+        print("link.unique_id", link.unique_id)  # f05conditionalrenderingref193102988
+        print(
+            "metadata.get_substitution(link.unique_id)",
+            metadata.get_substitution(link.unique_id),
+        )
+        # TODO: get substitution from docstate
+        # if link.unique_id and metadata.get_substitution(link.unique_id) is None:
+        if link.unique_id and docstate.get("substitutions", link.unique_id) is None:
+            # get chapter number from the href if f2f else number from current file
+            # TODO: more logic to take the chapter number AFTER the split
+            target_chapter_number = (
+                metadata.get_chapter_number(link.path)
+                if link.path and link.is_cross_file_reference()
+                else metadata.get_chapter_number()
+            )
+            print("target_chapter_number", target_chapter_number)
+            print("link.path", link.path)
+            if link.path and link.is_cross_file_reference():
+                target_fn = KeyPath(link.path).name
+                print("KeyPath(link.path).name", target_fn)
+            elif metadata.filepath and link.is_inner_reference():
+                target_fn = metadata.filepath.name
+                # TODO: get from docstate
+                print("metadata.filepath.name", target_fn)
+            else:
+                target_fn = None
+            # target_fn = (
+            #     link.path if link.path and link.is_cross_file_reference() else None
+            # )
+            metadata.add_substitution(
+                SubstitutionDatapoint(
                     pk=link.unique_id,
                     was=link.text_to_replace,
                     # placeholder=link.unique_id,
@@ -625,24 +665,42 @@ def prepare_references(
                     prefix="",
                     prev_item_num=None,
                 )
-                # print("S>", data.model_dump())
-                dstate.add(
-                    Substitution(
-                        loc=dstate.key,
-                        pk=link.unique_id,
-                        was=link.text_to_replace,
-                        # placeholder=link.unique_id,
-                        placeholder=link.id,
-                        item_type="ref",
-                        is_digital=None,
-                        is_paper=None,
-                        location=metadata.filepath,
-                        target_fn=target_fn,
-                        file_count=target_chapter_number,
-                        prefix="",
-                        prev_item_num=None,
-                    )
-                )
+            )
+            data = Substitution(
+                loc=docstate.key,
+                pk=link.unique_id,
+                was=link.text_to_replace,
+                # placeholder=link.unique_id,
+                placeholder=link.id,
+                item_type="ref",
+                is_digital=None,
+                is_paper=None,
+                location=metadata.filepath,
+                target_fn=target_fn,
+                file_count=target_chapter_number,
+                prefix="",
+                prev_item_num=None,
+            )
+            print("S>", data.model_dump())
+            docstate.add(data)
+            # docstate.add(
+            #     Substitution(
+            #         loc=docstate.key,
+            #         pk=link.unique_id,
+            #         was=link.text_to_replace,
+            #         # placeholder=link.unique_id,
+            #         placeholder=link.id,
+            #         item_type="ref",
+            #         is_digital=None,
+            #         is_paper=None,
+            #         location=metadata.filepath,
+            #         target_fn=target_fn,
+            #         file_count=target_chapter_number,
+            #         prefix="",
+            #         prev_item_num=None,
+            #     )
+            # )
+        print("post a_tag", a_tag)
     return html_soup
 
 
