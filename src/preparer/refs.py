@@ -564,8 +564,8 @@ def prepare_references(
         print('a_tag["href"]', a_tag["href"])
         link.set_from_href(a_tag["href"])
         # if is inner reference, get a target
-        target = metadata.get_target(link.id) if link.is_inner_reference() else None
-        # target = docstate.get("targets", link.id) if link.is_inner_reference() else None
+        # target = metadata.get_target(link.id) if link.is_inner_reference() else None
+        target = docstate.get("targets", link.id) if link.is_inner_reference() else None
         print("target", target)
         # get text to put into [text](...)
         link_text = link.make_text(a_tag.text, target)
