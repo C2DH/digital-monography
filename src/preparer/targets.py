@@ -4,6 +4,7 @@ import re
 import secrets
 import string
 import typing as t
+import xxhash
 
 from src._common.constants import (
     CLS_CAPTION,
@@ -40,58 +41,91 @@ def prepare_ref_targets_in_headers(
     headers: list[bs4.Tag],
 ) -> bs4.BeautifulSoup:
     """
-    Iterate over header tags and add target labels before them.
+    Iterate over header tags and, if there is an anchor tag,
+    add a target label before each element. The label is the hash of the element.
     For example, the following html in '01_a.md' file:
         <h2>Heading</h2>
     becomes:
-        <pre>(f-01-a-heading)=</pre>
+        <pre>(35110f86aeaa2f35)=</pre>
         <h2>Heading</h2>
     In addition, the function registers a Target and Heading objects.
     """
     heading_count = 0
-    for tag in headers:
-        anchors: list[bs4.Tag] = []
-        target_label = ""
-        for child in tag.children:
-            if isinstance(child, bs4.Tag) and child.name == "a":
-                is_digital, is_paper = _get_isdigital_and_ispaper(tag, "")
-                target_label = _get_target_label(docstate.key, child)
-                target_tag = _create_pre_elem_for_target_label(html_soup, target_label)
-                tag.insert_before(target_tag)
-                anchors.append(child)
-                targetdata = Target(
-                    loc=docstate.key,
-                    pk=target_label,  # 'f-01-a-heading'
-                    html=str(tag),
-                    text=tag.text,  # 'Heading'
-                    elem=str(tag),
-                    item_type="heading",
-                    is_digital=is_digital,
-                    is_paper=is_paper,
-                    filename=docstate.key.name if docstate.key else None,
-                    fragment=child.get("id"),  # '_Heading'
-                    prefix="",
-                    file_count=metadata.get_chapter_number(),  # 1 # TODO: get from somewhere else
-                    prev_item_num=None,
-                )
-                docstate.add(targetdata)
-        h_lvl = "".join(ch for ch in tag.name if ch.isdigit())
+    for h_tag in headers:
+        # anchors: list[bs4.Tag] = []
+        # target_label = ""
+        # print("hash(tag)", hash(h_tag), h_tag)
+        # target_hash = hash(h_tag)
+        # target_label = str(target_hash) if target_hash >= 0 else str(target_hash * -1)
+
+        str_h_tag = str(h_tag)
+        target_label = _hash_html(str_h_tag)
+        print('_hash_html("<h2>Heading</h2>")', _hash_html("<h2>Heading</h2>"))
+        anchors: bs4.ResultSet[bs4.Tag] = h_tag.find_all("a", id=True)
+        if anchors:
+            target_tag = _create_pre_elem_for_target_label(html_soup, target_label)
+            is_digital, is_paper = _get_isdigital_and_ispaper(h_tag, "")
+            h_tag.insert_before(target_tag)
+            targetdata = Target(
+                loc=docstate.key,  # TODO: maybe path in _JB dir?
+                pk=target_label,  # 16-char hex string
+                html=str_h_tag,
+                text=h_tag.text,  # 'Heading'
+                elem=str_h_tag,
+                item_type="heading",
+                is_digital=is_digital,
+                is_paper=is_paper,
+                filename=docstate.key.name if docstate.key else None,
+                fragment=None,  # do I even need it? Used to be =child.get("id"),  # '_Heading'
+                prefix="",
+                file_count=metadata.get_chapter_number(),  # 1 # TODO: get from somewhere else
+                prev_item_num=None,
+            )
+            docstate.add(targetdata)
+
+        # for child in h_tag.children:
+        #     if isinstance(child, bs4.Tag) and child.name == "a":
+        #         is_digital, is_paper = _get_isdigital_and_ispaper(h_tag, "")
+        #         target_label = _get_target_label(docstate.key, child)
+        #         # target_tag = _create_pre_elem_for_target_label(html_soup, target_label)
+        #         # print("hash(child)", hash(child), child)
+        #         h_tag.insert_before(target_tag)
+        #         anchors.append(child)
+        #         targetdata = Target(
+        #             loc=docstate.key,
+        #             pk=target_label,  # 'f-01-a-heading'
+        #             html=str(h_tag),
+        #             text=h_tag.text,  # 'Heading'
+        #             elem=str(h_tag),
+        #             item_type="heading",
+        #             is_digital=is_digital,
+        #             is_paper=is_paper,
+        #             filename=docstate.key.name if docstate.key else None,
+        #             fragment=child.get("id"),  # '_Heading'
+        #             prefix="",
+        #             file_count=metadata.get_chapter_number(),  # 1 # TODO: get from somewhere else
+        #             prev_item_num=None,
+        #         )
+        #         docstate.add(targetdata)
+        h_lvl = "".join(ch for ch in h_tag.name if ch.isdigit())
         heading_count += 1
-        hdata: Heading = Heading(
+        headingdata: Heading = Heading(
             loc=docstate.key,
             slug=docstate.metadata.slug,
             file_name=docstate.key.name if docstate.key else "",  # 1
             h_num=heading_count,  # 2
-            text=tag.text,  # 'Heading'
+            text=h_tag.text,  # 'Heading'
             target=target_label,  # 'f-01-a-a-heading'
             word_count=metadata.word_count,  # 258
             char_count=metadata.char_count,  # 1039
             level=h_lvl,  # 2
-            elem=str(tag),
+            elem=str(h_tag),
         )
-        docstate.add(hdata)
-        for a in anchors:
-            a.extract()
+        docstate.add(headingdata)
+        # for a in anchors:
+        #     a.extract()
+        for a_tag in anchors:
+            a_tag.extract()
     return html_soup
 
 
@@ -460,3 +494,13 @@ def _roman_to_int(text: str) -> int:
             else:
                 res += nums[text[i]]
     return res
+
+
+def _hash_html(html_elem: str | bs4.PageElement, seed: int = 0) -> str:
+    """
+    Returns 16-char hex lowercase string using 64-bit arithmetic operation.
+    For example, for string "<h2>Heading</h2>" it returns "35110f86aeaa2f35".
+    """
+    if isinstance(html_elem, bs4.PageElement):
+        html_elem = str(html_elem)
+    return xxhash.xxh64(html_elem, seed=seed).hexdigest()
