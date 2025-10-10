@@ -19,6 +19,12 @@ from src._common.keys import KeyPath
 from src._common.state import DocumentState
 
 
+# NOTE
+# Note targets are handled only for the digital version.
+# Hence, if a link leads to `path.md#some-id`, in case of splitting docx into multiple md,
+# the path.md might exist only in the digital version.
+
+
 def is_header(tag: bs4.element.Tag) -> bool:
     return bool(re.match(r"^h[1-6]$", tag.name))
 
@@ -34,9 +40,13 @@ def prepare_ref_targets_in_headers(
     headers: list[bs4.Tag],
 ) -> bs4.BeautifulSoup:
     """
-    Note targets are handled only for the digital version.
-    Hence, if a link leads to `path.md#some-id`, in case of splitting docx into multiple md,
-    the path.md might exist only in the digital version.
+    Iterate over header tags and add target labels before them.
+    For example, the following html in '01_a.md' file:
+        <h2>Heading</h2>
+    becomes:
+        <pre>(f-01-a-heading)=</pre>
+        <h2>Heading</h2>
+    In addition, the function registers a Target and Heading objects.
     """
     heading_count = 0
     for tag in headers:
