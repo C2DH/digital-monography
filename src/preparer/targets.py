@@ -176,6 +176,8 @@ def prepare_ref_targets_in_captions(
     """
     for caption in captions:
         anchors = _extract_anchor_tags(html_soup, caption)
+        caption_as_str = str(caption)
+        caption_hash = _hash_html(caption_as_str)
         unique_id = []
         ref_stack = []
 
@@ -183,7 +185,8 @@ def prepare_ref_targets_in_captions(
             tag: bs4.PageElement,
             prev: t.Optional[bs4.PageElement],
             sep: str,
-            a_id: str,
+            # a_id: str,
+            # caption_hash: str,
         ) -> None:
             """
             Imagine we have a complex caption like this:
@@ -218,6 +221,7 @@ def prepare_ref_targets_in_captions(
                     and not ref_stack
                 ):
                     # handle 1-st <data> tag
+                    OLD_SUBST_HANDLING = """
                     # TODO: instead of passing a_id, pass processed escaped_id
                     # e.g. f05conditionalrenderingref193102947
                     # instead of f-05-conditional-rendering-ref193102947
@@ -229,6 +233,9 @@ def prepare_ref_targets_in_captions(
                     )  # f05conditionalrenderingref193102947
                     child.replace_with("{{ %s }}" % escaped_id)
                     unique_id.append(escaped_id)
+                    """
+                    child.replace_with("{{ %s }}" % caption_hash)
+                    # unique_id.append(caption_hash)
                     sep = ""
                     ref_stack.append(child)
                 elif isinstance(child, bs4.Tag) and child.name == "data":
@@ -241,11 +248,79 @@ def prepare_ref_targets_in_captions(
                 elif isinstance(prev, bs4.Tag) and prev.name == "data":
                     sep += child.string
                 prev = child
-                _replace_data_tag(child, prev, sep, a_id)
+                _replace_data_tag(child, prev, sep)
+                # _replace_data_tag(child, prev, sep, caption_hash)
 
-        first_anchor_label = _get_target_label(docstate.key, anchors[0])
-        _replace_data_tag(caption, None, "", first_anchor_label)
+        # first_anchor_label = _get_target_label(docstate.key, anchors[0])
+
+        # _replace_data_tag(caption, None, "", caption_hash)
+        _replace_data_tag(caption, None, "")
+        if anchors:
+            is_digital, is_paper = _get_isdigital_and_ispaper(caption, caption_hash)
+            seq = parse_ref_stack(ref_stack)
+            target = Target(
+                loc=docstate.key,
+                pk=caption_hash,
+                html=seq["html"],
+                text=seq["plain_text_num"],  # calc from ref_stack
+                elem=caption_as_str,
+                item_type=seq["item_type"],
+                is_digital=is_digital,  # calc from caption and identifier
+                is_paper=is_paper,  # calc from caption and identifier
+                filename=docstate.key.name if docstate.key else None,
+                fragment=None,  # do we need it? a["id"],
+                file_count=metadata.get_chapter_number(),  # TODO: get from somewhere else
+                prefix=seq["prefix"],  # calc from ref_stack
+                prev_item_num=seq["prev_item_num"],  # calc from ref_stack
+            )
+            docstate.add(target)
+            # if anchors and docstate.get("substitutions", caption_hash) is None:
+            # TODO: consider target_fn=s3_key just in case some fn are duplicated
+            # in nested file structure, e.g. index.docx and chapter1/index.docx
+            target_fn = docstate.key.name if docstate.key else None
+            metadata.add_substitution(
+                SubstitutionDatapoint(
+                    # pk=unique_id[
+                    #     0
+                    # ],  # why substitution pk is different from target pk?
+                    pk=caption_hash,
+                    was=target.text,
+                    placeholder=target.pk,
+                    item_type=target.item_type,
+                    is_digital=is_digital,
+                    is_paper=is_paper,
+                    file_count=metadata.get_chapter_number(),
+                    location=metadata.filepath,
+                    target_fn=target_fn,
+                    prefix=target.prefix,
+                    prev_item_num=target.prev_item_num,
+                )
+            )
+            subst: Substitution = Substitution(
+                pk=caption_hash,
+                loc=docstate.key,
+                was=target.text,
+                placeholder=target.pk,
+                item_type=target.item_type,
+                is_digital=is_digital,
+                is_paper=is_paper,
+                file_count=metadata.get_chapter_number(),
+                location=metadata.filepath,
+                target_fn=target_fn,
+                prefix=target.prefix,
+                prev_item_num=target.prev_item_num,
+            )
+            docstate.add(subst)
+
+        target_tag = _create_pre_elem_for_target_label(html_soup, caption_hash)
+        try:
+            caption.insert_before(target_tag)
+        except ValueError:
+            caption.insert(0, target_tag)
+
+        OLD_SUBST_HANDLING_2 = """
         for a in anchors:
+            # anchor_label = _get_target_label(docstate.key, a)  # f-05-conditional-rendering-ref193102947
             anchor_label = _get_target_label(
                 docstate.key, a
             )  # f-05-conditional-rendering-ref193102947
@@ -325,6 +400,7 @@ def prepare_ref_targets_in_captions(
                 caption.insert_before(target_tag)
             except ValueError:
                 caption.insert(0, target_tag)
+        """
     return html_soup
 
 
