@@ -63,7 +63,7 @@ def test_targets_in_captions__insert_pre_tag_before_caption():
     assert pre
     assert pre.text == "(4a5f1afdd58f2af8)="
     assert pre.find_next_sibling() == captions[0]
-    target: Target = dstate.get("targets", "4a5f1afdd58f2af8")
+    target: Target = dstate.get("targets", "4a5f1afdd58f2af8", "hash")
     assert target.text == "1"
     assert str(bs).startswith(
         "<pre>(4a5f1afdd58f2af8)=</pre>"
@@ -94,12 +94,14 @@ def test_targets_in_captions__duplicated_target_id():
         "<strong>Figure {{ 53db9168dc9c72eb }}:</strong>"
         " Duplicated bookmarks.</p>"
     )
-    target: Target = docstate.get("targets", "53db9168dc9c72eb")
+    target: Target = docstate.get("targets", "53db9168dc9c72eb", "hash")
     assert target.text == "3"
     assert docstate.len("substitutions") == 1
-    substitution: Substitution = docstate.get("substitutions", "53db9168dc9c72eb")
+    substitution: Substitution = docstate.get(
+        "substitutions", "53db9168dc9c72eb", "hash"
+    )
     assert substitution.was == "3"
-    assert substitution.pk == "53db9168dc9c72eb"
+    assert substitution.hash == "53db9168dc9c72eb"
     assert substitution.placeholder == "53db9168dc9c72eb"
 
 
@@ -121,12 +123,12 @@ def test_targets_in_captions__replace_complex_numbering_in_caption():
         captions[0].text
         == "Figure {{ 530e400e369f7bd0 }}: Complex numbering with separator."
     )
-    target: Target = docstate.get("targets", "530e400e369f7bd0")
+    target: Target = docstate.get("targets", "530e400e369f7bd0", "hash")
     assert target.text == "5.B"
     assert docstate.len("substitutions") == 1
-    subst: Substitution = docstate.get("substitutions", "530e400e369f7bd0")
+    subst: Substitution = docstate.get("substitutions", "530e400e369f7bd0", "hash")
     assert subst.was == "5.B"
-    assert subst.pk == "530e400e369f7bd0"
+    assert subst.hash == "530e400e369f7bd0"
     assert subst.placeholder == "530e400e369f7bd0"
 
 
@@ -144,12 +146,12 @@ def test_targets_in_captions__replace_roman_numbering_in_caption():
     captions = [node for node in bs.children if is_caption(node)]
     bs = prepare_ref_targets_in_captions(bs, metadata, docstate, captions)
     assert captions[0].text == "Figure {{ ecec2a7dadb0859f }}: Roman numbering."
-    target: Target = docstate.get("targets", "ecec2a7dadb0859f")
+    target: Target = docstate.get("targets", "ecec2a7dadb0859f", "hash")
     assert target.text == "IV"
     assert docstate.len("substitutions") == 1
-    subst: Substitution = docstate.get("substitutions", "ecec2a7dadb0859f")
+    subst: Substitution = docstate.get("substitutions", "ecec2a7dadb0859f", "hash")
     assert subst.was == "IV"
-    assert subst.pk == "ecec2a7dadb0859f"
+    assert subst.hash == "ecec2a7dadb0859f"
     assert subst.placeholder == "ecec2a7dadb0859f"
 
 
@@ -172,12 +174,12 @@ def test_targets_in_captions__link_in_caption_is_left_not_changed():
     assert a["href"] == "https://example.com"
     assert a.string == "link"
     assert captions[0].text == "Figure {{ d9ba804a0d84c08d }}: Caption with a link."
-    target: Target = dstate.get("targets", "d9ba804a0d84c08d")
+    target: Target = dstate.get("targets", "d9ba804a0d84c08d", "hash")
     assert target.text == "2"
     assert dstate.len("substitutions") == 1
-    subst: Substitution = dstate.get("substitutions", "d9ba804a0d84c08d")
+    subst: Substitution = dstate.get("substitutions", "d9ba804a0d84c08d", "hash")
     assert subst.was == "2"
-    assert subst.pk == "d9ba804a0d84c08d"
+    assert subst.hash == "d9ba804a0d84c08d"
     assert subst.placeholder == "d9ba804a0d84c08d"
     assert str(bs).startswith(
         "<pre>(d9ba804a0d84c08d)=</pre>"
@@ -186,3 +188,8 @@ def test_targets_in_captions__link_in_caption_is_left_not_changed():
         'Caption with a <a href="https://example.com">link</a>.'
         "</p>"
     )
+
+
+#########################################################
+
+### new href parser
