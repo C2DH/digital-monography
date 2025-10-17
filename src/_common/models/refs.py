@@ -9,8 +9,9 @@ except (ImportError, ModuleNotFoundError):
 
 class Ref(MySQLModel, table=True):
     """
-    Reference (link or cross-reference) to a Target (bookmark, heading or caption)
-    extracted from a docx document.
+    A reference (link or cross-reference) to a RefTarget (bookmark, heading or caption).
+    RefTarget is a bridge table to a Target, which represents the document element
+    referenced by this Ref.
     """
 
     __tablename__ = "refs"

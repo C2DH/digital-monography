@@ -9,6 +9,7 @@ from .files import File, FileService  # noqa
 from .headings import Heading, HeadingService  # noqa
 from .doc_metadata import DocumentMetadata
 from .refs import Ref, RefService  # noqa
+from .refs_targets import RefTarget  # noqa
 from .substitutions import Substitution, SubstitutionService  # noqa
 from .targets import Target, TargetService  # noqa
 
@@ -24,6 +25,7 @@ __all__ = [
     "Heading",
     "DocumentMetadata",
     "Ref",
+    "RefTarget",
     "Substitution",
     "Target",
 ]
@@ -37,6 +39,7 @@ tables_to_models: dict[str, ModelMeta] = {
     "headings": Heading,
     "document_metadata": DocumentMetadata,
     "refs": Ref,
+    "refs_targets": RefTarget,
     "substitutions": Substitution,
     "targets": Target,
 }
