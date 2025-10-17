@@ -10,6 +10,7 @@ from src._common.constants import (
     CLS_CAPTION,
     CLS_DIGITAL_ONLY,
     CLS_PAPER_ONLY,
+    REF_PREFIX,
 )
 from src._common.metadata import (
     DocumentMetadata,
@@ -68,7 +69,7 @@ def prepare_ref_targets_in_headers(
             h_tag.insert_before(target_tag)
             targetdata = Target(
                 loc=docstate.key,  # TODO: maybe path in _JB dir?
-                pk=target_label,  # 16-char hex string
+                hash=target_label,  # 16-char hex string
                 html=str_h_tag,
                 text=h_tag.text,  # 'Heading'
                 elem=str_h_tag,
@@ -109,6 +110,7 @@ def prepare_ref_targets_in_headers(
         #         docstate.add(targetdata)
         h_lvl = "".join(ch for ch in h_tag.name if ch.isdigit())
         heading_count += 1
+        # Since not every Heading has an anchor tag, not every Heading creates a Target.
         headingdata: Heading = Heading(
             loc=docstate.key,
             slug=docstate.metadata.slug,
@@ -271,7 +273,7 @@ def prepare_ref_targets_in_captions(
             seq = parse_ref_stack(ref_stack)
             target = Target(
                 loc=docstate.key,
-                pk=caption_hash,  # you sure there won't be collisions?
+                hash=caption_hash,
                 html=seq["html"],
                 text=seq["plain_text_num"],  # calc from ref_stack
                 elem=caption_as_str,
@@ -289,26 +291,27 @@ def prepare_ref_targets_in_captions(
             # TODO: consider target_fn=s3_key just in case some fn are duplicated
             # in nested file structure, e.g. index.docx and chapter1/index.docx
             target_fn = docstate.key.name if docstate.key else None
-            metadata.add_substitution(
-                SubstitutionDatapoint(
-                    # pk=unique_id[
-                    #     0
-                    # ],  # why substitution pk is different from target pk?
-                    pk=caption_hash,
-                    was=target.text,
-                    placeholder=target.pk,
-                    item_type=target.item_type,
-                    is_digital=is_digital,
-                    is_paper=is_paper,
-                    file_count=metadata.get_chapter_number(),
-                    location=metadata.filepath,
-                    target_fn=target_fn,
-                    prefix=target.prefix,
-                    prev_item_num=target.prev_item_num,
-                )
-            )
+            # metadata.add_substitution(
+            #     SubstitutionDatapoint(
+            #         # pk=unique_id[
+            #         #     0
+            #         # ],  # why substitution pk is different from target pk?
+            #         # pk=caption_hash,
+            #         was=target.text,
+            #         placeholder=target.pk,
+            #         item_type=target.item_type,
+            #         is_digital=is_digital,
+            #         is_paper=is_paper,
+            #         file_count=metadata.get_chapter_number(),
+            #         location=metadata.filepath,
+            #         target_fn=target_fn,
+            #         prefix=target.prefix,
+            #         prev_item_num=target.prev_item_num,
+            #     )
+            # )
+            # TODO: consider if a Substitution and Target can be the same object?
             subst: Substitution = Substitution(
-                pk=caption_hash,
+                hash=caption_hash,
                 loc=docstate.key,
                 was=target.text,
                 placeholder=target.pk,
@@ -321,6 +324,7 @@ def prepare_ref_targets_in_captions(
                 prefix=target.prefix,
                 prev_item_num=target.prev_item_num,
             )
+            print("Substitution", subst.model_dump())
             docstate.add(subst)
         # register RefTargets, same for headings and captions
         for a_tag in anchors:
@@ -457,11 +461,10 @@ def _process_href(curr_key: KeyPath, elem: bs4.Tag) -> str:
         `01-a` is slugified name of the current file where a target is placed,
         `heading` is slugified id from <a> tag.
     """
-    prefix = "f"
     path = curr_key.stem
     tag_id = elem.get("id", "").replace("_", "-")
     assert tag_id, "Unknown situation where <a> tag has no id attribute"
-    fragment_before_slugification = f"{prefix}-{path}-{tag_id}"
+    fragment_before_slugification = f"{REF_PREFIX}-{path}-{tag_id}"
     return docutils.nodes.make_id(fragment_before_slugification)
 
 

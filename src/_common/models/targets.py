@@ -19,6 +19,7 @@ class Target(MySQLModel, table=True):
     html: str
     text: str
     elem: str
+    hash: str = sqlmodel.Field(description="xxhash.xxh64 hash of the target element.")
     is_paper: bool | None
     is_digital: bool | None
     # no "ref"

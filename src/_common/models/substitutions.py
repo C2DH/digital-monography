@@ -31,6 +31,7 @@ class Substitution(MySQLModel, table=True):
     prev_item_num: int | None
     new_item_num: int | None = sqlmodel.Field(default=None)
     fprefix: str | None = sqlmodel.Field(default=None)
+    hash: str = sqlmodel.Field(description="xxhash.xxh64 hash of the target element.")
 
     @property
     def location(self) -> pathlib.Path:

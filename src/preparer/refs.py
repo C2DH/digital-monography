@@ -209,6 +209,7 @@ def prepare_references(
             data = Substitution(
                 loc=docstate.key,
                 pk=link.unique_id,
+                hash="",
                 was=link.text_to_replace,
                 # placeholder=link.unique_id,
                 placeholder=link.id,
