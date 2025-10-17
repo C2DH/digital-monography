@@ -18,7 +18,7 @@ from src.preparer.targets import (
     is_header,
     prepare_ref_targets_in_headers,
     prepare_ref_targets_in_captions,
-    _get_target_label,
+    _process_href,
     _create_pre_elem_for_target_label,
 )
 
@@ -466,7 +466,7 @@ def test_target_label_and_create_pre_elem():
     sample_html = '<a id="_Heading"></a>'
     bs = bs4.BeautifulSoup(sample_html, "html.parser")
     key = KeyPath("a_slug") / "01_a.docx"
-    target_label = _get_target_label(key, bs.a)
+    target_label = _process_href(key, bs.a)
     assert target_label == "f-01-a-heading"
     target_tag = _create_pre_elem_for_target_label(bs, target_label)
     assert target_tag.name == "pre"
