@@ -14,7 +14,7 @@ from src._common.constants import (
 from src._common.metadata import (
     DocumentMetadata,
 )
-from src._common.models import Heading, Substitution, Target
+from src._common.models import Heading, RefTarget, Substitution, Target
 from src._common.metadata import SubstitutionDatapoint, TargetDatapoint
 from src._common.keys import KeyPath
 from src._common.state import DocumentState
@@ -60,7 +60,7 @@ def prepare_ref_targets_in_headers(
 
         str_h_tag = str(h_tag)
         target_label = _hash_html(str_h_tag)
-        print('_hash_html("<h2>Heading</h2>")', _hash_html("<h2>Heading</h2>"))
+        # print('_hash_html("<h2>Heading</h2>")', _hash_html("<h2>Heading</h2>"))
         anchors: bs4.ResultSet[bs4.Tag] = h_tag.find_all("a", id=True)
         if anchors:
             target_tag = _create_pre_elem_for_target_label(html_soup, target_label)
@@ -124,6 +124,17 @@ def prepare_ref_targets_in_headers(
         docstate.add(headingdata)
         # for a in anchors:
         #     a.extract()
+
+        # register RefTargets, same for headings and captions
+        for a_tag in anchors:
+            processed_href = _process_href(docstate.key, a_tag)
+            ref_target = RefTarget(
+                loc=docstate.key,
+                target_id=target_label,
+                proc_href=processed_href,
+            )
+            docstate.add(ref_target)
+        # remove anchor tags from the header
         for a_tag in anchors:
             a_tag.extract()
     return html_soup
@@ -260,7 +271,7 @@ def prepare_ref_targets_in_captions(
             seq = parse_ref_stack(ref_stack)
             target = Target(
                 loc=docstate.key,
-                pk=caption_hash,
+                pk=caption_hash,  # you sure there won't be collisions?
                 html=seq["html"],
                 text=seq["plain_text_num"],  # calc from ref_stack
                 elem=caption_as_str,
@@ -311,7 +322,15 @@ def prepare_ref_targets_in_captions(
                 prev_item_num=target.prev_item_num,
             )
             docstate.add(subst)
-
+        # register RefTargets, same for headings and captions
+        for a_tag in anchors:
+            processed_href = _process_href(docstate.key, a_tag)
+            ref_target = RefTarget(
+                loc=docstate.key,
+                target_id=caption_hash,
+                proc_href=processed_href,
+            )
+            docstate.add(ref_target)
         target_tag = _create_pre_elem_for_target_label(html_soup, caption_hash)
         try:
             caption.insert_before(target_tag)
@@ -428,7 +447,7 @@ def _get_isdigital_and_ispaper(
     return is_digital, is_paper
 
 
-def _get_target_label(curr_key: KeyPath, elem: bs4.Tag) -> str:
+def _process_href(curr_key: KeyPath, elem: bs4.Tag) -> str:
     """
     If we have `<a id="_Heading"></a>` in `01_a.md` file, the return value is
     `f-01-a-heading`.
