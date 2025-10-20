@@ -15,7 +15,7 @@ from src._common.constants import (
 from src._common.metadata import (
     DocumentMetadata,
 )
-from src._common.models import Heading, RefTarget, Substitution, Target
+from src._common.models import Chapter, Heading, RefTarget, Substitution, Target
 from src._common.metadata import SubstitutionDatapoint, TargetDatapoint
 from src._common.keys import KeyPath
 from src._common.state import DocumentState
@@ -51,6 +51,15 @@ def prepare_ref_targets_in_headers(
         <h2>Heading</h2>
     In addition, the function registers a Target and Heading objects.
     """
+    chapter: Chapter | None = docstate.first("chapters")
+    assert (
+        docstate.len("chapters") == 1
+    ), "Expected docstate to have exactly one chapter"
+    # chapter = docstate.get("chapters", attrib="fm_key", val=docstate.key)
+    assert chapter is not None, "Expected to find a Chapter in the docstate"
+    src_key = chapter.fm_key if chapter else None
+    jb_key = chapter.jb_key if chapter else None
+
     heading_count = 0
     for h_tag in headers:
         # anchors: list[bs4.Tag] = []
@@ -130,10 +139,14 @@ def prepare_ref_targets_in_headers(
         # register RefTargets, same for headings and captions
         for a_tag in anchors:
             processed_href = _process_href(docstate.key, a_tag)
+            fragment = _get_fragment_from_anchor_id(a_tag)
             ref_target = RefTarget(
                 loc=docstate.key,
                 target_id=target_label,
                 proc_href=processed_href,
+                fm_key=src_key,
+                jb_key=jb_key,
+                fragment=fragment,
             )
             docstate.add(ref_target)
         # remove anchor tags from the header
@@ -187,6 +200,23 @@ def prepare_ref_targets_in_captions(
         (f-00-index-unref341190179)=
         **Table {{ f00indexunref341190179 }}:** A sample table.
     """
+    # print(
+    #     '\n\n\n\ndocstate.__dict__["chapters"]',
+    #     docstate.__dict__["chapters"],
+    #     "\n\n\n\n",
+    # )
+    chapter: Chapter | None = docstate.first("chapters")
+    assert (
+        docstate.len("chapters") == 1
+    ), "Expected docstate to have exactly one chapter"
+    # chapter = docstate.get("chapters", attrib="fm_key", val=docstate.key)
+    assert chapter is not None, "Expected to find a Chapter in the docstate"
+    src_key = chapter.fm_key if chapter else None
+    jb_key = chapter.jb_key if chapter else None
+    # print(f"src_key: {src_key}, jb_key: {jb_key}")
+    # assert src_key is not None, "Expected chapter to have fm_key"
+    # assert jb_key is not None, "Expected chapter to have jb_key"
+
     for caption in captions:
         anchors = _extract_anchor_tags(html_soup, caption)
         caption_as_str = str(caption)
@@ -281,7 +311,7 @@ def prepare_ref_targets_in_captions(
                 is_digital=is_digital,  # calc from caption and identifier
                 is_paper=is_paper,  # calc from caption and identifier
                 filename=docstate.key.name if docstate.key else None,
-                fragment=None,  # do we need it? a["id"],
+                fragment=None,  # do we need it? a["id"], I would have to iterate over anchors
                 file_count=metadata.get_chapter_number(),  # TODO: get from somewhere else
                 prefix=seq["prefix"],  # calc from ref_stack
                 prev_item_num=seq["prev_item_num"],  # calc from ref_stack
@@ -314,7 +344,7 @@ def prepare_ref_targets_in_captions(
                 hash=caption_hash,
                 loc=docstate.key,
                 was=target.text,
-                placeholder=target.pk,
+                placeholder=target.hash,
                 item_type=target.item_type,
                 is_digital=is_digital,
                 is_paper=is_paper,
@@ -324,15 +354,19 @@ def prepare_ref_targets_in_captions(
                 prefix=target.prefix,
                 prev_item_num=target.prev_item_num,
             )
-            print("Substitution", subst.model_dump())
+            # print("Substitution", subst.model_dump())
             docstate.add(subst)
         # register RefTargets, same for headings and captions
         for a_tag in anchors:
             processed_href = _process_href(docstate.key, a_tag)
+            fragment = _get_fragment_from_anchor_id(a_tag)
             ref_target = RefTarget(
                 loc=docstate.key,
                 target_id=caption_hash,
                 proc_href=processed_href,
+                fm_key=src_key,
+                jb_key=jb_key,
+                fragment=fragment,
             )
             docstate.add(ref_target)
         target_tag = _create_pre_elem_for_target_label(html_soup, caption_hash)
@@ -466,6 +500,18 @@ def _process_href(curr_key: KeyPath, elem: bs4.Tag) -> str:
     assert tag_id, "Unknown situation where <a> tag has no id attribute"
     fragment_before_slugification = f"{REF_PREFIX}-{path}-{tag_id}"
     return docutils.nodes.make_id(fragment_before_slugification)
+
+
+def _get_fragment_from_anchor_id(a_tag: bs4.Tag) -> str:
+    """
+    Given an anchor tag id like `<a id="_Ref193102947"></a>` or `<a id="a_Heading"></a>`,
+    return the fragment identifier, e.g. `ref193102947` or `a-heading`.
+    Make sure fragment slugification is consistent with reference preparation.
+    """
+    tag_id = a_tag.get("id", "")
+    assert tag_id, "Unknown situation where <a> tag has no id attribute"
+    return tag_id  # maybe slugification is not needed since we are using hash as id anyway?
+    # return docutils.nodes.make_id(tag_id)
 
 
 def _create_pre_elem_for_target_label(

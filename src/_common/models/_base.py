@@ -20,9 +20,7 @@ class MySQLModel(sqlmodel.SQLModel):
 
     __table_args__ = {"extend_existing": True}
 
-    pk: str = sqlmodel.Field(
-        primary_key=True, default_factory=lambda: str(uuid.uuid4())
-    )
+    pk: str = sqlmodel.Field(primary_key=True, default_factory=lambda: uuid.uuid4().hex)
     x_loc: str = sqlmodel.Field(alias="loc")
 
     @property

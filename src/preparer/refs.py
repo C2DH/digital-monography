@@ -34,7 +34,7 @@ from src._common.metadata import (
     SubstitutionDatapoint,
     TargetDatapoint,
 )
-from src._common.models import Heading, Ref, Substitution, Target
+from src._common.models import Heading, Ref, RefTarget, Substitution, Target
 from src._common.keys import KeyPath
 from src._common.state import DocumentState
 
@@ -47,6 +47,49 @@ def is_reference(tag: bs4.element.Tag) -> bool:
     #     and tag.attrs.get("href")
     #     and tag.attrs.get("id", "").startswith("footnote")
     # )
+
+
+# def print(*args, **kwargs):
+#     # disable all print statements in the module
+#     pass
+#     # __builtins__.print(*args, **kwargs)
+
+
+"""
+===INFILE=========================================================
+Say a_tag in file "05_conditional-rendering.docx" is
+`<a href="#_Ref193102947">Figure 1</a>`
+
+Link
+id # f-05-conditional-rendering-ref193102947 # USED to be target_id
+unique_id # f05conditionalrenderingref193102947 # substitution_id
+text_to_replace # "1" extracted from prev_string="Figure 1" ("was" in Substitution)
+make_text() # get text to put into [text](...)
+make_destination() # ..to put into [...](destination)
+
+<a href="#f-05-conditional-rendering-ref193102947">Figure {{ f05conditionalrenderingref193102947 }}</a>
+
+text=Figure {{ f05conditionalrenderingref193102947 }}
+dest=#f-05-conditional-rendering-ref193102947
+     ^  fragment
+===F2F============================================================
+Say a_tag in file "01_a.docx" is
+<a href="02_b.docx#tblSimpleTable">link in caption to a table in chapter 2</a>
+
+Link
+id # f-02-b-tblsimpletable # USED to be target_id
+unique_id # 02bdocxf02btblsimpletable # substitution_id
+text_to_replace # "2" extracted from prev_string="link in caption to a table in chapter 2" ("was" in Substitution)
+make_text() # get text to put into [text](...)
+make_destination() # ..to put into [...](destination)
+
+<a href="./02_b.md#f-02-b-tblsimpletable">link in caption to a table in chapter {{ 02bdocxf02btblsimpletable }}</a>
+
+text=link in caption to a table in chapter {{ 02bdocxf02btblsimpletable }}
+dest=./02_b.md#f-02-b-tblsimpletable
+        path  ^  fragment
+=================================================================
+"""
 
 
 def prepare_references(
@@ -77,21 +120,35 @@ def prepare_references(
     Expected output:
         <a href="./01_a.md#f-01-a-bookmarktotbl">link to a table in chapter {{ 01adocxf01abookmarktotbl }}</a>
     """
+    for chpt in docstate.__dict__.get("chapters"):
+        print("chapter in docstate", chpt)
+
     for a_tag in references:
         print("=" * 75)
         print("a_tag", a_tag)
         if _is_ref_footnote(a_tag) or _is_target_footnote(a_tag):
             # handled in footnotes.py
             continue
-        print(
-            "_check_if_link_marked_as_paper_only(a_tag)",
-            _check_if_link_marked_as_paper_only(a_tag),
-        )
-        if _check_if_link_marked_as_paper_only(a_tag):
+        # print(
+        #     "_check_if_link_marked_as_paper_only(a_tag)",
+        #     _check_if_link_marked_as_paper_only(a_tag),
+        # )
+        # if _check_if_link_marked_as_paper_only(a_tag):
 
-            tag_class = a_tag.get("class", [])
-            tag_class.append(CLS_PAPER_ONLY)
-            a_tag["class"] = tag_class
+        #     tag_class = a_tag.get("class", [])
+        #     tag_class.append(CLS_PAPER_ONLY)
+        #     a_tag["class"] = tag_class
+
+        _mark_paper_only_tag(a_tag)
+        print("POST_a_tag", a_tag)
+
+        fn, fragment = _get_fn_and_fragment_from_href(a_tag["href"])
+        # fragment = docutils.nodes.make_id(fragment)  # slugify consistently with targets
+        # is_internal = _is_internal(a_tag["href"], fn, fragment)
+        print("/n/n===")
+        print(f"fn={fn}, fragment={fragment}")
+        ref_targets = _find_ref_targets(docstate, a_tag["href"], fn, fragment)
+        print("ref_targets", ref_targets)
 
         print(
             "a_tag > after paperonly handling", a_tag
@@ -103,10 +160,15 @@ def prepare_references(
         link.set_filepath(metadata.filepath)
         print('a_tag["href"]', a_tag["href"])
         link.set_from_href(a_tag["href"])
+        print("link.id", link.id)
         # if is inner reference, get a target
         # target = metadata.get_target(link.id) if link.is_inner_reference() else None
         target = docstate.get("targets", link.id) if link.is_inner_reference() else None
         print("target", target)
+
+        # ref_target = docstate.get("ref_targets", link.id, "proc_href")
+        # print(">.> ref_target", ref_target)
+
         # get text to put into [text](...)
         link_text = link.make_text(a_tag.text, target)
         print("link_text", link_text)
@@ -253,6 +315,37 @@ def _is_ref_footnote(a_tag: bs4.element.Tag) -> bool:
 
 def _is_target_footnote(a_tag: bs4.element.Tag) -> bool:
     return bool(a_tag.attrs.get("href", "").startswith("#footnote-ref-"))
+
+
+def _mark_paper_only_tag(a_tag: bs4.Tag) -> None:
+    """
+    The way it is implemented now, "paper-only" css class will mark only
+    descendants of the hyperlink tag and not the hyperlink tag itself.
+    `<a href="https://example.com"><span class="dgt-mon-paper-only">text</span></a>`
+    This is because in OOXML, highlight is a property of runs inside of hyperlink tag,
+    while the hyperlink tag itself is not considered highlited. This enables .docx users
+    to have different highlights in the same hyperlink element, but requires additional
+    processing from the preparer microservice.
+
+    To mitigate that, iterate over descendents and check if all of them are marked
+    as paper-only.
+    If yes, mark the hyperlink tag as paper-only as well.
+    """
+    res = set()
+    for tag in a_tag.descendants:
+        if isinstance(tag, bs4.Tag) and tag.get("class", []) == [CLS_PAPER_ONLY]:
+            res.add(True)
+        elif isinstance(tag, bs4.NavigableString):
+            pass
+        else:
+            res.add(False)
+    if not res:
+        return
+    is_paper_only = all(res)
+    if is_paper_only:
+        tag_class = a_tag.get("class", [])
+        tag_class.append(CLS_PAPER_ONLY)
+        a_tag["class"] = tag_class
 
 
 def _check_if_link_marked_as_paper_only(a_tag: bs4.Tag) -> bool:
@@ -504,3 +597,95 @@ class LinkMystifier:
         assert pattern == r"(?:\s)(([ivxlcdm]+|[a-z]{1}|\d+)[.:—-]{1}\d)"
         return re.search(pattern, tag_text.lower())
         # r"(?:\s)(([ivxlcdm]+|[a-z]{1}|\d+)[.:—-]{1}\d)", tag_text.lower()
+
+
+def _get_fragment_from_anchor_href(a_tag: bs4.Tag) -> str:
+    """
+    Given an anchor tag id like `<a id="_Ref193102947"></a>` or `<a id="a_Heading"></a>`,
+    return the fragment identifier, e.g. `ref193102947` or `a-heading`.
+    Make sure fragment slugification is consistent with reference preparation.
+    """
+    tag_href = a_tag.get("href", "")
+    return tag_href
+    # return docutils.nodes.make_id(tag_href) # maybe slugification is not needed since we are using hash as id anyway?
+
+
+def _get_fn_and_fragment_from_href(href: str) -> tuple[str, str]:
+    """
+    Extracts filename and fragment identifier from an URI.
+    If a value is not present, an empty string is returned instead.
+
+    E.g. "manuscript.docx" and "fragment" from:
+        "https://sharepoint.com/some/path/manuscript.docx#fragment"
+        "./manuscript.docx#fragment"
+    """
+    # 'A fragment identifier component is indicated by the presence of a number sign ("#")'
+    # so it should always be an index of #.
+    # See https://www.rfc-editor.org/rfc/rfc3986#section-3.5
+    if "#" in href:
+        fragment_idx = href.index("#")
+    else:
+        fragment_idx = len(href)
+    path = href[:fragment_idx]
+    fragment = href[fragment_idx + 1 :]
+    if "." not in path:
+        return "", fragment
+    for scheme in ["tel:", "mailto:", "sms:", "javascript:"]:
+        if path.startswith(scheme):
+            return "", fragment, False
+    if "/" not in path:
+        return path, fragment
+    filename = ""
+    for i in range(len(path) - 1, -1, -1):
+        ch = path[i]
+        # if ch == ".":
+        #     suffix = path[i + 1 :]
+        if ch == "/":
+            filename = path[i + 1 :]
+            break
+    if "." not in filename:
+        return "", fragment
+    return filename, fragment
+
+
+def _is_internal(href: str, filename: str, fragment: str) -> bool:
+    """
+    Returns if a resource is internal (either in the same file or f2f).
+    By internal, we mean there is some particular fragment in some particular file.
+    Does not matter is the file is hosted remotely in some external source (e.g. SharePoint).
+
+    NOTE: Consider checking if current file is the same as file in href
+    to check if the link is in-file or f2f.
+    """
+    if fragment and not filename:
+        return len(href) == len(fragment) + 1  # href is just "#fragment"
+    return filename != "" and fragment != ""
+
+
+def _find_ref_targets(
+    docstate: DocumentState, href: str, fn: str, fragment: str
+) -> list[RefTarget]:
+    """
+    Find RefTarget objects for a given anchor tag.
+    It relies on the fact that in DOCX, a target reference identifier is unique,
+    but only inside the same DOCX file. Therefore, we have to find a RefTarget
+    linked to some source document (i.e. a document before eventual  split
+    into multiple chapters).
+    """
+    is_internal = _is_internal(href, fn, fragment)
+    if not is_internal:
+        return []  # external
+    rt_all: list[RefTarget] = docstate.__dict__.get("ref_targets", [])
+    if is_internal and fn == "":
+        # internal in-file reference
+        print("TEMP", [rt for rt in rt_all if rt.fragment == fragment])
+
+        return [
+            rt
+            for rt in rt_all
+            if str(rt.fm_key) == str(docstate.key) and rt.fragment == fragment
+        ]
+    elif is_internal and fn != "":
+        # internal in-file or f2f reference, check by name where to look for
+        print("TEMP", [rt for rt in rt_all if rt.fragment == fragment])
+        return [rt for rt in rt_all if rt.fm_key.name == fn and rt.fragment == fragment]

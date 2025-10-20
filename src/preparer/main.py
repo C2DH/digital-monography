@@ -56,7 +56,7 @@ from prep_frontmatter import prepare_frontmatter
 from metadata_extraction import prepare_metadata_tables
 from remove_empty_tables import remove_empty_tables
 from replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
-from refs import (
+from references import (
     # prepare_ref_targets_in_headers,
     # prepare_ref_targets_in_captions,
     prepare_references,
@@ -436,6 +436,8 @@ def prepare_docx(
     html_soup = prepare_targets_in_footnotes(html_soup, dstate, target_footnotes)
     # html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, dstate, footnotes)
     html_soup = prepare_refs_in_footnotes(html_soup, dstate, ref_footnotes)
+    # with open(f"/tmp/efs/output_{dstate.key.name}.html", "w", encoding="utf-8") as f:
+    #     f.write(str(html_soup))
     html_soup = prepare_references(html_soup, metadata, dstate, references)
     html_soup = prepare_metadata_tables(html_soup, metadata, dstate, tables)
     html_soup = remove_paper_only(html_soup, metadata, dstate, paper_only)

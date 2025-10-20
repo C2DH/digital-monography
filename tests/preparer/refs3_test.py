@@ -1,9 +1,14 @@
 import bs4
+import pytest
 
 from src._common.models import Substitution, Target
 from src._common.metadata import DocumentMetadata
 from src._common.keys import KeyPath
 from src._common.state import DocumentState
+from src.preparer.references import (
+    _get_fn_and_fragment_from_href,
+    _is_internal,
+)
 
 
 from src.preparer.targets import (
@@ -193,3 +198,144 @@ def test_targets_in_captions__link_in_caption_is_left_not_changed():
 #########################################################
 
 ### new href parser
+
+MOVED = '''
+def _get_fn_and_fragment_from_href(href: str) -> tuple[str, str]:
+    """
+    Extracts filename and fragment identifier from an URI.
+    If a value is not present, an empty string is returned instead.
+
+    E.g. "manuscript.docx" and "fragment" from:
+        "https://sharepoint.com/some/path/manuscript.docx#fragment"
+        "./manuscript.docx#fragment"
+    """
+    # 'A fragment identifier component is indicated by the presence of a number sign ("#")'
+    # so it should always be an index of #.
+    # See https://www.rfc-editor.org/rfc/rfc3986#section-3.5
+    if "#" in href:
+        fragment_idx = href.index("#")
+    else:
+        fragment_idx = len(href)
+    path = href[:fragment_idx]
+    fragment = href[fragment_idx + 1 :]
+    if "." not in path:
+        return "", fragment
+    for scheme in ["tel:", "mailto:", "sms:", "javascript:"]:
+        if path.startswith(scheme):
+            return "", fragment
+    if "/" not in path:
+        return path, fragment
+    filename = ""
+    for i in range(len(path) - 1, -1, -1):
+        ch = path[i]
+        # if ch == ".":
+        #     suffix = path[i + 1 :]
+        if ch == "/":
+            filename = path[i + 1 :]
+            break
+    if "." not in filename:
+        return "", fragment
+    return filename, fragment
+
+
+def _is_internal(href: str, filename: str, fragment: str) -> bool:
+    """
+    Returns if a resource is internal (either in the same file or f2f).
+    By internal, we mean there is some particular fragment in some particular file.
+    Does not matter is the file is hosted remotely in some external source (e.g. SharePoint).
+
+    NOTE: Consider checking if current file is the same as file in href
+    to check if the link is in-file or f2f.
+    """
+    if fragment and not filename:
+        return len(href) == len(fragment) + 1  # href is just "#fragment"
+    return filename != "" and fragment != ""
+'''
+
+# def _extract_filename_from_href(href: str, fragment_idx: int | None = None) -> str:
+#     """
+#     Extracts filename from an URI if the filename is present.
+#     """
+#     if fragment_idx is None:
+#         # 'A fragment identifier component is indicated by the presence of a number sign ("#")'
+#         # so it should always be an index of #.
+#         # See https://www.rfc-editor.org/rfc/rfc3986#section-3.5
+#         fragment_idx = href.index("#")
+#     path = href[:fragment_idx]
+#     if "." not in path:
+#         return ""
+#     for scheme in ["tel:", "mailto:", "sms:", "javascript:"]:
+#         if path.startswith(scheme):
+#             return ""
+#     if "/" not in path:
+#         return path
+#     filename = ""
+#     for i in range(len(path) - 1, -1, -1):
+#         ch = path[i]
+#         # if ch == ".":
+#         #     suffix = path[i + 1 :]
+#         if ch == "/":
+#             filename = path[i + 1 :]
+#             break
+#     if "." not in filename:
+#         return ""
+#     return filename
+
+
+# def _extract_fragment_from_href(href: str) -> tuple[int | None, str]:
+#     """
+#     Extracts fragment identifier from an URI
+#     See https://www.rfc-editor.org/rfc/rfc3986#section-3.5
+
+#     The function returns index where the fragment begins and the fragment itself.
+#     E.g. "a_Fragment" from:
+#         "https://unilux.sharepoint.com/personal/joe_doe/Documents/Books/book-slug/manuscript.docx#a_Fragment"
+#         "./manuscript.docx#a_Fragment"
+
+#     Calculation of the "#" index is only to avoid calling href.index("#") second time.
+#     I couldn't find information about allowed characters in docx fragments in ECMA 376.
+#     I noticed that Word allows only alphanumerics and underscores (except as the first char)
+#     in bookmarks, so I assumed the same for OOXML fragments.
+#     """
+#     if "#" not in href:
+#         return None, ""
+#     for i in range(len(href) - 1, -1, -1):
+#         ch = href[i]
+#         if ch == "#":
+#             fragment = href[i + 1 :]
+#             if fragment[0] == "_":
+#                 return None, ""  # bookmarks cannot start with an underscore
+#             return i, fragment
+#         elif not ch.isalnum() and ch != "_":
+#             return None, ""
+#     return None, ""
+
+
+# raise NotImplementedError(
+#     "Move extraction to refs. Maybe as a class with static methods? The point is, we need to parse href before handling refs."
+# )
+
+
+@pytest.mark.parametrize(
+    "href,exp_fn,exp_fragment,exp_internal",
+    [
+        (
+            "https://unilux.sharepoint.com/personal/joe_doe/Documents/Books/book-slug/manuscript.docx#a_Fragment",
+            "manuscript.docx",
+            "a_Fragment",
+            True,
+        ),
+        ("manuscript.docx#a_Fragment", "manuscript.docx", "a_Fragment", True),
+        ("./manuscript.docx#a_Fragment", "manuscript.docx", "a_Fragment", True),
+        ("#a_Fragment", "", "a_Fragment", True),
+        ("mailto:example@example.com", "", "", False),
+        ("http://example.com/some/someDocument.docx", "someDocument.docx", "", False),
+        ("http://example.com/some/someDocument.pdf#", "someDocument.pdf", "", False),
+        ("http://example.com/home/homepage#fragment", "", "fragment", False),
+    ],
+)
+def test_href_parser(href, exp_fn, exp_fragment, exp_internal):
+    fn, fragment, is_internal = _get_fn_and_fragment_from_href(href)
+    assert fn == exp_fn
+    assert fragment == exp_fragment
+    assert is_internal == exp_internal

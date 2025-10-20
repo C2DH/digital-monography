@@ -94,6 +94,13 @@ class DocumentState:
         records = self.__dict__.get(tablename, [])
         return [rec for rec in records if getattr(rec, attrib) == val]
 
+    def first(self, tablename: str) -> t.Optional[sqlmodel.SQLModel]:
+        """Get the first model's instance (a record) from the state."""
+        records = self.__dict__.get(tablename, [])
+        if records:
+            return records[0]
+        return None
+
     def len(self, tablename: str) -> int:
         """Get the number of records in a current document's state."""
         return len(self.__dict__.get(tablename, []))
