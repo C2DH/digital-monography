@@ -90,10 +90,10 @@ db/migrate:
 show/dominique:
 	make db/migrate
 	DGTMON_NO_WAIT=1 \
-		IR_APKG_HTML_BUCKET_NAME=_HTML \
-		IR_APKG_MD_BUCKET_NAME=_MARKDOWN \
-		METADATA_ASSETS_BUCKET_NAME=_METDATA \
-		VERIFIER_MSGS=_WARNINGS \
+		IR_APKG_HTML_BUCKET_NAME=_s3_html \
+		IR_APKG_MD_BUCKET_NAME=_s3_md \
+		METADATA_ASSETS_BUCKET_NAME=_s3_assets_state \
+		VERIFIER_MSGS=_s3_warnings \
 		python3.12 scripts/prepare_and_build.py book_path="/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/a-colonia-luxemburguesa/"
 
 show/janakeck:
@@ -113,10 +113,10 @@ show/janakeck:
 show/guidelines:
 	make db/migrate
 	DGTMON_NO_WAIT=1 \
-		IR_APKG_HTML_BUCKET_NAME=_HTML \
-		IR_APKG_MD_BUCKET_NAME=_MARKDOWN \
-		METADATA_ASSETS_BUCKET_NAME=_METDATA \
-		VERIFIER_MSGS=_WARNINGS \
+		IR_APKG_HTML_BUCKET_NAME=_s3_html \
+		IR_APKG_MD_BUCKET_NAME=_s3_md \
+		METADATA_ASSETS_BUCKET_NAME=_s3_assets_state \
+		VERIFIER_MSGS=_s3_warnings \
 		python3.12 scripts/prepare_and_build_jb2.py book_path="/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/guidelines-for-drafting-manuscripts-v2/"
 	export BUILD_DIR=/tmp/efs/_JB/guidelines-for-drafting-manuscripts-v2/_build/html
 	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
