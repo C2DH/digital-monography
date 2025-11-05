@@ -1,23 +1,19 @@
 import pathlib
 import bs4
 
+from src._common.constants import TEMP_FOOTNOTES_TABLE
 from src._common.keys import KeyPath
 from src._common.metadata import DocumentMetadata
 from src._common.state import DocumentState
 from src.builder.main import RefsAndTargetsVerifier
 from src.preparer.main import _convert_to_html
 from src.preparer.ref_footnotes import (
+    extract_footnotes,
     is_ref_footnote,
-    is_target_footnote,
     prepare_refs_in_footnotes,
-    prepare_targets_in_footnotes,
 )
 from src.preparer.refs import (
-    # is_caption,
-    # is_header,
     is_reference,
-    # prepare_ref_targets_in_headers,
-    # prepare_ref_targets_in_captions,
     prepare_references,
 )
 from src.preparer.targets import (
@@ -55,13 +51,13 @@ class TestRefsAndTargetsVerifier:
         html_str = _convert_to_html(fp)
         html_soup = bs4.BeautifulSoup(html_str, "html.parser")
         docstate = DocumentState(fp)
+        docstate.__dict__[TEMP_FOOTNOTES_TABLE] = extract_footnotes(html_soup)
         metadata = DocumentMetadata(fp)
-        headers, captions, target_footnotes = [], [], []
+        headers, captions = [], []
         ref_footnotes, references = [], []
         classifiers = [
             (is_header, headers),
             (is_caption, captions),
-            (is_target_footnote, target_footnotes),
             (is_ref_footnote, ref_footnotes),
             (is_reference, references),
         ]
@@ -75,7 +71,7 @@ class TestRefsAndTargetsVerifier:
         html_soup = prepare_ref_targets_in_captions(
             html_soup, metadata, docstate, captions
         )
-        html_soup = prepare_targets_in_footnotes(html_soup, docstate, target_footnotes)
+        # html_soup = prepare_targets_in_footnotes(html_soup, docstate, target_footnotes)
         html_soup = prepare_refs_in_footnotes(html_soup, docstate, ref_footnotes)
         html_soup = prepare_references(html_soup, metadata, docstate, references)
         return html_soup, docstate

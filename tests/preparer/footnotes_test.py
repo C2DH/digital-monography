@@ -2,10 +2,11 @@ import bs4
 
 from src._common.keys import KeyPath
 from src._common.state import DocumentState
+from src._common.constants import TEMP_FOOTNOTES_TABLE
 from src.preparer.ref_footnotes import (
+    extract_footnotes,
     is_ref_footnote,
     is_target_footnote,
-    prepare_targets_in_footnotes,
     prepare_refs_in_footnotes,
 )
 
@@ -23,6 +24,7 @@ def test_preparing_ref_and_target_from_footnote():
     bs = bs4.BeautifulSoup(sample_html, "html.parser")
     key = KeyPath("sth/file.docx")
     docstate = DocumentState(key)
+    docstate.__dict__[TEMP_FOOTNOTES_TABLE] = extract_footnotes(bs)
     ref_footnotes = []
     target_footnotes = []
     classifiers = [
@@ -33,7 +35,6 @@ def test_preparing_ref_and_target_from_footnote():
         for check_if_meets_criteria, container in classifiers:
             if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
                 container.append(node)
-    bs = prepare_targets_in_footnotes(bs, docstate, target_footnotes)
     bs = prepare_refs_in_footnotes(bs, docstate, ref_footnotes)
     # ref footnote
     sup = bs.find("sup")

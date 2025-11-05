@@ -1,17 +1,17 @@
 import bs4
 import mammoth
 
-from src._common.constants import MAMMOTH_STYLE_MAP, WORK_DIR
+from src._common.constants import MAMMOTH_STYLE_MAP, WORK_DIR, TEMP_FOOTNOTES_TABLE
 from src._common.keys import KeyPath
 from src._common.html2md import convert_to_md
 from src._common.metadata import DocumentMetadata
 from src._common.state import DocumentState
 from src.preparer.conditional_prep import is_paper_only, remove_paper_only
 from src.preparer.ref_footnotes import (
+    extract_footnotes,
     is_ref_footnote,
     is_target_footnote,
     prepare_refs_in_footnotes,
-    prepare_targets_in_footnotes,
 )
 from src.preparer.refs import (
     # is_header,
@@ -44,6 +44,7 @@ class TestConditionalRendering:
         cls.after_soup = bs4.BeautifulSoup(result.value, "html.parser")
         key = cls.fp.relative_to(cls.fp.parent.parent)
         cls.dstate = DocumentState(key)
+        cls.dstate.__dict__[TEMP_FOOTNOTES_TABLE] = extract_footnotes(cls.after_soup)
         cls.metadata = DocumentMetadata(key)
         headers, captions, target_footnotes = [], [], []
         ref_footnotes, references = [], []
@@ -66,9 +67,9 @@ class TestConditionalRendering:
         cls.after_soup = prepare_ref_targets_in_captions(
             cls.after_soup, cls.metadata, cls.dstate, captions
         )
-        cls.after_soup = prepare_targets_in_footnotes(
-            cls.after_soup, cls.dstate, target_footnotes
-        )
+        # cls.after_soup = prepare_targets_in_footnotes(
+        #     cls.after_soup, cls.dstate, target_footnotes
+        # )
         cls.after_soup = prepare_refs_in_footnotes(
             cls.after_soup, cls.dstate, ref_footnotes
         )
