@@ -119,7 +119,9 @@ def build_after_loop(book_path: pathlib.Path) -> dict[str, float]:
     sqs_event = copy.deepcopy(DEFAULT_SQS_EVENT)
     sqs_event["Records"][0]["body"] = slug
     sqs_event["Records"][0]["attributes"]["MessageDeduplicationId"] = slug
+    CHANGING_DIR_STRUCT = """
     wordprocessor_handler(sqs_event, context)
+    """
     builder_handler(sqs_event, context)
     end = time.time()
     return {"builder": end - start}
