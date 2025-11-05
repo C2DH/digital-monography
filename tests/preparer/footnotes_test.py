@@ -2,7 +2,7 @@ import bs4
 
 from src._common.keys import KeyPath
 from src._common.state import DocumentState
-from src.preparer.footnotes import (
+from src.preparer.ref_footnotes import (
     is_ref_footnote,
     is_target_footnote,
     prepare_targets_in_footnotes,

@@ -41,6 +41,7 @@ class DocumentState:
         # NOTE: for __dict__ can only have sqlmodel.SQLModel-s,
         # but that might change in the future once we add DynamoDB into the mix.
         self.__dict__: dict[str, list[sqlmodel.SQLModel]] = {}
+        self.temp: dict[str, t.Any] = {}
         if key is not None:
             key = KeyPath(key)
             self.add(

@@ -7,7 +7,7 @@ from src._common.html2md import convert_to_md
 from src._common.metadata import DocumentMetadata
 from src._common.state import DocumentState
 from src.preparer.conditional_prep import is_paper_only, remove_paper_only
-from src.preparer.footnotes import (
+from src.preparer.ref_footnotes import (
     is_ref_footnote,
     is_target_footnote,
     prepare_refs_in_footnotes,

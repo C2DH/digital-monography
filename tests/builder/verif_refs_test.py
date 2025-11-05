@@ -6,7 +6,7 @@ from src._common.metadata import DocumentMetadata
 from src._common.state import DocumentState
 from src.builder.main import RefsAndTargetsVerifier
 from src.preparer.main import _convert_to_html
-from src.preparer.footnotes import (
+from src.preparer.ref_footnotes import (
     is_ref_footnote,
     is_target_footnote,
     prepare_refs_in_footnotes,

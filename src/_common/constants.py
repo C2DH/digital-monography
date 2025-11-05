@@ -86,7 +86,8 @@ CLS_STATE_TABLE_JSONDATA = "dgt-mon-hidden-state"
 ATTRIB_METADATA_UUID = "dgt-mon-metadata-uuid"
 # docx constants
 AUTONUMBER_PLACEHOLDER = "[auto]"
-REF_PREFIX = "f" # prefix to add before ref id in hrefs, e.g. f-01a-bookmarktofig so that we don't start with a number
+REF_PREFIX = "f"  # prefix to add before ref id in hrefs, e.g. f-01a-bookmarktofig so that we don't start with a number
+TEMP_FOOTNOTES_TABLE = "tmpf"
 # caption types
 CAPTION_ITEM_TYPE_FIGURE = "fig"
 CAPTION_ITEM_TYPE_TABLE = "tbl"

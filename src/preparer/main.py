@@ -32,6 +32,7 @@ from src._common.constants import (
     ASSETS_DIR,
     JB_DIR,
     DEFAULT_SFS_DIR,
+    TEMP_FOOTNOTES_TABLE,
 )
 from src._common.metadata import DocumentMetadata, AssetDatapoint
 from src._common.models import (
@@ -56,7 +57,7 @@ from prep_frontmatter import prepare_frontmatter
 from metadata_extraction import prepare_metadata_tables
 from remove_empty_tables import remove_empty_tables
 from replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
-from references import (
+from refs import (
     # prepare_ref_targets_in_headers,
     # prepare_ref_targets_in_captions,
     prepare_references,
@@ -64,11 +65,13 @@ from references import (
     # is_caption,
     is_reference,
 )
-from footnotes import (
+from ref_footnotes import (
     is_ref_footnote,
-    is_target_footnote,
+    # is_target_footnote,
+    extract_footnotes,
     prepare_refs_in_footnotes,
-    prepare_targets_in_footnotes,
+    # prepare_targets_in_footnotes,
+    # prepare_targets_in_footnotes_2,
 )
 from targets import (
     is_header,
@@ -175,11 +178,15 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_soup, frontmatter = prepare_frontmatter(html_soup, key)
         html_soups = split_docx_into_multiple_chapters(html_soup, frontmatter)
         prepend_htmls_with_frontmatter(html_soups, frontmatter)
+        footnotes = extract_footnotes(html_soup)
         for html_soup in html_soups:
             chapter: Chapter = html_soup.attrs.get("chapter")
             key = chapter.jb_key
             _create_domain_dirs(key)
             dstate = DocumentState(key)  # TODO: not key, use val from frontmatter
+            dstate.__dict__[TEMP_FOOTNOTES_TABLE] = (
+                footnotes  # TODO: improve syntax, del later
+            )
             # print("chapter.bookmark", chapter.bookmark)
             # print("chapter.book_slug", chapter.book_slug)
             # print("chapter.chapter_slug", chapter.chapter_slug)
@@ -195,6 +202,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
             html_soup, metadata, dstate, tables = prepare_docx(
                 html_soup, metadata, dstate
             )
+            del dstate.__dict__[TEMP_FOOTNOTES_TABLE]
             html_soup = hide_metadata_in_html(html_soup, metadata, dstate)  # last step
             html_soup_str = str(html_soup)
             # IMPORTANT NOTE: other services depend on html produced at this stage, make sure that:
@@ -395,7 +403,9 @@ def _create_domain_dirs(key: KeyPath) -> None:
 
 
 def prepare_docx(
-    html_soup: bs4.BeautifulSoup, metadata: DocumentMetadata, dstate: DocumentState
+    html_soup: bs4.BeautifulSoup,
+    metadata: DocumentMetadata,
+    dstate: DocumentState,
 ) -> tuple[bs4.BeautifulSoup, DocumentMetadata, DocumentState, list[bs4.element.Tag]]:
     # TODO: pass bs instead of str
     images_with_alttxt = []
@@ -404,7 +414,7 @@ def prepare_docx(
     captions = []
     citations = []
     ref_footnotes = []
-    target_footnotes = []
+    # target_footnotes = []
     references = []
     paper_only = []
     metadata.char_count, metadata.word_count = _get_char_and_word_count(html_soup)
@@ -416,7 +426,7 @@ def prepare_docx(
         (is_caption, captions),
         (is_reference, references),
         (is_ref_footnote, ref_footnotes),
-        (is_target_footnote, target_footnotes),
+        # (is_target_footnote, target_footnotes),
         (is_paper_only, paper_only),
         # is_ref_footnote, is_target_footnote, prepare_refs_in_footnotes, prepare_targets_in_footnotes
     ]
@@ -433,7 +443,7 @@ def prepare_docx(
     html_soup = add_bibliography(html_soup, bibliography)
     html_soup = prepare_ref_targets_in_headers(html_soup, metadata, dstate, headers)
     html_soup = prepare_ref_targets_in_captions(html_soup, metadata, dstate, captions)
-    html_soup = prepare_targets_in_footnotes(html_soup, dstate, target_footnotes)
+    # html_soup = prepare_targets_in_footnotes(html_soup, dstate, target_footnotes)
     # html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, dstate, footnotes)
     html_soup = prepare_refs_in_footnotes(html_soup, dstate, ref_footnotes)
     # with open(f"/tmp/efs/output_{dstate.key.name}.html", "w", encoding="utf-8") as f:

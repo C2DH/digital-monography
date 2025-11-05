@@ -5,6 +5,7 @@ from .assets import Asset, AssetService  # noqa
 from .citation_groups import CitationGroup
 from .citation_items import CitationItem
 from .chapters import Chapter, ChapterService  # noqa
+from .footnotes import Footnote  # noqa
 from .files import File, FileService  # noqa
 from .headings import Heading, HeadingService  # noqa
 from .doc_metadata import DocumentMetadata
@@ -22,6 +23,7 @@ __all__ = [
     "CitationItem",
     "Chapter",
     "File",
+    "Footnote",
     "Heading",
     "DocumentMetadata",
     "Ref",
@@ -36,6 +38,7 @@ tables_to_models: dict[str, ModelMeta] = {
     "citation_items": CitationItem,
     "chapters": Chapter,
     "files": File,
+    "footnotes": Footnote,
     "headings": Heading,
     "document_metadata": DocumentMetadata,
     "refs": Ref,
