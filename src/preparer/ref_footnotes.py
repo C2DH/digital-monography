@@ -46,6 +46,10 @@ def extract_footnotes(
         <!-- ... -->
     </ol>
     ```
+    This should be transformed by to
+    ```md
+    [^footnote-ref-fn-01-a-1]:  Footnote text.
+    ```
     Sadly, when we split a docx file, all footnotes get placed in the last
     chapter. Run this function before splitting, then when iterating each chapter,
     use the result of this function to read appropriate footnote target.
@@ -69,45 +73,6 @@ def extract_footnotes(
     return res
 
 
-def prepare_targets_in_footnotes(
-    html_soup: bs4.BeautifulSoup,
-    docstate: DocumentState,
-    footnotes: list[bs4.Tag],
-) -> bs4.BeautifulSoup:
-    """
-    mammoth.convert_to_html function transform MS Word target footnotes to html:
-    ```html
-    <ol>
-        <li id="footnote-fn-01-a-1">
-            <p>Footnote text. <a href="#footnote-ref-fn-01-a-1">↑</a></p>
-        </li>
-        <!-- ... -->
-    </ol>
-    ```
-    Sadly, when we split a docx file, all footnotes get placed in the last
-    chapter. Run this function before splitting, then when iterating each chapter,
-    read appropriate footnote target from the document state.
-
-    This should be transformed by to
-    ```md
-    [^footnote-ref-fn-01-a-1]:  Footnote text.
-    ```
-    """
-    for li_tag in footnotes:
-        assert is_target_footnote(li_tag)  # TODO: remove after development
-        li_tag: bs4.element.Tag
-        footnote = FootnoteTransformer(docstate.key)
-        footnote.from_target(li_tag["id"])
-        li_tag["id"] = footnote.id
-        for tag in li_tag.descendants:
-            if isinstance(tag, bs4.Tag) and tag.attrs.get("href", "").startswith(
-                "#footnote-ref-"
-            ):
-                tag["href"] = footnote.href
-                break
-    return html_soup
-
-
 def prepare_refs_in_footnotes(
     html_soup: bs4.BeautifulSoup,
     docstate: DocumentState,
@@ -124,6 +89,9 @@ def prepare_refs_in_footnotes(
     ```md
     ...[^footnote-$ID].
     ```
+
+    In addition, find an extracted target footnote and place it at the end of the html file
+    with updated "id" and "href".
     """
     prefix_len = len("footnote-ref-")
     footnote_targets = []
