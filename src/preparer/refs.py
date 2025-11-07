@@ -632,7 +632,7 @@ def _get_fn_and_fragment_from_href(href: str) -> tuple[str, str]:
         return "", fragment
     for scheme in ["tel:", "mailto:", "sms:", "javascript:"]:
         if path.startswith(scheme):
-            return "", fragment, False
+            return "", fragment
     if "/" not in path:
         return path, fragment
     filename = ""
