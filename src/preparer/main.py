@@ -57,14 +57,16 @@ from prep_frontmatter import prepare_frontmatter
 from metadata_extraction import prepare_metadata_tables
 from remove_empty_tables import remove_empty_tables
 from replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
-from refs import (
-    # prepare_ref_targets_in_headers,
-    # prepare_ref_targets_in_captions,
-    prepare_references,
-    # is_header,
-    # is_caption,
-    is_reference,
-)
+
+# from refs import (
+# prepare_ref_targets_in_headers,
+# prepare_ref_targets_in_captions,
+# prepare_references,
+# is_header,
+# is_caption,
+# is_reference,
+# )
+from prep_refs import is_reference, prepare_references
 from ref_footnotes import (
     is_ref_footnote,
     # is_target_footnote,

@@ -5,7 +5,7 @@ from src._common.models import Substitution, Target
 from src._common.metadata import DocumentMetadata
 from src._common.keys import KeyPath
 from src._common.state import DocumentState
-from src.preparer.references import (
+from src.preparer.prep_refs import (
     _get_fn_and_fragment_from_href,
     _is_internal,
 )
