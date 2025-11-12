@@ -1,9 +1,11 @@
 import bs4
 import docutils.nodes
+import xxhash
 import uuid
 
 from src._common.constants import (
     CLS_PAPER_ONLY,
+    REF_STRING_PREFIX,
     REF_PREFIX,
 )
 from src._common.metadata import (
@@ -37,6 +39,8 @@ def prepare_references(
         1) registers references in the docstate,
         2) modifies the HTML by adding placeholders for substitutions
            to be handled in later stages, when we have access to all documents.
+
+    Note this replaces the whole string of the <a> tag with a placeholder.
     """
     # for chpt in docstate.__dict__.get("chapters"):
     #     print("chapter in docstate", chpt)
@@ -81,8 +85,10 @@ def prepare_references(
         unique_id = docutils.nodes.make_id(
             f"{REF_PREFIX}-{docstate.key.stem}-{prev_href}"
         )
-        a_tag.string = r"{{ " + ref_pk + r" }}"
+        # THE_MOST_IMPORTANT_2_LINES = """
+        a_tag.string = r"{{ REF_" + REF_STRING_PREFIX + ref_pk + r" }}"  # placeholder
         a_tag["href"] = ref_pk
+        # """
         # print(
         #     "a_tag > after string replacement", a_tag
         # )  # <a class="dgt-mon-paper-only" href="#f-05-conditional-rendering-figforpaper">link to figForPaper bookmark</a>
@@ -101,7 +107,8 @@ def prepare_references(
             loc=docstate.key,
             target_id="",
             fn=docstate.key.name if docstate.key else "",
-            text=r"{{ " + ref_pk + r" }}",
+            text=a_tag.string,
+            # text=r"{{ " + ref_pk + r" }}",
             href=ref_pk,
             prev_string=prev_string,
             prev_href=prev_href,
@@ -143,6 +150,7 @@ def prepare_references(
                 file_count=None,  # Prev this was metadata.get_chapter_number(link.path) if link.path and link.is_cross_file_reference() else metadata.get_chapter_number()
                 prefix="",
                 prev_item_num=None,
+                hash=_hash_html(a_tag),
             )
             # print("S>", data.model_dump())
             docstate.add(data)
@@ -241,3 +249,13 @@ def _is_internal(href: str, filename: str, fragment: str) -> bool:
     if fragment and not filename:
         return len(href) == len(fragment) + 1  # href is just "#fragment"
     return filename != "" and fragment != ""
+
+
+def _hash_html(html_elem: str | bs4.PageElement, seed: int = 0) -> str:
+    """
+    Returns 16-char hex lowercase string using 64-bit arithmetic operation.
+    For example, for string "<h2>Heading</h2>" it returns "35110f86aeaa2f35".
+    """
+    if isinstance(html_elem, bs4.PageElement):
+        html_elem = str(html_elem)
+    return xxhash.xxh64(html_elem, seed=seed).hexdigest()
