@@ -6,11 +6,11 @@ import typing as t
 
 try:
     from keys import KeyPath
-    from models import DocumentMetadata, tables_to_models
+    from models import Chapter, DocumentMetadata, tables_to_models
     from models._base import MySQLModel
 except (ImportError, ModuleNotFoundError):
     from .keys import KeyPath  # type: ignore
-    from .models import DocumentMetadata, tables_to_models  # type: ignore
+    from .models import Chapter, DocumentMetadata, tables_to_models  # type: ignore
     from .models._base import MySQLModel  # type: ignore
 
 
@@ -192,28 +192,33 @@ def read_book_metadata(key: KeyPath) -> dict[str, DocumentState]:
 
 class BookState(collections.abc.MutableMapping):
     """
-    Collection of DocumentState objects.
-
-    Inter-microservice state describing a single book
+    Collection of DocumentState data.
+    It is meant to act as an inter-microservice state describing a single book
     consisting of one or more docx or ipynb documents.
+
+    The usage pattern is not yet fully understood, so I made 2 alternative
+    data structures to use:
+    * hashmap (self.docstates) and
+    * records (self.all_records).
+
     TODO: consider an adapter over JupyterBook config and ToC.
     """
 
     def __init__(self) -> None:
-        self.docstates: dict[str, DocumentState] = {}
+        self.docstates: dict[KeyPath, DocumentState] = {}
         self.all_records: DocumentState | None = None
 
-    def __contains__(self, name: str) -> bool:
-        return name in self.docstates
+    # def __contains__(self, name: str) -> bool:
+    #     return name in self.docstates
 
-    def __getitem__(self, name: str) -> DocumentState:
-        return self.docstates[name]
+    # def __getitem__(self, name: str) -> DocumentState:
+    #     return self.docstates[name]
 
-    def __setitem__(self, name: str, value: DocumentState):
-        self.docstates[name] = value
+    # def __setitem__(self, name: str, value: DocumentState):
+    #     self.docstates[name] = value
 
-    def __delitem__(self, name: str):
-        del self.docstates[name]
+    # def __delitem__(self, name: str):
+    #     del self.docstates[name]
 
     def __iter__(self):
         return iter(self.docstates)
@@ -224,9 +229,9 @@ class BookState(collections.abc.MutableMapping):
     def load_from_file(self, key: KeyPath) -> None:
         """
         Read JSON state stored in a file system, i.e.
-        * from Elastic File System (EFS) in AWS and
-        * from /tmp directory during local development,
-        and update the docstates with all DocumentState objects for a specific book.
+        * from Elastic File System (EFS) in AWS, or
+        * from /tmp directory during local development.
+        Then, update the docstates with all DocumentState objects for a specific book.
         Creates new DocumentState object that contains all the records.
         """
         for meta_file in key.efs_state_dir.glob("**/*.json"):
@@ -234,7 +239,13 @@ class BookState(collections.abc.MutableMapping):
             with meta_file.open("r") as f:
                 state = DocumentState(meta_file)
                 state.from_dict(json.load(f))
-                self.docstates[meta_file.stem] = state
+                assert (
+                    len(state["chapters"]) == 1
+                ), "Each docstate should have exactly 1 chapter."
+                chapter: Chapter = state.first("chapters")
+                assert isinstance(chapter.jb_key, KeyPath)
+                self.docstates[chapter.jb_key] = state
+                # self.docstates[meta_file.stem] = state
 
     def merge_docstate(self, key: KeyPath) -> DocumentState:
         """
