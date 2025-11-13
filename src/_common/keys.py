@@ -2,9 +2,23 @@ import pathlib
 from functools import cached_property
 
 try:
-    from constants import DEFAULT_SFS_DIR, JB_DIR, PAPER_DIR, STATE_DIR, INPUT_DIR
+    from constants import (
+        DEFAULT_SFS_DIR,
+        CHAPTERS_DIR,
+        JB_DIR,
+        PAPER_DIR,
+        STATE_DIR,
+        INPUT_DIR,
+    )
 except (ImportError, ModuleNotFoundError):
-    from .constants import DEFAULT_SFS_DIR, JB_DIR, PAPER_DIR, STATE_DIR, INPUT_DIR  # type: ignore
+    from .constants import (
+        DEFAULT_SFS_DIR,
+        CHAPTERS_DIR,
+        JB_DIR,
+        PAPER_DIR,
+        STATE_DIR,
+        INPUT_DIR,
+    )  # type: ignore
 
 
 class InvalidKey(Exception):
@@ -16,6 +30,7 @@ domain_dirs = [
     PAPER_DIR,
     STATE_DIR,
     INPUT_DIR,
+    CHAPTERS_DIR,
 ]
 
 
@@ -41,7 +56,7 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
         - `path` is the relative path to a file within a book (e.g. chapter1.md, assets/image.png)
     """
 
-    domain_dirs = [INPUT_DIR, JB_DIR, PAPER_DIR, STATE_DIR]
+    domain_dirs = [INPUT_DIR, JB_DIR, PAPER_DIR, STATE_DIR, CHAPTERS_DIR]
 
     def __new__(cls, *pathsegments):
         return super().__new__(cls, *pathsegments)
@@ -104,6 +119,11 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
         """Returns /mnt/efs/_INPUT/my-slug"""
         return self.abs_root / INPUT_DIR / self.slug
 
+    @cached_property
+    def efs_chapters_dir(self) -> "KeyPath":
+        """Returns /mnt/efs/_CHAPTERS/my-slug"""
+        return self.abs_root / CHAPTERS_DIR / self.slug
+
     # paths
 
     @cached_property
@@ -127,6 +147,11 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
     def efs_input_path(self) -> "KeyPath":
         """Returns /mnt/efs/_INPUT/my-slug/path/to/file.txt"""
         return self.efs_input_dir / self.github_path
+
+    @cached_property
+    def efs_chapters_path(self) -> "KeyPath":
+        """Returns /mnt/efs/_CHAPTERS/my-slug/path/to/file.txt"""
+        return self.efs_chapters_dir / self.github_path
 
     # legacy
 

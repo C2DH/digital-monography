@@ -47,6 +47,7 @@ JB_DIR = "_JB"
 PAPER_DIR = "_PAPER"
 STATE_DIR = "_STATE"
 INPUT_DIR = "_INPUT"
+CHAPTERS_DIR = "_CHAPTERS"
 FAKERS_INPUT_DIR = "_fakers_input"
 ASSETS_DIR = "assets"
 # database

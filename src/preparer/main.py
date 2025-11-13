@@ -132,6 +132,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     if _is_IPYNB(key) and _is_deletion(event_name):
         _remove_fileobj(key)
         _remove_file_from_efs_domain_dirs(key)
+        _remove_processed_ipynb_from_efs_chapters(key)
         msg = GithubTriggerMsg(key=key, action=GithubActionEnum.DELETE_OBJECT)
         _enqueue_to_github(msg)
         return {"statusCode": 200, "body": ""}
@@ -141,7 +142,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         # _remove_metadata_from_db(key)  # TODO: dstate
         _remove_state_from_efs(key)
         _remove_state_from_db(key)
-        # _remove_processed_html_from_efs(key)
+        _remove_preprocessed_html_from_efs(key)
         _remove_html_from_s3(key)
         # _remove_processed_md_from_efs(key)
         _remove_file_from_efs_domain_dirs(key.with_suffix(".md"))
@@ -168,6 +169,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         ipynb: nbformat.NotebookNode = _unmarshall_json(key.efs_input_path)
         tags_to_myst_crossref_targets(ipynb)
         _write_processed_ipynb_to_efs_jb(ipynb, key)
+        _write_processed_ipynb_to_efs_chapters(ipynb, key)
         msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
         _enqueue_to_github(msg)
         # _put_to_archive_s3(key)
@@ -217,7 +219,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
             # _write_metadata_to_db(metadata, dstate, key)  # TODO: dstate
             _write_state_to_efs(dstate, key)
             _write_state_to_db(dstate, key)
-            # _write_processed_html_to_efs(html_soup_str, key)
+            _write_preprocessed_html_to_efs(html_soup_str, key)
             _put_html_to_s3(html_soup_str, key)
             MAYBE_HTML2MD_IN_BUILDER_AFTER_ALL_SUBSITUTIONS = """
             md = _convert_to_md(key, html_soup, dstate)
@@ -662,24 +664,24 @@ def _enqueue_to_github(msg: GithubTriggerMsg) -> None:
 #         raise
 
 
-def _remove_processed_html_from_efs(key: KeyPath) -> None:
+def _remove_preprocessed_html_from_efs(key: KeyPath) -> None:
     try:
-        new_efs_filepath = key.efs_ir_path.with_suffix(".html")
+        new_efs_filepath = key.efs_chapters_path.with_suffix(".html")
         new_efs_filepath.unlink(missing_ok=True)
         logger.info(f"{new_efs_filepath} was removed from EFS.")
     except Exception as e:
-        logger.exception(f"Deleting html from /efs failed. Error: {repr(e)}")
+        logger.exception(f"Deleting pre-processed html from /efs failed. Error: {repr(e)}")
         raise
 
 
-def _write_processed_html_to_efs(html: str, key: KeyPath) -> None:
+def _write_preprocessed_html_to_efs(html: str, key: KeyPath) -> None:
     try:
-        new_efs_filepath = key.efs_ir_path.with_suffix(".html")
+        new_efs_filepath = key.efs_chapters_path.with_suffix(".html")
         new_efs_filepath.parent.mkdir(exist_ok=True)
         with open(new_efs_filepath, "w") as f:
             f.write(html)
     except Exception as e:
-        logger.exception(f"Writing html to /efs failed. Error: {repr(e)}")
+        logger.exception(f"Writing pre-processed html to /efs failed. Error: {repr(e)}")
         raise
 
 
@@ -884,8 +886,29 @@ def _write_state_to_db(dstate: DocumentState, key: KeyPath) -> None:
 def _write_processed_ipynb_to_efs_jb(
     ipynb: nbformat.NotebookNode, key: KeyPath
 ) -> None:
+    # NOTE: this writes directly to _JB, which assumes no further processing is needed
     if key.parts[-2] != ".ipynb_checkpoints":
         nbformat.write(ipynb, key.efs_jb_path)
+
+
+def _write_processed_ipynb_to_efs_chapters(
+    ipynb: nbformat.NotebookNode, key: KeyPath
+) -> None:
+    # NOTE: this writes to _CHAPTERS for eventual processing
+    if key.parts[-2] != ".ipynb_checkpoints":
+        nbformat.write(ipynb, key.efs_chapters_path)
+
+
+def _remove_processed_ipynb_from_efs_chapters(key) -> None:
+    try:
+        # fp = key.efs_slug_metadata_path.parent / key.github_path.with_suffix(".json")
+        fp.unlink(missing_ok=True)  # remove file if it exists
+        logger.info(f"Pre-processed ipynb was removed from {str(fp)}")
+    except Exception as e:
+        logger.exception(
+            f"Removing pre-processed ipynb from /efs directory failed. Error: {repr(e)}"
+        )
+        raise
 
 
 def _unmarshall_json(key: KeyPath) -> nbformat.NotebookNode:
