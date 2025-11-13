@@ -1,7 +1,7 @@
 import pytest
 
 
-from src._common.constants import JB_DIR, PAPER_DIR, WORK_DIR
+from src._common.constants import JB_DIR, PAPER_DIR, INPUT_DIR
 from src._common.state import DocumentState
 from src._common.html2md import convert_to_md
 from src._common.models import Chapter, ChapterService
@@ -18,7 +18,7 @@ class TestFrontmatterPreparationAndGenChaptersFromToC:
     @classmethod
     def setup_class(cls):
         fp = KeyPath("tests") / "_fixtures" / SLUG / "frontmatter_extraction.docx"
-        cls.key = KeyPath("/tmp/efs") / WORK_DIR / SLUG / fp.name
+        cls.key = KeyPath("/tmp/efs") / INPUT_DIR / SLUG / fp.name
         html_str = _convert_to_html(fp)
         html_soup = convert_to_bs(html_str)
         # cls.html_soup = bs4.BeautifulSoup(html_str, "html.parser")
@@ -174,7 +174,7 @@ class TestFrontmatterPreparationAndGenChapterFromKey:
     @classmethod
     def setup_class(cls):
         fp = KeyPath("tests") / "_fixtures" / SLUG / "index.docx"
-        cls.key = KeyPath("/tmp/efs") / WORK_DIR / SLUG / fp.name
+        cls.key = KeyPath("/tmp/efs") / INPUT_DIR / SLUG / fp.name
         html_str = _convert_to_html(fp)
         html_soup = convert_to_bs(html_str)
         cls.html_soup, cls.frontmatter = prepare_frontmatter(html_soup, cls.key)
@@ -198,7 +198,7 @@ class TestFrontmatterPreparationAndGenChapterFromKey:
                 "01_chapter_slug",
                 "1",
                 "01_chapter_slug",
-                KeyPath(f"/tmp/efs/{WORK_DIR}/{SLUG}/01_chapter_slug.docx"),
+                KeyPath(f"/tmp/efs/{INPUT_DIR}/{SLUG}/01_chapter_slug.docx"),
                 KeyPath(f"/tmp/efs/{JB_DIR}/{SLUG}/01_chapter_slug.md"),
                 KeyPath(f"/tmp/efs/{PAPER_DIR}/{SLUG}/01_chapter_slug.docx"),
             )

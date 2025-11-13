@@ -2,9 +2,9 @@ import pathlib
 from functools import cached_property
 
 try:
-    from constants import DEFAULT_SFS_DIR, JB_DIR, PAPER_DIR, STATE_DIR, WORK_DIR
+    from constants import DEFAULT_SFS_DIR, JB_DIR, PAPER_DIR, STATE_DIR, INPUT_DIR
 except (ImportError, ModuleNotFoundError):
-    from .constants import DEFAULT_SFS_DIR, JB_DIR, PAPER_DIR, STATE_DIR, WORK_DIR  # type: ignore
+    from .constants import DEFAULT_SFS_DIR, JB_DIR, PAPER_DIR, STATE_DIR, INPUT_DIR  # type: ignore
 
 
 class InvalidKey(Exception):
@@ -15,7 +15,7 @@ domain_dirs = [
     JB_DIR,
     PAPER_DIR,
     STATE_DIR,
-    WORK_DIR,
+    INPUT_DIR,
 ]
 
 
@@ -36,12 +36,12 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
         `abs_root / domain / slug / path`
     where
         - `abs_root` is the absolute root directory, e.g. /mnt/efs or /tmp/efs
-        - `domain` is one of the domain directories (e.g. _JB, _PAPER, _STATE, _WORK)
+        - `domain` is one of the domain directories (e.g. _JB, _PAPER, _STATE, _INPUT)
         - `slug` is the unique book identifier
         - `path` is the relative path to a file within a book (e.g. chapter1.md, assets/image.png)
     """
 
-    domain_dirs = [WORK_DIR, JB_DIR, PAPER_DIR, STATE_DIR]
+    domain_dirs = [INPUT_DIR, JB_DIR, PAPER_DIR, STATE_DIR]
 
     def __new__(cls, *pathsegments):
         return super().__new__(cls, *pathsegments)
@@ -100,9 +100,9 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
         return self.abs_root / STATE_DIR / self.slug
 
     @cached_property
-    def efs_work_dir(self) -> "KeyPath":
-        """Returns /mnt/efs/_WORK/my-slug"""
-        return self.abs_root / WORK_DIR / self.slug
+    def efs_input_dir(self) -> "KeyPath":
+        """Returns /mnt/efs/_INPUT/my-slug"""
+        return self.abs_root / INPUT_DIR / self.slug
 
     # paths
 
@@ -124,26 +124,26 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
         return self.efs_state_dir / self.github_path
 
     @cached_property
-    def efs_work_path(self) -> "KeyPath":
-        """Returns /mnt/efs/_WORK/my-slug/path/to/file.txt"""
-        return self.efs_work_dir / self.github_path
+    def efs_input_path(self) -> "KeyPath":
+        """Returns /mnt/efs/_INPUT/my-slug/path/to/file.txt"""
+        return self.efs_input_dir / self.github_path
 
     # legacy
 
     @property
     def efs_filepath(self) -> "KeyPath":
-        """Returns /mnt/efs/_WORK/my-slug/path/to/file.txt"""
+        """Returns /mnt/efs/_INPUT/my-slug/path/to/file.txt"""
         # """Returns /mnt/efs/my-slug/path/to/file.txt"""
         # TODO: remove, illegal
         # return self.abs_root / self
-        return self.efs_work_path
+        return self.efs_input_path
 
     @cached_property
     def efs_slug_dir(self) -> "KeyPath":
-        """Returns /mnt/efs/_WORK/my-slug"""
+        """Returns /mnt/efs/_INPUT/my-slug"""
         # """Returns /mnt/efs/my-slug"""
         # TODO: remove, illegal
-        return self.efs_work_dir
+        return self.efs_input_dir
         # return self.abs_root / self.slug
 
     @cached_property

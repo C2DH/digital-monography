@@ -165,7 +165,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         src = _get_source_bucket(event)
         _download_fileobj(src, key)
         _create_domain_dirs(key)
-        ipynb: nbformat.NotebookNode = _unmarshall_json(key.efs_work_path)
+        ipynb: nbformat.NotebookNode = _unmarshall_json(key.efs_input_path)
         tags_to_myst_crossref_targets(ipynb)
         _write_processed_ipynb_to_efs_jb(ipynb, key)
         msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
@@ -175,7 +175,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     if _is_DOCX(key) and _is_update(event_name):
         src = _get_source_bucket(event)
         _download_fileobj(src, key)
-        html_str = _convert_to_html(key.efs_work_path)
+        html_str = _convert_to_html(key.efs_input_path)
         html_soup = convert_to_bs(html_str)
         html_soup, frontmatter = prepare_frontmatter(html_soup, key)
         html_soups = split_docx_into_multiple_chapters(html_soup, frontmatter)
@@ -329,7 +329,7 @@ def _download_fileobj(src: str, key: KeyPath) -> None:
     """
     try:
         # key = key.efs_filepath
-        key = key.efs_work_path
+        key = key.efs_input_path
         # NOTE: this commented out code shouldn't be necassary.
         # It was just a temp to fix my error when I uploaded the "assets" file instead of dir.
         key.parent.mkdir(parents=True, exist_ok=True)
@@ -364,7 +364,7 @@ def _remove_fileobj(key: KeyPath) -> None:
     """
     try:
         # key = key.efs_filepath
-        key = key.efs_work_path
+        key = key.efs_input_path
         if key.exists():
             logger.info(f"Stat before removal: {key.stat()}")
         key.unlink(missing_ok=True)  # remove file if it exists
@@ -688,7 +688,7 @@ def _remove_file_from_efs_domain_dirs(key: KeyPath) -> None:
         key.efs_jb_path.unlink(missing_ok=True)
         key.efs_paper_path.unlink(missing_ok=True)
         key.efs_state_path.unlink(missing_ok=True)
-        key.efs_work_path.unlink(missing_ok=True)
+        key.efs_input_path.unlink(missing_ok=True)
         logger.info(f"{str(key.efs_jb_path)} was removed from EFS.")
     except Exception as e:
         logger.exception(
@@ -901,9 +901,9 @@ def _copy_other_files_to_efs_jb(key: KeyPath) -> None:
     try:
         if not key.efs_jb_path.parent.exists():
             key.efs_jb_path.parent.mkdir(parents=True)
-        shutil.copy2(key.efs_work_path, key.efs_jb_path)
+        shutil.copy2(key.efs_input_path, key.efs_jb_path)
         logger.info(
-            f"File {str(key.efs_work_path)} was copied to {str(key.efs_jb_path)}"
+            f"File {str(key.efs_input_path)} was copied to {str(key.efs_jb_path)}"
         )
     except Exception as e:
         logger.exception(

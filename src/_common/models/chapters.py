@@ -104,7 +104,7 @@ class ChapterService:
             chapter["book_slug"] = fm_key.slug
             chapter["prefix"] = chapter["prefix"] if "prefix" in chapter else str(idx)
             chapter["loc"] = fm_key
-            chapter["fm_key"] = fm_key.efs_work_path
+            chapter["fm_key"] = fm_key.efs_input_path
             chapter["chapter_slug"] = _get_chapter_slug_from_toc(idx, chapter)
             chapter["jb_key"] = _get_jb_key(chapter)
             chapter["docx_key"] = _get_docx_key(chapter)
@@ -120,7 +120,7 @@ class ChapterService:
         chapter["prefix"] = ChapterService.get_number_from_filename(key.stem)
         chapter["fn"] = key.stem
         chapter["loc"] = key
-        chapter["fm_key"] = key.efs_work_path
+        chapter["fm_key"] = key.efs_input_path
         chapter["jb_key"] = _get_jb_key(chapter)
         chapter["docx_key"] = _get_docx_key(chapter)
         return Chapter(**chapter)
@@ -143,7 +143,7 @@ class ChapterService:
             "prefix": str(idx),
             "fn": chapter_slug,
             "loc": frontmatter_key,
-            "fm_key": frontmatter_key.efs_work_path,
+            "fm_key": frontmatter_key.efs_input_path,
         }
         chapter["jb_key"] = _get_jb_key(chapter)
         chapter["docx_key"] = _get_docx_key(chapter)

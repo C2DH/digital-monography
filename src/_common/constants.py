@@ -46,7 +46,7 @@ else:
 JB_DIR = "_JB"
 PAPER_DIR = "_PAPER"
 STATE_DIR = "_STATE"
-WORK_DIR = "_WORK"
+INPUT_DIR = "_INPUT"
 FAKERS_INPUT_DIR = "_fakers_input"
 ASSETS_DIR = "assets"
 # database
