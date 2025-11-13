@@ -219,9 +219,11 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
             _write_state_to_db(dstate, key)
             # _write_processed_html_to_efs(html_soup_str, key)
             _put_html_to_s3(html_soup_str, key)
+            MAYBE_HTML2MD_IN_BUILDER_AFTER_ALL_SUBSITUTIONS = """
             md = _convert_to_md(key, html_soup, dstate)
             _write_processed_md_to_efs_jb(md, key)
             _put_md_to_s3(md, key.s3_key.with_suffix(".md"))
+            """
             # TODO: send to GitHub after all processing is done, just before the myst build step
             msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
             _enqueue_to_github(msg)
