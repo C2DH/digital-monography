@@ -165,7 +165,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         src = _get_source_bucket(event)
         _download_fileobj(src, key)
         _create_domain_dirs(key)
-        ipynb: nbformat.NotebookNode = _unmarshall_json(key.efs_filepath)
+        ipynb: nbformat.NotebookNode = _unmarshall_json(key.efs_work_path)
         tags_to_myst_crossref_targets(ipynb)
         _write_processed_ipynb_to_efs_jb(ipynb, key)
         msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
@@ -175,7 +175,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     if _is_DOCX(key) and _is_update(event_name):
         src = _get_source_bucket(event)
         _download_fileobj(src, key)
-        html_str = _convert_to_html(key.efs_filepath)
+        html_str = _convert_to_html(key.efs_work_path)
         html_soup = convert_to_bs(html_str)
         html_soup, frontmatter = prepare_frontmatter(html_soup, key)
         html_soups = split_docx_into_multiple_chapters(html_soup, frontmatter)
@@ -328,7 +328,8 @@ def _download_fileobj(src: str, key: KeyPath) -> None:
     https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/download_fileobj.html
     """
     try:
-        key = key.efs_filepath
+        # key = key.efs_filepath
+        key = key.efs_work_path
         # NOTE: this commented out code shouldn't be necassary.
         # It was just a temp to fix my error when I uploaded the "assets" file instead of dir.
         key.parent.mkdir(parents=True, exist_ok=True)
@@ -362,7 +363,8 @@ def _remove_fileobj(key: KeyPath) -> None:
     Remove a file from Elastic File System (EFS).
     """
     try:
-        key = key.efs_filepath
+        # key = key.efs_filepath
+        key = key.efs_work_path
         if key.exists():
             logger.info(f"Stat before removal: {key.stat()}")
         key.unlink(missing_ok=True)  # remove file if it exists
@@ -661,10 +663,8 @@ def _enqueue_to_github(msg: GithubTriggerMsg) -> None:
 
 
 def _remove_processed_html_from_efs(key: KeyPath) -> None:
-    # TODO: consider if _write_processed_html_to_efs is needed at all.
-    # If not, remove this function as well.
     try:
-        new_efs_filepath = key.efs_slug_html_path.with_suffix(".html")
+        new_efs_filepath = key.efs_ir_path.with_suffix(".html")
         new_efs_filepath.unlink(missing_ok=True)
         logger.info(f"{new_efs_filepath} was removed from EFS.")
     except Exception as e:
@@ -673,9 +673,8 @@ def _remove_processed_html_from_efs(key: KeyPath) -> None:
 
 
 def _write_processed_html_to_efs(html: str, key: KeyPath) -> None:
-    # TODO: consider if this is needed at all. Maybe for verification???
     try:
-        new_efs_filepath = key.efs_slug_html_path.with_suffix(".html")
+        new_efs_filepath = key.efs_ir_path.with_suffix(".html")
         new_efs_filepath.parent.mkdir(exist_ok=True)
         with open(new_efs_filepath, "w") as f:
             f.write(html)

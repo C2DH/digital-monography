@@ -55,14 +55,6 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
         """Returns the absolute root directory for the KeyPath."""
         return KeyPath(DEFAULT_SFS_DIR)
 
-    @property
-    def efs_filepath(self) -> "KeyPath":
-        """Returns /mnt/efs/_WORK/my-slug/path/to/file.txt"""
-        # """Returns /mnt/efs/my-slug/path/to/file.txt"""
-        # TODO: remove, illegal
-        # return self.abs_root / self
-        return self.efs_work_path
-
     @cached_property
     def s3_key(self) -> "KeyPath":
         """Returns my-slug/path/to/file.txt"""
@@ -122,13 +114,13 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
     @cached_property
     def efs_paper_path(self) -> "KeyPath":
         """Returns /mnt/efs/_PAPER/my-slug/path/to/file.txt"""
-        print("self.efs_paper_dir", self.efs_paper_dir)
+        # print("self.efs_paper_dir", self.efs_paper_dir)
         return self.efs_paper_dir / self.github_path
 
     @cached_property
     def efs_state_path(self) -> "KeyPath":
         """Returns /mnt/efs/_STATE/my-slug/path/to/file.txt"""
-        print("self.efs_state_dir", self.efs_state_dir)
+        # print("self.efs_state_dir", self.efs_state_dir)
         return self.efs_state_dir / self.github_path
 
     @cached_property
@@ -137,6 +129,14 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
         return self.efs_work_dir / self.github_path
 
     # legacy
+
+    @property
+    def efs_filepath(self) -> "KeyPath":
+        """Returns /mnt/efs/_WORK/my-slug/path/to/file.txt"""
+        # """Returns /mnt/efs/my-slug/path/to/file.txt"""
+        # TODO: remove, illegal
+        # return self.abs_root / self
+        return self.efs_work_path
 
     @cached_property
     def efs_slug_dir(self) -> "KeyPath":
