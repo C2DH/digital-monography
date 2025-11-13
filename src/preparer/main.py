@@ -224,6 +224,8 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
             _put_md_to_s3(md, key.s3_key.with_suffix(".md"))
             # TODO: send to GitHub after all processing is done, just before the myst build step
             msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
+            _enqueue_to_github(msg)
+            MAYBE_PUT_TO_GITHUB_IN_BUILDER_AFTER_ALL_SUBSITUTIONS = """
             msg_md = GithubTriggerMsg(
                 key=key.s3_key.with_suffix(".md"), action=GithubActionEnum.UPDATE_OBJECT
             )
@@ -231,9 +233,9 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
                 key=key.s3_key.with_suffix(".html"),
                 action=GithubActionEnum.UPDATE_OBJECT,
             )
-            _enqueue_to_github(msg)
             _enqueue_to_github(msg_md)
             _enqueue_to_github(msg_html)
+            """
         # _put_to_archive_s3(key.s3_key.with_suffix(".md"), md)
         _log_audit_event(
             key,
