@@ -2,6 +2,7 @@ import pathlib
 import typing as t
 
 from src._common.keys import KeyPath
+from src._common.constants import FAKERS_INPUT_DIR
 
 
 class Faker:
@@ -25,9 +26,9 @@ class S3Faker:
         In boto3, download_fileobj has to download an object from S3 to a
         file-like object in the shared file system (/mnt/efs/...).
         In the faker, it just copies the object data/input/... source to the
-        /tmp/efs/_INPUT dir (or wherever target was defined in constants.py).
+        /tmp/efs/{FAKERS_INPUT_DIR} dir (or wherever target was defined in constants.py).
         """
-        source_fp = pathlib.Path("/tmp") / "efs" / "_INPUT"
+        source_fp = pathlib.Path("/tmp") / "efs" / FAKERS_INPUT_DIR
         key = KeyPath(Key)
         for keypart in key.parts:
             source_fp = source_fp / keypart

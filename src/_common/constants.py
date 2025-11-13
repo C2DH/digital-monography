@@ -47,6 +47,7 @@ JB_DIR = "_JB"
 PAPER_DIR = "_PAPER"
 STATE_DIR = "_STATE"
 WORK_DIR = "_WORK"
+FAKERS_INPUT_DIR = "_fakers_input"
 ASSETS_DIR = "assets"
 # database
 db_user = os.environ.get("DB_USER")

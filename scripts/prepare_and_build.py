@@ -16,6 +16,7 @@ parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
 from src._common.keys import KeyPath
+from src._common.constants import FAKERS_INPUT_DIR
 from src.preparer.main import lambda_handler as preparer_handler
 from src.builder.main import lambda_handler as builder_handler
 from src.verifier.main import lambda_handler as verifier_handler
@@ -88,7 +89,7 @@ DEFAULT_SQS_EVENT = {
 
 def cpy_to_tmp_and_call_handler(fp: pathlib.Path, key: str) -> dict[str, float]:
     time_status = {}
-    target_fp = pathlib.Path("/tmp") / "efs" / "_INPUT"
+    target_fp = pathlib.Path("/tmp") / "efs" / FAKERS_INPUT_DIR
     for key_part in pathlib.Path(key).parts:
         target_fp = target_fp / key_part
     target_fp.parent.mkdir(parents=True, exist_ok=True)
