@@ -208,17 +208,17 @@ class BookState(collections.abc.MutableMapping):
         self.docstates: dict[KeyPath, DocumentState] = {}
         self.all_records: DocumentState | None = None
 
-    # def __contains__(self, name: str) -> bool:
-    #     return name in self.docstates
+    def __contains__(self, name: str) -> bool:
+        return name in self.docstates
 
-    # def __getitem__(self, name: str) -> DocumentState:
-    #     return self.docstates[name]
+    def __getitem__(self, name: str) -> DocumentState:
+        return self.docstates[name]
 
-    # def __setitem__(self, name: str, value: DocumentState):
-    #     self.docstates[name] = value
+    def __setitem__(self, name: str, value: DocumentState):
+        self.docstates[name] = value
 
-    # def __delitem__(self, name: str):
-    #     del self.docstates[name]
+    def __delitem__(self, name: str):
+        del self.docstates[name]
 
     def __iter__(self):
         return iter(self.docstates)
