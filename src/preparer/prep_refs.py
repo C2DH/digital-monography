@@ -86,7 +86,7 @@ def prepare_references(
             f"{REF_PREFIX}-{docstate.key.stem}-{prev_href}"
         )
         # THE_MOST_IMPORTANT_2_LINES = """
-        a_tag.string = r"{{ REF_" + REF_STRING_PREFIX + ref_pk + r" }}"  # placeholder
+        a_tag.string = r"{{ " + REF_STRING_PREFIX + ref_pk + r" }}"  # placeholder
         a_tag["href"] = ref_pk
         # """
         # print(
