@@ -394,6 +394,7 @@ def _create_domain_dirs(key: KeyPath) -> None:
     try:
         key.efs_jb_dir.mkdir(parents=True, exist_ok=True)
         key.efs_paper_dir.mkdir(parents=True, exist_ok=True)
+        key.efs_chapters_dir.mkdir(parents=True, exist_ok=True)
         key.efs_state_dir.mkdir(parents=True, exist_ok=True)
         (key.efs_jb_dir / ASSETS_DIR).mkdir(parents=True, exist_ok=True)
         # NOTE: maybe you don't need to create assets dir in paper dir

@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import pathlib
+import bs4
 import sqlmodel
 import sys
 import shutil
@@ -30,8 +31,9 @@ from src._common.models import (
     Substitution,
     SubstitutionService,
 )
+from src._common.html2md import convert_to_md
 from src._common.keys import KeyPath
-from src._common.state import BookState, read_book_metadata
+from src._common.state import BookState, DocumentState, read_book_metadata
 from fakers import Faker
 from prep_config import create_myst_config_file
 
@@ -68,8 +70,25 @@ def lambda_handler(event, context) -> None:
     _copy_manuscript(key)
     bookstate = _load_book_state(key)
     _create_myst_config_file(key)
-    _make_substitutions(key, bookstate)
-    # make substitutions
+    # enrich_html_from_docx(key, bookstate)
+
+    for key in sorted(key.efs_chapters_dir.glob("**/*")):
+        assert key.suffix.lower() in (".html", ".ipynb")
+        with open(key, "r") as f:
+            filestr = f.read()
+        if key.suffix.lower() == ".ipynb":
+            pass  # TODO: handle ipynb files
+        elif key.suffix.lower() == ".html":
+            docstate = DocumentState(key)
+            html_soup = bs4.BeautifulSoup(filestr, "html.parser")
+            md = _convert_to_md(key, html_soup, docstate)
+            _write_processed_md_to_efs_jb(md, key)
+
+    # _connect_refs_and_targets(key, bookstate)
+    # _html2md
+    # _make_substitutions(key, bookstate)
+    # enqueue_to_github
+
     # build book <== no
     # distribute book <== no
     _log_audit_event(key, AuditStatus.SUCCESS.value, "Building book in progress...")
@@ -158,6 +177,47 @@ def _create_myst_config_file(key: KeyPath) -> None:
             "Error while creating Jupyter Book config file.",
         )
         raise
+
+
+def _convert_to_md(
+    key: KeyPath,
+    html_soup: bs4.BeautifulSoup,
+    docstate: DocumentState,
+) -> str:
+    try:
+        return convert_to_md(html_soup, docstate)
+    except Exception as e:
+        logger.exception(f"Converting to md failed. Error: {repr(e)}")
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            "Error upon preparing markdown.",
+        )
+        raise
+
+
+def _write_processed_md_to_efs_jb(md: str, key: KeyPath) -> None:
+    try:
+        new_efs_filepath = key.efs_jb_path.with_suffix(".md")
+        with open(new_efs_filepath, "w") as f:
+            f.write(md)
+    except Exception as e:
+        logger.exception(f"Writing md to /efs failed. Error: {repr(e)}")
+        raise
+
+
+def _connect_refs_and_targets(key: KeyPath, bookstate: BookState) -> None:
+    # iterate over chapters
+    # traverse html soups
+    # find all refs, I assume paper-only has been removed
+    # iterate over refs, find targets in bookstate
+    # I assume target numbers have been updated
+    # update ref string with up-to-date target number
+    # update ref href
+
+    # For the targets, maybe just a simple operation to
+    # replace all HASH with updated strings?
+    pass
 
 
 def _make_substitutions(key: KeyPath, bookstate: BookState) -> None:
