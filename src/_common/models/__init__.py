@@ -33,18 +33,18 @@ __all__ = [
 ]
 
 tables_to_models: dict[str, ModelMeta] = {
-    "assets": Asset,
-    "citation_groups": CitationGroup,
-    "citation_items": CitationItem,
-    "chapters": Chapter,
-    "files": File,
-    "footnotes": Footnote,
-    "headings": Heading,
-    "document_metadata": DocumentMetadata,
-    "refs": Ref,
-    "refs_targets": RefTarget,
-    "substitutions": Substitution,
-    "targets": Target,
+    Asset.__tablename__: Asset,
+    CitationGroup.__tablename__: CitationGroup,
+    CitationItem.__tablename__: CitationItem,
+    Chapter.__tablename__: Chapter,
+    File.__tablename__: File,
+    Footnote.__tablename__: Footnote,
+    Heading.__tablename__: Heading,
+    DocumentMetadata.__tablename__: DocumentMetadata,
+    Ref.__tablename__: Ref,
+    RefTarget.__tablename__: RefTarget,
+    Substitution.__tablename__: Substitution,
+    Target.__tablename__: Target,
 }
 
 
