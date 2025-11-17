@@ -81,8 +81,11 @@ def lambda_handler(event, context) -> None:
         elif key.suffix.lower() == ".html":
             docstate = DocumentState(key)
             html_soup = bs4.BeautifulSoup(filestr, "html.parser")
+            # Do I have all the data I need in the state files?
+            # If not, do I have to iterate over all chapters twice?
             md = _convert_to_md(key, html_soup, docstate)
             _write_processed_md_to_efs_jb(md, key)
+            _write_processed_html_to_efs(str(html_soup), key)
 
     # _connect_refs_and_targets(key, bookstate)
     # _html2md
@@ -203,6 +206,19 @@ def _write_processed_md_to_efs_jb(md: str, key: KeyPath) -> None:
             f.write(md)
     except Exception as e:
         logger.exception(f"Writing md to /efs failed. Error: {repr(e)}")
+        raise
+
+
+def _write_processed_html_to_efs(html: str, key: KeyPath) -> None:
+    """
+    Update html with information gathered from all chapters consisting of a whole book.
+    """
+    try:
+        new_efs_filepath = key.efs_chapters_path.with_suffix(".html")
+        with open(new_efs_filepath, "w") as f:
+            f.write(html)
+    except Exception as e:
+        logger.exception(f"Writing processed html to /efs failed. Error: {repr(e)}")
         raise
 
 
