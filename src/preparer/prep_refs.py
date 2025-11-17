@@ -85,10 +85,10 @@ def prepare_references(
         unique_id = docutils.nodes.make_id(
             f"{REF_PREFIX}-{docstate.key.stem}-{prev_href}"
         )
-        # THE_MOST_IMPORTANT_2_LINES = """
+        THE_MOST_IMPORTANT_2_LINES = """
         a_tag.string = r"{{ " + REF_STRING_PREFIX + ref_pk + r" }}"  # placeholder
-        a_tag["href"] = ref_pk
-        # """
+        this_seems_unnecessary = 'a_tag["href"] = ref_pk'
+        """
         # print(
         #     "a_tag > after string replacement", a_tag
         # )  # <a class="dgt-mon-paper-only" href="#f-05-conditional-rendering-figforpaper">link to figForPaper bookmark</a>

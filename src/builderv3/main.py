@@ -26,8 +26,12 @@ sys.path.insert(0, current_dir)
 from src._common.audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
 from src._common.constants import ASSETS_DIR, DB_URL, IS_DEBUG, ModuleEnum
 from src._common.models import (
+    Chapter,
     File,
     FileService,
+    Ref,
+    RefService,
+    RefTarget,
     Substitution,
     SubstitutionService,
 )
@@ -79,13 +83,75 @@ def lambda_handler(event, context) -> None:
         if key.suffix.lower() == ".ipynb":
             pass  # TODO: handle ipynb files
         elif key.suffix.lower() == ".html":
-            docstate = DocumentState(key)
+            jb_key = key.efs_jb_path.with_suffix(".md")
+            docstate = (
+                bookstate[jb_key] if jb_key in bookstate else DocumentState(jb_key)
+            )
+            # from which docx file this file was created
+            chapter: Chapter | None = docstate.first("chapters")
+            fm_key = chapter.fm_key if chapter else None
+
+            # print('docstate.len("headings")', docstate.len("headings"))
             html_soup = bs4.BeautifulSoup(filestr, "html.parser")
-            # Do I have all the data I need in the state files?
-            # If not, do I have to iterate over all chapters twice?
-            md = _convert_to_md(key, html_soup, docstate)
-            _write_processed_md_to_efs_jb(md, key)
-            _write_processed_html_to_efs(str(html_soup), key)
+            anchors = html_soup.find_all("a", href=True)
+            print('bookstate.len("targets")', bookstate.len("targets"))
+            for target in bookstate.all("targets"):
+                # print("target", target)
+                print(
+                    {
+                        "hash": target.hash,
+                        "pk": target.pk,
+                    }
+                )
+            print("=" * 75)
+            print()
+            ref_targets: list[RefTarget] = bookstate.all("ref_targets")
+            print('bookstate.len("ref_targets")', bookstate.len("ref_targets"))
+            for rec in ref_targets:
+                print(
+                    {
+                        "target_id": rec.target_id,
+                        "proc_href": rec.proc_href,
+                        "fragment": rec.fragment,
+                    }
+                )
+            print("=" * 75)
+            for a_tag in anchors:
+                assert isinstance(a_tag, bs4.Tag)
+                fn, fragment = _get_fn_and_fragment_from_href(a_tag["href"])
+                # find target()
+                ref_targets = bookstate.filter(
+                    "ref_targets", fragment, attrib="fragment"
+                )
+                target = None
+                if len(ref_targets) > 1 and not fn:
+                    # No target file, hence target is in the same file as ref
+                    assert len([rt for rt in ref_targets if rt.fm_key == fm_key]) == 1, "Expected one rt with the same fragment per fm_key"
+                    ref_target = next(rt for rt in ref_targets if rt.fm_key == fm_key)
+                    target = bookstate.get("targets", ref_target.target_id, "hash")
+                elif len(ref_targets) > 1:
+                    raise NotImplementedError("Strange case. Investigate.")
+                elif len(ref_targets) == 1:
+                    ref_target = ref_targets[0]
+                    target = bookstate.get("targets", ref_target.target_id, "hash")
+                elif len(ref_targets) == 0 and a_tag["href"].startswith("#footnote-"):
+                    pass # just a footnote
+                elif len(ref_targets) == 0 and RefService.is_external(a_tag["href"]):
+                    pass # just external link
+                else:
+                    print(a_tag)
+                print("-" * 75)
+                #########################################
+                if target:
+                    # a_tag.string
+
+                    a_tag["href"] = "#" + target.hash
+
+        # Do I have all the data I need in the state files?
+        # If not, do I have to iterate over all chapters twice?
+        md = _convert_to_md(key, html_soup, docstate)
+        _write_processed_md_to_efs_jb(md, key)
+        _write_processed_html_to_efs(str(html_soup), key)
 
     # _connect_refs_and_targets(key, bookstate)
     # _html2md
@@ -220,6 +286,44 @@ def _write_processed_html_to_efs(html: str, key: KeyPath) -> None:
     except Exception as e:
         logger.exception(f"Writing processed html to /efs failed. Error: {repr(e)}")
         raise
+
+
+def _get_fn_and_fragment_from_href(href: str) -> tuple[str, str]:
+    """
+    Extracts filename and fragment identifier from an URI.
+    If a value is not present, an empty string is returned instead.
+
+    E.g. "manuscript.docx" and "fragment" from:
+        "https://sharepoint.com/some/path/manuscript.docx#fragment"
+        "./manuscript.docx#fragment"
+    """
+    # 'A fragment identifier component is indicated by the presence of a number sign ("#")'
+    # so it should always be an index of #.
+    # See https://www.rfc-editor.org/rfc/rfc3986#section-3.5
+    if "#" in href:
+        fragment_idx = href.index("#")
+    else:
+        fragment_idx = len(href)
+    path = href[:fragment_idx]
+    fragment = href[fragment_idx + 1 :]
+    if "." not in path:
+        return "", fragment
+    for scheme in ["tel:", "mailto:", "sms:", "javascript:"]:
+        if path.startswith(scheme):
+            return "", fragment
+    if "/" not in path:
+        return path, fragment
+    filename = ""
+    for i in range(len(path) - 1, -1, -1):
+        ch = path[i]
+        # if ch == ".":
+        #     suffix = path[i + 1 :]
+        if ch == "/":
+            filename = path[i + 1 :]
+            break
+    if "." not in filename:
+        return "", fragment
+    return filename, fragment
 
 
 def _connect_refs_and_targets(key: KeyPath, bookstate: BookState) -> None:
