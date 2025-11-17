@@ -102,6 +102,9 @@ class DocumentState:
             return records[0]
         return None
 
+    def all(self, tablename: str) -> list[sqlmodel.SQLModel]:
+        return self.__dict__.get(tablename, [])
+
     def len(self, tablename: str) -> int:
         """Get the number of records in a current document's state."""
         return len(self.__dict__.get(tablename, []))
@@ -258,6 +261,25 @@ class BookState(collections.abc.MutableMapping):
                 for record in records:
                     self.all_records.add(record)
         return self.all_records
+
+    def get(
+        self, tablename: str, val: str | int, attrib: str = "pk"
+    ) -> t.Optional[sqlmodel.SQLModel]:
+        """Get a model's instance (a record) from all document state objects."""
+        return self.all_records.get(tablename, val, attrib)
+
+    def filter(
+        self, tablename: str, val: str | int | bool, attrib: str
+    ) -> list[sqlmodel.SQLModel]:
+        """Filter 0 or more models instances (records) from the state."""
+        return self.all_records.filter(tablename, val, attrib)
+
+    def all(self, tablename: str) -> list[sqlmodel.SQLModel]:
+        return self.all_records.all(tablename)
+
+    def len(self, tablename: str) -> int:
+        """Get the number of records in a current document's state."""
+        return self.all_records.len(tablename)
 
 
 def has_db_table(model: sqlmodel.SQLModel | sqlmodel.main.SQLModelMetaclass) -> bool:
