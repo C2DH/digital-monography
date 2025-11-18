@@ -1,17 +1,17 @@
 # NOTE : this is not as much builder, as
 # book level preparer (preparer works per document)
 import boto3
+import bs4
 import datetime
 import json
 import logging
 import os
 import pathlib
-import bs4
+import re
 import sqlmodel
 import sys
 import shutil
 import typing as t
-import yaml
 from mypy_boto3_dynamodb.service_resource import (
     DynamoDBServiceResource as boto3_DynamoDBServiceResource,
 )
@@ -24,7 +24,13 @@ sys.path.insert(0, current_dir)
 
 
 from src._common.audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
-from src._common.constants import ASSETS_DIR, DB_URL, IS_DEBUG, ModuleEnum
+from src._common.constants import (
+    ASSETS_DIR,
+    AUTONUMBER_PLACEHOLDER,
+    DB_URL,
+    IS_DEBUG,
+    ModuleEnum,
+)
 from src._common.models import (
     Chapter,
     File,
@@ -34,6 +40,7 @@ from src._common.models import (
     RefTarget,
     Substitution,
     SubstitutionService,
+    Target,
 )
 from src._common.html2md import convert_to_md
 from src._common.keys import KeyPath
@@ -123,10 +130,12 @@ def lambda_handler(event, context) -> None:
                 ref_targets = bookstate.filter(
                     "ref_targets", fragment, attrib="fragment"
                 )
-                target = None
+                target: Target | None = None
                 if len(ref_targets) > 1 and not fn:
                     # No target file, hence target is in the same file as ref
-                    assert len([rt for rt in ref_targets if rt.fm_key == fm_key]) == 1, "Expected one rt with the same fragment per fm_key"
+                    assert (
+                        len([rt for rt in ref_targets if rt.fm_key == fm_key]) == 1
+                    ), "Expected one rt with the same fragment per fm_key"
                     ref_target = next(rt for rt in ref_targets if rt.fm_key == fm_key)
                     target = bookstate.get("targets", ref_target.target_id, "hash")
                 elif len(ref_targets) > 1:
@@ -135,17 +144,16 @@ def lambda_handler(event, context) -> None:
                     ref_target = ref_targets[0]
                     target = bookstate.get("targets", ref_target.target_id, "hash")
                 elif len(ref_targets) == 0 and a_tag["href"].startswith("#footnote-"):
-                    pass # just a footnote
+                    pass  # just a footnote
                 elif len(ref_targets) == 0 and RefService.is_external(a_tag["href"]):
-                    pass # just external link
+                    pass  # just external link
                 else:
                     print(a_tag)
                 print("-" * 75)
                 #########################################
                 if target:
-                    # a_tag.string
-
                     a_tag["href"] = "#" + target.hash
+                was, a_tag.string = _new_link_text(a_tag, target)
 
         # Do I have all the data I need in the state files?
         # If not, do I have to iterate over all chapters twice?
@@ -246,6 +254,70 @@ def _create_myst_config_file(key: KeyPath) -> None:
             "Error while creating Jupyter Book config file.",
         )
         raise
+
+
+def _new_link_text(
+    a_tag: bs4.Tag,
+    target: Target | None = None,
+    # tag_text: str, target: Target | None = None
+) -> tuple[str, str]:
+    """
+    Link text to be placed in `[text](...)` syntax.
+    Returns replaced text and the new text.
+    """
+    text_to_replace = ""
+    tag_href = a_tag["href"]
+    tag_text = a_tag.text
+    target_hash = target.hash if target else "xxxUNEXPECTED_NO_TARGETxxx"
+    if AUTONUMBER_PLACEHOLDER in tag_text:
+        text_to_replace = AUTONUMBER_PLACEHOLDER
+        replace_with = r"{{ " + target_hash + r" }}"
+        tag_text = tag_text.replace(text_to_replace, replace_with)
+        return text_to_replace, tag_text
+    match = _match_complex_numbering(tag_text)
+    if isinstance(match, re.Match):
+        start, end = match.span(1)
+        text_to_replace = tag_text[start:end]
+        replace_with = r"{{ " + target_hash + r" }}"
+        return text_to_replace, tag_text.replace(text_to_replace, replace_with)
+    elif RefService.is_internal_f2f(tag_href):
+        to_replace = ""
+        for i in range(len(tag_text)):
+            if tag_text[i].isdigit():
+                to_replace += tag_text[i]
+            if to_replace and not tag_text[i].isdigit():
+                break
+        # replace_with = r"{{ " + self.path + "#" + self.fragment + r" }}"
+        replace_with = r"{{ " + target_hash + r" }}"
+        if to_replace:
+            tag_text = tag_text.replace(to_replace, replace_with)
+        text_to_replace = to_replace
+    # elif self.is_inner_reference(tag_href):
+    elif RefService.is_internal_infile(tag_href):
+        if target is not None:
+            to_replace = target.text
+            # replace_with = r"{{ " + self.fragment + r" }}"
+            replace_with = r"{{ " + target_hash + r" }}"
+            tag_text = tag_text.replace(to_replace, replace_with)
+            text_to_replace = to_replace
+    return text_to_replace, tag_text
+
+
+def _match_complex_numbering(tag_text: str) -> re.Match | None:
+    """
+    Search for complex numbering in the text of the anchor tag.
+    Complex number pattern is either `<roman_num><sep><digit>` (e.g. 'iv.1')
+    or `<letter of the alphabet><sep><digit>` (e.g. 'a.1') or `<digit><sep><digit>`.
+    This solution assumes the alphabetical numbering will not be greater than 'z' (26).
+    Accepted separators match MS Word separators: '.:—-'
+    """
+    before = r"(?:\s)"  # make sure starts with a whitespace
+    heading_number = r"([ivxlcdm]+|[a-z]{1}|\d+)"
+    sep = r"[.:—-]{1}"
+    pattern = rf"{before}({heading_number}{sep}\d)"
+    assert pattern == r"(?:\s)(([ivxlcdm]+|[a-z]{1}|\d+)[.:—-]{1}\d)"
+    return re.search(pattern, tag_text.lower())
+    # r"(?:\s)(([ivxlcdm]+|[a-z]{1}|\d+)[.:—-]{1}\d)", tag_text.lower()
 
 
 def _convert_to_md(
