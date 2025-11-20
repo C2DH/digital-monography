@@ -96,37 +96,13 @@ def lambda_handler(event, context) -> None:
 
             html_soup = bs4.BeautifulSoup(filestr, "html.parser")
             anchors = html_soup.find_all("a", href=True)
-            ref_targets: list[RefTarget] = bookstate.all("ref_targets")
             for a_tag in anchors:
                 assert isinstance(a_tag, bs4.Tag)
-                fn, fragment = _get_fn_and_fragment_from_href(a_tag["href"])
-                # find target()
-                ref_targets = bookstate.filter(
-                    "ref_targets", fragment, attrib="fragment"
-                )
-                target: Target | None = None
-                if len(ref_targets) > 1 and not fn:
-                    assert (
-                        len([rt for rt in ref_targets if rt.fm_key == fm_key]) == 1
-                    ), "Expected one rt with the same fragment per fm_key"
-                    ref_target = next(rt for rt in ref_targets if rt.fm_key == fm_key)
-                    target = bookstate.get("targets", ref_target.target_id, "hash")
-                elif len(ref_targets) > 1:
-                    raise NotImplementedError("Strange case. Investigate.")
-                elif len(ref_targets) == 1:
-                    ref_target = ref_targets[0]
-                    target = bookstate.get("targets", ref_target.target_id, "hash")
-                elif len(ref_targets) == 0 and a_tag["href"].startswith("#footnote-"):
-                    pass  # just a footnote
-                elif len(ref_targets) == 0 and RefService.is_external(a_tag["href"]):
-                    pass  # just external link
-                else:
-                    pass
-                    # print(a_tag)
-                #########################################
+                target = _find_target(fm_key, a_tag, bookstate)
                 if target:
                     a_tag["href"] = "#" + target.hash
                     new_value = _find_new_value(target, bookstate)
+                    # TODO: remove "was" if not used
                     was, a_tag.string = _new_link_text(a_tag, target, new_value)
 
         # Do I have all the data I need in the state files?
@@ -136,9 +112,6 @@ def lambda_handler(event, context) -> None:
         _write_processed_md_to_efs_jb(md, key)
         _write_processed_html_to_efs(str(html_soup), key)
 
-    # _connect_refs_and_targets(key, bookstate)
-    # _html2md
-    # _make_substitutions(key, bookstate)
     # enqueue_to_github
 
     # build book <== no
@@ -229,6 +202,40 @@ def _create_myst_config_file(key: KeyPath) -> None:
             "Error while creating Jupyter Book config file.",
         )
         raise
+
+
+def _find_target(
+    src_key: KeyPath, a_tag: bs4.Tag, bookstate: BookState
+) -> Target | None:
+    """
+    Looks for a reference target so that reference's href and text
+    can be synced with updated value of the target.
+    This is not needed for external links (e.g to http or mailto)
+    and footnotes, in which case the system should return "None".
+    If no ref target was found, href and text of a reference shouldn't be updated.
+    """
+    fn, fragment = _get_fn_and_fragment_from_href(a_tag["href"])
+    ref_targets: list[RefTarget] = bookstate.filter(
+        "ref_targets", fragment, attrib="fragment"
+    )
+    if len(ref_targets) > 1 and not fn:
+        assert (
+            len([rt for rt in ref_targets if rt.fm_key == src_key]) == 1
+        ), "Expected one rt with the same fragment per fm_key"
+        ref_target = next(rt for rt in ref_targets if rt.fm_key == src_key)
+        return bookstate.get("targets", ref_target.target_id, "hash")
+    elif len(ref_targets) > 1:
+        raise NotImplementedError("Strange case. Investigate.")
+    elif len(ref_targets) == 1:
+        ref_target = ref_targets[0]
+        return bookstate.get("targets", ref_target.target_id, "hash")
+    elif len(ref_targets) == 0 and a_tag["href"].startswith("#footnote-"):
+        # just a footnote
+        return None
+    elif len(ref_targets) == 0 and RefService.is_external(a_tag["href"]):
+        # just external link
+        return None
+    return None
 
 
 def _new_link_text(a_tag: bs4.Tag, target: Target, new_value: str) -> tuple[str, str]:
