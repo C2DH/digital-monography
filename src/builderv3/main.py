@@ -101,9 +101,9 @@ def lambda_handler(event, context) -> None:
                 target = _find_target(fm_key, a_tag, bookstate)
                 if target:
                     a_tag["href"] = "#" + target.hash
-                    new_value = _find_new_value(target, bookstate)
+                    # new_value = _find_new_value(target, bookstate)
                     # TODO: remove "was" if not used
-                    was, a_tag.string = _new_link_text(a_tag, target, new_value)
+                    was, a_tag.string = _new_link_text(a_tag, target, bookstate)
 
         # Do I have all the data I need in the state files?
         # If not, do I have to iterate over all chapters twice?
@@ -238,19 +238,26 @@ def _find_target(
     return None
 
 
-def _new_link_text(a_tag: bs4.Tag, target: Target, new_value: str) -> tuple[str, str]:
-    # def _new_link_text(a_tag: bs4.Tag, target: Target) -> tuple[str, str]:
+def _new_link_text(
+    a_tag: bs4.Tag, target: Target, bookstate: BookState
+) -> tuple[str, str]:
     """
     Link text to be placed in `[text](...)` syntax.
     Returns replaced text and the new text.
     """
+    subst: Substitution | None = bookstate.get(
+        "substitutions", target.hash, attrib="hash"
+    )
+    if isinstance(subst, Substitution):
+        file_prefix = subst.file_count if subst else None
+        replace_with = SubstitutionService.to_digital_version(subst, file_prefix)
+    else:
+        replace_with = ""
     text_to_replace = ""
-    tag_href = a_tag["href"]
     tag_text = a_tag.text
-    target_hash = target.hash
     if AUTONUMBER_PLACEHOLDER in tag_text:
         text_to_replace = AUTONUMBER_PLACEHOLDER
-        replace_with = new_value
+        # replace_with = new_value
         # replace_with = r"{{ " + target_hash + r" }}"
         tag_text = tag_text.replace(text_to_replace, replace_with)
         return text_to_replace, tag_text
@@ -273,14 +280,14 @@ def _new_link_text(a_tag: bs4.Tag, target: Target, new_value: str) -> tuple[str,
     if isinstance(match, re.Match):
         start, end = match.span(1)
         text_to_replace = tag_text[start:end]
-        replace_with = new_value
+        # replace_with = new_value
         # replace_with = r"{{ " + target_hash + r" }}"
         return text_to_replace, tag_text.replace(text_to_replace, replace_with)
-    elif new_value == "" and target.item_type == "heading":
+    elif replace_with == "" and target.item_type == "heading":
         return text_to_replace, tag_text
     else:  # maybe check if tag_href == "#target_hash"
         to_replace = target.text
-        replace_with = new_value
+        # replace_with = new_value
         tag_text = tag_text.replace(to_replace, replace_with)
         text_to_replace = to_replace
         return text_to_replace, tag_text
@@ -303,14 +310,14 @@ def _match_complex_numbering(tag_text: str) -> re.Match | None:
     # r"(?:\s)(([ivxlcdm]+|[a-z]{1}|\d+)[.:—-]{1}\d)", tag_text.lower()
 
 
-def _find_new_value(target: Target, bookstate: BookState) -> str:
-    subst: Substitution | None = bookstate.get(
-        "substitutions", target.hash, attrib="hash"
-    )
-    if not isinstance(subst, Substitution):
-        return ""
-    file_prefix = subst.file_count if subst else None
-    return SubstitutionService.to_digital_version(subst, file_prefix)
+# def _find_new_value(target: Target, bookstate: BookState) -> str:
+#     subst: Substitution | None = bookstate.get(
+#         "substitutions", target.hash, attrib="hash"
+#     )
+#     if not isinstance(subst, Substitution):
+#         return ""
+#     file_prefix = subst.file_count if subst else None
+#     return SubstitutionService.to_digital_version(subst, file_prefix)
 
 
 def _replace_placeholders_with_new_values(md: str, bookstate: BookState) -> str:

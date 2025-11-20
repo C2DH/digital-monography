@@ -211,6 +211,9 @@ class BookState(collections.abc.MutableMapping):
         self.docstates: dict[KeyPath, DocumentState] = {}
         self.all_records: DocumentState | None = None
 
+    # TODO: Dunder methods should be targeting self.all_records instead.
+    # Bookstate should require merging all docstates first.
+
     def __contains__(self, name: str) -> bool:
         return name in self.docstates
 
