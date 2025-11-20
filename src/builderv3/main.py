@@ -1,5 +1,5 @@
-# NOTE : this is not as much builder, as
-# book level preparer (preparer works per document)
+# NOTE: consider renaming from "builder", this is more book level aggregator and merger.
+# "preparer" microservice works per document, this prepares on a book level.
 import boto3
 import bs4
 import datetime
@@ -33,9 +33,6 @@ from src._common.constants import (
 )
 from src._common.models import (
     Chapter,
-    File,
-    FileService,
-    Ref,
     RefService,
     RefTarget,
     Substitution,
@@ -44,7 +41,7 @@ from src._common.models import (
 )
 from src._common.html2md import convert_to_md
 from src._common.keys import KeyPath
-from src._common.state import BookState, DocumentState, read_book_metadata
+from src._common.state import BookState
 from fakers import Faker
 from prep_config import create_myst_config_file
 
@@ -101,12 +98,9 @@ def lambda_handler(event, context) -> None:
                 target = _find_target(fm_key, a_tag, bookstate)
                 if target:
                     a_tag["href"] = "#" + target.hash
-                    # new_value = _find_new_value(target, bookstate)
                     # TODO: remove "was" if not used
                     was, a_tag.string = _new_link_text(a_tag, target, bookstate)
 
-        # Do I have all the data I need in the state files?
-        # If not, do I have to iterate over all chapters twice?
         md = _convert_to_md(key, html_soup, bookstate)
         md = _replace_placeholders_with_new_values(md, bookstate)
         _write_processed_md_to_efs_jb(md, key)
@@ -257,37 +251,17 @@ def _new_link_text(
     tag_text = a_tag.text
     if AUTONUMBER_PLACEHOLDER in tag_text:
         text_to_replace = AUTONUMBER_PLACEHOLDER
-        # replace_with = new_value
-        # replace_with = r"{{ " + target_hash + r" }}"
         tag_text = tag_text.replace(text_to_replace, replace_with)
         return text_to_replace, tag_text
-    THIS_CASE_NEVER_HAPPENS = """
-    # at this stage, both infile and f2f look like `#some-hash`
-    if RefService.is_internal_f2f(tag_href):
-        to_replace = ""
-        for i in range(len(tag_text)):
-            if tag_text[i].isdigit():
-                to_replace += tag_text[i]
-            if to_replace and not tag_text[i].isdigit():
-                break
-        replace_with = new_value
-        # replace_with = r"{{ " + target_hash + r" }}"
-        if to_replace:
-            tag_text = tag_text.replace(to_replace, replace_with)
-        text_to_replace = to_replace
-    """
     match = _match_complex_numbering(tag_text)
     if isinstance(match, re.Match):
         start, end = match.span(1)
         text_to_replace = tag_text[start:end]
-        # replace_with = new_value
-        # replace_with = r"{{ " + target_hash + r" }}"
         return text_to_replace, tag_text.replace(text_to_replace, replace_with)
     elif replace_with == "" and target.item_type == "heading":
         return text_to_replace, tag_text
     else:  # maybe check if tag_href == "#target_hash"
         to_replace = target.text
-        # replace_with = new_value
         tag_text = tag_text.replace(to_replace, replace_with)
         text_to_replace = to_replace
         return text_to_replace, tag_text
@@ -308,16 +282,6 @@ def _match_complex_numbering(tag_text: str) -> re.Match | None:
     assert pattern == r"(?:\s)(([ivxlcdm]+|[a-z]{1}|\d+)[.:—-]{1}\d)"
     return re.search(pattern, tag_text.lower())
     # r"(?:\s)(([ivxlcdm]+|[a-z]{1}|\d+)[.:—-]{1}\d)", tag_text.lower()
-
-
-# def _find_new_value(target: Target, bookstate: BookState) -> str:
-#     subst: Substitution | None = bookstate.get(
-#         "substitutions", target.hash, attrib="hash"
-#     )
-#     if not isinstance(subst, Substitution):
-#         return ""
-#     file_prefix = subst.file_count if subst else None
-#     return SubstitutionService.to_digital_version(subst, file_prefix)
 
 
 def _replace_placeholders_with_new_values(md: str, bookstate: BookState) -> str:
@@ -412,74 +376,6 @@ def _get_fn_and_fragment_from_href(href: str) -> tuple[str, str]:
     if "." not in filename:
         return "", fragment
     return filename, fragment
-
-
-def _connect_refs_and_targets(key: KeyPath, bookstate: BookState) -> None:
-    # iterate over chapters
-    # traverse html soups
-    # find all refs, I assume paper-only has been removed
-    # iterate over refs, find targets in bookstate
-    # I assume target numbers have been updated
-    # update ref string with up-to-date target number
-    # update ref href
-
-    # For the targets, maybe just a simple operation to
-    # replace all HASH with updated strings?
-    pass
-
-
-def _make_substitutions(key: KeyPath, bookstate: BookState) -> None:
-    """
-    Replace substitution placeholders in markdown files with new values.
-
-    I don't like this implementation because it should be done for .md and .ipynb
-    by JupyterBook. Also, I don't like having too many slow IO operations.
-    However, I needed some solution fast and I didn't have time to fight with JupyterBook.
-    I couldn't make JupyterBook to do the substitutions for f2f refs.
-    """
-    for md in key.efs_jb_dir.glob("*.md"):
-        dstate = bookstate.docstates.get(md.stem, None)
-
-    # THIS_IS_HOW_IT_WAS_IN_JB1 = """
-    book_metadata = read_book_metadata(key)
-    for md in key.efs_slug_dir.glob("*.md"):
-        dstate = book_metadata.get(md.stem)
-        try:
-            if md.stem not in book_metadata:
-                continue
-            with open(md, "r") as f:
-                mdstr = f.read()
-                # Make mapping of file_count to file prefix.
-                # This is suboptimal, but FileDatapoint only knows file stem and prefix.
-                # I could add more data to it, but since user has to correctly
-                # write this data in yaml file by hand, the less data the better :/
-                file_prefices: dict[int, str] = {}
-                files: list[File] = dstate["files"]
-                for file in files:
-                    file_count = FileService.get_number_from_filename(file.stem)
-                    file_prefices[file_count] = file.prefix
-                # Replace placeholders with new values, incl. file prefix
-                substitutions: list[Substitution] = dstate["substitutions"]
-                for subs in substitutions:
-                    if subs.file_count in file_prefices:
-                        file_prefix = file_prefices[subs.file_count]
-                    else:
-                        file_prefix = None
-                    mdstr = mdstr.replace(
-                        r"{{ " + subs.pk + r" }}",
-                        SubstitutionService.to_digital_version(subs, file_prefix),
-                    )
-                    # NOTE: seems to just repeat "was" attr
-            with open(md, "w") as f:
-                f.write(mdstr)
-        except Exception as e:
-            logger.exception(f"Replacing placeholders in {md} failed. Error: {repr(e)}")
-            _log_audit_event(
-                key,
-                AuditStatus.FAILED.value,
-                "Error upon updating automatic numbering.",
-            )
-    # """
 
 
 RESTORE_FOR_SAVING_WARNINGS = """
