@@ -91,15 +91,7 @@ def lambda_handler(event, context) -> None:
             pass  # TODO: handle ipynb files
         elif key.suffix.lower() == ".html":
             jb_key = key.efs_jb_path.with_suffix(".md")
-            # docstate_idontthinkineedit = (
-            #     bookstate[jb_key] if jb_key in bookstate else DocumentState(jb_key)
-            # )
-            # chapter_idontthinkineedit: Chapter | None = (
-            #     docstate_idontthinkineedit.first("chapters")
-            # )
             chapter: Chapter = bookstate.get("chapters", jb_key, attrib="jb_key")
-            # from which docx file this file was created
-            # assert chapter == chapter_idontthinkineedit
             fm_key = chapter.fm_key if chapter else None
 
             html_soup = bs4.BeautifulSoup(filestr, "html.parser")
@@ -114,7 +106,6 @@ def lambda_handler(event, context) -> None:
                 )
                 target: Target | None = None
                 if len(ref_targets) > 1 and not fn:
-                    # No target file, hence target is in the same file as ref
                     assert (
                         len([rt for rt in ref_targets if rt.fm_key == fm_key]) == 1
                     ), "Expected one rt with the same fragment per fm_key"
@@ -132,7 +123,6 @@ def lambda_handler(event, context) -> None:
                 else:
                     pass
                     # print(a_tag)
-                print("-" * 75)
                 #########################################
                 if target:
                     a_tag["href"] = "#" + target.hash
@@ -142,7 +132,7 @@ def lambda_handler(event, context) -> None:
         # Do I have all the data I need in the state files?
         # If not, do I have to iterate over all chapters twice?
         md = _convert_to_md(key, html_soup, bookstate)
-        # md = _replace_placeholders_with_new_values(md, bookstate)
+        md = _replace_placeholders_with_new_values(md, bookstate)
         _write_processed_md_to_efs_jb(md, key)
         _write_processed_html_to_efs(str(html_soup), key)
 
@@ -312,79 +302,24 @@ def _find_new_value(target: Target, bookstate: BookState) -> str:
     )
     if not isinstance(subst, Substitution):
         return ""
-        # return "xxxNEWVALUE_BUT_NO_SUBSTITUTION_FOUNDxxx"
-    # file_prefix = FileService.get_number_from_filename(file.stem)
-    # file_prefix = target.file_count
     file_prefix = subst.file_count if subst else None
     return SubstitutionService.to_digital_version(subst, file_prefix)
 
 
-def _replace_placeholders_with_new_values(md: str, bookstate: BookState) -> None:
+def _replace_placeholders_with_new_values(md: str, bookstate: BookState) -> str:
     """
     Replace substitution placeholders in markdown files with new values.
     """
     substitutions: list[Substitution] = bookstate.all("substitutions")
     for subs in substitutions:
+        placeholder = r"{{ " + subs.hash + r" }}"
+        if placeholder not in md:
+            continue
         md = md.replace(
-            r"{{ " + subs.pk + r" }}",
+            placeholder,
             SubstitutionService.to_digital_version(subs, subs.file_count),
         )
     return md
-
-
-def _make_substitutions(key: KeyPath, bookstate: BookState) -> None:
-    """
-    Replace substitution placeholders in markdown files with new values.
-
-    I don't like this implementation because it should be done for .md and .ipynb
-    by JupyterBook. Also, I don't like having too many slow IO operations.
-    However, I needed some solution fast and I didn't have time to fight with JupyterBook.
-    I couldn't make JupyterBook to do the substitutions for f2f refs.
-    """
-    for md in key.efs_jb_dir.glob("*.md"):
-        dstate = bookstate.get(md.stem)
-        try:
-            if md.stem not in bookstate:
-                continue
-            with open(md, "r") as f:
-                mdstr = f.read()
-                # Make mapping of file_count to file prefix.
-                # This is suboptimal, but FileDatapoint only knows file stem and prefix.
-                # I could add more data to it, but since user has to correctly
-                # write this data in yaml file by hand, the less data the better :/
-                file_prefices: dict[int, str] = {}
-                files: list[File] = dstate["files"]
-                for file in files:
-                    file_count = FileService.get_number_from_filename(file.stem)
-                    file_prefices[file_count] = file.prefix
-                # Replace placeholders with new values, incl. file prefix
-                substitutions: list[Substitution] = dstate["substitutions"]
-                for subs in substitutions:
-                    if subs.file_count in file_prefices:
-                        file_prefix = file_prefices[subs.file_count]
-                    else:
-                        file_prefix = None
-                    mdstr = mdstr.replace(
-                        r"{{ " + subs.pk + r" }}",
-                        SubstitutionService.to_digital_version(subs, file_prefix),
-                    )
-                    # NOTE: seems to just repeat "was" attr
-            # post_mdstr = mdstr
-            # if pre_mdstr != post_mdstr:
-            #     diff = difflib.ndiff(
-            #         pre_mdstr.splitlines(keepends=True),
-            #         post_mdstr.splitlines(keepends=True),
-            #     )
-            #     print("".join(diff), end="")
-            with open(md, "w") as f:
-                f.write(mdstr)
-        except Exception as e:
-            logger.exception(f"Replacing placeholders in {md} failed. Error: {repr(e)}")
-            _log_audit_event(
-                key,
-                AuditStatus.FAILED.value,
-                "Error upon updating automatic numbering.",
-            )
 
 
 def _convert_to_md(
@@ -489,10 +424,7 @@ def _make_substitutions(key: KeyPath, bookstate: BookState) -> None:
     I couldn't make JupyterBook to do the substitutions for f2f refs.
     """
     for md in key.efs_jb_dir.glob("*.md"):
-        print(f"Making substitutions in {md}.")
-        print(bookstate.docstates.keys())
         dstate = bookstate.docstates.get(md.stem, None)
-        print("dstate", dstate.__dict__.keys() if dstate else None)
 
     # THIS_IS_HOW_IT_WAS_IN_JB1 = """
     book_metadata = read_book_metadata(key)
