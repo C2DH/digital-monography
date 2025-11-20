@@ -16,7 +16,6 @@ from src._common.state import DocumentState
 
 
 def is_reference(tag: bs4.element.Tag) -> bool:
-    # "a", href=True
     return bool(tag.name == "a" and tag.attrs.get("href"))
 
 
@@ -35,16 +34,8 @@ def prepare_references(
 
     Since preparer microservice works on per-document basis,
     we don't have access to other documents to link f2f references with targets.
-    Hence, this function
-        1) registers references in the docstate,
-        2) modifies the HTML by adding placeholders for substitutions
-           to be handled in later stages, when we have access to all documents.
-
-    Note this replaces the whole string of the <a> tag with a placeholder.
+    Hence, this function only registers references in the docstate.
     """
-    # for chpt in docstate.__dict__.get("chapters"):
-    #     print("chapter in docstate", chpt)
-
     for a_tag in references:
         if _is_ref_footnote(a_tag) or _is_target_footnote(a_tag):
             # handled in footnotes.py
@@ -53,8 +44,6 @@ def prepare_references(
         prev_href = a_tag["href"]
         fn, fragment = _get_fn_and_fragment_from_href(a_tag["href"])
         is_internal = _is_internal(a_tag["href"], fn, fragment)
-        # ref_targets = _find_ref_targets(docstate, fn, fragment)
-        # print("ref_targets", ref_targets)
         if not is_internal:
             ref = Ref(
                 loc=docstate.key,
@@ -69,71 +58,22 @@ def prepare_references(
             docstate.add(ref)
             continue
         ref_pk = uuid.uuid4().hex
-        # get text to put into [text](...)
-        # link_text = _make_text(a_tag.text, ref_pk)
-        # get dest to put into [...](destination)
-        # link_dest = _make_destination() # nah, just ref_pk
-
-        # print("prev_string", prev_string)
-        # print("a_tag.string", a_tag.string)
-        # print('a_tag["href"]', a_tag["href"])
-        # print(
-        #     "a_tag > before string replacement", a_tag
-        # )  # <a class="dgt-mon-paper-only" href="#figForPaper"><span class="dgt-mon-paper-only">link to figForPaper bookmark</span></a>
         prev_string = a_tag.string if a_tag.string is not None else ""
         prev_href = a_tag["href"]
         unique_id = docutils.nodes.make_id(
             f"{REF_PREFIX}-{docstate.key.stem}-{prev_href}"
         )
-        THE_MOST_IMPORTANT_2_LINES = """
-        a_tag.string = r"{{ " + REF_STRING_PREFIX + ref_pk + r" }}"  # placeholder
-        this_seems_unnecessary = 'a_tag["href"] = ref_pk'
-        """
-        # print(
-        #     "a_tag > after string replacement", a_tag
-        # )  # <a class="dgt-mon-paper-only" href="#f-05-conditional-rendering-figforpaper">link to figForPaper bookmark</a>
-        # ref = RefDatapoint(
-        #     target_id=target.pk if target else "",
-        #     fn=metadata.filepath.name,
-        #     text=link_text,
-        #     href=link_dest,
-        #     prev_string=prev_string,
-        #     prev_href=prev_href,
-        #     elem=str(a_tag.parent),
-        # )
-        # print("RefDatapoint", ref)
-        # metadata.add_ref(ref)
         data = Ref(
             loc=docstate.key,
             target_id="",
             fn=docstate.key.name if docstate.key else "",
             text=a_tag.string,
-            # text=r"{{ " + ref_pk + r" }}",
             href=ref_pk,
             prev_string=prev_string,
             prev_href=prev_href,
             elem=str(a_tag.parent),
         )
-        print("Ref", data.model_dump())
         docstate.add(data)
-        # Ref(
-        #     loc=dstate.key,
-        #     target_id=target.pk if target else "",
-        #     fn=dstate.key.name if dstate.key else "",
-        #     text=link_text,
-        #     href=link_dest,
-        #     prev_string=prev_string,
-        #     prev_href=prev_href,
-        #     elem=str(a_tag.parent),
-        # )
-        # )
-        # print("link.unique_id", link.unique_id)  # f05conditionalrenderingref193102988
-        # print(
-        #     "metadata.get_substitution(link.unique_id)",
-        #     metadata.get_substitution(link.unique_id),
-        # )
-        # TODO: get substitution from docstate
-        # if link.unique_id and metadata.get_substitution(link.unique_id) is None:
         if unique_id and docstate.get("substitutions", unique_id) is None:
             data = Substitution(
                 loc=docstate.key,
@@ -146,15 +86,12 @@ def prepare_references(
                 is_paper=None,
                 location=metadata.filepath,
                 target_fn="",
-                # target_fn=target_fn,
                 file_count=None,  # Prev this was metadata.get_chapter_number(link.path) if link.path and link.is_cross_file_reference() else metadata.get_chapter_number()
                 prefix="",
                 prev_item_num=None,
                 hash=_hash_html(a_tag),
             )
-            # print("S>", data.model_dump())
             docstate.add(data)
-        print("post a_tag", a_tag)
     return html_soup
 
 
