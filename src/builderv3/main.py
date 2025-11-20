@@ -91,38 +91,20 @@ def lambda_handler(event, context) -> None:
             pass  # TODO: handle ipynb files
         elif key.suffix.lower() == ".html":
             jb_key = key.efs_jb_path.with_suffix(".md")
-            docstate = (
-                bookstate[jb_key] if jb_key in bookstate else DocumentState(jb_key)
-            )
+            # docstate_idontthinkineedit = (
+            #     bookstate[jb_key] if jb_key in bookstate else DocumentState(jb_key)
+            # )
+            # chapter_idontthinkineedit: Chapter | None = (
+            #     docstate_idontthinkineedit.first("chapters")
+            # )
+            chapter: Chapter = bookstate.get("chapters", jb_key, attrib="jb_key")
             # from which docx file this file was created
-            chapter: Chapter | None = docstate.first("chapters")
+            # assert chapter == chapter_idontthinkineedit
             fm_key = chapter.fm_key if chapter else None
 
-            # print('docstate.len("headings")', docstate.len("headings"))
             html_soup = bs4.BeautifulSoup(filestr, "html.parser")
             anchors = html_soup.find_all("a", href=True)
-            print('bookstate.len("targets")', bookstate.len("targets"))
-            for target in bookstate.all("targets"):
-                # print("target", target)
-                print(
-                    {
-                        "hash": target.hash,
-                        "pk": target.pk,
-                    }
-                )
-            print("=" * 75)
-            print()
             ref_targets: list[RefTarget] = bookstate.all("ref_targets")
-            print('bookstate.len("ref_targets")', bookstate.len("ref_targets"))
-            for rec in ref_targets:
-                print(
-                    {
-                        "target_id": rec.target_id,
-                        "proc_href": rec.proc_href,
-                        "fragment": rec.fragment,
-                    }
-                )
-            print("=" * 75)
             for a_tag in anchors:
                 assert isinstance(a_tag, bs4.Tag)
                 fn, fragment = _get_fn_and_fragment_from_href(a_tag["href"])
@@ -148,16 +130,19 @@ def lambda_handler(event, context) -> None:
                 elif len(ref_targets) == 0 and RefService.is_external(a_tag["href"]):
                     pass  # just external link
                 else:
-                    print(a_tag)
+                    pass
+                    # print(a_tag)
                 print("-" * 75)
                 #########################################
                 if target:
                     a_tag["href"] = "#" + target.hash
-                was, a_tag.string = _new_link_text(a_tag, target)
+                    new_value = _find_new_value(target, bookstate)
+                    was, a_tag.string = _new_link_text(a_tag, target, new_value)
 
         # Do I have all the data I need in the state files?
         # If not, do I have to iterate over all chapters twice?
-        md = _convert_to_md(key, html_soup, docstate)
+        md = _convert_to_md(key, html_soup, bookstate)
+        # md = _replace_placeholders_with_new_values(md, bookstate)
         _write_processed_md_to_efs_jb(md, key)
         _write_processed_html_to_efs(str(html_soup), key)
 
@@ -256,11 +241,8 @@ def _create_myst_config_file(key: KeyPath) -> None:
         raise
 
 
-def _new_link_text(
-    a_tag: bs4.Tag,
-    target: Target | None = None,
-    # tag_text: str, target: Target | None = None
-) -> tuple[str, str]:
+def _new_link_text(a_tag: bs4.Tag, target: Target, new_value: str) -> tuple[str, str]:
+    # def _new_link_text(a_tag: bs4.Tag, target: Target) -> tuple[str, str]:
     """
     Link text to be placed in `[text](...)` syntax.
     Returns replaced text and the new text.
@@ -268,39 +250,43 @@ def _new_link_text(
     text_to_replace = ""
     tag_href = a_tag["href"]
     tag_text = a_tag.text
-    target_hash = target.hash if target else "xxxUNEXPECTED_NO_TARGETxxx"
+    target_hash = target.hash
     if AUTONUMBER_PLACEHOLDER in tag_text:
         text_to_replace = AUTONUMBER_PLACEHOLDER
-        replace_with = r"{{ " + target_hash + r" }}"
+        replace_with = new_value
+        # replace_with = r"{{ " + target_hash + r" }}"
         tag_text = tag_text.replace(text_to_replace, replace_with)
         return text_to_replace, tag_text
-    match = _match_complex_numbering(tag_text)
-    if isinstance(match, re.Match):
-        start, end = match.span(1)
-        text_to_replace = tag_text[start:end]
-        replace_with = r"{{ " + target_hash + r" }}"
-        return text_to_replace, tag_text.replace(text_to_replace, replace_with)
-    elif RefService.is_internal_f2f(tag_href):
+    THIS_CASE_NEVER_HAPPENS = """
+    # at this stage, both infile and f2f look like `#some-hash`
+    if RefService.is_internal_f2f(tag_href):
         to_replace = ""
         for i in range(len(tag_text)):
             if tag_text[i].isdigit():
                 to_replace += tag_text[i]
             if to_replace and not tag_text[i].isdigit():
                 break
-        # replace_with = r"{{ " + self.path + "#" + self.fragment + r" }}"
-        replace_with = r"{{ " + target_hash + r" }}"
+        replace_with = new_value
+        # replace_with = r"{{ " + target_hash + r" }}"
         if to_replace:
             tag_text = tag_text.replace(to_replace, replace_with)
         text_to_replace = to_replace
-    # elif self.is_inner_reference(tag_href):
-    elif RefService.is_internal_infile(tag_href):
-        if target is not None:
-            to_replace = target.text
-            # replace_with = r"{{ " + self.fragment + r" }}"
-            replace_with = r"{{ " + target_hash + r" }}"
-            tag_text = tag_text.replace(to_replace, replace_with)
-            text_to_replace = to_replace
-    return text_to_replace, tag_text
+    """
+    match = _match_complex_numbering(tag_text)
+    if isinstance(match, re.Match):
+        start, end = match.span(1)
+        text_to_replace = tag_text[start:end]
+        replace_with = new_value
+        # replace_with = r"{{ " + target_hash + r" }}"
+        return text_to_replace, tag_text.replace(text_to_replace, replace_with)
+    elif new_value == "" and target.item_type == "heading":
+        return text_to_replace, tag_text
+    else:  # maybe check if tag_href == "#target_hash"
+        to_replace = target.text
+        replace_with = new_value
+        tag_text = tag_text.replace(to_replace, replace_with)
+        text_to_replace = to_replace
+        return text_to_replace, tag_text
 
 
 def _match_complex_numbering(tag_text: str) -> re.Match | None:
@@ -320,13 +306,94 @@ def _match_complex_numbering(tag_text: str) -> re.Match | None:
     # r"(?:\s)(([ivxlcdm]+|[a-z]{1}|\d+)[.:—-]{1}\d)", tag_text.lower()
 
 
+def _find_new_value(target: Target, bookstate: BookState) -> str:
+    subst: Substitution | None = bookstate.get(
+        "substitutions", target.hash, attrib="hash"
+    )
+    if not isinstance(subst, Substitution):
+        return ""
+        # return "xxxNEWVALUE_BUT_NO_SUBSTITUTION_FOUNDxxx"
+    # file_prefix = FileService.get_number_from_filename(file.stem)
+    # file_prefix = target.file_count
+    file_prefix = subst.file_count if subst else None
+    return SubstitutionService.to_digital_version(subst, file_prefix)
+
+
+def _replace_placeholders_with_new_values(md: str, bookstate: BookState) -> None:
+    """
+    Replace substitution placeholders in markdown files with new values.
+    """
+    substitutions: list[Substitution] = bookstate.all("substitutions")
+    for subs in substitutions:
+        md = md.replace(
+            r"{{ " + subs.pk + r" }}",
+            SubstitutionService.to_digital_version(subs, subs.file_count),
+        )
+    return md
+
+
+def _make_substitutions(key: KeyPath, bookstate: BookState) -> None:
+    """
+    Replace substitution placeholders in markdown files with new values.
+
+    I don't like this implementation because it should be done for .md and .ipynb
+    by JupyterBook. Also, I don't like having too many slow IO operations.
+    However, I needed some solution fast and I didn't have time to fight with JupyterBook.
+    I couldn't make JupyterBook to do the substitutions for f2f refs.
+    """
+    for md in key.efs_jb_dir.glob("*.md"):
+        dstate = bookstate.get(md.stem)
+        try:
+            if md.stem not in bookstate:
+                continue
+            with open(md, "r") as f:
+                mdstr = f.read()
+                # Make mapping of file_count to file prefix.
+                # This is suboptimal, but FileDatapoint only knows file stem and prefix.
+                # I could add more data to it, but since user has to correctly
+                # write this data in yaml file by hand, the less data the better :/
+                file_prefices: dict[int, str] = {}
+                files: list[File] = dstate["files"]
+                for file in files:
+                    file_count = FileService.get_number_from_filename(file.stem)
+                    file_prefices[file_count] = file.prefix
+                # Replace placeholders with new values, incl. file prefix
+                substitutions: list[Substitution] = dstate["substitutions"]
+                for subs in substitutions:
+                    if subs.file_count in file_prefices:
+                        file_prefix = file_prefices[subs.file_count]
+                    else:
+                        file_prefix = None
+                    mdstr = mdstr.replace(
+                        r"{{ " + subs.pk + r" }}",
+                        SubstitutionService.to_digital_version(subs, file_prefix),
+                    )
+                    # NOTE: seems to just repeat "was" attr
+            # post_mdstr = mdstr
+            # if pre_mdstr != post_mdstr:
+            #     diff = difflib.ndiff(
+            #         pre_mdstr.splitlines(keepends=True),
+            #         post_mdstr.splitlines(keepends=True),
+            #     )
+            #     print("".join(diff), end="")
+            with open(md, "w") as f:
+                f.write(mdstr)
+        except Exception as e:
+            logger.exception(f"Replacing placeholders in {md} failed. Error: {repr(e)}")
+            _log_audit_event(
+                key,
+                AuditStatus.FAILED.value,
+                "Error upon updating automatic numbering.",
+            )
+
+
 def _convert_to_md(
     key: KeyPath,
     html_soup: bs4.BeautifulSoup,
-    docstate: DocumentState,
+    bookstate: BookState,
 ) -> str:
     try:
-        return convert_to_md(html_soup, docstate)
+        return convert_to_md(html_soup, bookstate.all_records)
     except Exception as e:
         logger.exception(f"Converting to md failed. Error: {repr(e)}")
         _log_audit_event(
