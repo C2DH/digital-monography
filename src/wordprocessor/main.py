@@ -66,20 +66,14 @@ def lambda_handler(event, context) -> None:
     # TODO: aggregate all chapters in builder, verifier and wordprocessor
     # in a consistent way, with config read from frontmatter
     for key in config_key.efs_input_dir.glob("*.docx"):
-        doc = wordprocess_docx(key, bookstate_old, bookstate)
+        doc = wordprocess_docx(key, bookstate)
         doc.save(key.efs_paper_path)
 
 
-def wordprocess_docx(
-    key: KeyPath, bookstate_old: dict[str, DocumentState], bookstate: BookState
-) -> docx.document.Document:
+def wordprocess_docx(key: KeyPath, bookstate: BookState) -> docx.document.Document:
     doc = _read_document(key)
-    # print("bookstate", bookstate)
-    # for k in bookstate.keys():
-    #     print(k)
-    metadata = bookstate_old[key.stem]
     _remove_parts_and_highlights_due_to_conditional_rendering(key, doc)
-    _add_chapter_number_to_captions(key, doc, metadata)
+    _add_chapter_number_to_captions(key, doc, bookstate)
     _prepare_refs(key, doc, bookstate)
     _remove_images(key, doc)
     return doc
@@ -126,9 +120,12 @@ def _load_book_state(key: KeyPath) -> BookState:
         raise
 
 
+raise Exception("I need a better file count updater")
+
+
 def _update_file_count(
     config: dict[str, t.Any],
-    bookstate: dict[str, DocumentState],
+    bookstate: BookState,
 ) -> None:
     if "dgtmon" not in config or "prefixes" not in config["dgtmon"]:
         return
@@ -272,10 +269,11 @@ def _remove_parts_and_highlights_due_to_conditional_rendering(
 def _add_chapter_number_to_captions(
     key: KeyPath,
     doc: docx.document.Document,
-    docstate: DocumentState,
+    bookstate: BookState,
+    # docstate: DocumentState,
 ) -> None:
     try:
-        return add_chapter_number_to_captions(doc, docstate)
+        return add_chapter_number_to_captions(key, doc, bookstate)
     except Exception as e:
         logger.exception(
             f"Adding chapter number to captions failed. " f"Error: {repr(e)}"

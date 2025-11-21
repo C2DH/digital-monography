@@ -13,7 +13,8 @@ import typing as t
 
 from src._common.constants import CAPTION_ALLOWED_ITEMS
 from src._common.models import File, FileService
-from src._common.state import DocumentState
+from src._common.keys import KeyPath
+from src._common.state import BookState
 
 # try:
 #     from constants import CAPTION_ALLOWED_ITEMS
@@ -26,8 +27,9 @@ from src._common.state import DocumentState
 
 
 def add_chapter_number_to_captions(
+    key: KeyPath,
     doc: docx.document.Document,
-    docstate: DocumentState,
+    bookstate: BookState,
 ) -> None:
     """
     Find caption paragraphs and add chapter number to the automatic numbering.
@@ -81,8 +83,8 @@ def add_chapter_number_to_captions(
             prev: docx.oxml.text.run.CT_R = field.getprevious()
             if _is_caption_item(prev):
                 assert isinstance(prev, docx.oxml.text.run.CT_R)
-                file = _find_file(docstate)
-                num = FileService.get_number_from_filename(docstate.key.stem)
+                file = _find_file(key, bookstate)
+                num = FileService.get_number_from_filename(key.stem)
                 if isinstance(file, File):
                     prev.text = f"{prev.text}{file.prefix}."
                 elif num is not None:
@@ -99,10 +101,10 @@ def add_chapter_number_to_captions(
                 #         prev.text = f"{prev.text}{num}."
 
 
-def _find_file(docstate: DocumentState) -> t.Iterator[File | None]:
-    files: list[File] = docstate["files"]
+def _find_file(key: KeyPath, bookstate: BookState) -> t.Iterator[File | None]:
+    files: list[File] = bookstate.all("files")
     for f in files:
-        if f.stem == docstate.key.stem:
+        if f.stem == key.stem:
             yield f
     yield None
 
