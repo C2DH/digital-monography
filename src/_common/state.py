@@ -213,6 +213,7 @@ class BookState(collections.abc.MutableMapping):
 
     # TODO: Dunder methods should be targeting self.all_records instead.
     # Bookstate should require merging all docstates first.
+    # Also, loading and merging can be done in __init__ directly.
 
     def __contains__(self, name: str) -> bool:
         return name in self.docstates

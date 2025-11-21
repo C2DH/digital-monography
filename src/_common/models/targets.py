@@ -3,8 +3,16 @@ import typing as t
 
 try:
     from ._base import MySQLModel
+    from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
     from ._base import MySQLModel  # type: ignore
+    from ..keys import KeyPath  # type: ignore
+
+
+DESC = {
+    "hash": "xxhash.xxh64 hash of the target element.",
+    "fm_key": "Input file where the target was defined.",
+}
 
 
 class Target(MySQLModel, table=True):
@@ -19,12 +27,10 @@ class Target(MySQLModel, table=True):
     html: str
     text: str
     elem: str
-    hash: str = sqlmodel.Field(description="xxhash.xxh64 hash of the target element.")
+    hash: str = sqlmodel.Field(description=DESC["hash"])
     is_paper: bool | None
     is_digital: bool | None
-    # no "ref"
-    filename: str | None
-    fragment: str | None
+    x_fm_key: str = sqlmodel.Field(alias="fm_key", description=DESC["fm_key"])
     item_type: t.Literal["heading", "equation", "figure", "table", "graph", ""] = (
         sqlmodel.Field(sa_type=sqlmodel.String, default="")
     )
@@ -32,6 +38,14 @@ class Target(MySQLModel, table=True):
     prefix: str
     prev_item_num: int | None
     new_item_num: int | None = sqlmodel.Field(default=None)
+
+    @property
+    def fm_key(self) -> KeyPath:
+        return KeyPath(self.x_fm_key)
+
+    @fm_key.setter
+    def fm_key(self, val: KeyPath) -> None:
+        self.x_fm_key = str(val)
 
 
 class TargetService:

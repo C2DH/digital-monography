@@ -85,8 +85,7 @@ def prepare_ref_targets_in_headers(
                 item_type="heading",
                 is_digital=is_digital,
                 is_paper=is_paper,
-                filename=docstate.key.name if docstate.key else None,
-                fragment=None,  # do I even need it? Used to be =child.get("id"),  # '_Heading'
+                fm_key=src_key,
                 prefix="",
                 file_count=metadata.get_chapter_number(),  # 1 # TODO: get from somewhere else
                 prev_item_num=None,
@@ -310,8 +309,7 @@ def prepare_ref_targets_in_captions(
                 item_type=seq["item_type"],
                 is_digital=is_digital,  # calc from caption and identifier
                 is_paper=is_paper,  # calc from caption and identifier
-                filename=docstate.key.name if docstate.key else None,
-                fragment=None,  # do we need it? a["id"], I would have to iterate over anchors
+                fm_key=src_key,
                 file_count=metadata.get_chapter_number(),  # TODO: get from somewhere else
                 prefix=seq["prefix"],  # calc from ref_stack
                 prev_item_num=seq["prev_item_num"],  # calc from ref_stack
