@@ -3,15 +3,8 @@ import docx.oxml.drawing
 import docx.oxml.text.paragraph
 import docx.oxml.text.run
 
-from src._common.state import DocumentState
 
-# try:
-#     from state import DocumentState
-# except (ImportError, ModuleNotFoundError):
-#     from .state import DocumentState
-
-
-def remove_images(doc: docx.document.Document, _: DocumentState) -> None:
+def remove_images(doc: docx.document.Document) -> None:
     """
     Find "drawing" objects and remove the whole paragraph if it contains only one
     run. Else, remove the run containing the drawing object.

@@ -4,8 +4,8 @@ import docx.text.hyperlink
 import docx.text.paragraph
 
 from src._common.constants import AUTONUMBER_PLACEHOLDER
-from src._common.models import Target, TargetService
-from src._common.state import DocumentState
+from src._common.models import Chapter, RefTarget, Target, TargetService
+from src._common.state import BookState, DocumentState
 from src._common.keys import KeyPath
 
 # try:
@@ -23,7 +23,7 @@ from src._common.keys import KeyPath
 def prepare_refs(
     key: KeyPath,
     doc: docx.document.Document,
-    bookstate: dict[str, DocumentState],
+    bookstate: BookState,
 ) -> None:
     """
     In a reference, replace placeholder {{AUTONUMBER_PLACEHOLDER}}
@@ -39,8 +39,7 @@ def prepare_refs(
         </w:r>
     </w:hyperlink>
     """
-    for docstate in bookstate.values():
-        _update_datapoints_for_targets(docstate["targets"])
+    _update_datapoints_for_targets(bookstate.all("targets"))
     _update_hyperlink_texts(key, doc, bookstate)
 
 
@@ -87,28 +86,113 @@ def _update_hyperlink_texts(
 def _update_hyperlink_texts_in_paragraph(
     key: KeyPath,
     p: docx.text.paragraph.Paragraph,
-    bookstate: dict[str, DocumentState],
+    bookstate: BookState,
 ) -> None:
     for link in p.hyperlinks:
-        if AUTONUMBER_PLACEHOLDER in link.text and link.address:
-            target_file_stem = link.address.split(".")[0]
-            target = _find_target(link, target_file_stem, bookstate)
-            if target is not None:
-                _replace_link_text(link, target)
-        elif AUTONUMBER_PLACEHOLDER in link.text and link.fragment:
-            stem = key.stem if hasattr(key, "stem") else ""
-            target = _find_target(link, stem, bookstate)
-            if target is not None:
-                _replace_link_text(link, target)
+        print("-" * 50)
+        target = _find_target(key, link, bookstate)
+        print("link.address", link.address)
+        print("link.fragment", link.fragment)
+        print("link.text", link.text)
+        print("target", target)
+        print("-" * 50)
+        if target is not None:
+            _replace_link_text(link, target)
+
+        # if AUTONUMBER_PLACEHOLDER in link.text and link.address:
+        #     print("link.text", link.text)
+        #     print("link.address", link.address)
+        #     target_file_stem = link.address.split(".")[0]
+        #     target = _find_target(link, target_file_stem, bookstate)
+        #     if target is not None:
+        #         _replace_link_text(link, target)
+        # elif AUTONUMBER_PLACEHOLDER in link.text and link.fragment:
+        #     print("link.text", link.text)
+        #     print("link.fragment", link.fragment)
+        #     fn = input_key.name if hasattr(input_key, "name") else ""
+        #     fn = input_key.name
+        #     target = _find_target(link, fn, bookstate)
+        #     if target is not None:
+        #         _replace_link_text(link, target)
 
 
 def _find_target(
+    key: KeyPath,
     link: docx.text.hyperlink.Hyperlink,
-    stem: str,
     bookstate: dict[str, DocumentState],
 ) -> Target | None:
-    targets: list[Target] = bookstate[stem]["targets"]
-    return next((t for t in targets if t.fragment == link.fragment), None)
+    # print("-" * 50)
+    # if AUTONUMBER_PLACEHOLDER in link.text:
+    # print("=" * 50)
+
+    ref_targets: list[RefTarget] = bookstate.all("ref_targets")
+    target_ids: set[str] = {
+        rt.target_id for rt in ref_targets if rt.fragment == link.fragment
+    }
+    print("len(target_ids)", len(target_ids))
+    if len(target_ids) == 0:
+        return None
+    elif len(target_ids) == 1:
+        target_id = target_ids.pop()
+        print("target_id", target_id)
+        target = bookstate.get("targets", target_id, attrib="hash")
+        print("target", target)
+        return target
+    elif len(target_ids) > 1 and link.address:
+        print("link.address", link.address)
+        # there is link.address, therefore target is in different file as ref
+        target_file_stem = link.address.split(".")[0]
+        targets: list[Target] = bookstate.all("targets")
+        targets_with_fragment = [t for t in targets if t.hash in target_ids]
+        assert len(targets_with_fragment) > 0, "There should be at least one target."
+        for t in targets_with_fragment:
+            if t.loc.stem == target_file_stem:
+                return t
+        raise NotImplementedError(
+            "Figure out how to filter the right target based on `link.address`."
+        )
+    elif len(target_ids) > 1 and not link.address:
+        # no link.address, therefore target is in the same file as ref
+        print("elif len(target_ids) > 1 and not link.address")
+        targets: list[Target] = bookstate.all("targets")
+        for t in targets:
+            # print("---")
+            # print(t)
+            # print("---")
+            # print("key", key)
+            # print("t.fm_key", t.fm_key)
+            # print("t.loc", t.loc)
+            # print("link.fragment", link.fragment)
+            # print("link.text", link.text)
+            if t.hash in target_ids and t.fm_key == key:
+                return t
+        raise NotImplementedError(
+            "Figure out how to filter the right target WITHOUT the `link.address`."
+        )
+
+    raise NotImplementedError("Need to think it thgrough more carefully.")
+    # targets_with_fragment = [t for t in targets if t.fragment == link.fragment]
+    # targets: list[Target] = bookstate.all("targets")
+    # print('bookstate.len("targets")', bookstate.len("targets"))
+    # print("link.fragment", link.fragment)
+    # print("link.address", link.address)
+    # print("link.text", link.text)
+    # # for t in targets:
+    # #     print("t.fragment", t.fragment)
+    # targets_with_fragment = [t for t in targets if t.fragment == link.fragment]
+    # print("targets_with_fragment", targets_with_fragment, len(targets_with_fragment))
+    # if len(targets_with_fragment) == 0:
+    #     return None
+    # elif len(targets_with_fragment) == 1:
+    #     return targets_with_fragment[0]
+    # elif len(targets_with_fragment) > 1:
+    #     target_file_stem = link.address.split(".")[0]
+    #     for t in targets_with_fragment:
+    #         if t.loc.stem == target_file_stem:
+    #             return t
+    #     raise NotImplementedError(
+    #         "Figure out how to filter the right target based on `link.address`."
+    #     )
 
 
 def _replace_link_text(
@@ -116,12 +200,17 @@ def _replace_link_text(
     target: Target,
 ) -> None:
     for run in link.runs:
+        print("run.text", run.text)
         if (
             AUTONUMBER_PLACEHOLDER in run.text
             and target.is_paper == False
             and target.is_digital == True
         ):
+            print("BEFORE run.text", run.text)
             run.text = run.text.replace(AUTONUMBER_PLACEHOLDER, "")
         elif AUTONUMBER_PLACEHOLDER in run.text:
+            print("BEFORE run.text", run.text)
             new_value = TargetService.to_paper_version(target)
+            print("new_value", new_value)
             run.text = run.text.replace(AUTONUMBER_PLACEHOLDER, new_value)
+            print("AFTER run.text", run.text)

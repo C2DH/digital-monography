@@ -21,7 +21,7 @@ from src._common.audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
 from src._common.constants import IS_DEBUG, ModuleEnum
 from src._common.keys import KeyPath
 from src._common.models import File
-from src._common.state import DocumentState, read_book_metadata
+from src._common.state import BookState, DocumentState, read_book_metadata
 from numbering_captions import add_chapter_number_to_captions
 from numbering_refs import prepare_refs
 from remove_images import remove_images
@@ -58,29 +58,30 @@ def lambda_handler(event, context) -> None:
     logger.info("Event: " + json.dumps(event, default=str))
     logger.info("Context: " + json.dumps(context, default=str))
     config_key = _get_config_key(event)
-    bookstate = read_book_metadata(config_key)
+    bookstate = _load_book_state(config_key)
+    bookstate_old = read_book_metadata(config_key)
     config = _prepare_config(config_key)
-    _update_file_count(config, bookstate)
+    _update_file_count(config, bookstate_old)
 
     # TODO: aggregate all chapters in builder, verifier and wordprocessor
     # in a consistent way, with config read from frontmatter
     for key in config_key.efs_input_dir.glob("*.docx"):
-        doc = wordprocess_docx(key, bookstate)
+        doc = wordprocess_docx(key, bookstate_old, bookstate)
         doc.save(key.efs_paper_path)
 
 
 def wordprocess_docx(
-    key: KeyPath, bookstate: dict[str, DocumentState]
+    key: KeyPath, bookstate_old: dict[str, DocumentState], bookstate: BookState
 ) -> docx.document.Document:
     doc = _read_document(key)
     # print("bookstate", bookstate)
     # for k in bookstate.keys():
     #     print(k)
-    metadata = bookstate[key.stem]
+    metadata = bookstate_old[key.stem]
     _remove_parts_and_highlights_due_to_conditional_rendering(key, doc)
     _add_chapter_number_to_captions(key, doc, metadata)
     _prepare_refs(key, doc, bookstate)
-    _remove_images(key, doc, metadata)
+    _remove_images(key, doc)
     return doc
 
 
@@ -109,6 +110,20 @@ def _prepare_config(key: KeyPath) -> t.Any:
     with open(key) as f:
         config = yaml.safe_load(f)
     return config
+
+
+def _load_book_state(key: KeyPath) -> BookState:
+    try:
+        bookstate = BookState()
+        bookstate.load_from_file(key)
+        bookstate.merge_docstate(key)
+        return bookstate
+    except Exception as e:
+        logging.exception(f"Loading book state failed. Error: {repr(e)}")
+        _log_audit_event(
+            key, AuditStatus.FAILED.value, "Error while loading book state."
+        )
+        raise
 
 
 def _update_file_count(
@@ -276,7 +291,7 @@ def _add_chapter_number_to_captions(
 def _prepare_refs(
     key: KeyPath,
     doc: docx.document.Document,
-    bookstate: dict[str, DocumentState],
+    bookstate: BookState,
 ) -> None:
     try:
         return prepare_refs(key, doc, bookstate)
@@ -293,10 +308,9 @@ def _prepare_refs(
 def _remove_images(
     key: KeyPath,
     doc: docx.document.Document,
-    docstate: DocumentState,
 ) -> None:
     try:
-        return remove_images(doc, docstate)
+        return remove_images(doc)
     except Exception as e:
         logger.exception(f"Removing images from .docx failed. " f"Error: {repr(e)}")
         _log_audit_event(

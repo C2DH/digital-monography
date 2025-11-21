@@ -71,11 +71,6 @@ def add_chapter_number_to_captions(
         "//w:p/w:pPr/w:pStyle[@w:val='Caption']"
     )
     for caption_pstyle_el in captions_pstyle_elems:
-        print(
-            "Check if 'caption_pstyle_el' is really of type 'docx.oxml.shared.CT_String'. "
-            "It doesn't seem to have the same attributes :/"
-        )
-        print("type(caption_pstyle_el)", type(caption_pstyle_el))
         assert isinstance(caption_pstyle_el, docx.oxml.shared.CT_String)
         pPr: docx.oxml.text.parfmt.CT_PPr = caption_pstyle_el.getparent()
         p: docx.oxml.text.paragraph.CT_P = pPr.getparent()
