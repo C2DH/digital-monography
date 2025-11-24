@@ -195,76 +195,40 @@ def read_book_metadata(key: KeyPath) -> dict[str, DocumentState]:
 
 class BookState(collections.abc.MutableMapping):
     """
-    Collection of DocumentState data.
+    Collection of state data from all DocumentState objects.
     It is meant to act as an inter-microservice state describing a single book
     consisting of one or more docx or ipynb documents.
-
-    The usage pattern is not yet fully understood, so I made 2 alternative
-    data structures to use:
-    * hashmap (self.docstates) and
-    * records (self.all_records).
 
     TODO: consider an adapter over JupyterBook config and ToC.
     """
 
-    def __init__(self) -> None:
-        self.docstates: dict[KeyPath, DocumentState] = {}
-        self.all_records: DocumentState | None = None
-
-    # TODO: Dunder methods should be targeting self.all_records instead.
-    # Bookstate should require merging all docstates first.
-    # Also, loading and merging can be done in __init__ directly.
+    def __init__(self, key: KeyPath) -> None:
+        self.all_records = DocumentState(key)
+        docstates = collections.defaultdict(list)
+        for statef in key.efs_state_dir.glob("**/*.json"):
+            with statef.open("r") as f:
+                data: dict[str, list[t.Any]] = json.load(f)
+            for k, v in data.items():
+                docstates[k].extend(v)
+        self.all_records.from_dict(docstates)
 
     def __contains__(self, name: str) -> bool:
-        return name in self.docstates
+        return name in self.all_records
 
     def __getitem__(self, name: str) -> DocumentState:
-        return self.docstates[name]
+        return self.all_records[name]
 
     def __setitem__(self, name: str, value: DocumentState):
-        self.docstates[name] = value
+        self.all_records[name] = value
 
     def __delitem__(self, name: str):
-        del self.docstates[name]
+        del self.all_records[name]
 
     def __iter__(self):
-        return iter(self.docstates)
+        return iter(self.all_records)
 
     def __len__(self):
-        return len(self.docstates)
-
-    def load_from_file(self, key: KeyPath) -> None:
-        """
-        Read JSON state stored in a file system, i.e.
-        * from Elastic File System (EFS) in AWS, or
-        * from /tmp directory during local development.
-        Then, update the docstates with all DocumentState objects for a specific book.
-        Creates new DocumentState object that contains all the records.
-        """
-        for meta_file in key.efs_state_dir.glob("**/*.json"):
-            meta_file: KeyPath
-            with meta_file.open("r") as f:
-                state = DocumentState(meta_file)
-                state.from_dict(json.load(f))
-                assert (
-                    len(state["chapters"]) == 1
-                ), "Each docstate should have exactly 1 chapter."
-                chapter: Chapter = state.first("chapters")
-                assert isinstance(chapter.jb_key, KeyPath)
-                self.docstates[chapter.jb_key] = state
-                # self.docstates[meta_file.stem] = state
-
-    def merge_docstate(self, key: KeyPath) -> DocumentState:
-        """
-        Merge all DocumentState objects into one.
-        Used by aggregation microservices to have an overview of the whole book.
-        """
-        self.all_records = DocumentState(key)
-        for docstate in self.docstates.values():
-            for records in docstate.__dict__.values():
-                for record in records:
-                    self.all_records.add(record)
-        return self.all_records
+        return len(self.all_records)
 
     def get(
         self, tablename: str, val: str | int, attrib: str = "pk"

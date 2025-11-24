@@ -108,10 +108,7 @@ def _prepare_config(key: KeyPath) -> t.Any:
 
 def _load_book_state(key: KeyPath) -> BookState:
     try:
-        bookstate = BookState()
-        bookstate.load_from_file(key)
-        bookstate.merge_docstate(key)
-        return bookstate
+        return BookState(key)
     except Exception as e:
         logging.exception(f"Loading book state failed. Error: {repr(e)}")
         _log_audit_event(
