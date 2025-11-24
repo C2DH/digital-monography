@@ -29,7 +29,11 @@ DESC = {
 
 
 class Chapter(MySQLModel, table=True):
-    "Entry in the '_toc' field from a frontmatter table."
+    """
+    Entry in the '_toc' field from a frontmatter table representing a chapter in a book.
+    It has to be defined at the document level (in docx or ipynb), not in `myst.yml` config file,
+    because this informaiton is needed in the preparer stage, which does not read the book config.
+    """
 
     __tablename__ = "chapters"
 
