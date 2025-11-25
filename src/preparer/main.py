@@ -208,13 +208,13 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
             )
             del dstate.__dict__[TEMP_FOOTNOTES_TABLE]
             html_soup = hide_metadata_in_html(html_soup, metadata, dstate)  # last step
-            html_soup_str = str(html_soup)
             # IMPORTANT NOTE: other services depend on html produced at this stage, make sure that:
             # 1) all reversible transformations are made before saving html file;
             # 2) irreversible transformations are omited to avoid not being able to recreate a book
             # as html files written at this stage will be the basis for a paper version of a book.
             html_soup = insert_digital_objects(html_soup, dstate, tables)
             html_soup = remove_metadata_tables(html_soup, dstate, tables)
+            html_soup_str = str(html_soup)
             _write_assets_info_to_s3(dstate, key)
             # _write_metadata_to_db(metadata, dstate, key)  # TODO: dstate
             _write_state_to_efs(dstate, key)
