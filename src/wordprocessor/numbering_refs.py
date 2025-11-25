@@ -1,3 +1,4 @@
+import collections
 import docx
 import docx.document
 import docx.text.hyperlink
@@ -28,8 +29,26 @@ def prepare_refs(
         </w:r>
     </w:hyperlink>
     """
-    _update_datapoints_for_targets(bookstate.all("targets"))
     _update_hyperlink_texts(key, doc, bookstate)
+
+
+def update_targets_count(bookstate: BookState) -> None:
+    """
+    In order to do reference numbering correctly,
+    first we have to update "target.new_item_num" property.
+
+    To do that, group all targets by fm_key.
+    Then, order targets by prev_item_num within each group
+    and call _update_datapoints_for_targets() for each group.
+    """
+    grouped_targets = collections.defaultdict(list)
+    all_targets: list[Target] = bookstate.all("targets")
+    for target in all_targets:
+        grouped_targets[target.fm_key].append(target)
+
+    for group in grouped_targets.values():
+        group: list[Target] = sorted(group, key=lambda t: (t.prev_item_num or 0))
+        _update_datapoints_for_targets(group)
 
 
 def _update_datapoints_for_targets(
@@ -55,7 +74,7 @@ def _update_datapoints_for_targets(
         "": 0,
     }
     for dp in datapoints:
-        if dp.is_paper == False and prev_item_num is not None:
+        if dp.is_paper == False:
             val = 0 if prev_item_num[dp.item_type] == dp.prev_item_num else 1
             ommited_count[dp.item_type] += val
         elif dp.prev_item_num is not None:
@@ -134,4 +153,7 @@ def _replace_link_text(
             run.text = run.text.replace(AUTONUMBER_PLACEHOLDER, "")
         elif AUTONUMBER_PLACEHOLDER in run.text:
             new_value = TargetService.to_paper_version(target)
+            print(">>>new_value", new_value)
+            print(">>>BEFORE_run.text", run.text)
             run.text = run.text.replace(AUTONUMBER_PLACEHOLDER, new_value)
+            print(">>>AFTER_run.text", run.text)

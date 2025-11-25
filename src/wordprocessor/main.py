@@ -23,7 +23,7 @@ from src._common.keys import KeyPath
 from src._common.models import File
 from src._common.state import BookState, DocumentState, read_book_metadata
 from numbering_captions import add_chapter_number_to_captions
-from numbering_refs import prepare_refs
+from numbering_refs import prepare_refs, update_targets_count
 from remove_images import remove_images
 from wpr_conditional_rendering import (
     remove_parts_and_highlights_due_to_conditional_rendering,
@@ -61,10 +61,11 @@ def lambda_handler(event, context) -> None:
     bookstate = _load_book_state(config_key)
     bookstate_old = read_book_metadata(config_key)
     config = _prepare_config(config_key)
-    _update_file_count(config, bookstate_old)
+    # _update_file_count(config, bookstate_old)
 
     # TODO: aggregate all chapters in builder, verifier and wordprocessor
     # in a consistent way, with config read from frontmatter
+    update_targets_count(bookstate)
     for key in config_key.efs_input_dir.glob("*.docx"):
         doc = wordprocess_docx(key, bookstate)
         doc.save(key.efs_paper_path)
