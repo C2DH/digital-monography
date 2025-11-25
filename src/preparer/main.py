@@ -671,7 +671,9 @@ def _remove_preprocessed_html_from_efs(key: KeyPath) -> None:
         new_efs_filepath.unlink(missing_ok=True)
         logger.info(f"{new_efs_filepath} was removed from EFS.")
     except Exception as e:
-        logger.exception(f"Deleting pre-processed html from /efs failed. Error: {repr(e)}")
+        logger.exception(
+            f"Deleting pre-processed html from /efs failed. Error: {repr(e)}"
+        )
         raise
 
 
@@ -825,7 +827,7 @@ def _write_metadata_to_db(
 
 def _remove_state_from_efs(key: KeyPath) -> None:
     try:
-        fp = key.efs_slug_metadata_path.parent / key.github_path.with_suffix(".json")
+        fp = key.efs_state_path.with_suffix(".json")
         fp.unlink(missing_ok=True)  # remove file if it exists
         logger.info(f"Metadata was removed from {str(fp)}")
     except Exception as e:
@@ -900,9 +902,10 @@ def _write_processed_ipynb_to_efs_chapters(
         nbformat.write(ipynb, key.efs_chapters_path)
 
 
-def _remove_processed_ipynb_from_efs_chapters(key) -> None:
+def _remove_processed_ipynb_from_efs_chapters(key: KeyPath) -> None:
     try:
         # fp = key.efs_slug_metadata_path.parent / key.github_path.with_suffix(".json")
+        fp = key.efs_chapters_path
         fp.unlink(missing_ok=True)  # remove file if it exists
         logger.info(f"Pre-processed ipynb was removed from {str(fp)}")
     except Exception as e:
