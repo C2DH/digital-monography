@@ -153,7 +153,4 @@ def _replace_link_text(
             run.text = run.text.replace(AUTONUMBER_PLACEHOLDER, "")
         elif AUTONUMBER_PLACEHOLDER in run.text:
             new_value = TargetService.to_paper_version(target)
-            print(">>>new_value", new_value)
-            print(">>>BEFORE_run.text", run.text)
             run.text = run.text.replace(AUTONUMBER_PLACEHOLDER, new_value)
-            print(">>>AFTER_run.text", run.text)

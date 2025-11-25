@@ -8,7 +8,6 @@ import os
 import pathlib
 import sys
 import typing as t
-import yaml
 from mypy_boto3_dynamodb.service_resource import (
     DynamoDBServiceResource as boto3_DynamoDBServiceResource,
 )
@@ -20,8 +19,7 @@ sys.path.insert(0, current_dir)
 from src._common.audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
 from src._common.constants import IS_DEBUG, ModuleEnum
 from src._common.keys import KeyPath
-from src._common.models import File
-from src._common.state import BookState, DocumentState, read_book_metadata
+from src._common.state import BookState
 from numbering_captions import add_chapter_number_to_captions
 from numbering_refs import prepare_refs, update_targets_count
 from remove_images import remove_images
@@ -57,16 +55,10 @@ else:
 def lambda_handler(event, context) -> None:
     logger.info("Event: " + json.dumps(event, default=str))
     logger.info("Context: " + json.dumps(context, default=str))
-    config_key = _get_config_key(event)
-    bookstate = _load_book_state(config_key)
-    bookstate_old = read_book_metadata(config_key)
-    config = _prepare_config(config_key)
-    # _update_file_count(config, bookstate_old)
-
-    # TODO: aggregate all chapters in builder, verifier and wordprocessor
-    # in a consistent way, with config read from frontmatter
+    cfg_key = _get_config_key(event)
+    bookstate = _load_book_state(cfg_key)
     update_targets_count(bookstate)
-    for key in config_key.efs_input_dir.glob("*.docx"):
+    for key in cfg_key.efs_input_dir.glob("*.docx"):
         doc = wordprocess_docx(key, bookstate)
         doc.save(key.efs_paper_path)
 
@@ -101,12 +93,6 @@ def _get_config_key(event) -> KeyPath:
         raise
 
 
-def _prepare_config(key: KeyPath) -> t.Any:
-    with open(key) as f:
-        config = yaml.safe_load(f)
-    return config
-
-
 def _load_book_state(key: KeyPath) -> BookState:
     try:
         return BookState(key)
@@ -116,45 +102,6 @@ def _load_book_state(key: KeyPath) -> BookState:
             key, AuditStatus.FAILED.value, "Error while loading book state."
         )
         raise
-
-
-raise Exception("I need a better file count updater")
-
-
-def _update_file_count(
-    config: dict[str, t.Any],
-    bookstate: BookState,
-) -> None:
-    if "dgtmon" not in config or "prefixes" not in config["dgtmon"]:
-        return
-    prefixes = config["dgtmon"]["prefixes"]
-    if type(prefixes) == list and type(prefixes[0]) == dict:
-        prefixes = {k: v for kv in prefixes for k, v in kv.items()}
-        _ = """ 
-        #FOR_FULL_TYPECHECKING_TRY_THIS_OUT
-        updated_prefixes = {}
-        for kv in prefixes:
-            assert isinstance(kv, dict)
-            for k, v in kv.items():
-                updated_prefixes[k] = v
-        config["dgtmon"]["prefixes"] = updated_prefixes
-        """
-    if type(prefixes) != dict or len(prefixes) == 0:
-        return
-    ###
-    for docstate in bookstate.values():
-        for stem, prefix in prefixes.items():
-            # metadata.add_file(FileDatapoint(stem=stem, prefix=str(prefix)))
-            docstate.add(
-                File(stem=stem, slug="slug", prefix=str(prefix), loc=KeyPath(stem))
-            )
-    # for metadata in book_metadata.values():
-    #     for dp in metadata.substitutions:
-    #         if dp.target_fn is None:
-    #             continue
-    #         stem = KeyPath(dp.target_fn).stem
-    #         if stem in prefixes:
-    #             dp.fprefix = prefixes[stem]
 
 
 # def prepare_references(
