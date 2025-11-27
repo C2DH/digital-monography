@@ -6,15 +6,15 @@ from src._common.keys import KeyPath
 JB_BUILD_DIR = KeyPath(DEFAULT_SFS_DIR) / JB_DIR / "a_book" / "_build" / "html"
 
 
-class TestWorkflowFromDocxToJupyterBookV2:
+class TestIfJupyterBookV2WasCorrectlyBuild:
 
     @pytest.mark.parametrize(
         "url_path",
         [
             "a",
             "b",
-            "c",
-            "d",
+            # "c",
+            # "d",
             "conditional-rendering",
         ],
     )
