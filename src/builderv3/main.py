@@ -100,11 +100,11 @@ def lambda_handler(event, context) -> None:
                     a_tag["href"] = "#" + target.hash
                     # TODO: remove "was" if not used
                     was, a_tag.string = _new_link_text(a_tag, target, bookstate)
-
-        md = _convert_to_md(key, html_soup, bookstate)
-        md = _replace_placeholders_with_new_values(md, bookstate)
-        _write_processed_md_to_efs_jb(md, key)
-        _write_processed_html_to_efs(str(html_soup), key)
+            # only applies to .ipynb
+            md = _convert_to_md(key, html_soup, bookstate)
+            md = _replace_placeholders_with_new_values(md, bookstate)
+            _write_processed_md_to_efs_jb(md, key)
+            _write_processed_html_to_efs(str(html_soup), key)
 
     # enqueue_to_github
 
