@@ -56,8 +56,6 @@ class MystMdConverter(markdownify.MarkdownConverter):
         autolinks = True
         escape_underscores = False
         escape_misc = False
-        sub_symbol = "{sub}"
-        sup_symbol = "{sup}"
 
     def escape(self, text):
         if not text:
@@ -173,10 +171,11 @@ class MystMdConverter(markdownify.MarkdownConverter):
             end = "\n\n"
         return "" + (line_beginning_re.sub("> ", text) + end) if text else ""
 
-    convert_sub = sub_inline_conversion(lambda self: self.options["sub_symbol"])
+    def convert_sub(self, el, text, convert_as_inline):
+        prefix, suffix, text = markdownify.chomp(text)
+        return "%s<sub>%s</sub>%s" % (prefix, text, suffix)
 
     def convert_sup(self, el, text, convert_as_inline):
-        markup_tag = self.options["sup_symbol"]
         prefix, suffix, text = markdownify.chomp(text)
         if not text:
             return ""
@@ -184,7 +183,7 @@ class MystMdConverter(markdownify.MarkdownConverter):
             return text
         if text.startswith("[^endnote-ref-"):
             return text
-        return "%s%s`%s`%s" % (prefix, markup_tag, text, suffix)
+        return "%s<sup>%s</sup>%s" % (prefix, text, suffix)
 
     def convert_iframe(
         self, el: bs4.element.Tag, text: str, convert_as_inline: bool
