@@ -24,7 +24,8 @@ class CitationGroup(MySQLModel, table=True):
 
     __tablename__ = "citation_groups"
 
-    pk: str = sqlmodel.Field(primary_key=True)
+    # pk: str = sqlmodel.Field(primary_key=True)
+    id: str = sqlmodel.Field(description="The citationID")
     file_name: str
     citation_schema: str
     formattedCitation: str

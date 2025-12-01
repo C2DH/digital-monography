@@ -49,6 +49,8 @@ def prepare_citations(
 
     for citation_group in citations:
         props = citation_group.get("properties", {})
+        # What to do when one citation is used multiple times in the same document?
+        # For now, save duplicate entries in the database under separate pk
         metadata.add_citation_group(
             CitationGroupDatapoint(
                 pk=citation_group.get("citationID"),
@@ -62,7 +64,8 @@ def prepare_citations(
         )
         dstate.add(
             CitationGroup(
-                pk=citation_group.get("citationID"),
+                # pk=citation_group.get("citationID"),
+                id=citation_group.get("citationID"),
                 loc=dstate.metadata.key,
                 slug=dstate.metadata.slug,
                 file_name=metadata.filepath.name if metadata.filepath else "",
