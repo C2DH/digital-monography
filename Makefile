@@ -41,7 +41,9 @@ prep/book2:
 		python3.12 scripts/prepare_and_build_jb2.py book_path="tests/_fixtures/a_book/"
 	export BUILD_DIR=/tmp/efs/a_book/_build/html
 	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
-	(cd /tmp/efs/_JB/a_book && myst build --html)
+	(cd /tmp/efs/_JB/a_book && \
+		myst build --html && \
+		cp -r ./assets _build/html/assets)
 	echo 'npx serve /tmp/efs/_JB/a_book/_build/html'
 
 prep/split:
@@ -55,7 +57,9 @@ prep/split:
 		python3.12 scripts/prepare_and_build_jb2.py book_path="tests/_fixtures/split-to-multiple-chapters/"
 	export BUILD_DIR=/tmp/efs/_JB/split-to-multiple-chapters/_build/html
 	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
-	(cd /tmp/efs/_JB/split-to-multiple-chapters && myst build --html)
+	(cd /tmp/efs/_JB/split-to-multiple-chapters && \
+		myst build --html && \
+		cp -r ./assets _build/html/assets)
 	echo 'npx serve /tmp/efs/_JB/split-to-multiple-chapters/_build/html'
 
 test/unit:
@@ -98,7 +102,9 @@ show/dominique:
 		python3.12 scripts/prepare_and_build_jb2.py book_path="/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/a-colonia-luxemburguesa/"
 	export BUILD_DIR=/tmp/efs/_JB/a-colonia-luxemburguesa/_build/html
 	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
-	(cd /tmp/efs/_JB/a-colonia-luxemburguesa && myst build --html)
+	(cd /tmp/efs/_JB/a-colonia-luxemburguesa && \
+		myst build --html && \
+		cp -r ./assets _build/html/assets)
 	echo 'npx serve /tmp/efs/_JB/a-colonia-luxemburguesa/_build/html'
 
 show/janakeck:
@@ -112,7 +118,9 @@ show/janakeck:
 		python3.12 scripts/prepare_and_build_jb2.py book_path="/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/migration-and-HERitage/"
 	export BUILD_DIR=/tmp/efs/_JB/migration-and-HERitage/_build/html
 	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
-	(cd /tmp/efs/_JB/migration-and-HERitage && myst build --html)
+	(cd /tmp/efs/_JB/migration-and-HERitage && \
+		myst build --html && \
+		cp -r ./assets _build/html/assets)
 	echo 'npx serve /tmp/efs/_JB/migration-and-HERitage/_build/html'
 
 show/guidelines:
@@ -125,7 +133,9 @@ show/guidelines:
 		python3.12 scripts/prepare_and_build_jb2.py book_path="/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/guidelines-for-drafting-manuscripts-v2/"
 	export BUILD_DIR=/tmp/efs/_JB/guidelines-for-drafting-manuscripts-v2/_build/html
 	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
-	(cd /tmp/efs/_JB/guidelines-for-drafting-manuscripts-v2 && myst build --html)
+	(cd /tmp/efs/_JB/guidelines-for-drafting-manuscripts-v2 && \
+		myst build --html && \
+		cp -r ./assets _build/html/assets)
 	echo 'npx serve /tmp/efs/_JB/guidelines-for-drafting-manuscripts-v2/_build/html'
 
 login:
