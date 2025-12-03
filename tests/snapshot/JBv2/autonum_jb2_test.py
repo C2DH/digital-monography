@@ -79,19 +79,17 @@ class TestAutomaticNumberingInJupyterBookV2:
             ("[link to fig (paper only)](#", True, "key_a"),
             ("[link to fig 5.2 (digital and paper)](#", True, "key_a"),
             (
-                # "Link to 1{sup}`st` asset (NOT on paper, 1{sup}`st` in digital): cross-ref **[Figure 5.1](#cad1981cd241e21a)** and [link to figForDigital bookmark](#cad1981cd241e21a)",
-                "Link to 1{sup}`st` asset (NOT on paper, 1{sup}`st` in digital): cross-ref **[Figure 5.1](#",
+                "Link to 1<sup>st</sup> asset (NOT on paper, 1<sup>st</sup> in digital): cross-ref **[Figure 5.1](#",
                 True,
                 "key_cr",
             ),
             (
-                "Link to 2{sup}`nd` asset (1{sup}`st` on paper, NOT in digital)",
+                "Link to 2<sup>nd</sup> asset (1<sup>st</sup> on paper, NOT in digital)",
                 False,
                 "key_cr",
             ),
             (
-                # "Link to 3{sup}`rd` asset (2{sup}`nd` on paper, 2{sup}`nd` in digital): cross-ref **[Figure 5.2](#50c332fa0edff8a8)** and [link to figForDigitalAndPaper bookmark](#50c332fa0edff8a8)",
-                "Link to 3{sup}`rd` asset (2{sup}`nd` on paper, 2{sup}`nd` in digital): cross-ref **[Figure 5.2](#",
+                "Link to 3<sup>rd</sup> asset (2<sup>nd</sup> on paper, 2<sup>nd</sup> in digital): cross-ref **[Figure 5.2](#",
                 True,
                 "key_cr",
             ),
