@@ -1,8 +1,19 @@
 version: 1
 project:
-  downloads:
-    - file: ./assets/thumbnail.svg
-      title: A smiley face
+  title: Split Document Example
+  authors:
+    - name: Pawel Kaminski
+      affiliations: Luxembourg Centre for Contemporary and Digital History (C²DH)
+    - name: Elisabeth Guerard
+      affiliations: Luxembourg Centre for Contemporary and Digital History (C²DH)
+  license: CC-BY-NC-ND-4.0
+  open_access: true
+  copyright: '2026'
+  banner: ./assets/banner.jpeg
+  thumbnail: ./assets/thumbnail.svg
+  keywords:
+    - test
+    - e2e
 site:
   options:
     folders: true
