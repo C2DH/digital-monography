@@ -21,7 +21,7 @@ from src._common.constants import IS_DEBUG, ModuleEnum
 from src._common.keys import KeyPath
 from src._common.state import BookState
 from numbering_captions import add_chapter_number_to_captions
-from numbering_refs import prepare_refs, update_targets_count
+from numbering_refs import prepare_refs, update_targets_for_substitutions
 from remove_images import remove_images
 from wpr_conditional_rendering import (
     remove_parts_and_highlights_due_to_conditional_rendering,
@@ -57,7 +57,7 @@ def lambda_handler(event, context) -> None:
     logger.info("Context: " + json.dumps(context, default=str))
     cfg_key = _get_config_key(event)
     bookstate = _load_book_state(cfg_key)
-    update_targets_count(bookstate)
+    update_targets_for_substitutions(bookstate)
     for key in cfg_key.efs_input_dir.glob("*.docx"):
         doc = wordprocess_docx(key, bookstate)
         doc.save(key.efs_paper_path)

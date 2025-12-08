@@ -32,7 +32,7 @@ def prepare_refs(
     _update_hyperlink_texts(key, doc, bookstate)
 
 
-def update_targets_count(bookstate: BookState) -> None:
+def update_targets_for_substitutions(bookstate: BookState) -> None:
     """
     In order to do reference numbering correctly,
     first we have to update "target.new_item_num" property.
@@ -48,10 +48,10 @@ def update_targets_count(bookstate: BookState) -> None:
 
     for group in grouped_targets.values():
         group: list[Target] = sorted(group, key=lambda t: (t.prev_item_num or 0))
-        _update_datapoints_for_targets(group)
+        _update_state_records_for_substitution(group)
 
 
-def _update_datapoints_for_targets(
+def _update_state_records_for_substitution(
     datapoints: list[Target],
 ) -> None:
     """

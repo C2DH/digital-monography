@@ -5,20 +5,16 @@ from src._common.models import Substitution, Target
 from src._common.state import DocumentState
 
 
-def count_targets_for_substitutions(
+def update_targets_for_substitutions(
     soup: bs4.BeautifulSoup, metadata: DocumentMetadata, dstate: DocumentState
 ) -> bs4.BeautifulSoup:
-    # update_datapoints_for_targets(soup, metadata.substitutions)
-    # update_datapoints_for_targets(soup, metadata.targets)
-    update_datapoints_for_targets(soup, dstate["substitutions"])
-    update_datapoints_for_targets(soup, dstate["targets"])
+    _update_state_records_for_substitution(soup, dstate["substitutions"])
+    _update_state_records_for_substitution(soup, dstate["targets"])
     return soup
 
 
-def update_datapoints_for_targets(
+def _update_state_records_for_substitution(
     soup: bs4.BeautifulSoup,
-    # metadata: DocumentMetadata,
-    # datapoints: list[SubstitutionDatapoint | TargetDatapoint],
     datapoints: list[Substitution | Target],
 ) -> bs4.BeautifulSoup:
     """

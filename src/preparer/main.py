@@ -85,7 +85,7 @@ from split_into_chapters import (
     split_docx_into_multiple_chapters,
     prepend_htmls_with_frontmatter,
 )
-from substitutions_prep import count_targets_for_substitutions
+from substitutions_prep import update_targets_for_substitutions
 from ipynb_prep import tags_to_myst_crossref_targets
 from fakers import Faker
 
@@ -464,7 +464,7 @@ def prepare_docx(
     html_soup = remove_paper_only(html_soup, metadata, dstate, paper_only)
     html_soup = remove_empty_tables(html_soup, metadata, dstate, tables)
     html_soup = prepare_alt_texts(html_soup, metadata, dstate, images_with_alttxt)
-    html_soup = count_targets_for_substitutions(html_soup, metadata, dstate)
+    html_soup = update_targets_for_substitutions(html_soup, metadata, dstate)
     return html_soup, metadata, dstate, tables
 
 
