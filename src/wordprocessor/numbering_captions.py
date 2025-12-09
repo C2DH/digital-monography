@@ -63,7 +63,7 @@ def add_chapter_number_to_captions(
             <fldChar w:fldCharType="begin" />
         </r>
     ```
-    Note that only complex fields are supported (fildChar) and not fldSimple.
+    Note that only complex fields are supported (fldChar) and not fldSimple.
     Once a begin of fieldChar has been found in a caption-styled paragraph,
     the number of a chapter is concatenated to the text of a previous run,
     which should be the caption type (e.g. "Figure" or "Table").
