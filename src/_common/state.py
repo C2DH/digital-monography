@@ -230,6 +230,14 @@ class BookState(collections.abc.MutableMapping):
     def __len__(self):
         return len(self.all_records)
 
+    def add(self, record: sqlmodel.SQLModel) -> None:
+        """Add a model's instance (a record) to the state."""
+        if not isinstance(record, sqlmodel.SQLModel):
+            raise TypeError(f"Expected sqlmodel.SQLModel, got {type(record)}")
+        if record.__tablename__ not in self.all_records.__dict__:
+            self.all_records.__dict__[record.__tablename__] = []
+        self.all_records.__dict__[record.__tablename__].append(record)
+
     def get(
         self, tablename: str, val: str | int, attrib: str = "pk"
     ) -> t.Optional[sqlmodel.SQLModel]:
