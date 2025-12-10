@@ -59,7 +59,8 @@ class TargetService:
         """
         if t.new_item_num is not None:
             file_count = f"{t.file_count}." if t.file_count is not None else ""
-            return f"{file_count}{t.prefix}{t.new_item_num}"
+            prefix = t.prefix if t.prefix is not None else ""
+            return f"{file_count}{prefix}{t.new_item_num}"
         else:
             return ""
 
@@ -71,6 +72,7 @@ class TargetService:
         """
         if t.new_item_num is not None:
             file_count = t.file_count if t.file_count is not None else ""
-            return f"{file_count}.{t.prefix}{t.new_item_num}"
+            prefix = t.prefix if t.prefix is not None else ""
+            return f"{file_count}.{prefix}{t.new_item_num}"
         else:
             return ""
