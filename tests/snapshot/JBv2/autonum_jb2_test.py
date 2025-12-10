@@ -157,7 +157,6 @@ class TestAutomaticNumberingInJupyterBookV2_SplitDocExample:
         else:
             assert exp_text not in self.md[getattr(self, key)]
 
-    THIS_WORKS_CORRECTLY_SHOWS_AUTONUMBERING_DOES_NOT_HANDLE_SPLIT_FILES = """
     @pytest.mark.parametrize(
         "exp_text, key, msg",  # note in this context msg is just a hint
         [
@@ -198,7 +197,7 @@ class TestAutomaticNumberingInJupyterBookV2_SplitDocExample:
             ),
             # ...
             (
-                "cross-ref to the [Table 2.1](#",
+                "cross-ref to the **[Table 2.1](#",
                 "key_inf",
                 (
                     "Correct ref should include a valid file-prefix "
@@ -212,4 +211,3 @@ class TestAutomaticNumberingInJupyterBookV2_SplitDocExample:
             assert exp_text in self.md[getattr(self, key)], msg
         else:
             assert exp_text not in self.md[getattr(self, key)]
-    """
