@@ -1,5 +1,6 @@
 # NOTE: consider renaming from "builder", this is more book level aggregator and merger.
 # "preparer" microservice works per document, this prepares on a book level.
+import collections
 import boto3
 import bs4
 import datetime
@@ -27,6 +28,7 @@ from src._common.audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
 from src._common.constants import (
     ASSETS_DIR,
     AUTONUMBER_PLACEHOLDER,
+    AUTONUMBER_COUNT_CHAPTERS_SEPARATELY,
     DB_URL,
     IS_DEBUG,
     ModuleEnum,
@@ -36,8 +38,8 @@ from src._common.models import (
     RefService,
     RefTarget,
     Substitution,
-    SubstitutionService,
     Target,
+    TargetService,
 )
 from src._common.html2md import convert_to_md
 from src._common.keys import KeyPath
@@ -77,9 +79,9 @@ def lambda_handler(event, context) -> None:
     _copy_assets(key)
     _copy_manuscript(key)
     bookstate = _load_book_state(key)
+    update_targets_for_substitutions(bookstate)
     _create_myst_config_file(key)
     # enrich_html_from_docx(key, bookstate)
-
     for key in sorted(key.efs_chapters_dir.glob("**/*")):
         assert key.suffix.lower() in (".html", ".ipynb")
         with open(key, "r") as f:
@@ -92,6 +94,7 @@ def lambda_handler(event, context) -> None:
             fm_key = chapter.fm_key if chapter else None
 
             html_soup = bs4.BeautifulSoup(filestr, "html.parser")
+            # update references
             anchors = html_soup.find_all("a", href=True)
             for a_tag in anchors:
                 assert isinstance(a_tag, bs4.Tag)
@@ -195,6 +198,85 @@ def _create_myst_config_file(key: KeyPath) -> None:
         raise
 
 
+def update_targets_for_substitutions(bookstate: BookState) -> None:
+    """
+    In order to do reference numbering correctly,
+    first we have to update "target.new_item_num" property.
+
+    To do that, group all targets by loc_key (key after split).
+    Then, order targets by prev_item_num within each group
+    and call _update_datapoints_for_targets() for each group.
+    """
+    if AUTONUMBER_COUNT_CHAPTERS_SEPARATELY:
+        grouped_targets = _group_targets_by_chapter(bookstate)
+        for group in grouped_targets.values():
+            _update_state_records_for_substitution(group)
+    else:
+        raise NotImplementedError(
+            "Implement autonumbering where numbers do not start at 1 with each chapter."
+        )
+
+
+def _group_targets_by_chapter(bookstate: BookState) -> dict[str, list[Target]]:
+    """
+    To do that, group all targets by loc_key (key after split).
+    Then, order targets by prev_item_num within each group.
+    """
+    grouped_and_sorted_targets: dict[int, list[Target]] = {}
+    grouped_targets: dict[int, list[Target]] = collections.defaultdict(list)
+    all_targets: list[Target] = sorted(
+        bookstate.all("targets"), key=lambda t: t.file_count
+    )
+    for target in all_targets:
+        assert (
+            target.file_count is not None
+        ), "Autonumbering relies on file_count. Check if file name is prepended with a number or find some other method."
+        grouped_targets[target.file_count].append(target)
+
+    for group in grouped_targets.values():
+        # NOTE: this assumes target counting is consistent accross chapters
+        # In reality, a book might be made out of 2 files that have to be splited
+        # into multiple chapters, each with its own autonumbering.
+        # Thus, relying on `t.prev_item_num` alone is not sufficient.
+        # In that case, consider adding new `item_num` attrib to Target,
+        # taken from incremental numbering done in "preparer/targets.py".
+        group: list[Target] = sorted(group, key=lambda t: (t.prev_item_num or 0))
+        if len(group) > 0:
+            grouped_and_sorted_targets[group[0].file_count] = group
+    return grouped_and_sorted_targets
+
+
+def _update_state_records_for_substitution(
+    datapoints: list[Substitution | Target],
+) -> None:
+    prev_item_num = {
+        "heading": 0,
+        "equation": 0,
+        "figure": 0,
+        "table": 0,
+        "": 0,
+    }
+    ommited_count = {
+        "heading": 0,
+        "equation": 0,
+        "figure": 0,
+        "table": 0,
+        "": 0,
+    }
+    for dp in datapoints:
+        if dp.item_type == "ref":
+            # check assumption that in every ref prev_item_num is None
+            assert dp.prev_item_num is None
+            pass
+        elif dp.is_digital == False:
+            # increment omitted count
+            ommited_count[dp.item_type] += 1
+        elif dp.prev_item_num is not None:
+            # update "new_item_num" property
+            dp.new_item_num = prev_item_num[dp.item_type] + 1
+            prev_item_num[dp.item_type] += 1
+
+
 def _find_target(
     src_key: KeyPath, a_tag: bs4.Tag, bookstate: BookState
 ) -> Target | None:
@@ -236,14 +318,7 @@ def _new_link_text(
     Link text to be placed in `[text](...)` syntax.
     Returns replaced text and the new text.
     """
-    subst: Substitution | None = bookstate.get(
-        "substitutions", target.hash, attrib="hash"
-    )
-    if isinstance(subst, Substitution):
-        file_prefix = subst.file_count if subst else None
-        replace_with = SubstitutionService.to_digital_version(subst, file_prefix)
-    else:
-        replace_with = ""
+    replace_with = TargetService.to_digital_version(target)
     text_to_replace = ""
     tag_text = a_tag.text
     if AUTONUMBER_PLACEHOLDER in tag_text:
@@ -283,16 +358,28 @@ def _match_complex_numbering(tag_text: str) -> re.Match | None:
 
 def _replace_placeholders_with_new_values(md: str, bookstate: BookState) -> str:
     """
-    Replace substitution placeholders in markdown files with new values.
+    Replace target placeholders in markdown files with new values.
+
+    Before:
+    ```md
+    (1ecb9f4f0fe2e53d)=
+    **Figure {{ 1ecb9f4f0fe2e53d }}:** Some image.
+    ```
+
+    After:
+    ```md
+    (1ecb9f4f0fe2e53d)=
+    **Figure 1.1:** Some image.
+    ```
     """
-    substitutions: list[Substitution] = bookstate.all("substitutions")
-    for subs in substitutions:
-        placeholder = r"{{ " + subs.hash + r" }}"
+    targets: list[Target] = bookstate.all("targets")
+    for target in targets:
+        placeholder = r"{{ " + target.hash + r" }}"
         if placeholder not in md:
             continue
         md = md.replace(
             placeholder,
-            SubstitutionService.to_digital_version(subs, subs.file_count),
+            TargetService.to_digital_version(target),
         )
     return md
 

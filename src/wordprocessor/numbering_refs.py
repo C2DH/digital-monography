@@ -39,7 +39,7 @@ def update_targets_for_substitutions(bookstate: BookState) -> None:
 
     To do that, group all targets by fm_key.
     Then, order targets by prev_item_num within each group
-    and call _update_datapoints_for_targets() for each group.
+    and call _update_state_records_for_substitution() for each group.
     """
     grouped_targets = collections.defaultdict(list)
     all_targets: list[Target] = bookstate.all("targets")
