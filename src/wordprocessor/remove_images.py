@@ -31,6 +31,7 @@ def remove_images(doc: docx.document.Document) -> None:
         print("type(drawing)", type(drawing))
         assert isinstance(drawing, docx.oxml.drawing.CT_Drawing)
         r_elem = drawing.getparent()
+        print("type(r_elem)", type(r_elem))
         assert isinstance(r_elem, docx.oxml.text.run.CT_R)
         p_elem = r_elem.getparent()
         assert isinstance(p_elem, docx.oxml.text.paragraph.CT_P)
