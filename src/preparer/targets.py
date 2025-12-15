@@ -15,7 +15,7 @@ from src._common.constants import (
 from src._common.metadata import (
     DocumentMetadata,
 )
-from src._common.models import Chapter, Heading, RefTarget, Target
+from src._common.models import Chapter, ChapterService, Heading, RefTarget, Target
 from src._common.keys import KeyPath
 from src._common.state import DocumentState
 
@@ -309,7 +309,7 @@ def prepare_ref_targets_in_captions(
                 is_digital=is_digital,  # calc from caption and identifier
                 is_paper=is_paper,  # calc from caption and identifier
                 fm_key=src_key,
-                file_count=metadata.get_chapter_number(),  # TODO: get from somewhere else
+                file_count=ChapterService.get_number_from_filename(chapter.jb_key.stem),
                 prefix=seq["prefix"],  # calc from ref_stack
                 prev_item_num=seq["prev_item_num"],  # calc from ref_stack
             )
