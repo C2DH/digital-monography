@@ -22,6 +22,8 @@ DESC = {
     "fn": "An author can optionally define a custom file name for a chapter. If not defined, the chapter slug is used. Should be set in the frontmatter.",
     #
     # "src_key": "Key to source file, i.e. a document that will be processed into a chapter.",
+    # TODO: rename "fm_key" to "src_key", source key is more intuitive,
+    # sometimes there is no frontmatter, yet there always is a source file
     "fm_key": "Frontmatter key. Location of the frontmatter where the chapter is defined.",
     "jb_key": "Key to jupyter book input file. It is derived from other values.",
     "docx_key": "Key to the .docx output file that will be used in typesetting. It is derived from other values.",

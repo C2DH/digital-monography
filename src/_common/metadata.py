@@ -547,6 +547,11 @@ class DocumentMetadataAsDict(t.TypedDict):
 type DocumentMetadataSerialized = dict[str, list[dict[str, PrimitiveValues]]]
 
 
+# TODO: deprecate
+# This is only used in old builder and obsolete tests.
+# Remove this after old builder (for JBv1) is deleted.
+
+
 class DocumentMetadata:
     """
     Collection of records (lists of dictionaries) about:

@@ -18,6 +18,8 @@ type PrimitiveValues = str | int | bool | None
 type DocumentStateSerialized = dict[str, list[dict[str, PrimitiveValues]]]
 
 
+# TODO: rename from DocumentState to ChapterState?
+# When one .docx file is split into multiple chapters, each chapter has its own state.
 class DocumentState:
     """
     Inter-microservice state describing a single docx document.

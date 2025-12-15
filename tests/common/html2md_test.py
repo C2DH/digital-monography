@@ -3,7 +3,6 @@ import mammoth
 import pathlib
 
 from src._common.html2md import convert_to_md
-from src._common.metadata import DocumentMetadata
 from src._common.state import DocumentState
 from src._common.keys import KeyPath
 from src.preparer.citations import add_bibliography, prepare_citations, is_citation
@@ -18,14 +17,11 @@ class TestHtml2MdFootnotes:
             result = mammoth.convert_to_html(f)
         cls.soup = bs4.BeautifulSoup(result.value, "html.parser")
         dstate = DocumentState(cls.fp)
-        metadata = DocumentMetadata()
         citations = []
         for node in cls.soup.descendants:
             if is_citation(node):
                 citations.append(node)
-        cls.soup, bibliography = prepare_citations(
-            cls.soup, metadata, dstate, citations
-        )
+        cls.soup, bibliography = prepare_citations(cls.soup, dstate, citations)
         cls.soup = add_bibliography(cls.soup, bibliography)
         cls.md = convert_to_md(cls.soup, dstate)
 

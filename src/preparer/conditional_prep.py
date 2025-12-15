@@ -1,7 +1,6 @@
 import bs4
 
 from src._common.constants import CLS_PAPER_ONLY
-from src._common.metadata import DocumentMetadata
 from src._common.state import DocumentState
 
 
@@ -11,8 +10,7 @@ def is_paper_only(tag: bs4.Tag) -> bool:
 
 def remove_paper_only(
     html_soup: bs4.BeautifulSoup,
-    _: DocumentMetadata,
-    dstate: DocumentState,
+    _: DocumentState,
     paper_only: list[bs4.Tag],
 ) -> bs4.BeautifulSoup:
     """

@@ -5,11 +5,6 @@ import typing as t
 import citeproc
 import citeproc.string
 
-from src._common.metadata import (
-    DocumentMetadata,
-    CitationGroupDatapoint,
-    CitationItemDatapoint,
-)
 from src._common.models import CitationGroup, CitationItem
 from src._common.state import DocumentState
 
@@ -39,36 +34,24 @@ def is_citation(tag: bs4.element.Tag) -> bool:
 
 def prepare_citations(
     html_soup: bs4.BeautifulSoup,
-    metadata: DocumentMetadata,
-    dstate: DocumentState,
+    # metadata: DocumentMetadata,
+    docstate: DocumentState,
     citation_tags: list[bs4.element.Tag],
 ) -> tuple[bs4.BeautifulSoup, citeproc.CitationStylesBibliography]:
     citation_style = "harvard1"  # TODO make it configurable
     citations = _extract_citations(citation_tags)
     citeproc_input = []
-
     for citation_group in citations:
         props = citation_group.get("properties", {})
         # What to do when one citation is used multiple times in the same document?
         # For now, save duplicate entries in the database under separate pk
-        metadata.add_citation_group(
-            CitationGroupDatapoint(
-                pk=citation_group.get("citationID"),
-                # id=citation_group.get("citationID"),
-                file_name=metadata.filepath.name if metadata.filepath else "",
-                citation_schema=citation_group.get("schema"),
-                formattedCitation=props.get("formattedCitation"),
-                noteIndex=props.get("noteIndex"),
-                plainCitation=props.get("plainCitation"),
-            )
-        )
-        dstate.add(
+        docstate.add(
             CitationGroup(
                 # pk=citation_group.get("citationID"),
                 id=citation_group.get("citationID"),
-                loc=dstate.metadata.key,
-                slug=dstate.metadata.slug,
-                file_name=metadata.filepath.name if metadata.filepath else "",
+                loc=docstate.metadata.key,
+                slug=docstate.metadata.slug,
+                file_name=docstate.key.name if docstate.key else "",
                 citation_schema=citation_group.get("schema"),
                 formattedCitation=props.get("formattedCitation"),
                 noteIndex=props.get("noteIndex"),
@@ -77,25 +60,15 @@ def prepare_citations(
         )
         # TODO: link CGroup with CItem with a foreign key
         for citation_item in citation_group["citationItems"]:
-            metadata.add_citation_item(
-                CitationItemDatapoint(
-                    # pk=citation_item.get("id"),
-                    id=citation_item.get("id"),
-                    file_name=metadata.filepath.name if metadata.filepath else "",
-                    citationId=citation_group.get("citationID"),
-                    itemData=citation_item.get("itemData"),
-                    uris=citation_item.get("uris"),
-                )
-            )
-            dstate.add(
+            docstate.add(
                 CitationItem(
-                    loc=dstate.key,
+                    loc=docstate.key,
                     id=citation_item.get("id"),
-                    file_name=metadata.filepath.name if metadata.filepath else "",
+                    file_name=docstate.key.name if docstate.key else "",
                     citationId=citation_group.get("citationID"),
                     itemData=citation_item.get("itemData"),
                     uris=citation_item.get("uris"),
-                    slug=dstate.metadata.slug,
+                    slug=docstate.metadata.slug,
                 )
             )
             citeproc_input.append(citation_item["itemData"])

@@ -49,11 +49,10 @@ class TestRefDatapointsCreated:
         cls, fp: KeyPath
     ) -> tuple[bs4.BeautifulSoup, DocumentMetadata, DocumentState]:
         docstate = DocumentState(fp)
-        metadata = DocumentMetadata(fp)
         html_str = _convert_to_html(fp)
         html_soup = convert_to_bs(html_str)
-        html_soup, metadata, docstate, _ = prepare_docx(html_soup, metadata, docstate)
-        return html_soup, metadata, docstate
+        html_soup, docstate = prepare_docx(html_soup, docstate)
+        return html_soup, docstate
 
     def test_target_as_a_user_placed_bookmark(self):
         target: Target = self.bookstate[self.fp_a.stem].get(
@@ -440,10 +439,9 @@ class TestDatapointsCreatedAndMarkedForDigitalAndForPaper:
         cls, fp: KeyPath
     ) -> tuple[bs4.BeautifulSoup, DocumentMetadata]:
         docstate = DocumentState(fp)
-        metadata = DocumentMetadata(fp)
         html_str = _convert_to_html(fp)
         html_soup = convert_to_bs(html_str)
-        html_soup, metadata, docstate, _ = prepare_docx(html_soup, metadata, docstate)
+        html_soup, docstate, _ = prepare_docx(html_soup, docstate)
         return html_soup, docstate
 
     def test_target_for_digital(self):

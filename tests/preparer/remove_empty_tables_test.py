@@ -2,7 +2,6 @@ import bs4
 
 from src.preparer.remove_empty_tables import remove_empty_tables
 from src._common.constants import CLS_METADATA_TABLE_JSONDATA, CLS_STATE_TABLE_JSONDATA
-from src._common.metadata import DocumentMetadata
 from src._common.state import DocumentState
 
 
@@ -59,10 +58,7 @@ class TestRemovingEmptyTables:
         cls.html_soup = bs4.BeautifulSoup(HTML_STR, "html.parser")
         cls.tables = cls.html_soup.find_all("table")
         cls.dstate = DocumentState()
-        metadata = DocumentMetadata()
-        cls.html_soup = remove_empty_tables(
-            cls.html_soup, metadata, cls.dstate, cls.tables
-        )
+        cls.html_soup = remove_empty_tables(cls.html_soup, cls.dstate, cls.tables)
         cls.tables = cls.html_soup.find_all("table")
 
     def test_only_one_table_left(self):

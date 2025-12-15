@@ -73,13 +73,11 @@ class TestCitationsFromFootnotes:
         cls.html_soup = bs4.BeautifulSoup(result.value, "html.parser")
         citations = []
         cls.dstate = DocumentState(cls.fp)
-        cls.metadata = DocumentMetadata()
+        # cls.metadata = DocumentMetadata()
         for node in cls.html_soup.descendants:
             if is_citation(node):
                 citations.append(node)
-        cls.html_soup, cls.bib = prepare_citations(
-            cls.html_soup, cls.metadata, cls.dstate, citations
-        )
+        cls.html_soup, cls.bib = prepare_citations(cls.html_soup, cls.dstate, citations)
         cls.html_soup = add_bibliography(cls.html_soup, cls.bib)
 
     def test_extract_citations_finds_all_2_citations(self):

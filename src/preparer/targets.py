@@ -12,9 +12,6 @@ from src._common.constants import (
     CLS_PAPER_ONLY,
     REF_PREFIX,
 )
-from src._common.metadata import (
-    DocumentMetadata,
-)
 from src._common.models import Chapter, ChapterService, Heading, RefTarget, Target
 from src._common.keys import KeyPath
 from src._common.state import DocumentState
@@ -36,7 +33,6 @@ def is_caption(tag: bs4.element.Tag) -> bool:
 
 def prepare_ref_targets_in_headers(
     html_soup: bs4.BeautifulSoup,
-    metadata: DocumentMetadata,  # TODO: remove metadata
     docstate: DocumentState,
     headers: list[bs4.Tag],
 ) -> bs4.BeautifulSoup:
@@ -86,7 +82,7 @@ def prepare_ref_targets_in_headers(
                 is_paper=is_paper,
                 fm_key=src_key,
                 prefix="",
-                file_count=metadata.get_chapter_number(),  # 1 # TODO: get from somewhere else
+                file_count=ChapterService.get_number_from_filename(jb_key.name),
                 prev_item_num=None,
             )
             docstate.add(targetdata)
@@ -125,8 +121,8 @@ def prepare_ref_targets_in_headers(
             h_num=heading_count,  # 2
             text=h_tag.text,  # 'Heading'
             target=target_label,  # 'f-01-a-a-heading'
-            word_count=metadata.word_count,  # 258
-            char_count=metadata.char_count,  # 1039
+            word_count=docstate.metadata.word_count,  # 258
+            char_count=docstate.metadata.char_count,  # 1039
             level=h_lvl,  # 2
             elem=str(h_tag),
         )
@@ -155,7 +151,6 @@ def prepare_ref_targets_in_headers(
 
 def prepare_ref_targets_in_captions(
     html_soup: bs4.BeautifulSoup,
-    metadata: DocumentMetadata,
     docstate: DocumentState,
     captions: list[bs4.Tag],
 ) -> bs4.BeautifulSoup:
@@ -309,7 +304,7 @@ def prepare_ref_targets_in_captions(
                 is_digital=is_digital,  # calc from caption and identifier
                 is_paper=is_paper,  # calc from caption and identifier
                 fm_key=src_key,
-                file_count=ChapterService.get_number_from_filename(chapter.jb_key.stem),
+                file_count=ChapterService.get_number_from_filename(chapter.jb_key.name),
                 prefix=seq["prefix"],  # calc from ref_stack
                 prev_item_num=seq["prev_item_num"],  # calc from ref_stack
             )

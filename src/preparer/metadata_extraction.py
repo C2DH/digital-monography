@@ -8,8 +8,6 @@ import uuid
 
 from src._common.metadata import (
     AssetDatapoint,
-    DocumentMetadata,
-    MetadataTableDatapoint,
 )
 from src._common.models import Asset
 from src._common.constants import (
@@ -43,7 +41,6 @@ FALSE_EQUIVALENTS = [
 
 def prepare_metadata_tables(
     html_soup: bs4.BeautifulSoup,
-    document_metadata: DocumentMetadata,
     dstate: DocumentState,
     tables: list[bs4.element.Tag],
 ) -> bs4.BeautifulSoup:
@@ -83,12 +80,12 @@ def prepare_metadata_tables(
                 table["id"] = metadata_tbl.uuid
                 table[ATTRIB_METADATA_UUID] = metadata_tbl.uuid
                 # metadata_tbl_values = metadata_tbl.to_dict()
-                document_metadata.add(
-                    "metadata_tables",
-                    MetadataTableDatapoint(
-                        pk=metadata_tbl.uuid, kwargs=copy.copy(metadata_tbl.kwargs)
-                    ),
-                )
+                # document_metadata.add(
+                #     "metadata_tables",
+                #     MetadataTableDatapoint(
+                #         pk=metadata_tbl.uuid, kwargs=copy.copy(metadata_tbl.kwargs)
+                #     ),
+                # )
                 if described_el:
                     described_el[ATTRIB_METADATA_UUID] = metadata_tbl.uuid
                     # metadata_tbl_values.update({"elem": described_el})
@@ -100,8 +97,8 @@ def prepare_metadata_tables(
                 if target_el:
                     metadata_tbl.add_target(target_el.text)
 
-            metadata_tbl.add_slug(document_metadata.slug)
-            metadata_tbl.add_location(document_metadata.filepath)
+            metadata_tbl.add_slug(dstate.metadata.slug)
+            metadata_tbl.add_location(dstate.metadata.key)
             metadata_tbl.add_orig_caption(dstate)
             metadata_tbl.add_docstate(dstate)
             asset_paper = metadata_tbl.assetdatapoint_for_paper()

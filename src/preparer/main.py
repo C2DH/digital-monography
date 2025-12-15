@@ -34,9 +34,9 @@ from src._common.constants import (
     DEFAULT_SFS_DIR,
     TEMP_FOOTNOTES_TABLE,
 )
-from src._common.metadata import DocumentMetadata, AssetDatapoint
 from src._common.models import (
     Asset,
+    AssetService,
     Chapter,
 )
 from src._common.github_trigger import GithubTriggerMsg, GithubActionEnum
@@ -176,13 +176,10 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
             # print("chapter.docx_key", chapter.docx_key)
             # print("-" * 75)
             dstate.add(chapter)
-            metadata = DocumentMetadata(key)  # TODO: not key, use val from frontmatter
             # TODO: prepare_docx shouldn't have to return "state"
-            html_soup, metadata, dstate, tables = prepare_docx(
-                html_soup, metadata, dstate
-            )
+            html_soup, dstate, tables = prepare_docx(html_soup, dstate)
             del dstate.__dict__[TEMP_FOOTNOTES_TABLE]
-            html_soup = hide_metadata_in_html(html_soup, metadata, dstate)  # last step
+            html_soup = hide_metadata_in_html(html_soup, dstate)  # last step
             # IMPORTANT NOTE: other services depend on html produced at this stage, make sure that:
             # 1) all reversible transformations are made before saving html file;
             # 2) irreversible transformations are omited to avoid not being able to recreate a book
@@ -390,9 +387,8 @@ def _create_domain_dirs(key: KeyPath) -> None:
 
 def prepare_docx(
     html_soup: bs4.BeautifulSoup,
-    metadata: DocumentMetadata,
     dstate: DocumentState,
-) -> tuple[bs4.BeautifulSoup, DocumentMetadata, DocumentState, list[bs4.element.Tag]]:
+) -> tuple[bs4.BeautifulSoup, DocumentState, list[bs4.element.Tag]]:
     # TODO: pass bs instead of str
     images_with_alttxt = []
     tables = []
@@ -403,7 +399,9 @@ def prepare_docx(
     # target_footnotes = []
     references = []
     paper_only = []
-    metadata.char_count, metadata.word_count = _get_char_and_word_count(html_soup)
+    dstate.metadata.char_count, dstate.metadata.word_count = _get_char_and_word_count(
+        html_soup
+    )
     classifiers = [
         (is_img_with_alt_text, images_with_alttxt),
         (is_citation, citations),
@@ -425,21 +423,21 @@ def prepare_docx(
         for check_if_meets_criteria, container in classifiers:
             if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
                 container.append(node)
-    html_soup, bibliography = prepare_citations(html_soup, metadata, dstate, citations)
+    html_soup, bibliography = prepare_citations(html_soup, dstate, citations)
     html_soup = add_bibliography(html_soup, bibliography)
-    html_soup = prepare_ref_targets_in_headers(html_soup, metadata, dstate, headers)
-    html_soup = prepare_ref_targets_in_captions(html_soup, metadata, dstate, captions)
+    html_soup = prepare_ref_targets_in_headers(html_soup, dstate, headers)
+    html_soup = prepare_ref_targets_in_captions(html_soup, dstate, captions)
     # html_soup = prepare_targets_in_footnotes(html_soup, dstate, target_footnotes)
-    # html_soup = prepare_ref_targets_in_footnotes(html_soup, metadata, dstate, footnotes)
+    # html_soup = prepare_ref_targets_in_footnotes(html_soup,dstate, footnotes)
     html_soup = prepare_refs_in_footnotes(html_soup, dstate, ref_footnotes)
     # with open(f"/tmp/efs/output_{dstate.key.name}.html", "w", encoding="utf-8") as f:
     #     f.write(str(html_soup))
-    html_soup = prepare_references(html_soup, metadata, dstate, references)
-    html_soup = prepare_metadata_tables(html_soup, metadata, dstate, tables)
-    html_soup = remove_paper_only(html_soup, metadata, dstate, paper_only)
-    html_soup = remove_empty_tables(html_soup, metadata, dstate, tables)
-    html_soup = prepare_alt_texts(html_soup, metadata, dstate, images_with_alttxt)
-    return html_soup, metadata, dstate, tables
+    html_soup = prepare_references(html_soup, dstate, references)
+    html_soup = prepare_metadata_tables(html_soup, dstate, tables)
+    html_soup = remove_paper_only(html_soup, dstate, paper_only)
+    html_soup = remove_empty_tables(html_soup, dstate, tables)
+    html_soup = prepare_alt_texts(html_soup, dstate, images_with_alttxt)
+    return html_soup, dstate, tables
 
 
 def _get_char_and_word_count(html_soup: bs4.BeautifulSoup) -> tuple[int, int]:
@@ -688,8 +686,7 @@ def _write_processed_md_to_efs_jb(md: str, key: KeyPath) -> None:
 
 def _remove_assets_info_from_s3(key: KeyPath) -> None:
     try:
-        # TODO: this works, but it's a bad design
-        s3_key = AssetDatapoint.get_s3_key(key)
+        s3_key = AssetService.get_s3_key(key)
         bucket = os.environ.get("METADATA_ASSETS_BUCKET_NAME", "")
         resp = s3.delete_object(Bucket=bucket, Key=s3_key)
         logger.info(
@@ -710,8 +707,7 @@ def _remove_assets_info_from_s3(key: KeyPath) -> None:
 
 def _write_assets_info_to_s3(docstate: DocumentState, key: KeyPath) -> None:
     try:
-        # TODO: this works, but it's a bad design
-        s3_key = AssetDatapoint.get_s3_key(key)
+        s3_key = AssetService.get_s3_key(key)
         bucket = os.environ.get("METADATA_ASSETS_BUCKET_NAME", "")
         assets: list[Asset] = docstate["assets"]
         body = json.dumps([ass.model_dump(mode="json") for ass in assets], default=str)
@@ -730,83 +726,14 @@ def _write_assets_info_to_s3(docstate: DocumentState, key: KeyPath) -> None:
         raise
 
 
-def _remove_metadata_from_db(key: KeyPath) -> None:
-    if dynamodb is None:
-        return
-    try:
-        tables = {
-            "assets": os.environ.get("DYNAMODB_ASSETS_TBL", ""),
-            "citation_groups": os.environ.get("DYNAMODB_CITATIONS_TBL", ""),
-            "headings": os.environ.get("DYNAMODB_HEADINGS_TBL", ""),
-            # "warnings": os.environ.get("DYNAMODB_WARNINGS_TBL", ""),
-        }
-        for tbl in tables.values():
-            table = dynamodb.Table(tbl)
-            resp = table.delete_item(Key={"slug": key.slug, "fn": key.name})
-            logger.info(
-                f"Response from dynamodb.Table({tbl}).delete_item: {json.dumps(resp, default=str)}"
-            )
-        return
-    except Exception as e:
-        logger.exception(
-            f"Writing metadata in json to database failed. Error: {repr(e)}"
-        )
-        _log_audit_event(
-            key,
-            AuditStatus.FAILED.value,
-            "Error upon writing metadata to database.",
-        )
-        raise
-
-
-def _write_metadata_to_db(
-    metadata: DocumentMetadata, dstate: DocumentState, key: KeyPath
-) -> None:
-    if dynamodb is None:
-        return
-    try:
-        tables = {
-            "assets": os.environ.get("DYNAMODB_ASSETS_TBL", ""),
-            "citation_groups": os.environ.get("DYNAMODB_CITATIONS_TBL", ""),
-            "headings": os.environ.get("DYNAMODB_HEADINGS_TBL", ""),
-            # "warnings": os.environ.get("DYNAMODB_WARNINGS_TBL", ""),
-        }
-        for domain, tbl in tables.items():
-            table = dynamodb.Table(tbl)
-            resp = table.put_item(
-                Item={
-                    "slug": key.slug,
-                    "fn": key.name,
-                    "records": [
-                        rec.model_dump_json() for rec in getattr(metadata, domain)
-                    ],
-                }
-            )
-            logger.info(
-                f"Response from dynamodb.Table({tbl}).put_item: {json.dumps(resp, default=str)}"
-            )
-
-        return
-    except Exception as e:
-        logger.exception(
-            f"Writing metadata in json to database failed. Error: {repr(e)}"
-        )
-        _log_audit_event(
-            key,
-            AuditStatus.FAILED.value,
-            "Error upon writing metadata to database.",
-        )
-        raise
-
-
 def _remove_state_from_efs(key: KeyPath) -> None:
     try:
         fp = key.efs_state_path.with_suffix(".json")
         fp.unlink(missing_ok=True)  # remove file if it exists
-        logger.info(f"Metadata was removed from {str(fp)}")
+        logger.info(f"Chapter state was removed from {str(fp)}")
     except Exception as e:
         logger.exception(
-            f"Removing metadata in json from /efs directory failed. Error: {repr(e)}"
+            f"Removing chapter state in json from /efs directory failed. Error: {repr(e)}"
         )
         raise
 
@@ -817,10 +744,10 @@ def _write_state_to_efs(docstate: DocumentState, key: KeyPath) -> None:
         fp = key.efs_state_path.with_suffix(".json")
         with open(fp, "w") as f:
             json.dump(docstate.to_dict(), f)
-        logger.info(f"Metadata was saved to {str(fp)}")
+        logger.info(f"Chapter state was saved to {str(fp)}")
     except Exception as e:
         logger.exception(
-            f"Writing metadata in json to /efs directory failed. Error: {repr(e)}"
+            f"Writing chapter state in json to /efs directory failed. Error: {repr(e)}"
         )
         raise
 

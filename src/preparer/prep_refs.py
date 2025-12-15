@@ -5,11 +5,7 @@ import uuid
 
 from src._common.constants import (
     CLS_PAPER_ONLY,
-    REF_STRING_PREFIX,
     REF_PREFIX,
-)
-from src._common.metadata import (
-    DocumentMetadata,
 )
 from src._common.models import Ref
 from src._common.state import DocumentState
@@ -21,7 +17,6 @@ def is_reference(tag: bs4.element.Tag) -> bool:
 
 def prepare_references(
     html_soup: bs4.BeautifulSoup,
-    metadata: DocumentMetadata,
     docstate: DocumentState,
     references: list[bs4.Tag],
 ) -> bs4.BeautifulSoup:

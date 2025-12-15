@@ -87,6 +87,10 @@ class AssetService:
         """
         return medium == MediumEnum.DIGITAL or medium == MediumEnum.PAPER_AND_DIGITAL
 
+    @staticmethod
+    def get_s3_key(key: KeyPath) -> str:
+        return f"{key.slug}/{key.stem}.json"
+
 
 #########################################################################################
 

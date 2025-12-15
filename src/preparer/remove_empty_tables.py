@@ -1,13 +1,11 @@
 import bs4
 
-from src._common.metadata import DocumentMetadata
 from src._common.state import DocumentState
 
 
 def remove_empty_tables(
     html_soup: bs4.BeautifulSoup,
-    metadata: DocumentMetadata,
-    dstate: DocumentState,
+    _: DocumentState,
     tables: list[bs4.element.Tag],
 ) -> bs4.BeautifulSoup:
     # for table in html_soup.find_all("table"):

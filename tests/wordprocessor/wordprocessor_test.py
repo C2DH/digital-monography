@@ -1,5 +1,4 @@
 import bs4
-import docx
 import io
 import pathlib
 import mammoth
@@ -40,7 +39,6 @@ DEFAULT_S3_EVENT = {
 
 from src._common.constants import AUTONUMBER_PLACEHOLDER, MAMMOTH_STYLE_MAP
 from src._common.keys import KeyPath
-from src._common.metadata import DocumentMetadata
 from src._common.state import DocumentState
 from src._common.html2md import convert_to_md
 from src.preparer.main import convert_to_bs, prepare_docx
@@ -77,11 +75,9 @@ class TestWordprocessor:
             before_soup = bs4.BeautifulSoup(before_html.value, "html.parser")
         # preparer
         cls.docstate = DocumentState(key)
-        metadata = DocumentMetadata(key)
         html_soup = convert_to_bs(before_html.value)
-        _, metadata, cls.docstate, _ = prepare_docx(
+        _, cls.docstate, _ = prepare_docx(
             html_soup,
-            metadata,
             cls.docstate,
             # before_html.value, metadata, cls.docstate
         )
