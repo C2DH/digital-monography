@@ -93,27 +93,16 @@ def lambda_handler(event, context) -> None:
             fm_key = chapter.fm_key if chapter else None
 
             html_soup = bs4.BeautifulSoup(filestr, "html.parser")
-            # update references
-            anchors = html_soup.find_all("a", href=True)
-            for a_tag in anchors:
-                assert isinstance(a_tag, bs4.Tag)
-                target = _find_target(fm_key, a_tag, bookstate)
-                if target:
-                    a_tag["href"] = "#" + target.hash
-                    # TODO: remove "was" if not used
-                    was, a_tag.string = _new_link_text(a_tag, target, bookstate)
-            # only applies to .ipynb
+            _update_references(fm_key, html_soup, bookstate)
             md = _convert_to_md(key, html_soup, bookstate)
             md = _replace_placeholders_with_new_values(md, bookstate)
             _write_processed_md_to_efs_jb(md, key)
             _write_processed_html_to_efs(str(html_soup), key)
 
     # enqueue_to_github
-
     # build book <== no
     # distribute book <== no
     _log_audit_event(key, AuditStatus.SUCCESS.value, "Building book in progress...")
-    # connect assets to refs_to_assets
     # update refs in db
     # verify book
     # save warnings
@@ -195,6 +184,19 @@ def _create_myst_config_file(key: KeyPath) -> None:
             "Error while creating Jupyter Book config file.",
         )
         raise
+
+
+def _update_references(
+    fm_key: KeyPath, html_soup: bs4.BeautifulSoup, bookstate: BookState
+) -> None:
+    anchors = html_soup.find_all("a", href=True)
+    for a_tag in anchors:
+        assert isinstance(a_tag, bs4.Tag)
+        target = _find_target(fm_key, a_tag, bookstate)
+        if target:
+            a_tag["href"] = "#" + target.hash
+            # TODO: remove "was" if not used
+            was, a_tag.string = _new_link_text(a_tag, target, bookstate)
 
 
 def update_targets_for_substitutions(bookstate: BookState) -> None:
