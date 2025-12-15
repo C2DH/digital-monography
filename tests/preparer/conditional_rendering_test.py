@@ -4,29 +4,27 @@ import mammoth
 from src._common.constants import MAMMOTH_STYLE_MAP, INPUT_DIR, TEMP_FOOTNOTES_TABLE
 from src._common.keys import KeyPath
 from src._common.html2md import convert_to_md
-from src._common.metadata import DocumentMetadata
 from src._common.state import DocumentState
-from src.preparer.conditional_prep import is_paper_only, remove_paper_only
-from src.preparer.ref_footnotes import (
-    extract_footnotes,
-    is_ref_footnote,
-    is_target_footnote,
-    prepare_refs_in_footnotes,
-)
-from src.preparer.refs import (
-    # is_header,
-    # is_caption,
-    is_reference,
-    # prepare_ref_targets_in_headers,
-    # prepare_ref_targets_in_captions,
-    prepare_references,
-)
-from src.preparer.targets import (
-    is_header,
-    is_caption,
-    prepare_ref_targets_in_headers,
-    prepare_ref_targets_in_captions,
-)
+from src._common.models import ChapterService
+from src.preparer.main import prepare_docx
+
+# from src.preparer.conditional_prep import is_paper_only, remove_paper_only
+# from src.preparer.ref_footnotes import (
+#     extract_footnotes,
+#     is_ref_footnote,
+#     is_target_footnote,
+#     prepare_refs_in_footnotes,
+# )
+# from src.preparer.refs import (
+#     is_reference,
+#     prepare_references,
+# )
+# from src.preparer.targets import (
+#     is_header,
+#     is_caption,
+#     prepare_ref_targets_in_headers,
+#     prepare_ref_targets_in_captions,
+# )
 
 
 class TestConditionalRendering:
@@ -46,42 +44,8 @@ class TestConditionalRendering:
         cls.after_soup = bs4.BeautifulSoup(result.value, "html.parser")
         key = cls.fp.relative_to(cls.fp.parent.parent)
         cls.dstate = DocumentState(key)
-        cls.dstate.__dict__[TEMP_FOOTNOTES_TABLE] = extract_footnotes(cls.after_soup)
-        cls.metadata = DocumentMetadata(key)
-        headers, captions, target_footnotes = [], [], []
-        ref_footnotes, references = [], []
-        paper_only = []
-        classifiers = [
-            (is_header, headers),
-            (is_caption, captions),
-            (is_target_footnote, target_footnotes),
-            (is_ref_footnote, ref_footnotes),
-            (is_reference, references),
-            (is_paper_only, paper_only),
-        ]
-        for node in cls.after_soup.descendants:
-            for check_if_meets_criteria, container in classifiers:
-                if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
-                    container.append(node)
-        cls.after_soup = prepare_ref_targets_in_headers(
-            cls.after_soup, cls.metadata, cls.dstate, headers
-        )
-        cls.after_soup = prepare_ref_targets_in_captions(
-            cls.after_soup, cls.metadata, cls.dstate, captions
-        )
-        # cls.after_soup = prepare_targets_in_footnotes(
-        #     cls.after_soup, cls.dstate, target_footnotes
-        # )
-        cls.after_soup = prepare_refs_in_footnotes(
-            cls.after_soup, cls.dstate, ref_footnotes
-        )
-        cls.after_soup = prepare_references(
-            cls.after_soup, cls.metadata, cls.dstate, references
-        )
-        cls.after_soup = remove_paper_only(
-            cls.after_soup, cls.metadata, cls.dstate, paper_only
-        )
-        # html_soup = remove_empty_tables(html_soup, metadata, tables)
+        cls.dstate.add(ChapterService.generate_chapter_from_key(key))
+        cls.after_soup, cls.dstate, _ = prepare_docx(cls.after_soup, cls.dstate)
         cls.after_md = convert_to_md(cls.after_soup, cls.dstate)
 
     def test_removal_of_parts_of_paragraph(self):
