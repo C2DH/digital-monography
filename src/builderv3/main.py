@@ -37,7 +37,6 @@ from src._common.models import (
     Chapter,
     RefService,
     RefTarget,
-    Substitution,
     Target,
     TargetService,
 )
@@ -247,8 +246,13 @@ def _group_targets_by_chapter(bookstate: BookState) -> dict[str, list[Target]]:
 
 
 def _update_state_records_for_substitution(
-    datapoints: list[Substitution | Target],
+    datapoints: list[Target],
 ) -> None:
+    """
+    This function is similar (but not identic) to
+    "wordprocessor/numbering_refs/_update_datapoints_for_targets()".
+    Especially note that we omit when dp.is_digital == False.
+    """
     prev_item_num = {
         "heading": 0,
         "equation": 0,

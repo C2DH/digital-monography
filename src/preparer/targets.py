@@ -15,8 +15,7 @@ from src._common.constants import (
 from src._common.metadata import (
     DocumentMetadata,
 )
-from src._common.models import Chapter, Heading, RefTarget, Substitution, Target
-from src._common.metadata import SubstitutionDatapoint, TargetDatapoint
+from src._common.models import Chapter, Heading, RefTarget, Target
 from src._common.keys import KeyPath
 from src._common.state import DocumentState
 
@@ -318,7 +317,7 @@ def prepare_ref_targets_in_captions(
             # if anchors and docstate.get("substitutions", caption_hash) is None:
             # TODO: consider target_fn=s3_key just in case some fn are duplicated
             # in nested file structure, e.g. index.docx and chapter1/index.docx
-            target_fn = docstate.key.name if docstate.key else None
+            # target_fn = docstate.key.name if docstate.key else None
             # metadata.add_substitution(
             #     SubstitutionDatapoint(
             #         # pk=unique_id[
@@ -338,22 +337,22 @@ def prepare_ref_targets_in_captions(
             #     )
             # )
             # TODO: consider if a Substitution and Target can be the same object?
-            subst: Substitution = Substitution(
-                hash=caption_hash,
-                loc=docstate.key,
-                was=target.text,
-                placeholder=target.hash,
-                item_type=target.item_type,
-                is_digital=is_digital,
-                is_paper=is_paper,
-                file_count=metadata.get_chapter_number(),
-                location=metadata.filepath,
-                target_fn=target_fn,
-                prefix=target.prefix,
-                prev_item_num=target.prev_item_num,
-            )
+            # subst: Substitution = Substitution(
+            #     hash=caption_hash,
+            #     loc=docstate.key,
+            #     was=target.text,
+            #     placeholder=target.hash,
+            #     item_type=target.item_type,
+            #     is_digital=is_digital,
+            #     is_paper=is_paper,
+            #     file_count=metadata.get_chapter_number(),
+            #     location=metadata.filepath,
+            #     target_fn=target_fn,
+            #     prefix=target.prefix,
+            #     prev_item_num=target.prev_item_num,
+            # )
             # print("Substitution", subst.model_dump())
-            docstate.add(subst)
+            # docstate.add(subst)
         # register RefTargets, same for headings and captions
         for a_tag in anchors:
             processed_href = _process_href(docstate.key, a_tag)

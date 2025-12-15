@@ -1,3 +1,4 @@
+UPDATING_WAS_MOVED_TO_BUILDERV3_AND_WORDPROCESSOR = '''
 import bs4
 
 from src._common.metadata import DocumentMetadata
@@ -48,3 +49,4 @@ def _update_state_records_for_substitution(
             dp.new_item_num = dp.prev_item_num - ommited_count[dp.item_type]
         prev_item_num[dp.item_type] = dp.prev_item_num
     return soup
+'''

@@ -37,13 +37,7 @@ from src._common.constants import (
 from src._common.metadata import DocumentMetadata, AssetDatapoint
 from src._common.models import (
     Asset,
-    CitationGroup,
-    CitationItem,
     Chapter,
-    Heading,
-    Ref,
-    Substitution,
-    Target,
 )
 from src._common.github_trigger import GithubTriggerMsg, GithubActionEnum
 from src._common.state import DocumentState
@@ -57,23 +51,11 @@ from prep_frontmatter import prepare_frontmatter
 from metadata_extraction import prepare_metadata_tables
 from remove_empty_tables import remove_empty_tables
 from replace_alt_texts import is_img_with_alt_text, prepare_alt_texts
-
-# from refs import (
-# prepare_ref_targets_in_headers,
-# prepare_ref_targets_in_captions,
-# prepare_references,
-# is_header,
-# is_caption,
-# is_reference,
-# )
 from prep_refs import is_reference, prepare_references
 from ref_footnotes import (
     is_ref_footnote,
-    # is_target_footnote,
     extract_footnotes,
     prepare_refs_in_footnotes,
-    # prepare_targets_in_footnotes,
-    # prepare_targets_in_footnotes_2,
 )
 from targets import (
     is_header,
@@ -85,7 +67,6 @@ from split_into_chapters import (
     split_docx_into_multiple_chapters,
     prepend_htmls_with_frontmatter,
 )
-from substitutions_prep import update_targets_for_substitutions
 from ipynb_prep import tags_to_myst_crossref_targets
 from fakers import Faker
 
@@ -102,12 +83,6 @@ if IS_DEBUG:
     )
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-FIXED_SUBSTITUTIONS = {
-    "01_a___Ref177042490": "1",
-    "01_a___Ref177044323": "1",
-    "02_b.docx#02_b__tblSimpleTable": "2",
-    "02_b.docx#02_b__h1HyperlinksB": "1",
-}
 if IS_DEBUG:
     dynamodb = None
     s3 = Faker("s3")

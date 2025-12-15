@@ -11,7 +11,7 @@ from src._common.metadata import (
     DocumentMetadata,
     MetadataTableDatapoint,
 )
-from src._common.models import Asset, Substitution
+from src._common.models import Asset
 from src._common.constants import (
     MediumEnum,
     ATTRIB_METADATA_UUID,
@@ -260,6 +260,9 @@ class MetadataTable:
         self.kwargs["location"] = location
 
     def add_orig_caption(self, dstate: DocumentState) -> None:
+        self.kwargs["orig_caption"] = ""
+        # TODO: We need a better way to save original captions.
+        THIS_RELIES_ON_SUBSTITUTIONS_WHICH_ARE_OBSOLETE = '''
         """Add an original caption before substitution. E.g.:
         kwargs["caption"] == 'Figure {{ subst_pk }}: xxx'
         kwargs["orig_caption"] == 'Figure 2: xxx'
@@ -279,6 +282,7 @@ class MetadataTable:
             )
         else:
             self.kwargs["orig_caption"] = ""
+        '''
 
     def add_docstate(self, docstate: DocumentState) -> None:
         self.docstate = docstate

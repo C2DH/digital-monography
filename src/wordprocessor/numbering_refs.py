@@ -56,7 +56,7 @@ def _update_state_records_for_substitution(
 ) -> None:
     """
     This function is similar (but not identic) to
-    "preparer/substitutions_prep/update_datapoints_for_targets()".
+    "builderv3/.../_update_state_records_for_substitution()".
     Especially note that we omit when dp.is_paper == False.
     """
     prev_item_num = {

@@ -14,6 +14,11 @@ except (ImportError, ModuleNotFoundError):
 
 
 class Substitution(MySQLModel, table=True):
+    """
+    This is used only in builder and defunct tests.
+    TODO: Remove this after migrating to Jupyter Book v2.
+    """
+
     __tablename__ = "substitutions"
 
     # pk: str = sqlmodel.Field(primary_key=True, default=str(uuid.uuid4()))
@@ -47,6 +52,11 @@ class Substitution(MySQLModel, table=True):
 
 
 class SubstitutionService:
+    """
+    Only old builder (for Jupyter Book v1) uses this.
+    After migrating to Jupyter Book v2, this can be removed.
+    """
+
     @staticmethod
     def to_digital_version(
         subst: Substitution, file_prefix: None | str | int = None

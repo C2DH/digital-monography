@@ -11,7 +11,7 @@ from src._common.constants import (
 from src._common.metadata import (
     DocumentMetadata,
 )
-from src._common.models import Substitution, Ref
+from src._common.models import Ref
 from src._common.state import DocumentState
 
 
@@ -74,24 +74,24 @@ def prepare_references(
             elem=str(a_tag.parent),
         )
         docstate.add(data)
-        if unique_id and docstate.get("substitutions", unique_id) is None:
-            data = Substitution(
-                loc=docstate.key,
-                pk=unique_id,
-                was="",  # Previously this was link.text_to_replace, but maybe it will be easier to handle it at builder stage?
-                # placeholder=link.unique_id,
-                placeholder=ref_pk,
-                item_type="ref",
-                is_digital=None,
-                is_paper=None,
-                location=metadata.filepath,
-                target_fn="",
-                file_count=None,  # Prev this was metadata.get_chapter_number(link.path) if link.path and link.is_cross_file_reference() else metadata.get_chapter_number()
-                prefix="",
-                prev_item_num=None,
-                hash=_hash_html(a_tag),
-            )
-            docstate.add(data)
+        # if unique_id and docstate.get("substitutions", unique_id) is None:
+        #     data = Substitution(
+        #         loc=docstate.key,
+        #         pk=unique_id,
+        #         was="",  # Previously this was link.text_to_replace, but maybe it will be easier to handle it at builder stage?
+        #         # placeholder=link.unique_id,
+        #         placeholder=ref_pk,
+        #         item_type="ref",
+        #         is_digital=None,
+        #         is_paper=None,
+        #         location=metadata.filepath,
+        #         target_fn="",
+        #         file_count=None,  # Prev this was metadata.get_chapter_number(link.path) if link.path and link.is_cross_file_reference() else metadata.get_chapter_number()
+        #         prefix="",
+        #         prev_item_num=None,
+        #         hash=_hash_html(a_tag),
+        #     )
+        #     docstate.add(data)
     return html_soup
 
 
