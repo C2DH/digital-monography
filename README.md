@@ -573,7 +573,6 @@ An alternative solution might be to fork myst.md and try to replace all features
 * add e2e cloud testing on actual Lambdas
 * mypy type checking
 * flake8 linting
-* refactor link management (refs.py)
 * migrate JupyterBook v1 to v2
 * restore verification rules
 * deploy wordprocessor and connect with others
@@ -586,6 +585,19 @@ An alternative solution might be to fork myst.md and try to replace all features
 If you uploaded a book to Dropbox but you don't see the output nor the logs, it probably means that you didn't authenticate the app with Dropbox before uploading. Be sure to hit the "login" button in the dashboard before uploading manuscript to Dropbox.
 
 ## Sundry
+
+### How do references and targets work?
+
+#### Preparer
+
+Preparer iterates over anchor tags, registering Ref and Target objects. It also registeres RefTarget model, which is a bridge for linking potentially multiple Ref instances to a Target. Refs, Targets and RefTargets are stored in a state (in a table), not yet linked with each other.
+For each unique target, place target label above referenced content.
+
+#### Downstream
+
+Unlike preparer, builder and wordprocessor have access not only to a current chapter, but to a whole book. First, update numbering of the targets, respectively ommiting paper_only and digital_only targets. Secondly, update refs, making sure they have a href attribute linking to the correct target instance and that number in their text will match number of the related target. Thirdly, replace placeholders with updated values.
+
+It is advised that builder and wordprocessor work in a similar way.
 
 ### Generating infrastrucutre visualisation
 
