@@ -106,6 +106,7 @@ show/dominique:
 		myst build --html && \
 		cp -r ./assets _build/html/assets)
 	echo 'npx serve /tmp/efs/_JB/a-colonia-luxemburguesa/_build/html'
+	npx serve /tmp/efs/_JB/a-colonia-luxemburguesa/_build/html
 
 show/janakeck:
 	mkdir -p /tmp/efs/
@@ -122,6 +123,7 @@ show/janakeck:
 		myst build --html && \
 		cp -r ./assets _build/html/assets)
 	echo 'npx serve /tmp/efs/_JB/migration-and-HERitage/_build/html'
+	npx serve /tmp/efs/_JB/migration-and-HERitage/_build/html
 
 show/guidelines:
 	make db/migrate
