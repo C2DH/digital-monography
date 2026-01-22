@@ -1,36 +1,44 @@
 import flask
+import importlib
 import os
+import types
 
 from src._common.constants import IS_DEBUG
 
 
+SERVICE_NAME = "orm"
+BLUEPRINT_MODULES: list[str] = [
+    "admin.routes",
+    "assets.routes",
+    "cloud.routes",
+    "citations.routes",
+    "headings.routes",
+]
+
+
+def _import_blueprint(module_path: str) -> types.ModuleType:
+    try:
+        return importlib.import_module(module_path)
+    except (ModuleNotFoundError, ImportError):
+        return importlib.import_module(f"src.{SERVICE_NAME}.{module_path}")
+
+
 def create_app():
-    """
-    Defined in app.py so that both main.py and tests can import it.
-    """
+    """Defined in app.py so that both main.py and tests can import it."""
     app = flask.Flask(__name__)
     app.debug = IS_DEBUG
     app.secret_key = os.environ["FLASK_SECRET_KEY"]
     with app.app_context():
-        # this is to prevent circular imports
-        try:
-            # in lambda, the directories are copied to the root dir
-            from admin.routes import admin_bp
-            from assets.routes import assets_bp
-            from citations.routes import citations_bp
-            from cloud.routes import cloud_bp
-            from headings.routes import headings_bp
-        except (ModuleNotFoundError, ImportError):
-            # in local testing, the modules is present in src.<microservice> dir
-            from src.orm.admin.routes import admin_bp
-            from src.orm.assets.routes import assets_bp
-            from src.orm.citations.routes import citations_bp
-            from src.orm.cloud.routes import cloud_bp
-            from src.orm.headings.routes import headings_bp
-
-        app.register_blueprint(admin_bp)
-        app.register_blueprint(assets_bp)
-        app.register_blueprint(cloud_bp)
-        app.register_blueprint(citations_bp)
-        app.register_blueprint(headings_bp)
+        for module_path in BLUEPRINT_MODULES:
+            # import within context to avoid circular imports
+            mod = _import_blueprint(module_path)
+            package = module_path.split(".")[0]
+            blueprint_name = f"{package}_bp"
+            try:
+                bp = getattr(mod, blueprint_name)
+            except AttributeError as e:
+                raise AttributeError(
+                    f"Module '{module_path}' should have a blueprint named '{blueprint_name}'."
+                )
+            app.register_blueprint(bp)
     return app
