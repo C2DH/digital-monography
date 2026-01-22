@@ -1,3 +1,4 @@
+-r src/dashboard/requirements.txt
 -r src/entrypoint/requirements.txt
 -r src/preparer/requirements.txt
 -r src/verifier/requirements.txt
