@@ -14,6 +14,12 @@ except (ImportError, ModuleNotFoundError):
 
 
 citations_bp = flask.Blueprint("citations", __name__)
+citations_bp.template_folder = citations_bp.root_path + "/templates"
+
+
+@citations_bp.route("/")
+def index_page():
+    return flask.render_template("index.html")
 
 
 @citations_bp.route("/api/citations/groups/list", methods=["GET"])
