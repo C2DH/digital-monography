@@ -13,6 +13,7 @@ from .refs import Ref, RefService  # noqa
 from .refs_targets import RefTarget  # noqa
 from .substitutions import Substitution, SubstitutionService  # noqa
 from .targets import Target, TargetService  # noqa
+from .users import User  # noqa
 
 type ModelMeta = sqlmodel.main.SQLModelMetaclass | sqlalchemy.orm.DeclarativeMeta
 
