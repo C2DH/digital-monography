@@ -9,10 +9,6 @@ from src._common.constants import IS_DEBUG
 SERVICE_NAME = "dashboard"
 BLUEPRINT_MODULES: list[str] = [
     "admin.routes",
-    # "assets.routes",
-    # "cloud.routes",
-    # "citations.routes",
-    # "headings.routes",
 ]
 
 
