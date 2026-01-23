@@ -1,3 +1,5 @@
+# DB_PATH = /tmp/efs/_database.db
+DB_PATH = /home/ubuntu/Projects/digital-monography/_database.db
 ENTRYPOINT_LATEST_V := $(shell jq -r '.ENTRYPOINT.LATEST' < .versions.json)
 DROPBOX_LATEST_V := $(shell jq -r '.DROPBOX.LATEST' < .versions.json)
 BUILDER_LATEST_V := $(shell jq -r '.BUILDER.LATEST' < .versions.json)
@@ -85,11 +87,13 @@ typecheck:
 db/makemigrations:
 	ls src/_common/migrations/versions
 	# 'Enter migration message, best in `01_init_db` format.'
-	# cd src/_common && DB_PATH=/tmp/efs/_database.db alembic revision --autogenerate -m  ; cd ../..
+	# cd src/_common && DB_PATH=${DB_PATH} alembic revision --autogenerate -m  ; cd ../..
+# 	# cd src/_common && DB_PATH=/tmp/efs/_database.db alembic revision --autogenerate -m  ; cd ../..
 
 db/migrate:
 	mkdir -p /tmp/efs
-	cd src/_common && DB_PATH=/tmp/efs/_database.db alembic upgrade heads
+	cd src/_common && DB_PATH=${DB_PATH} alembic upgrade heads
+# 	cd src/_common && DB_PATH=/tmp/efs/_database.db alembic upgrade heads
 
 show/dominique:
 	mkdir -p /tmp/efs/

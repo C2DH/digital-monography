@@ -32,6 +32,12 @@ class S3Event(enum.StrEnum):
     OBJ_REMOVED = "ObjectRemoved"
 
 
+class UserRole(enum.StrEnum):
+    Admin = "Admin"
+    Editor = "Editor"
+    Author = "Author"
+
+
 class DgtmonSecrets(t.TypedDict):
     github_api_token: str
     github_api_org: str
@@ -53,7 +59,10 @@ ASSETS_DIR = "assets"
 # database
 db_user = os.environ.get("DB_USER")
 db_pass = os.environ.get("DB_PASS")
-db_path = os.environ.get("DB_PATH", DEFAULT_SFS_DIR + "/_database.db")
+# db_path = os.environ.get("DB_PATH", DEFAULT_SFS_DIR + "/_database.db")
+db_path = os.environ.get(
+    "DB_PATH", "/home/ubuntu/Projects/digital-monography/_database.db"
+)
 db_driver = os.environ.get("DB_DRIVER", "sqlite")
 if db_user and db_pass:
     DB_URL = "{}://{}:{}@/{}".format(db_driver, db_user, db_pass, db_path)
