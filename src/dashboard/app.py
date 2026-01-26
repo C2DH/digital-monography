@@ -9,6 +9,7 @@ from src._common.constants import IS_DEBUG
 SERVICE_NAME = "dashboard"
 BLUEPRINT_MODULES: list[str] = [
     "admin.routes",
+    "home.routes",
 ]
 
 
@@ -21,7 +22,7 @@ def _import_blueprint(module_path: str) -> types.ModuleType:
 
 def create_app():
     """Defined in app.py so that both main.py and tests can import it."""
-    app = flask.Flask(__name__)
+    app = flask.Flask(__name__, template_folder="./_templates")
     app.debug = IS_DEBUG
     app.secret_key = os.environ["FLASK_SECRET_KEY"]
     with app.app_context():
