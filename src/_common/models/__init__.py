@@ -2,6 +2,7 @@ import sqlalchemy
 import sqlalchemy.orm
 import sqlmodel
 from .assets import Asset, AssetService  # noqa
+from .authors import Author, Book, LinkAuthorsBooks  # noqa
 from .citation_groups import CitationGroup
 from .citation_items import CitationItem
 from .chapters import Chapter, ChapterService  # noqa
@@ -20,6 +21,8 @@ type ModelMeta = sqlmodel.main.SQLModelMetaclass | sqlalchemy.orm.DeclarativeMet
 
 __all__ = [
     "Asset",
+    "Author",
+    "Book",
     "CitationGroup",
     "CitationItem",
     "Chapter",
@@ -35,6 +38,8 @@ __all__ = [
 
 tables_to_models: dict[str, ModelMeta] = {
     Asset.__tablename__: Asset,
+    Author.__tablename__: Author,
+    Book.__tablename__: Book,
     CitationGroup.__tablename__: CitationGroup,
     CitationItem.__tablename__: CitationItem,
     Chapter.__tablename__: Chapter,

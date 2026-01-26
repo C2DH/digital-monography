@@ -2,10 +2,10 @@ import sqlmodel
 from werkzeug import security as wkzg_security
 
 try:
-    from ._base import MySQLModel
+    # from ._base import MySQLModel
     from constants import UserRole
 except (ImportError, ModuleNotFoundError):
-    from ._base import MySQLModel  # type: ignore
+    # from ._base import MySQLModel  # type: ignore
     from ..constants import UserRole  # type: ignore
 
 
