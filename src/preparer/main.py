@@ -17,6 +17,7 @@ from mypy_boto3_dynamodb.service_resource import (
 )
 from mypy_boto3_s3.client import S3Client as boto3_S3Client
 from mypy_boto3_sqs import SQSClient as boto3_SQSClient
+import yaml
 
 # Get the current directory and add it to sys.path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -37,7 +38,10 @@ from src._common.constants import (
 from src._common.models import (
     Asset,
     AssetService,
+    Author,
+    Book,
     Chapter,
+    LinkAuthorsBooks,
 )
 from src._common.github_trigger import GithubTriggerMsg, GithubActionEnum
 from src._common.state import DocumentState
@@ -155,6 +159,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         html_str = _convert_to_html(key.efs_input_path)
         html_soup = convert_to_bs(html_str)
         html_soup, frontmatter = prepare_frontmatter(html_soup, key)
+        # print("frontmatter.myst_data", frontmatter.myst_data)
         html_soups = split_docx_into_multiple_chapters(html_soup, frontmatter)
         prepend_htmls_with_frontmatter(html_soups, frontmatter)
         footnotes = extract_footnotes(html_soup)
@@ -218,6 +223,29 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
             AuditStatus.SUCCESS.value,
             "Contents of the file prepared for further processing.",
         )
+        return {"statusCode": 200, "body": ""}
+    elif _is_CONFIG(key) and _is_update(event_name):
+        # print("\n\n\n>>>", key, "\n\n\n")
+        src = _get_source_bucket(event)
+        _download_fileobj(src, key)
+        cnf = _convert_yml_to_dict(key.efs_input_path)
+        print("cnf", cnf)
+        project_data = _extract_project_info_from_config(cnf)
+        _write_project_data_to_db(key, project_data)
+
+        # project = cnf.get("project", {})
+        # if isinstance(project, dict):
+        #     title = project.get("title", "")
+        #     authors = project.get("authors", [])
+        #     for author in authors:
+        #         if isinstance(author, dict):
+        #             name = author.get("name", "")
+
+        _create_domain_dirs(key)
+        _copy_other_files_to_efs_jb(key)
+        # raise NotImplementedError("Other files should also be copied to _JB")
+        msg = GithubTriggerMsg(key=key, action=GithubActionEnum.UPDATE_OBJECT)
+        _enqueue_to_github(msg)
         return {"statusCode": 200, "body": ""}
     elif _is_update(event_name):
         src = _get_source_bucket(event)
@@ -284,6 +312,10 @@ def _is_DOCX(key: KeyPath) -> bool:
 
 def _is_IPYNB(key: KeyPath) -> bool:
     return key.suffix.lower() == ".ipynb"
+
+
+def _is_CONFIG(key: KeyPath) -> bool:
+    return key.name.lower() == "myst.yml" or key.name.lower() == "myst.yaml"
 
 
 def _is_update(event_name: t.Literal["ObjectCreated", "ObjectRemoved"]) -> bool:
@@ -385,6 +417,57 @@ def _create_domain_dirs(key: KeyPath) -> None:
         raise
 
 
+class ProjectData(t.TypedDict):
+    title: str
+    authors: list[str]
+
+
+def _extract_project_info_from_config(cnf: dict) -> ProjectData:
+    project_data: ProjectData = {"title": "", "authors": []}
+    project = cnf.get("project", {})
+    if isinstance(project, dict):
+        project_data["title"] = project.get("title", "")
+        authors = project.get("authors", [])
+        for author in authors:
+            if isinstance(author, dict) and "name" in author:
+                project_data["authors"].append(author["name"])
+    return project_data
+
+
+def _write_project_data_to_db(key: KeyPath, project_data: ProjectData) -> None:
+    # slug = key.slug
+    try:
+        with sqlmodel.Session(db_engine) as session:
+            # # delete existing records for this file so there are no duplicates
+            # dstate.sql_delete_by_key(session, key)
+            # # write all assets included in the processed file
+            # dstate.sql_insert_all(session)
+            book = Book(
+                title=project_data["title"],
+                slug=key.slug,
+                updated=datetime.datetime.now(datetime.timezone.utc),
+            )
+            for author_name in project_data["authors"]:
+                # TODO: naive, query and check if exists
+                author = Author(name=author_name, books=[book])
+                # book.authors.append(author)
+                session.add(author)
+            session.add(book)
+            session.commit()
+        logger.info(f"Sent SQL INSERT cmd for {key} without an error.")
+        return
+    except Exception as e:
+        logger.exception(
+            f"Writing {key.slug} config data to the database failed. Error: {repr(e)}"
+        )
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            "Error upon writing config data to the database.",
+        )
+        raise
+
+
 def prepare_docx(
     html_soup: bs4.BeautifulSoup,
     dstate: DocumentState,
@@ -466,6 +549,24 @@ def _convert_to_html(key: KeyPath) -> str:
             key,
             AuditStatus.FAILED.value,
             "Error upon preparing html.",
+        )
+        raise
+
+
+def _convert_yml_to_dict(key: KeyPath) -> dict:
+    try:
+        with open(key, "rb") as f:
+            cnf = yaml.safe_load(f)
+            if not isinstance(cnf, dict):
+                cnf = {}
+            logger.info(f"Unmarshalling {key} config succeeded.")
+            return cnf
+    except Exception as e:
+        logger.exception(f"Unmarshalling {key} config failed. Error: {repr(e)}")
+        _log_audit_event(
+            key,
+            AuditStatus.FAILED.value,
+            "Error upon unmarshalling config yaml.",
         )
         raise
 
