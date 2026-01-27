@@ -1,12 +1,12 @@
 import typing as t
 
 try:
-    from _base import MySQLModel
+    from _base import ChapterSQLModel
 except (ImportError, ModuleNotFoundError):
-    from ._base import MySQLModel  # type: ignore
+    from ._base import ChapterSQLModel  # type: ignore
 
 
-class File(MySQLModel, table=True):
+class File(ChapterSQLModel, table=True):
     __tablename__ = "files"
 
     stem: str

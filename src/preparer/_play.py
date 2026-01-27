@@ -9,7 +9,7 @@ import uuid
 from sqlmodel.main import SQLModelMetaclass
 from sqlmodel import SQLModel
 
-from models._base import MySQLModel
+from models._base import ChapterSQLModel
 from models import tables_to_models
 from models.assets import Asset
 from metadata import AssetDatapoint

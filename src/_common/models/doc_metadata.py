@@ -2,14 +2,14 @@ import sqlmodel
 import typing as t
 
 try:
-    from ._base import MySQLModel
+    from ._base import ChapterSQLModel
     from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
-    from ._base import MySQLModel  # type: ignore
+    from ._base import ChapterSQLModel  # type: ignore
     from ..keys import KeyPath  # type: ignore
 
 
-class DocumentMetadata(MySQLModel, table=True):
+class DocumentMetadata(ChapterSQLModel, table=True):
     __tablename__ = "doc_metadata"
 
     # id: int = sqlmodel.Field(primary_key=True)

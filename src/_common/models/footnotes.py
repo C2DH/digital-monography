@@ -1,10 +1,10 @@
 try:
-    from ._base import MySQLModel
+    from ._base import ChapterSQLModel
 except (ImportError, ModuleNotFoundError):
-    from ._base import MySQLModel  # type: ignore
+    from ._base import ChapterSQLModel  # type: ignore
 
 
-class Footnote(MySQLModel, table=True):
+class Footnote(ChapterSQLModel, table=True):
     """
     This is imporant when splitting the file.
 

@@ -2,12 +2,12 @@ import pydantic
 import sqlmodel
 
 try:
-    from ._base import MySQLModel
+    from ._base import ChapterSQLModel
 except (ImportError, ModuleNotFoundError):
-    from ._base import MySQLModel  # type: ignore
+    from ._base import ChapterSQLModel  # type: ignore
 
 
-class Ref(MySQLModel, table=True):
+class Ref(ChapterSQLModel, table=True):
     """
     A reference (link or cross-reference) to a RefTarget (bookmark, heading or caption).
     RefTarget is a bridge table to a Target, which represents the document element

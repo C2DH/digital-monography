@@ -7,11 +7,11 @@ import typing as t
 try:
     from keys import KeyPath
     from models import Chapter, DocumentMetadata, tables_to_models
-    from models._base import MySQLModel
+    from models._base import ChapterSQLModel
 except (ImportError, ModuleNotFoundError):
     from .keys import KeyPath  # type: ignore
     from .models import Chapter, DocumentMetadata, tables_to_models  # type: ignore
-    from .models._base import MySQLModel  # type: ignore
+    from .models._base import ChapterSQLModel  # type: ignore
 
 
 type PrimitiveValues = str | int | bool | None
@@ -133,28 +133,31 @@ class DocumentState:
 
     def sql_insert_all(self, session: sqlmodel.Session) -> None:
         """
-        Send a sql INSERT command with all records that have a SQLModel db table assigned.
-        Note that during iteration we are generating the sql statement and
-        at the end we emit a single sql COMMIT command to the database
-        (assuming we have 1 db connection). After the commit, the db connection is released
-        back to the connection pool (important for unlocking SQLite db).
+        Send a sql INSERT command with all records that have a ChapterSQLModel db table assigned.
+        Book-level models (e.g. Author, Book) are not inserted here, only chapter-level ones.
         """
-        for _, records in self.__dict__.items():
-            if _ == "doc_metadata":
-                continue
-            if (
-                records
-                and isinstance(records[0], MySQLModel)
-                and has_db_table(records[0])
-                # and records[0].has_db_table()
-            ):
-                session.add_all(records)
+        records = [
+            v
+            for k, v in self.__dict__.items()
+            if (isinstance(v, ChapterSQLModel) and has_db_table(v))
+        ]
+        session.add_all(records)
         session.commit()
+        # for _, records in self.__dict__.items():
+        #     if _ == "doc_metadata":
+        #         continue
+        #     if (
+        #         records
+        #         and isinstance(records[0], ChapterSQLModel)
+        #         and has_db_table(records[0])
+        #     ):
+        #         session.add_all(records)
+        # session.commit()
 
     def sql_delete_by_key(self, session: sqlmodel.Session, key: KeyPath) -> None:
         """
-        Send a sql DELETE command to remove all db rows for a given document (filtered
-        by key). This is used to delete all records for currently processed document
+        Send a sql DELETE command to remove all db rows for a given chapter (filtered
+        by key). This is used to delete all records for currently processed chapter
         before inserting new ones, so that there are no duplicated datapoints.
 
         Note we are operating not on records but on models' classes. This is
@@ -166,18 +169,20 @@ class DocumentState:
         back to the connection pool (important for unlocking SQLite db).
         """
         for model in tables_to_models.values():
-            model: SQLModelMetaclass
-            if isinstance(model, SQLModelMetaclass) and has_db_table(model):
-                assert hasattr(
-                    model, "x_loc"
-                ), f"Model {model.__name__} does not have x_loc attribute. Every db table model should inherit from {MySQLModel.__name__}."
-                model: MySQLModel
+            if (
+                isinstance(model, SQLModelMetaclass)
+                and has_db_table(model)
+                and hasattr(model, "x_loc")  # only ChapterSQLModel
+            ):
+                model: ChapterSQLModel
                 statement = sqlmodel.delete(model).where(model.x_loc == str(key))
                 session.exec(statement)
         session.commit()
 
     def __str__(self) -> str:
         return json.dumps(self.__dict__, default=str)
+
+    # TODO: add sql_delete_by_slug() to delete both chapter and book-level records
 
 
 def read_book_metadata(key: KeyPath) -> dict[str, DocumentState]:

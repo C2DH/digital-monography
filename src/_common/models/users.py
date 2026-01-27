@@ -2,17 +2,19 @@ import sqlmodel
 from werkzeug import security as wkzg_security
 
 try:
-    # from ._base import MySQLModel
     from constants import UserRole
 except (ImportError, ModuleNotFoundError):
-    # from ._base import MySQLModel  # type: ignore
     from ..constants import UserRole  # type: ignore
 
 
 class User(sqlmodel.SQLModel, table=True):
+    """
+    App-level db model does not need to inherit from BookSQLModel nor ChapterSQLModel.
+    """
+
     __tablename__ = "users"
 
-    id: int = sqlmodel.Field(primary_key=True)
+    id: int | None = sqlmodel.Field(default=None, primary_key=True)
     username: str = sqlmodel.Field(index=True, nullable=False, unique=True)
     password_hash: str = sqlmodel.Field()
     role: UserRole = sqlmodel.Field(default=UserRole.Author, nullable=False)

@@ -1,10 +1,10 @@
 import sqlmodel
 
 try:
-    from ._base import MySQLModel
+    from ._base import ChapterSQLModel
     from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
-    from ._base import MySQLModel  # type: ignore
+    from ._base import ChapterSQLModel  # type: ignore
     from ..keys import KeyPath  # type: ignore
 
 DESC = {
@@ -22,7 +22,7 @@ DESC = {
 }
 
 
-class RefTarget(MySQLModel, table=True):
+class RefTarget(ChapterSQLModel, table=True):
     """
     RefTarget is a bridge table between a Ref and a Target.
 

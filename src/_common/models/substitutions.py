@@ -4,16 +4,16 @@ import typing as t
 import uuid
 
 try:
-    from ._base import MySQLModel
+    from ._base import ChapterSQLModel
     from keys import KeyPath
     from constants import AUTONUMBER_PLACEHOLDER
 except (ImportError, ModuleNotFoundError):
-    from ._base import MySQLModel  # type: ignore
+    from ._base import ChapterSQLModel  # type: ignore
     from ..keys import KeyPath  # type: ignore
     from ..constants import AUTONUMBER_PLACEHOLDER
 
 
-class Substitution(MySQLModel, table=True):
+class Substitution(ChapterSQLModel, table=True):
     """
     This is used only in builder and defunct tests.
     TODO: Remove this after migrating to Jupyter Book v2.

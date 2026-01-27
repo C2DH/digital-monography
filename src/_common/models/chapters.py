@@ -3,10 +3,10 @@ import sqlmodel
 
 
 try:
-    from ._base import MySQLModel
+    from ._base import ChapterSQLModel
     from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
-    from ._base import MySQLModel  # type: ignore
+    from ._base import ChapterSQLModel  # type: ignore
     from ..keys import KeyPath  # type: ignore
 
 
@@ -30,7 +30,7 @@ DESC = {
 }
 
 
-class Chapter(MySQLModel, table=True):
+class Chapter(ChapterSQLModel, table=True):
     """
     Entry in the '_toc' field from a frontmatter table representing a chapter in a book.
     It has to be defined at the document level (in docx or ipynb), not in `myst.yml` config file,

@@ -3,12 +3,12 @@ import sqlmodel
 import typing as t
 
 try:
-    from ._base import MySQLModel
+    from ._base import ChapterSQLModel
 except (ImportError, ModuleNotFoundError):
-    from ._base import MySQLModel  # type: ignore
+    from ._base import ChapterSQLModel  # type: ignore
 
 
-class CitationItem(MySQLModel, table=True):
+class CitationItem(ChapterSQLModel, table=True):
     """
     If a manuscript stores citations as objects, those objects can be extracted
     and saved to the database. One citation block is represented by a citation group,
