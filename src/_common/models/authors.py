@@ -4,6 +4,11 @@ import sqlmodel
 from ._base import BookSQLModel
 
 
+A_DESC = {
+    "orcid": "ORCID identifier for the author. If not empty, serves as a unique key."
+}
+
+
 class LinkAuthorsBooks(sqlmodel.SQLModel, table=True):
     """
     Links authors to books in a many-to-many relationship
@@ -27,6 +32,7 @@ class Author(sqlmodel.SQLModel, table=True):
 
     id: int | None = sqlmodel.Field(default=None, primary_key=True)
     name: str = sqlmodel.Field()
+    orcid: str | None = sqlmodel.Field(default=None, description=A_DESC["orcid"])
     books: list["Book"] = sqlmodel.Relationship(
         back_populates="authors", link_model=LinkAuthorsBooks
     )

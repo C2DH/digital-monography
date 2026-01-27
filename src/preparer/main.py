@@ -225,12 +225,13 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         )
         return {"statusCode": 200, "body": ""}
     elif _is_CONFIG(key) and _is_update(event_name):
-        # print("\n\n\n>>>", key, "\n\n\n")
+        print("\n\n\n>>>", key, "\n\n\n")
         src = _get_source_bucket(event)
         _download_fileobj(src, key)
         cnf = _convert_yml_to_dict(key.efs_input_path)
         print("cnf", cnf)
         project_data = _extract_project_info_from_config(cnf)
+        print("project_data", project_data)
         _write_project_data_to_db(key, project_data)
 
         # project = cnf.get("project", {})
@@ -315,7 +316,11 @@ def _is_IPYNB(key: KeyPath) -> bool:
 
 
 def _is_CONFIG(key: KeyPath) -> bool:
-    return key.name.lower() == "myst.yml" or key.name.lower() == "myst.yaml"
+    return key.suffix.lower() in [".yml", ".yaml"] and key.stem.lower() in [
+        "myst",
+        "_myst",
+        "_config",
+    ]
 
 
 def _is_update(event_name: t.Literal["ObjectCreated", "ObjectRemoved"]) -> bool:
@@ -417,42 +422,74 @@ def _create_domain_dirs(key: KeyPath) -> None:
         raise
 
 
+class AuthorData(t.TypedDict):
+    name: str
+    orcid: str | None
+
+
 class ProjectData(t.TypedDict):
     title: str
-    authors: list[str]
+    authors: list[AuthorData]
 
 
 def _extract_project_info_from_config(cnf: dict) -> ProjectData:
     project_data: ProjectData = {"title": "", "authors": []}
+    # myst.yml (JBv2)
     project = cnf.get("project", {})
-    if isinstance(project, dict):
+    if isinstance(project, dict) and project:
         project_data["title"] = project.get("title", "")
         authors = project.get("authors", [])
         for author in authors:
-            if isinstance(author, dict) and "name" in author:
-                project_data["authors"].append(author["name"])
+            if isinstance(author, dict):
+                project_data["authors"].append(
+                    {
+                        "name": author.get("name", ""),
+                        "orcid": author.get("orcid"),
+                    }
+                )
+    # _config.yml (JBv1)
+    if len(project) == 0:
+        project_data["title"] = cnf.get("title", "")
+        if "author" in cnf:
+            project_data["authors"].append({"name": cnf["author"]})
     return project_data
 
 
 def _write_project_data_to_db(key: KeyPath, project_data: ProjectData) -> None:
-    # slug = key.slug
     try:
         with sqlmodel.Session(db_engine) as session:
             # # delete existing records for this file so there are no duplicates
             # dstate.sql_delete_by_key(session, key)
             # # write all assets included in the processed file
             # dstate.sql_insert_all(session)
-            book = Book(
-                title=project_data["title"],
-                slug=key.slug,
-                updated=datetime.datetime.now(datetime.timezone.utc),
-            )
-            for author_name in project_data["authors"]:
-                # TODO: naive, query and check if exists
-                author = Author(name=author_name, books=[book])
-                # book.authors.append(author)
-                session.add(author)
-            session.add(book)
+            bstmt = sqlmodel.select(Book).where(Book.slug == key.slug)
+            book = session.exec(bstmt).one_or_none()
+            if not book:
+                book = Book(
+                    title=project_data["title"],
+                    slug=key.slug,
+                    updated=datetime.datetime.now(datetime.timezone.utc),
+                )
+                session.add(book)
+            names_in_manuscript = [a["name"] for a in project_data["authors"]]
+            orcids_in_manuscript = [a.get("orcid") for a in project_data["authors"]]
+            if len(names_in_manuscript) == len(orcids_in_manuscript):
+                astmt = (
+                    sqlmodel.select(Author)
+                    .where(sqlmodel.col(Author.orcid).in_(orcids_in_manuscript))
+                    .where(sqlmodel.col(Author.name).in_(names_in_manuscript))
+                )
+            else:
+                # if there is at least one author without ORCID, match only by name
+                astmt = sqlmodel.select(Author).where(
+                    sqlmodel.col(Author.name).in_(names_in_manuscript)
+                )
+            authors = session.exec(astmt).all()
+            names_in_db = [author.name for author in authors]
+            for a in project_data["authors"]:
+                if a["name"] not in names_in_db:
+                    author = Author(name=a["name"], orcid=a.get("orcid"), books=[book])
+                    session.add(author)
             session.commit()
         logger.info(f"Sent SQL INSERT cmd for {key} without an error.")
         return
