@@ -225,13 +225,10 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         )
         return {"statusCode": 200, "body": ""}
     elif _is_CONFIG(key) and _is_update(event_name):
-        print("\n\n\n>>>", key, "\n\n\n")
         src = _get_source_bucket(event)
         _download_fileobj(src, key)
         cnf = _convert_yml_to_dict(key.efs_input_path)
-        print("cnf", cnf)
         project_data = _extract_project_info_from_config(cnf)
-        print("project_data", project_data)
         _write_project_data_to_db(key, project_data)
 
         # project = cnf.get("project", {})
@@ -405,6 +402,7 @@ def _create_domain_dirs(key: KeyPath) -> None:
         key.efs_paper_dir.mkdir(parents=True, exist_ok=True)
         key.efs_chapters_dir.mkdir(parents=True, exist_ok=True)
         key.efs_state_dir.mkdir(parents=True, exist_ok=True)
+        key.efs_warnings_dir.mkdir(parents=True, exist_ok=True)
         (key.efs_jb_dir / ASSETS_DIR).mkdir(parents=True, exist_ok=True)
         # NOTE: maybe you don't need to create assets dir in paper dir
         # just copy the whole assets dir ONLY WHEN you need to download the paper package
@@ -804,6 +802,7 @@ def _remove_file_from_efs_domain_dirs(key: KeyPath) -> None:
         key.efs_paper_path.unlink(missing_ok=True)
         key.efs_state_path.unlink(missing_ok=True)
         key.efs_input_path.unlink(missing_ok=True)
+        key.efs_warnings_path.unlink(missing_ok=True)
         logger.info(f"{str(key.efs_jb_path)} was removed from EFS.")
     except Exception as e:
         logger.exception(

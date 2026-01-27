@@ -9,6 +9,7 @@ try:
         PAPER_DIR,
         STATE_DIR,
         INPUT_DIR,
+        WARNINGS_DIR,
     )
 except (ImportError, ModuleNotFoundError):
     from .constants import (
@@ -18,6 +19,7 @@ except (ImportError, ModuleNotFoundError):
         PAPER_DIR,
         STATE_DIR,
         INPUT_DIR,
+        WARNINGS_DIR,
     )  # type: ignore
 
 
@@ -31,6 +33,7 @@ domain_dirs = [
     STATE_DIR,
     INPUT_DIR,
     CHAPTERS_DIR,
+    WARNINGS_DIR,
 ]
 
 
@@ -56,7 +59,7 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
         - `path` is the relative path to a file within a book (e.g. chapter1.md, assets/image.png)
     """
 
-    domain_dirs = [INPUT_DIR, JB_DIR, PAPER_DIR, STATE_DIR, CHAPTERS_DIR]
+    domain_dirs = [INPUT_DIR, JB_DIR, PAPER_DIR, STATE_DIR, CHAPTERS_DIR, WARNINGS_DIR]
 
     def __new__(cls, *pathsegments):
         return super().__new__(cls, *pathsegments)
@@ -124,6 +127,11 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
         """Returns /mnt/efs/_CHAPTERS/my-slug"""
         return self.abs_root / CHAPTERS_DIR / self.slug
 
+    @cached_property
+    def efs_warnings_dir(self) -> "KeyPath":
+        """Returns /mnt/efs/_WARNINGS/my-slug"""
+        return self.abs_root / WARNINGS_DIR / self.slug
+
     # paths
 
     @cached_property
@@ -152,6 +160,11 @@ class KeyPath(type(pathlib.Path())):  # type: ignore
     def efs_chapters_path(self) -> "KeyPath":
         """Returns /mnt/efs/_CHAPTERS/my-slug/path/to/file.txt"""
         return self.efs_chapters_dir / self.github_path
+
+    @cached_property
+    def efs_warnings_path(self) -> "KeyPath":
+        """Returns /mnt/efs/_WARNINGS/my-slug/path/to/file.txt"""
+        return self.efs_warnings_dir / self.github_path
 
     # legacy
 
