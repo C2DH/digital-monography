@@ -21,7 +21,7 @@ from src._common.audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
 from src._common.constants import ModuleEnum, S3Event, IS_DEBUG
 from src._common.keys import KeyPath
 from fakers import Faker
-from rules_v1 import HtmlVerifier
+from rules_v3 import HtmlVerifier
 
 # try:
 #     from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
@@ -61,9 +61,29 @@ else:
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
     logger.info("Handler was invoked successfully.")
     key = _get_key(event)
-    TEMP_DISABLED_FOR_BUILDER_WARNINGS = """
     event_name = _get_event_name(event)
     timestamp = _get_timestamp(event)
+    if event_name == S3Event.OBJ_REMOVED.value:
+        pass  # TODO: implement removal of the verification messages
+    elif event_name == S3Event.OBJ_CREATED.value:
+        html_fp = key.efs_chapters_path.with_suffix(".html")
+        with open(html_fp, "r") as f:
+            html = f.read()
+        verifier = _verify_html(key, html, timestamp)
+        warnings_json = verifier.to_json(md=True)
+        # verifer = HtmlVerifier()
+        # verifer.verify(
+        #     html,
+        #     html_fp,
+        #     slug=key.slug,
+        #     timestamp=timestamp,
+        # )
+        # verifer.sort()
+        # warnings_json = verifer.to_json(md=True)
+        _write_json_to_efs(warnings_json, key)
+        print("\n\n\n")
+
+    TEMP_DISABLED_FOR_BUILDER_WARNINGS = """
     if key.suffix.lower() == ".html" and event_name == S3Event.OBJ_REMOVED.value:
         pass  # TODO: implement removal of the verification messages
     if key.suffix.lower() == ".html" and event_name == S3Event.OBJ_CREATED.value:
@@ -83,7 +103,7 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
         _write_json_to_efs(warnings_json, key)
         # _make_warnings_report(verifer.soup, warnings_json, timestamp, key)
         _put_json_to_s3(json.dumps(warnings_json, default=str), key)
-        """  # TODO: revert
+    """  # TODO: revert
     _send_msg_to_sqs(key)
     logger.info("Handler ended successfully.")
     _log_audit_event(
@@ -137,14 +157,27 @@ def _get_timestamp(event) -> datetime.datetime:
         raise
 
 
+def _verify_html(key: KeyPath, html: str, timestamp: datetime.datetime) -> HtmlVerifier:
+    verifer = HtmlVerifier()
+    verifer.verify(
+        html,
+        key,
+        slug=key.slug,
+        timestamp=timestamp,
+    )
+    verifer.sort()
+    return verifer
+
+
 def _write_json_to_efs(json_data: t.Any, key: KeyPath) -> None:
     try:
-        fp = key.efs_slug_warnings_path.parent / key.github_path.with_suffix(".json")
+        # fp = key.efs_slug_warnings_path.parent / key.github_path.with_suffix(".json")
+        fp = key.efs_warnings_path.with_suffix(".json")
         with open(fp, "w") as f:
             json.dump(json_data, f)
         logger.info(f"Warnings raw data was saved to {str(fp)}")
     except Exception as e:
-        logger.exception(f"Writing json to /efs directory failed. Error: {repr(e)}")
+        logger.exception(f"Writing json to directory failed. Error: {repr(e)}")
         _log_audit_event(
             key, AuditStatus.FAILED.value, "Writing verification warnings failed."
         )

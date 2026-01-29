@@ -173,8 +173,11 @@ class GeneralVerificationMessage:
         return self.to_json()
 
 
+VerifMessage = t.Union[FileVerificationMessage, GeneralVerificationMessage]
+
+
 class VerifierMessages:
-    _messages: list[t.Union[FileVerificationMessage, GeneralVerificationMessage]]
+    _messages: list[VerifMessage]
 
     def __init__(self):
         self._messages = []
