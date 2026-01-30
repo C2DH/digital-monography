@@ -14,6 +14,32 @@ except (ImportError, ModuleNotFoundError):
         GeneralVerificationMessageJson,
     )
 
+prefix = """
+::::::{tab-set}
+:::::{tab-item} Headings
+:sync: tab1
+Heading warnings disabled.
+:::::
+:::::{tab-item} Paragraphs
+:sync: tab2
+Paragraph warnings disabled.
+:::::
+:::::{tab-item} Links
+:sync: tab3
+Link warnings disabled.
+:::::
+:::::{tab-item} Tables
+:sync: tab4
+Table warnings disabled.
+:::::
+:::::{tab-item} Captions
+:sync: tab5
+:selected:
+"""
+suffix = """
+:::::
+::::::"""
+
 
 def make_warnings_report(
     soup: bs4.BeautifulSoup,
@@ -25,8 +51,13 @@ def make_warnings_report(
 ) -> str:
     char_count, word_count = _get_character_and_word_count(soup)
     formated_date = timestamp.strftime("%A %d. %B %Y, %H:%M")
+    title = soup.find_next("h1")
+    if title:
+        startwith = f"# Warnings | {title.text}"
+    else:
+        startwith = f'# Result of the automatic verification of "{fn}"'
     report = f"""\
-# Result of the automatic verification of "{fn}"
+{startwith}
 
 ## Statistics
 
@@ -55,10 +86,12 @@ a rule starts.
 👍 The platform has not found any rules violated by this file.
 :::
 """
+        return report
+    report = report + prefix
     for msg in json_data:
         if msg.get("curr_elem"):
             report += _make_fwarning_dropdown(msg)
-    return report
+    return report + suffix
 
 
 # def _make_gwarning_dropdown(msg: GeneralVerificationMessageJson) -> str:
