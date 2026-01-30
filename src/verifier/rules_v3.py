@@ -271,27 +271,27 @@ class HtmlVerifier:
         self, tag: bs4.Tag, item: str | None, number: int | None
     ) -> bool:
         bolded = tag.find_next("strong")
-        # print("bolded", bolded, type(bolded))
-        bolded_md = convert_to_md(bolded)
-        self._logs.append(
-            {
-                "tag": tag,
-                "strong": bolded,
-                "bolded.text": bolded.text,
-                "bolded.string": bolded.string,
-                "caption_md": bolded_md,
-                r'bolded_md.startswith(f"{item} {number}:")': bolded_md.startswith(
-                    f"{item} {number}:"
-                ),
-                "isinstance(bolded, bs4.Tag)": isinstance(bolded, bs4.Tag),
-                "match": re.match(r"^\w+ {{ (_Unref|_Ref)[0-9]{9} }}:", bolded.text),
-            }
-        )
-        # print(re.match(r"^\w+ {{ (_Unref|_Ref)[0-9]{9} }}:", bolded.text))
-        # self._logs.append((re.match(r"^\w+ {{ (_Unref|_Ref)[0-9]{9} }}:", bolded.text)))
         if isinstance(bolded, bs4.Tag):
-            return False if bolded_md.strip().startswith(f"{item} {number}:") else True
-            # return re.match(r"^\w+ {{ (_Unref|_Ref)[0-9]{9} }}:", bolded.text) is None
+            bolded_md = convert_to_md(bolded)
+            self._logs.append(
+                {
+                    "tag": tag,
+                    "strong": bolded,
+                    "bolded.text": bolded.text,
+                    "bolded.string": bolded.string,
+                    "caption_md": bolded_md,
+                    r'bolded_md.startswith(f"{item} {number}:")': bolded_md.startswith(
+                        f"{item} {number}:"
+                    ),
+                    "isinstance(bolded, bs4.Tag)": isinstance(bolded, bs4.Tag),
+                    "match": re.match(
+                        r"^\w+ {{ (_Unref|_Ref)[0-9]{9} }}:", bolded.text
+                    ),
+                }
+            )
+            # print(self._logs[-1])
+            # print("-" * 25)
+            return False if bolded_md.strip().startswith(f"{item} {number}") else True
         return True
 
     def _check_cap_invalid_type(self, item: t.Optional[str], tag: bs4.Tag) -> bool:
