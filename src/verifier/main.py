@@ -1,4 +1,5 @@
 import boto3
+import bs4
 import datetime
 import json
 import logging
@@ -22,6 +23,7 @@ from src._common.constants import ModuleEnum, S3Event, IS_DEBUG
 from src._common.keys import KeyPath
 from fakers import Faker
 from rules_v3 import HtmlVerifier
+from make_warnings_report import make_warnings_report
 
 # try:
 #     from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
@@ -59,29 +61,34 @@ else:
 
 
 def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
-    logger.info("Handler was invoked successfully.")
     key = _get_key(event)
     event_name = _get_event_name(event)
     timestamp = _get_timestamp(event)
     if event_name == S3Event.OBJ_REMOVED.value:
         pass  # TODO: implement removal of the verification messages
     elif event_name == S3Event.OBJ_CREATED.value:
-        html_fp = key.efs_chapters_path.with_suffix(".html")
-        with open(html_fp, "r") as f:
-            html = f.read()
-        verifier = _verify_html(key, html, timestamp)
-        warnings_json = verifier.to_json(md=True)
-        # verifer = HtmlVerifier()
-        # verifer.verify(
-        #     html,
-        #     html_fp,
-        #     slug=key.slug,
-        #     timestamp=timestamp,
-        # )
-        # verifer.sort()
-        # warnings_json = verifer.to_json(md=True)
-        _write_json_to_efs(warnings_json, key)
-        print("\n\n\n")
+
+        for html_fp in key.efs_chapters_dir.rglob("*.html"):
+            print(f"Verifying {str(html_fp)}")
+
+            # html_fp = key.efs_chapters_path.with_suffix(".html")
+            # html_fp = "/tmp/efs/_CHAPTERS/migration-and-HERitage/03_interdisciplinary_overview.html"
+            with open(html_fp, "r") as f:
+                html = f.read()
+            verifier = _verify_html(html_fp, html, timestamp)
+            warnings_json = verifier.to_json(md=True)
+            # verifer = HtmlVerifier()
+            # verifer.verify(
+            #     html,
+            #     html_fp,
+            #     slug=key.slug,
+            #     timestamp=timestamp,
+            # )
+            # verifer.sort()
+            # warnings_json = verifer.to_json(md=True)
+            _make_warnings_report(verifier.soup, warnings_json, timestamp, html_fp)
+            _write_json_to_efs(warnings_json, html_fp)
+            print("\n\n\n")
 
     TEMP_DISABLED_FOR_BUILDER_WARNINGS = """
     if key.suffix.lower() == ".html" and event_name == S3Event.OBJ_REMOVED.value:
@@ -167,6 +174,29 @@ def _verify_html(key: KeyPath, html: str, timestamp: datetime.datetime) -> HtmlV
     )
     verifer.sort()
     return verifer
+
+
+def _make_warnings_report(
+    soup: bs4.BeautifulSoup,
+    json_data: t.Any,
+    timestamp: datetime.datetime,
+    key: KeyPath,
+) -> None:
+    try:
+        # fp = key.add_to_efs_slug_dir("_warnings").parent / key.github_path.with_suffix(
+        #     ".md"
+        # )
+        fp = key.efs_warnings_path.with_suffix(".md")
+        file_name = str(key.with_suffix(".docx").name)
+        with open(fp, "w") as f:
+            f.write(make_warnings_report(soup, json_data, timestamp, file_name))
+        logger.info(f"Warnings markdown report was saved to {str(fp)}")
+    except Exception as e:
+        logger.exception(f"Writing json to /efs directory failed. Error: {repr(e)}")
+        _log_audit_event(
+            key, AuditStatus.FAILED.value, "Generating verification warnings failed."
+        )
+        raise
 
 
 def _write_json_to_efs(json_data: t.Any, key: KeyPath) -> None:
