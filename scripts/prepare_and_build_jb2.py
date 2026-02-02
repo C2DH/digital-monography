@@ -1,5 +1,6 @@
 import argparse
 import copy
+import datetime
 import pathlib
 import shutil
 import sys
@@ -35,7 +36,7 @@ DEFAULT_S3_EVENT = {
             "eventVersion": "2.1",
             "eventSource": "aws:s3",
             "awsRegion": "eu-west-1",
-            "eventTime": "2024-06-01T10:01:01.100Z",
+            "eventTime": "2026-01-30T10:01:01.100Z",
             "eventName": "ObjectCreated:Put",
             "userIdentity": {"principalId": "AWS:AROAVK5GEQE3275W6UTUO:preparer"},
             "requestParameters": {"sourceIPAddress": "10.10.2.149"},
@@ -96,6 +97,12 @@ def cpy_to_tmp_and_call_handler(fp: pathlib.Path, key: str) -> dict[str, float]:
     shutil.copyfile(fp, target_fp)
     s3_event = copy.deepcopy(DEFAULT_S3_EVENT)
     s3_event["Records"][0]["s3"]["object"]["key"] = key
+    s3_event["Records"][0]["eventTime"] = (
+        datetime.datetime.now(tz=datetime.timezone.utc).strftime(
+            "%Y-%m-%dT%H:%M:%S.%f"
+        )[:-3]
+        + "Z"
+    )
     context = {}
     # preparer
     start = time.time()  # consider time.perf_counter or time.process_time
