@@ -1,6 +1,7 @@
 import collections
 import bs4
 import datetime
+import enum
 import logging
 import json
 import pathlib
@@ -51,6 +52,17 @@ MSG_PROBLEMS = {
         # "check_cap_no_copyright": "No valid license information found.",
         # "check_cap_many_bookmarks": "A caption includes duplicated bookmarks.",
     },
+    HEADINGS: {
+        # "check_h_no_h1_at_start": "Every file should start with Heading of level 1.",
+        "check_h_first_h_not_h1": "First Heading should be of level 1.",
+        # "check_h_h1_after_start": "You should place Headings of level 1 only at the beginning of the file.",
+        "check_h_not_sequential": "Heading levels should only increment by one level at a time.",
+        "check_h_no_title_case": "All headings should be title cased.",
+        "check_h_with_trailing_dot": "Headings should not end with a trailing dot.",
+        "check_h_with_footnotes": "Headings must not contain any footnotes.",
+        "check_h_if_gte_6": "Heading of level 6 and above are not supported.",
+        "check_h_for_duplicates": "Duplicate headings found.",
+    },
 }
 
 
@@ -68,6 +80,16 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
+class MsgLevel(enum.Enum):
+    INFO = 20  # Confirmation that things are working as expected.
+    NOTICE = 25  # An indication that input data should be examined.
+    WARNING = (
+        30  # An indication that input data may lead to problems and MUST be examined.
+    )
+    ERROR = 40  # Due to a more serious error in input data, the software won't be able to perform some function.
+    CRITICAL = 50  # Input data contains a serious error, indicating that the book might not be created/updated.
+
+
 class HtmlVerifier:
     """
     Verify HTML documents (chapters).
@@ -83,8 +105,8 @@ class HtmlVerifier:
         self._messages = VerifierMessages()
         self._links = []
         self._captions: list[bs4.Tag] = []
-        self._headings = []
-        self._headings_lvls = []
+        self._headings: list[bs4.Tag] = []
+        self._headings_lvls: list[int] = []
         self._paragraphs = []
         self._tables = []
         self._metadata_tables = []
@@ -113,6 +135,7 @@ class HtmlVerifier:
         self.soup = bs4.BeautifulSoup(html, "html.parser")
         self._mark_html_elements_recursively(self.soup)
         self._apply_captions_verification()
+        self._apply_heading_verification()
 
     def _mark_html_elements_recursively(self, node: bs4.PageElement, lvl=0) -> None:
         """
@@ -355,3 +378,145 @@ class HtmlVerifier:
     #             if len(ref_nums) > 1:
     #                 return ref_nums
     #     return ref_nums
+
+    # headings ##########################################################################
+
+    def _apply_heading_verification(self) -> None:
+        self._unique_headings = []
+        self._h_stack = []
+        # if self._check_h_no_h1_at_start(self._first_tag):
+        #     shrt_txt = (
+        #         self._first_tag.text[:25]
+        #         if len(self._first_tag.text) > 25
+        #         else self._first_tag.text
+        #     )
+        #     self._messages.add_msg(
+        #         problem=MSG_PROBLEMS[HEADINGS]["check_h_no_h1_at_start"],
+        #         recommend=f'Here, it begins with "{shrt_txt}..." which does not have a Heading 1 style.',
+        #         elem=self._first_tag,
+        #         fn=self._fp.name,
+        #         timestamp=self._timestamp,
+        #         tags=[HEADINGS],
+        #     )
+        for i in range(len(self._headings)):
+            tag = self._headings[i]
+            while self._h_stack and self._h_stack[-1] > self._headings_lvls[i]:
+                self._h_stack.pop()
+            if self._h_stack and self._headings_lvls[i] - self._h_stack[-1] > 1:
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[HEADINGS]["check_h_not_sequential"],
+                    recommend=f'Heading {str(self._headings_lvls[i])} ("{tag.text}") is placed after heading level {str(self._h_stack[-1])}. Consider changing the former to style "Heading {str(self._h_stack[-1] + 1)}".',
+                    elem=tag,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
+                    tags=[HEADINGS],
+                )
+            if len(self._h_stack) == 0 and self._headings_lvls[i] != 1:
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[HEADINGS]["check_h_first_h_not_h1"],
+                    recommend=f'Consider changing the style of "{tag.text}" or "{self._first_tag.text}" to "Heading 1".',
+                    elem=tag,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
+                    tags=[HEADINGS],
+                )
+            # # NOTE: 2026-02-02 this doesn't apply to single docx to split into multiple chapters
+            # # check_h_h1_after_start
+            # if i > 1 and self._headings_lvls[i] == 1:
+            #     self._messages.add_msg(
+            #         problem=MSG_PROBLEMS[HEADINGS]["check_h_h1_after_start"],
+            #         recommend=f'Consider changing level of "{tag.text}" or splitting file into two as there should be only one top level heading per file.',
+            #         elem=tag,
+            #         fn=self._fp.name,
+            #         timestamp=self._timestamp,
+            #         tags=[HEADINGS],
+            #     )
+            self._h_stack.append(self._headings_lvls[i])
+
+            if self._check_h_no_title_case(tag):
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[HEADINGS]["check_h_no_title_case"],
+                    recommend=f'Consider changing the heading "{tag.text}" to "{tag.text.title()}".',
+                    elem=tag,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
+                    tags=[HEADINGS],
+                )
+            if self._check_h_with_trailing_dot(tag):
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[HEADINGS]["check_h_with_trailing_dot"],
+                    recommend=f'Consider removing the "." character at the end of the heading.',
+                    elem=tag,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
+                    tags=[HEADINGS],
+                )
+            if self._check_h_with_footnotes(tag):
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[HEADINGS]["check_h_with_footnotes"],
+                    recommend=f'Please remove the footnote from the heading "{tag.text}".',
+                    elem=tag,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
+                    tags=[HEADINGS, FOOTNOTES],
+                )
+            if self._check_h_if_gte_6(tag):
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[HEADINGS]["check_h_if_gte_6"],
+                    recommend=f'Consider changing the style of "{tag.text}" to Heading 5 or lower.',
+                    elem=tag,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
+                    tags=[HEADINGS],
+                )
+            if self._check_h_for_duplicates(tag):
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[HEADINGS]["check_h_for_duplicates"],
+                    recommend=f'There should be no two headings with the same text. Please rephrase "{tag.text}".',
+                    elem=tag,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
+                    tags=[HEADINGS],
+                )
+
+    # TODO: this should cover cases when frontmatter is before h1
+    # def _check_h_no_h1_at_start(self, tag: bs4.element.Tag) -> bool:
+    #     try:
+    #         is_heading = re.match(r"^h[0-9]*$", tag.name)
+    #         tag_nums = re.findall(r"\d+", tag.name)
+    #         if is_heading and tag_nums and int(tag_nums[0]) == 1:
+    #             return False
+    #     except ValueError as e:
+    #         return False
+    #     else:
+    #         return True
+
+    def _check_h_no_title_case(self, tag: bs4.element.Tag) -> bool:
+        return tag.text != tag.text.title() and IS_HEADING_TITLE_CASED_REQUIRED
+
+    def _check_h_with_trailing_dot(self, tag: bs4.element.Tag) -> bool:
+        return tag.text.strip().endswith(".")
+
+    def _check_h_with_footnotes(self, tag: bs4.element.Tag) -> bool:
+        """
+        Check for an anchor tag in a superscript tag. E.g.:
+        <h1>No Footnotes In Headings<sup><a href="#footnote-1" id="footnote-ref-1">[1]</a></sup></h1>
+        """
+        for sup in tag.find_all("sup"):
+            sup: bs4.element.Tag
+            for a in sup.find_all("a"):
+                if "footnote" in str(a):
+                    return True
+        return False
+
+    def _check_h_if_gte_6(self, tag: bs4.element.Tag) -> bool:
+        nums = re.findall(r"\d+", tag.name)
+        if nums and int(nums[0]) >= 6:
+            return True
+        return False
+
+    def _check_h_for_duplicates(self, tag: bs4.element.Tag) -> bool:
+        if tag.text in self._unique_headings:
+            return True
+        self._unique_headings.append(tag.text)
+        return False
