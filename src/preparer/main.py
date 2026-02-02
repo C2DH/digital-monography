@@ -470,7 +470,9 @@ def _write_project_data_to_db(key: KeyPath, project_data: ProjectData) -> None:
                 )
                 session.add(book)
             names_in_manuscript = [a["name"] for a in project_data["authors"]]
-            orcids_in_manuscript = [a.get("orcid") for a in project_data["authors"]]
+            orcids_in_manuscript = [
+                a["orcid"] for a in project_data["authors"] if a.get("orcid")
+            ]
             if len(names_in_manuscript) == len(orcids_in_manuscript):
                 astmt = (
                     sqlmodel.select(Author)
