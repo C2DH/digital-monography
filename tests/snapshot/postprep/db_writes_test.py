@@ -1,19 +1,14 @@
-import json
 import bs4
-import pytest
 import sqlmodel
 
 from src._common.constants import (
     DEFAULT_SFS_DIR,
     CHAPTERS_DIR,
     DB_URL,
-    # CLS_STATE_TABLE_JSONDATA,
-    # INPUT_DIR,
 )
 from src._common.keys import KeyPath
 from src._common.state import DocumentState
 from src._common.models import (
-    Author,
     Book,
 )
 
