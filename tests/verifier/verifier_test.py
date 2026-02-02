@@ -18,10 +18,7 @@ from src._common.constants import (
 )
 from src.preparer.main import _convert_to_html
 from src.verifier.main import _verify_html, _fromtimestamp
-from src.verifier.rules_v3 import CAPTIONS, MSG_PROBLEMS
-
-
-from pprint import pprint
+from src.verifier.rules_v3 import CAPTIONS, HEADINGS, MSG_PROBLEMS
 
 
 PARENT_DIR = KeyPath("tests") / "_fixtures" / "book-content-examples"
@@ -54,16 +51,16 @@ class TestHeadingsLinksAndCaptionsBreakingVerificationRules:
             warnings_records = cls.verifier.to_json(md=True)
             # cls.verifer = HtmlVerifier()
             for war in warnings_records:
-                # if HEADINGS in war["tags"]:
-                #     cls.warnings[HEADINGS].append(war)
                 if CAPTIONS in war["tags"]:
                     cls.warnings[CAPTIONS].append(war)
+                if HEADINGS in war["tags"]:
+                    cls.warnings[HEADINGS].append(war)
                 # if LINKS in war["tags"]:
                 #     cls.warnings[LINKS].append(war)
                 # if PARAGRAPHS in war["tags"]:
                 #     cls.warnings[PARAGRAPHS].append(war)
 
-    #     # headings ########################################################################
+    # headings ########################################################################
 
     #     def test_check_h_no_h1_at_start(self):
     #         warning = next(
@@ -75,132 +72,132 @@ class TestHeadingsLinksAndCaptionsBreakingVerificationRules:
     #             and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_no_h1_at_start"]
     #         )
     #         assert warning
-    #         assert warning["fn"] == "verify_h_a_cap.html"
+    #         assert warning["fn"] == "verify_h_a_cap.docx"
 
-    #     def test_check_h_first_h_not_h1(self):
-    #         warning = next(
-    #             w
-    #             for w in self.warnings[HEADINGS]
-    #             if w["curr_elem"].startswith("<h2>Oh no, the first Heading is level 2.")
-    #             and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_first_h_not_h1"]
-    #         )
-    #         assert warning
-    #         assert warning["fn"] == "verify_h_a_cap.html"
+    def test_check_h_first_h_not_h1(self):
+        warning = next(
+            w
+            for w in self.warnings[HEADINGS]
+            if w["curr_elem"].startswith("Oh no, the first Heading is level 2.")
+            and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_first_h_not_h1"]
+        )
+        assert warning
+        assert warning["fn"] == "verify_h_a_cap.docx"
 
-    #     def test_check_h_h1_after_start__1(self):
-    #         warning = next(
-    #             w
-    #             for w in self.warnings[HEADINGS]
-    #             if "Heading 1 Should Be At The Beginning Of The File Only!"
-    #             in w["curr_elem"]
-    #             and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_h1_after_start"]
-    #         )
-    #         assert warning
-    #         assert warning["fn"] == "verify_h_a_cap.html"
+    # def test_check_h_h1_after_start__1(self):
+    #     warning = next(
+    #         w
+    #         for w in self.warnings[HEADINGS]
+    #         if "Heading 1 Should Be At The Beginning Of The File Only!"
+    #         in w["curr_elem"]
+    #         and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_h1_after_start"]
+    #     )
+    #     assert warning
+    #     assert warning["fn"] == "verify_h_a_cap.docx"
 
-    #     def test_check_h_h1_after_start__2(self):
-    #         warning = next(
-    #             w
-    #             for w in self.warnings[HEADINGS]
-    #             if "There Should Be Only One Heading 1" in w["curr_elem"]
-    #             and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_h1_after_start"]
-    #         )
-    #         assert warning
-    #         assert warning["fn"] == "verify_h_a_cap.html"
+    # def test_check_h_h1_after_start__2(self):
+    #     warning = next(
+    #         w
+    #         for w in self.warnings[HEADINGS]
+    #         if "There Should Be Only One Heading 1" in w["curr_elem"]
+    #         and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_h1_after_start"]
+    #     )
+    #     assert warning
+    #     assert warning["fn"] == "verify_h_a_cap.docx"
 
-    #     def test_check_h_not_sequential__1(self):
-    #         warning = next(
-    #             w
-    #             for w in self.warnings[HEADINGS]
-    #             if "Heading 4. Where is level 3?" in w["curr_elem"]
-    #             and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_not_sequential"]
-    #         )
-    #         assert warning
-    #         assert warning["fn"] == "verify_h_a_cap.html"
+    def test_check_h_not_sequential__1(self):
+        warning = next(
+            w
+            for w in self.warnings[HEADINGS]
+            if "Heading 4. Where is level 3?" in w["curr_elem"]
+            and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_not_sequential"]
+        )
+        assert warning
+        assert warning["fn"] == "verify_h_a_cap.docx"
 
-    #     def test_check_h_not_sequential__2(self):
-    #         warning = next(
-    #             w
-    #             for w in self.warnings[HEADINGS]
-    #             if "Heading 6. Where 5?" in w["curr_elem"]
-    #             and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_not_sequential"]
-    #         )
-    #         assert warning
-    #         assert warning["fn"] == "verify_h_a_cap.html"
+    def test_check_h_not_sequential__2(self):
+        warning = next(
+            w
+            for w in self.warnings[HEADINGS]
+            if "Heading 6. Where 5?" in w["curr_elem"]
+            and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_not_sequential"]
+        )
+        assert warning
+        assert warning["fn"] == "verify_h_a_cap.docx"
 
-    #     def test_check_h_no_title_case(self):
-    #         warning = next(
-    #             w
-    #             for w in self.warnings[HEADINGS]
-    #             if w["curr_elem"].startswith("<h2>Oh no, the first Heading is level 2")
-    #             and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_no_title_case"]
-    #         )
-    #         assert warning["fn"] == "verify_h_a_cap.html"
-    #         assert warning["next_elem"].startswith("<h4>Heading 4. Where is level 3?")
-    #         assert warning["prev_elem"].startswith(
-    #             "<p>The file should always start with Heading 1"
-    #         )
+    def test_check_h_no_title_case(self):
+        warning = next(
+            w
+            for w in self.warnings[HEADINGS]
+            if w["curr_elem"].startswith("Oh no, the first Heading is level 2")
+            and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_no_title_case"]
+        )
+        assert warning["fn"] == "verify_h_a_cap.docx"
+        assert warning["next_elem"].startswith("Heading 4. Where is level 3?")
+        assert warning["prev_elem"].startswith(
+            "The file should always start with Heading 1"
+        )
 
-    #     def test_check_h_with_trailing_dot(self):
-    #         warning = next(
-    #             w
-    #             for w in self.warnings[HEADINGS]
-    #             if w["curr_elem"].endswith(".</h2>")
-    #             and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_with_trailing_dot"]
-    #         )
-    #         assert warning["fn"] == "verify_h_a_cap.html"
-    #         assert warning["prev_elem"].startswith(
-    #             "<p>The file should always start with Heading 1.",
-    #         )
-    #         assert warning["next_elem"].startswith(
-    #             "<h4>Heading 4. Where is level 3?",
-    #         )
+    def test_check_h_with_trailing_dot(self):
+        warning = next(
+            w
+            for w in self.warnings[HEADINGS]
+            if w["curr_elem"].endswith(".")
+            and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_with_trailing_dot"]
+        )
+        assert warning["fn"] == "verify_h_a_cap.docx"
+        assert warning["prev_elem"].startswith(
+            "The file should always start with Heading 1.",
+        )
+        assert warning["next_elem"].startswith(
+            "Heading 4. Where is level 3?",
+        )
 
-    #     def test_check_h_with_footnotes(self):
-    #         warning = next(
-    #             w
-    #             for w in self.warnings[HEADINGS]
-    #             if "No Footnotes In Headings" in w["curr_elem"]
-    #             and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_with_footnotes"]
-    #         )
-    #         assert warning
-    #         assert warning["fn"] == "verify_h_a_cap.html"
+    def test_check_h_with_footnotes(self):
+        warning = next(
+            w
+            for w in self.warnings[HEADINGS]
+            if "No Footnotes In Headings" in w["curr_elem"]
+            and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_with_footnotes"]
+        )
+        assert warning
+        assert warning["fn"] == "verify_h_a_cap.docx"
 
-    #     def test_check_h_if_gte_6(self):
-    #         warning = next(
-    #             w
-    #             for w in self.warnings[HEADINGS]
-    #             if "Heading 6" in w["curr_elem"]
-    #             and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_if_gte_6"]
-    #         )
-    #         assert warning
-    #         assert warning["fn"] == "verify_h_a_cap.html"
+    def test_check_h_if_gte_6(self):
+        warning = next(
+            w
+            for w in self.warnings[HEADINGS]
+            if "Heading 6" in w["curr_elem"]
+            and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_if_gte_6"]
+        )
+        assert warning
+        assert warning["fn"] == "verify_h_a_cap.docx"
 
-    #     def test_check_h_for_duplicates(self):
-    #         warning = next(
-    #             w
-    #             for w in self.warnings[HEADINGS]
-    #             if "Heading 4" in w["curr_elem"]
-    #             and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_for_duplicates"]
-    #         )
-    #         assert warning
-    #         assert warning["fn"] == "verify_h_a_cap.html"
+    def test_check_h_for_duplicates(self):
+        warning = next(
+            w
+            for w in self.warnings[HEADINGS]
+            if "Heading 4" in w["curr_elem"]
+            and w["problem"] == MSG_PROBLEMS[HEADINGS]["check_h_for_duplicates"]
+        )
+        assert warning
+        assert warning["fn"] == "verify_h_a_cap.docx"
 
-    #     def test_check_h_bold_instead_heading(self):
-    #         all_bold = None
-    #         bold_at_start_and_end = None
-    #         bold_in_the_middle = None
-    #         for w in self.warnings[PARAGRAPHS]:
-    #             if w["problem"] == MSG_PROBLEMS[PARAGRAPHS]["check_p_bold_instead_heading"]:
-    #                 if "No heading style - <em>that’s</em> bold" in w["curr_elem"]:
-    #                     all_bold = w
-    #                 if "In this sentence" in w["curr_elem"]:
-    #                     bold_at_start_and_end = w
-    #                 if "with a duplicated text" in w["curr_elem"]:
-    #                     bold_in_the_middle = w
-    #         assert all_bold
-    #         assert bold_at_start_and_end == None
-    #         assert bold_in_the_middle == None
+    # def test_check_h_bold_instead_heading(self):
+    #     all_bold = None
+    #     bold_at_start_and_end = None
+    #     bold_in_the_middle = None
+    #     for w in self.warnings[PARAGRAPHS]:
+    #         if w["problem"] == MSG_PROBLEMS[PARAGRAPHS]["check_p_bold_instead_heading"]:
+    #             if "No heading style - <em>that’s</em> bold" in w["curr_elem"]:
+    #                 all_bold = w
+    #             if "In this sentence" in w["curr_elem"]:
+    #                 bold_at_start_and_end = w
+    #             if "with a duplicated text" in w["curr_elem"]:
+    #                 bold_in_the_middle = w
+    #     assert all_bold
+    #     assert bold_at_start_and_end == None
+    #     assert bold_in_the_middle == None
 
     # captions ########################################################################
 
