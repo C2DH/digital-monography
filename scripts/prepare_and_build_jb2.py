@@ -97,12 +97,7 @@ def cpy_to_tmp_and_call_handler(fp: pathlib.Path, key: str) -> dict[str, float]:
     shutil.copyfile(fp, target_fp)
     s3_event = copy.deepcopy(DEFAULT_S3_EVENT)
     s3_event["Records"][0]["s3"]["object"]["key"] = key
-    s3_event["Records"][0]["eventTime"] = (
-        datetime.datetime.now(tz=datetime.timezone.utc).strftime(
-            "%Y-%m-%dT%H:%M:%S.%f"
-        )[:-3]
-        + "Z"
-    )
+    s3_event["Records"][0]["eventTime"] = _get_curr_timestamp()
     context = {}
     # preparer
     start = time.time()  # consider time.perf_counter or time.process_time
@@ -117,6 +112,16 @@ def cpy_to_tmp_and_call_handler(fp: pathlib.Path, key: str) -> dict[str, float]:
         verifier_handler(s3_event, context)
         time_status["verifier"] = time.time() - start
     return time_status
+
+
+def _get_curr_timestamp() -> str:
+    """Returns the current timestamp in ISO 8601 format with milliseconds and 'Z' suffix."""
+    return (
+        datetime.datetime.now(tz=datetime.timezone.utc).strftime(
+            "%Y-%m-%dT%H:%M:%S.%f"
+        )[:-3]
+        + "Z"
+    )
 
 
 def build_after_loop(book_path: pathlib.Path) -> dict[str, float]:
