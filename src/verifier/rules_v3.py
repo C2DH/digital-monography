@@ -66,6 +66,10 @@ MSG_PROBLEMS = {
     PARAGRAPHS: {
         "check_p_bold_instead_heading": "Found bold line. Did you meant to use a heading?",
     },
+    LINKS: {
+        "check_a_is_http": "Links should point to websites using secure https over http.",
+        "check_a_not_archived": "Links should point to websites archived using the Internet Archive.",
+    },
 }
 
 
@@ -106,7 +110,7 @@ class HtmlVerifier:
     def __init__(self) -> None:
         self.soup = None
         self._messages = VerifierMessages()
-        self._links = []
+        self._links: list[bs4.Tag] = []
         self._captions: list[bs4.Tag] = []
         self._headings: list[bs4.Tag] = []
         self._headings_lvls: list[int] = []
@@ -140,6 +144,7 @@ class HtmlVerifier:
         self._apply_captions_verification()
         self._apply_heading_verification()
         self._apply_paragraphs_verification()
+        self._apply_links_verification()
 
     def _mark_html_elements_recursively(self, node: bs4.PageElement, lvl=0) -> None:
         """
@@ -552,3 +557,35 @@ class HtmlVerifier:
         if len(children_names) == 1 and "strong" in children_names:
             return True
         return False
+
+    # links #############################################################################
+
+    def _apply_links_verification(self) -> None:
+        for link in self._links:
+            href = link.get("href", "")
+            if self._check_a_is_http(href):
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[LINKS]["check_a_is_http"],
+                    recommend=f"Issue with the link `[{link.text}]({href})` was found. If possible, change \"`{href}`\" to \"{href.replace('http:', 'https:', 1)}\".",
+                    elem=link.parent,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
+                    tags=[LINKS],
+                )
+            if self._check_a_not_archived(href):
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[LINKS]["check_a_not_archived"],
+                    recommend=f'Consider archiving the link [{link.text}]({href}) with "https://wayback-api.archive.org/" and replacing "`{href}`" in your manuscript with the archived link.',
+                    elem=link.parent,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
+                    tags=[LINKS],
+                )
+
+    def _check_a_is_http(self, href: str) -> bool:
+        return href.startswith("http://")
+
+    def _check_a_not_archived(self, href: str) -> bool:
+        return href.startswith("http") and not href.startswith(
+            "https://web.archive.org/"
+        )
