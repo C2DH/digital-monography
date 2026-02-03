@@ -63,6 +63,9 @@ MSG_PROBLEMS = {
         "check_h_if_gte_6": "Heading of level 6 and above are not supported.",
         "check_h_for_duplicates": "Duplicate headings found.",
     },
+    PARAGRAPHS: {
+        "check_p_bold_instead_heading": "Found bold line. Did you meant to use a heading?",
+    },
 }
 
 
@@ -107,7 +110,7 @@ class HtmlVerifier:
         self._captions: list[bs4.Tag] = []
         self._headings: list[bs4.Tag] = []
         self._headings_lvls: list[int] = []
-        self._paragraphs = []
+        self._paragraphs: list[bs4.Tag] = []
         self._tables = []
         self._metadata_tables = []
         self._comments = {}
@@ -136,6 +139,7 @@ class HtmlVerifier:
         self._mark_html_elements_recursively(self.soup)
         self._apply_captions_verification()
         self._apply_heading_verification()
+        self._apply_paragraphs_verification()
 
     def _mark_html_elements_recursively(self, node: bs4.PageElement, lvl=0) -> None:
         """
@@ -491,32 +495,60 @@ class HtmlVerifier:
     #     else:
     #         return True
 
-    def _check_h_no_title_case(self, tag: bs4.element.Tag) -> bool:
+    def _check_h_no_title_case(self, tag: bs4.Tag) -> bool:
         return tag.text != tag.text.title() and IS_HEADING_TITLE_CASED_REQUIRED
 
-    def _check_h_with_trailing_dot(self, tag: bs4.element.Tag) -> bool:
+    def _check_h_with_trailing_dot(self, tag: bs4.Tag) -> bool:
         return tag.text.strip().endswith(".")
 
-    def _check_h_with_footnotes(self, tag: bs4.element.Tag) -> bool:
+    def _check_h_with_footnotes(self, tag: bs4.Tag) -> bool:
         """
         Check for an anchor tag in a superscript tag. E.g.:
         <h1>No Footnotes In Headings<sup><a href="#footnote-1" id="footnote-ref-1">[1]</a></sup></h1>
         """
         for sup in tag.find_all("sup"):
-            sup: bs4.element.Tag
+            sup: bs4.Tag
             for a in sup.find_all("a"):
                 if "footnote" in str(a):
                     return True
         return False
 
-    def _check_h_if_gte_6(self, tag: bs4.element.Tag) -> bool:
+    def _check_h_if_gte_6(self, tag: bs4.Tag) -> bool:
         nums = re.findall(r"\d+", tag.name)
         if nums and int(nums[0]) >= 6:
             return True
         return False
 
-    def _check_h_for_duplicates(self, tag: bs4.element.Tag) -> bool:
+    def _check_h_for_duplicates(self, tag: bs4.Tag) -> bool:
         if tag.text in self._unique_headings:
             return True
         self._unique_headings.append(tag.text)
+        return False
+
+    # paragraphs #######################################################################
+
+    def _apply_paragraphs_verification(self) -> None:
+        for p in self._paragraphs:
+            if self._check_p_bold_instead_heading(p):
+                bold = p.text[:20] + "..." if len(p.text) > 20 else p.text
+                self._messages.add_msg(
+                    problem=MSG_PROBLEMS[PARAGRAPHS]["check_p_bold_instead_heading"],
+                    recommend=f'If so, please change the MS Word style for "{bold}" to appropriate "Heading" level.',
+                    elem=p,
+                    fn=self._fp.name,
+                    timestamp=self._timestamp,
+                    tags=[HEADINGS, PARAGRAPHS],
+                )
+
+    def _check_p_bold_instead_heading(self, tag: bs4.Tag) -> bool:
+        """
+        In case when a <strong> tag is only part of the <p> element,
+        the children will include also bs4.element.NavigableString,
+        which name attribute is None.
+        """
+        children_names = {
+            getattr(ch, "name") for ch in tag.children if hasattr(ch, "name")
+        }
+        if len(children_names) == 1 and "strong" in children_names:
+            return True
         return False
