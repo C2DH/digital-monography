@@ -18,7 +18,7 @@ from src._common.constants import (
 )
 from src.preparer.main import _convert_to_html
 from src.verifier.main import _verify_html, _fromtimestamp
-from src.verifier.rules_v3 import CAPTIONS, HEADINGS, PARAGRAPHS, MSG_PROBLEMS
+from src.verifier.rules_v3 import CAPTIONS, HEADINGS, LINKS, PARAGRAPHS, MSG_PROBLEMS
 
 
 PARENT_DIR = KeyPath("tests") / "_fixtures" / "book-content-examples"
@@ -55,8 +55,8 @@ class TestHeadingsLinksAndCaptionsBreakingVerificationRules:
                     cls.warnings[CAPTIONS].append(war)
                 if HEADINGS in war["tags"]:
                     cls.warnings[HEADINGS].append(war)
-                # if LINKS in war["tags"]:
-                #     cls.warnings[LINKS].append(war)
+                if LINKS in war["tags"]:
+                    cls.warnings[LINKS].append(war)
                 if PARAGRAPHS in war["tags"]:
                     cls.warnings[PARAGRAPHS].append(war)
 
@@ -333,42 +333,42 @@ class TestHeadingsLinksAndCaptionsBreakingVerificationRules:
     #     assert "_Ref178606189" not in is_incorrect_raise_warning["recommend"]
     #     assert is_correct_no_warning == None
 
+    # links ###########################################################################
 
-#     # links ###########################################################################
+    def test_check_a_is_http(self):
+        is_incorrect_raise_warning = None
+        is_correct_no_warning = None
+        for w in self.warnings[LINKS]:
+            if (
+                "http://example.com/" in w["curr_elem"]
+                and w["problem"] == MSG_PROBLEMS[LINKS]["check_a_is_http"]
+            ):
+                is_incorrect_raise_warning = w
+            if (
+                "https://web.archive.org" in w["curr_elem"]
+                and w["problem"] == MSG_PROBLEMS[LINKS]["check_a_is_http"]
+            ):
+                is_correct_no_warning = w
+        assert is_incorrect_raise_warning
+        assert is_correct_no_warning is None
 
-#     def test_check_a_is_http(self):
-#         is_incorrect_raise_warning = None
-#         is_correct_no_warning = None
-#         for w in self.warnings[LINKS]:
-#             if (
-#                 "http://example.com/" in w["curr_elem"]
-#                 and w["problem"] == MSG_PROBLEMS[LINKS]["check_a_is_http"]
-#             ):
-#                 is_incorrect_raise_warning = w
-#             if (
-#                 "https://web.archive.org" in w["curr_elem"]
-#                 and w["problem"] == MSG_PROBLEMS[LINKS]["check_a_is_http"]
-#             ):
-#                 is_correct_no_warning = w
-#         assert is_incorrect_raise_warning
-#         assert is_correct_no_warning is None
+    def test_check_a_not_archived(self):
+        is_incorrect_raise_warning = None
+        is_correct_no_warning = None
+        for w in self.warnings[LINKS]:
+            if (
+                "http://example.com/" in w["curr_elem"]
+                and w["problem"] == MSG_PROBLEMS[LINKS]["check_a_not_archived"]
+            ):
+                is_incorrect_raise_warning = w
+            if (
+                "https://web.archive.org" in w["curr_elem"]
+                and w["problem"] == MSG_PROBLEMS[LINKS]["check_a_not_archived"]
+            ):
+                is_correct_no_warning = w
+        assert is_incorrect_raise_warning
+        assert is_correct_no_warning is None
 
-#     def test_check_a_not_archived(self):
-#         is_incorrect_raise_warning = None
-#         is_correct_no_warning = None
-#         for w in self.warnings[LINKS]:
-#             if (
-#                 "http://example.com/" in w["curr_elem"]
-#                 and w["problem"] == MSG_PROBLEMS[LINKS]["check_a_not_archived"]
-#             ):
-#                 is_incorrect_raise_warning = w
-#             if (
-#                 "https://web.archive.org" in w["curr_elem"]
-#                 and w["problem"] == MSG_PROBLEMS[LINKS]["check_a_not_archived"]
-#             ):
-#                 is_correct_no_warning = w
-#         assert is_incorrect_raise_warning
-#         assert is_correct_no_warning is None
 
 #     ###################################################################################
 
