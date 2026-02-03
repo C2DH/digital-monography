@@ -18,7 +18,7 @@ from src._common.constants import (
 )
 from src.preparer.main import _convert_to_html
 from src.verifier.main import _verify_html, _fromtimestamp
-from src.verifier.rules_v3 import CAPTIONS, HEADINGS, MSG_PROBLEMS
+from src.verifier.rules_v3 import CAPTIONS, HEADINGS, PARAGRAPHS, MSG_PROBLEMS
 
 
 PARENT_DIR = KeyPath("tests") / "_fixtures" / "book-content-examples"
@@ -57,8 +57,8 @@ class TestHeadingsLinksAndCaptionsBreakingVerificationRules:
                     cls.warnings[HEADINGS].append(war)
                 # if LINKS in war["tags"]:
                 #     cls.warnings[LINKS].append(war)
-                # if PARAGRAPHS in war["tags"]:
-                #     cls.warnings[PARAGRAPHS].append(war)
+                if PARAGRAPHS in war["tags"]:
+                    cls.warnings[PARAGRAPHS].append(war)
 
     # headings ########################################################################
 
@@ -183,21 +183,21 @@ class TestHeadingsLinksAndCaptionsBreakingVerificationRules:
         assert warning
         assert warning["fn"] == "verify_h_a_cap.docx"
 
-    # def test_check_h_bold_instead_heading(self):
-    #     all_bold = None
-    #     bold_at_start_and_end = None
-    #     bold_in_the_middle = None
-    #     for w in self.warnings[PARAGRAPHS]:
-    #         if w["problem"] == MSG_PROBLEMS[PARAGRAPHS]["check_p_bold_instead_heading"]:
-    #             if "No heading style - <em>that’s</em> bold" in w["curr_elem"]:
-    #                 all_bold = w
-    #             if "In this sentence" in w["curr_elem"]:
-    #                 bold_at_start_and_end = w
-    #             if "with a duplicated text" in w["curr_elem"]:
-    #                 bold_in_the_middle = w
-    #     assert all_bold
-    #     assert bold_at_start_and_end == None
-    #     assert bold_in_the_middle == None
+    def test_check_h_bold_instead_heading(self):
+        all_bold = None
+        bold_at_start_and_end = None
+        bold_in_the_middle = None
+        for w in self.warnings[PARAGRAPHS]:
+            if w["problem"] == MSG_PROBLEMS[PARAGRAPHS]["check_p_bold_instead_heading"]:
+                if "No heading style - *that’s* bold" in w["curr_elem"]:
+                    all_bold = w
+                if "In this sentence" in w["curr_elem"]:
+                    bold_at_start_and_end = w
+                if "with a duplicated text" in w["curr_elem"]:
+                    bold_in_the_middle = w
+        assert all_bold
+        assert bold_at_start_and_end == None
+        assert bold_in_the_middle == None
 
     # captions ########################################################################
 
