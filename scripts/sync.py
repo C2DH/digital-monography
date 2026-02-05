@@ -25,6 +25,9 @@ def listen_for_updates(
     last_modified = {}
     is_update = False
     ### 2026-02-05: Quick and dirty assets upload to avoid copying each asset file separately
+    # I made a microbenchmark on J.S.K. book with 1 dzi img (dzi: 5794 files, 33.0 MB on disk)
+    # prepare_and_build_jb2.py process_time (copytree): 20.445633422 (incl. 9.773150841000001 on copytree)
+    # prepare_and_build_jb2.py process_time (preparer): 26.403285738
     src_assdir = book_path / "assets"
     dst_assdir = pathlib.Path("/tmp") / "efs" / "_INPUT" / book_path.name / "assets"
     shutil.copytree(
