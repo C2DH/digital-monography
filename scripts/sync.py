@@ -1,6 +1,7 @@
 import boto3
-import pathlib
 import os
+import pathlib
+import shutil
 import time
 import typing as t
 
@@ -23,14 +24,26 @@ def listen_for_updates(
 ) -> None:
     last_modified = {}
     is_update = False
+    ### 2026-02-05: Quick and dirty assets upload to avoid copying each asset file separately
+    src_assdir = book_path / "assets"
+    dst_assdir = pathlib.Path("/tmp") / "efs" / "_INPUT" / book_path.name / "assets"
+    shutil.copytree(
+        src_assdir,
+        dst_assdir,
+        dirs_exist_ok=True,
+    )
+    #############################################################################
     while True:
         time_status = {}
         for fp in book_path.glob("**/*"):
+            parts = fp.parts
             if not fp.exists() or fp.is_dir():
                 is_update = False
                 continue
             if fp.name.startswith("~$"):
                 is_update = False
+                continue
+            if "assets" in parts:  # 2026-02-05: Skip assets dir as assets are copytreed
                 continue
             if fp not in last_modified:
                 last_modified[fp] = 0
