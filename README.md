@@ -42,7 +42,6 @@ The project consists of the following main software components.
 | [mammoth](https://github.com/kaminski-pawel/python-mammoth) | BL     | Python library for transforming `.docx` into markdown.                                                                                                                  |
 | [CI/CD pipeline](./.gitlab-ci.yml)                          | DevOps | Set of scripts for applying changes to the infrastructure.                                                                                                              |
 | [dashboard](staticws/dashboard/)                            | UI     | Dashboard with tools for authors and editors to help their work on the manuscript.                                                                                      |
-| [reader](staticws/reader/)                                  | UI     | Copy of degruyter.com website to show how the digital books can be integrated with de Gruyter's platform.                                                               |
 
 ![architecture_abstract](./arch_abstract.svg)
 

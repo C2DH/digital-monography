@@ -2,6 +2,8 @@
 
 The dashboard for authors and editors to help their work on manuscripts.
 
+This solution is meant to be hosted as a static website without a need for a separate server. An alternative solution we are experimenting with can be found in `src/dashboard`.
+
 ## Tech stack
 
 Tech stack for the frontend:
