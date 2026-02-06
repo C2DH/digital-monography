@@ -2,6 +2,15 @@
 
 Platform for scholars of digital humanities to publish their digital work.
 
+The platform facilitates preparation of books. It aids in generating both traditional outcome of scholarly work (i.e. research presented in printed monographs) but also digital components unsupported by the EPUB format: data sets, multimedia contents (for example videos and photos), etc. Key elements of the publishing platform will be long-term sustainability and accessibility of the digitally published monographs. Digital books prepared with our platform are expected to stand out through integration of rich media elements, including embedded audio and visual materials. In addition, one of the core innovations of the project lies in making available tools for preparing manuscripts for publishing, including facilitating collaboration and editorial processes, automatic verification, archival, etc.
+
+## Value proposition
+
+What this project offers which other solutions do not provide?
+* Jupyter Book does not handle manuscripts written in `.docx` files (MS Word, LibreOffice).
+* EPUB and other e-book formats do not support videos, interactive maps, interactive visualisations, etc.
+* Paper books can be extended with digital specific features - multimedia, code execution, etc.
+
 ## Documentation
 
 [Notes and materials related with the project](https://uniluxembourg-my.sharepoint.com/:f:/r/personal/pawel_kaminski_uni_lu/Documents/Digital%20Monography%20Documents?csf=1&web=1&e=YYBKgk) can be found on the University's OneDrive shared directory. Access to the directory is given upon request. Some of other important project documents include:
@@ -22,13 +31,14 @@ The development cycle is based on release cycles 4 months each. The direction of
 
 ## Design principles
 
+* Flexibility is required as there is no upfront specification. In practice, users of this software (book authors, editors, readers) share their feedback during development process. Especially, no final decision has been made with regard to mode of running the software (see [section about possible options](#flexibility)).
 * Sustainability is the highest priority of this project. Books should be hosted as static web pages without a need for dedicated servers. When possible, websites related to the project, like the reader or the dashboard, should not require any application logic on the server-side after web pages are built.
-* The functionality of the code should be guessable just by looking at `src/<microservice>/main.py` module. The details of implementing this functionality can be hidden in other modules in this microservice.
-* Code shared between microservices should be writen and stored in `src/_common/<filename>.py` files and copied to the microservices that use it with a command specified in the `Makefile` file.
-* The state of the pipeline (state resulting from processing a manuscript) should be shared using the "metadata" object. For example, if you want to pass some information from the Preparer microservice to the Builder Microservice, you should store it in appropriate record in `metadata.DocumentMetadata` in Preparer and load from this object in Builder. Metadata is saved in multiple places for conveniance, e.g. in the database, as json files in the file storage shared between microservices and as json in `<scripts>` tag in html.
-* Rely on features of MS Word for `.docx` input, JupyterLab/Notebook for `.ipynb` input and on JupyterBook/Sphinx-doc for output as much as possible.
+* The functionality of the code should be guessable just by looking at handler function in a `src/<service>/main.py` module. The details of implementing this functionality can be hidden in other modules in this service.
+* Code shared between services should be writen and stored in `src/_common/<filename>.py` files. All services copy the `src/_common` directory and use it independently from each other.
+* The state of the pipeline (state resulting from processing a manuscript) should be shared using the `DocumentState`" or `BookState` objects. For example, if you want to pass some information from the Preparer service to the Builder service, you should store it in appropriate record in `DocumentState` in Preparer and load from this object in Builder. State is saved in the database, as json files in the file storage shared between services and as json in `<scripts>` tag in html.
+* Rely on features of MS Word for `.docx` input, JupyterLab/Notebook for `.ipynb` input and on JupyterBook/MyST for output as much as possible.
 * Target MyST specification rather that bespoke solutions.
-* The deployment is steered by the `git push` command ran in the develop or master branches. Note however that the code of the microservices is pulled by the infrastructure from the docker image repository, so the developer has to point to the proper version number in `.versions.json` and push an image tagged with this version before the CI/CD pipeline tries to pull the image from the repo.
+* The deployment is steered by the `git push` command ran in the develop or master branches. Note however that the code of the services is pulled by the infrastructure from the docker image repository, so the developer has to point to the proper version number in `.versions.json` and push an image tagged with this version before the CI/CD pipeline tries to pull the image from the repo.
 
 ## Architecture design
 
@@ -38,24 +48,48 @@ The project consists of the following main software components.
 
 | Name                                                        | Layer  | Description                                                                                                                                                             |
 | ----------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [pipeline](src/)                                            | BL     | Microservices that process input manuscript, verify it, and build output for other apps to use. The pipeline includes multiple micro services that are described below. |
+| [pipeline](src/)                                            | BL     | services that process input manuscript, verify it, and build output for other apps to use. The pipeline includes multiple services that are described below. |
 | [mammoth](https://github.com/kaminski-pawel/python-mammoth) | BL     | Python library for transforming `.docx` into markdown.                                                                                                                  |
 | [CI/CD pipeline](./.gitlab-ci.yml)                          | DevOps | Set of scripts for applying changes to the infrastructure.                                                                                                              |
 | [dashboard](staticws/dashboard/)                            | UI     | Dashboard with tools for authors and editors to help their work on the manuscript.                                                                                      |
 
 ![architecture_abstract](./arch_abstract.svg)
 
-_Image repo_ is the docker image repository from where the CI/CD pipeline pulls a specific microservice code.
+_Image repo_ is the docker image repository from where the CI/CD pipeline pulls a specific service code.
 
-The main workflow for generating digital monographies can be simplified as an interaction between the dropbox, entrypoint, preparer, verifier (on document and on book level) and builder microservices.
+The main workflow for generating digital monographies can be simplified as an interaction between the dropbox, entrypoint, preparer, verifier (on document and on book level) and builder services.
 
 ![simplified_diagram_digital_book](./cartoon-book-digital.png)
 
-The workflow for generating docx for typesetting is not yet implemented. The most work here is made by the wordprocessor triggered by the endpoint microservice.
+The workflow for generating docx for typesetting is not yet implemented. The most work here is made by the wordprocessor triggered by the endpoint service.
 
 ![simplified_diagram_paper_book](./cartoon-book-paper.png)
 
+### <a name="flexibility"></a>Flexibility among design options
+
+#### Microservices vs running on a single virtual machine
+
+In the beginning of the project there was a discussion about choosing the mode of software execution, i.e. whether to run it on a series of microservices and on a single virtual machine. Both choices have their pros and cons.
+
+For now, we were developing following the microservice* approach, but in a way that will allow me to switch to a server-based solution (or a hybrid solution) if needed. To make development (and potential switch to a single VM) easier, we opt not to implement the "microservice architecture" in the strict sense. For example, there is some common code copied to all services (see `src/_common`) and there is a central database shared between services. In general, services are isolated independent functions that can run in AWS Lambda or other "function-as-a-service" solution.
+
+When considering migration to a server-based solution, please review running the services in separate threads.
+
+#### How Jupyter Books are meant to be served
+
+Jupyter Book v2 can [generate digital books as "static" websites](https://mystmd.org/guide/deployment), but they still need to be served. For example, it can be served with httpd or nginx. It is still undecided how to automate the process of building and deploying books in a scalable and reliable fashion. For example, we could use Jupyter Book v2 [serve functionality](https://github.com/jupyter-book/mystmd/blob/main/packages/myst-cli/src/cli/start.ts) to benefit from cache and fast build-time.
+
+#### Dashboard
+
+We consider two alternative solutions for handling the dashboard for authors and editors:
+* [React app separate from the document processing pipeline](staticws/dashboard/)
+* [Flask app that serves data with HTML templates + htmx](src/dashboard/main.py)
+
+Aim of the dashboard is to aid authors and editors in book preparation.
+
 ### Details of pipeline architecture
+
+The pipeline is the core of the project. It processes books, provides information about them to authors and editors, generates a version for typesetting for printing, as well as triggers Jupyter Book to build a static website to read a book from.
 
 ![aws_architecture_diagram](./arch_details.svg)
 
@@ -63,40 +97,41 @@ For the full architecture see [the instructions on generating an infrastrucutre 
 
 The architecture attempts to follow the pattern of `... -> s3 upload -> Lambda invoke -> s3 upload -> ...`. Sometimes an upload to s3 can and should invoke multiple Lambda functions. It can be also advantageous to have an SQS queue as a part of the chain. This allows for a modular design, which brings some benefits with it.
 
-The platform consists of the following microservices (Lambda functions):
+The platform consists of the following services (Lambda functions):
 | Name              | In VPC? | Description                                                                  |
 | ----------------- | ------- | ---------------------------------------------------------------------------- |
 | **entrypoint**    | false   | Exposes REST endpoints, incl. OAuth and webhooks to integrate with Dropbox.  |
+| **dashboard**     | false   | Experimentation with serving dashboard as a html templates.      |
 | **dropbox**       | false   | Calls Dropbox API to retrieve files from Dropbox and writes them to s3.      |
 | **preparer**      | true    | Does all the transformations of the files in the author package.             |
 | **verifier**      | true    | Checks the single uploaded document against the verification rules.          |
 | **github**        | false   | Pushes the processed documents to GitHub remote repository.                  |
 | **builder**       | true    | Runs Jupyter Book to build a book out of processed documents.                |
 | **gpu**           | false   | Generates pre-signed url from private S3 bucket.                             |
-| **orm**           | false   | Middleware between microservices and the shared database.                    |
+| **orm**           | false   | Middleware between services and the shared database.                    |
 | **wordprocessor** | false   | Transforms docx files for the paper version.                                 |
 
-Deployment of each microservice should be done in order:
+Deployment of each service should be done in order:
 
 | Order | Stage name  | Command | Description |
 | ----- | ----------- | ------- | ----------- |
-| 1     | **version** | `vim .versions.json`        | In `.versions.json` appropriately increment _latest_ and _stable_ version numbers of a microservice you've made changes to in the `src/<microservice>` dir |
+| 1     | **version** | `vim .versions.json`        | In `.versions.json` appropriately increment _latest_ and _stable_ version numbers of a service you've made changes to in the `src/<service>` dir |
 | 2     | **apply**   | `git push`                  | As you push your changes to GitLab, the CI/CD pipeline is run, including deployment of changes to the infrastructure; if the image version has changed in the `.versions.json`, the Docker container will be updated on the cloud |
-| 3     | **build**   | `make <microservice>/build` | Builds Docker image |
-| 4     | **tag**     | `make <microservice>/tag`   | Tags the image with a tag specified in `.versions.json` |
-| 5     | **push**    | `make <microservice>/push`  | Pushes the image to docker registry (remember to login to the registry with `make login`) |
+| 3     | **build**   | `make <service>/build` | Builds Docker image |
+| 4     | **tag**     | `make <service>/tag`   | Tags the image with a tag specified in `.versions.json` |
+| 5     | **push**    | `make <service>/push`  | Pushes the image to docker registry (remember to login to the registry with `make login`) |
 
-`make <microservice>/push` is a useful alias for builing, tagging and pushing a particular microservice. Note that there is a **race condition** - docker container has to be built, tagged and pushed before the apply stage pulls the image from registry. If CI/CD pipeline job fails with error `Source image <registry>/<image>:<tag> does not exist. Provide a valid source image.` re-run that job. Make sure that you had built, tagged and pushed the image in question.
+`make <service>/push` is a useful alias for builing, tagging and pushing a particular service. Note that there is a **race condition** - docker container has to be built, tagged and pushed before the apply stage pulls the image from registry. If CI/CD pipeline job fails with error `Source image <registry>/<image>:<tag> does not exist. Provide a valid source image.` re-run that job. Make sure that you had built, tagged and pushed the image in question.
 
-### Details of each microservice architecture
+### Details of each service architecture
 
-Every microservice consists of:
+Every service consists of:
 * Dockerfile
 * requirements.txt
 * main.py
 and optionally other files with implementation details.
 
-`lambda_handler()` function in each `src/<microservice>/main.py` file is an entrypoint to this microservice. Data about the event that triggered this microservice and context in which this microservice is being run are passed as arguments to `lambda_handler(event, context)`.
+`lambda_handler()` function in each `src/<service>/main.py` file is an entrypoint to this service. Data about the event that triggered this service and context in which this service is being run are passed as arguments to `lambda_handler(event, context)`.
 
 The `lambda_handler()` should call abstract wrapper subprocedures, which call concrete subprocedures with the actual logic.
 
@@ -133,20 +168,20 @@ def _wrapper_subprocedure(*args, **kwargs) -> t.Any:
 
 Concrete subprocedures hide implementation details. Those subprocedures should be located in separate files and not in the main file.
 
-Code common to more than one microservice should be written in the `src/_common/<module_name.py>` and copied from there to the microservices using `make copy/<module_name>` command.
+Code common to more than one service should be written in the `src/_common/<module_name.py>` and copied from there to the services using `make copy/<module_name>` command.
 
 #### Imports
 
-In this project, we don't strictly implement the microservice architecture. In particular, there is code shared between microservices found in `src/_common` directory and some microservice are connected to a single database.
+In this project, we don't strictly implement the service architecture. In particular, there is code shared between services found in `src/_common` directory and some service are connected to a single database.
 
-When arranging imports from modules within a microservice and from code shared between microservices, we also have to consider all the ways that a microservice code might be invoked:
+When arranging imports from modules within a service and from code shared between services, we also have to consider all the ways that a service code might be invoked:
 * CMD - the default command to run when a container is started, as defined in a Dockerfile.
 * tests,
 * scripts (see `tests` and `scripts` directories respecitively).
 
 To accomodate all those different modes, please follow this pattern.
 
-##### In `src/<microservice>/Dockerfile`
+##### In `src/<service>/Dockerfile`
 ```Dockerfile
 FROM public.ecr.aws/lambda/python:3.12
 
@@ -165,7 +200,7 @@ RUN --mount=from=common,target=common \
 CMD [ "main.lambda_handler" ]
 ```
 
-##### In `src/<microservice>/main.py`
+##### In `src/<service>/main.py`
 ```py
 # External dependencies
 import os
@@ -182,7 +217,7 @@ from mymodule import SOME_VAR
 
 ##### Please note
 * When you want to import a few modules without models or migration data, it is recommended to copy just the files you need.
-* Avoid repeating file names (other than `main.py`) across microservices. Otherwise a module name might be overwritten in `sys.modules` when importing code from different microservices in tests or scripts, causing a wrong module to be imported (e.g. a mixup between `src/preparer/utils.py` and `src/builder/utils.py`).
+* Avoid repeating file names (other than `main.py`) across services. Otherwise a module name might be overwritten in `sys.modules` when importing code from different services in tests or scripts, causing a wrong module to be imported (e.g. a mixup between `src/preparer/utils.py` and `src/builder/utils.py`).
 
 ### Multiple environments
 
@@ -192,17 +227,17 @@ The project has two cloud environments: main and develop. Each time you run `git
 
 #### Infrastructure
 
-Each resource deployed should follow the same naming convention: `<project>-<env>-<awsservice>-<microservice>-<details>`
+Each resource deployed should follow the same naming convention: `<project>-<env>-<awsservice>-<service>-<details>`
 
 * `project` should be always "dgtmon". Helpful e.g. when you look for a IAM Policy related to the project - just start typing the name of the project and you'll filter only relavant items.
 * `env` is generally the name of the environment ("main" or "develop"). For shared resources (e.g. ECR images) and for legacy resources it can be equal to "dev".
 * `awsservice` is the abbreviation of a infrastructure resource. It should anwser the question: "what is it".
-* `microservice` is the related service, like "builder" or "preparer". `microservice` can also be "general" or "gen" if the resource is for general use. You can also leave it empty.
+* `service` is the related service, like "builder" or "preparer". `service` can also be "general" or "gen" if the resource is for general use. You can also leave it empty.
 
 For example, the full name of a resource could be
 `dgtmon-main-s3-verifier-logs-warning`.
 
-It is highly recommended to define `<awsservice>-<microservice>-<details>` as Terraform variable in `infra/variables.tf` file. The value has to be then filled in the `secrets/encrypted.tfvars.json` using the "sops" tool.
+It is highly recommended to define `<awsservice>-<service>-<details>` as Terraform variable in `infra/variables.tf` file. The value has to be then filled in the `secrets/encrypted.tfvars.json` using the "sops" tool.
 
 Then, when defining resources in the `.tf` files use variables:
 ```tf
@@ -440,8 +475,8 @@ To create an app, set its options and/or see its details, navigate to Dropbox [d
 
 ## Adding new Lambda function
 
-When adding a new Lambda function (a new microservice), please follow these steps:
-1. Add the microservice code to the `src/ ` directory.
+When adding a new Lambda function (a new service), please follow these steps:
+1. Add the service code to the `src/ ` directory.
 1. Add the test code to the `tests/ ` directory.
 1. Copy and modify one of the `.tf` files to define a Lambda function. Usually you can reuse all of the IaC code changing only the `<old-function-name>` to `<new-function-name>`.
 1. Update the `Makefile`.
@@ -455,9 +490,9 @@ When adding a new Lambda function (a new microservice), please follow these step
 
 ### Type cheching
 
-To run type check use `make typecheck` function. You can also run `mypy src/<microservice>/` to run the type checker directly on a given microservice.
+To run type check use `make typecheck` function. You can also run `mypy src/<service>/` to run the type checker directly on a given service.
 
-At the beginning of the project every microservice was type checked and linted. However, the beginning of the project was also packed with tight deadlines and so type checking and linting ceased to be a priority. Below is the table with the type check implementation status. Note that a support for type check could be easily implemented for microservices marked with a star "*".
+At the beginning of the project every service was type checked and linted. However, the beginning of the project was also packed with tight deadlines and so type checking and linting ceased to be a priority. Below is the table with the type check implementation status. Note that a support for type check could be easily implemented for services marked with a star "*".
 
 | Name          | Implemented? | 
 | ------------- | ------------ | 
@@ -473,7 +508,7 @@ At the beginning of the project every microservice was type checked and linted. 
 
 ### Linting
 
-We use flake8 for linting. Run `flake8 src/<microservice>/` to run the linting script. 
+We use flake8 for linting. Run `flake8 src/<service>/` to run the linting script. 
 
 ## Further developments
 
@@ -498,10 +533,6 @@ I see this as a controversial choice and I encourage to keep looking for a bette
 
 We use alembic as the database migration system.
 
-##### TODOs
-
-Configure logging handlers in `db/alembic.init`.
-
 ##### Useful commands
 
 ```sh
@@ -519,7 +550,7 @@ alembic history --verbose
 
 Jupyter Book is a series of open-source workflows and code that anyone can use to build a “living,” digital textbook. It is the software that we use for building a static website out of manuscripts.
 
-The project was made with Jupyter Book v1 (further refered to as "JB1" or "v1"), which adds Jupyter Notebook integration to the [Sphinx documentation generator](https://github.com/sphinx-doc/sphinx). With time, the maintainers devoted more and more time to Jupyter Book v2 (further "JB2" or "v2"). JB2 is a complete re-write of the project, so migration from JB1 to JB2 is a non-trivial task. Please see below few of my thought about migration to v2.
+The project was made with Jupyter Book v1 (further refered to as "JB1" or "v1"), which adds Jupyter Notebook integration to the [Sphinx documentation generator](https://github.com/sphinx-doc/sphinx). With time, the maintainers devoted more and more time to Jupyter Book v2 (further "JB2" or "v2"). JB2 is a complete re-write of the project, so migration from JB1 to JB2 is a non-trivial task.
 
 #### Clarification on the naming
 
@@ -541,15 +572,15 @@ Also, it is imporant to understand the difference between Jupyter Notebook and J
 
 #### Background
 
-JB2 and mystmd are being developed mainly by contributors from two companies: [Curvenote](https://curvenote.com/) and [2i2c](https://2i2c.org/). To quote the [documentation](https://web.archive.org/web/20250219074454/https://mystmd.org/guide/deployment): “MyST was designed to be deployed as an application” with MyST server underneath and not as a static site with microservices underneath (which is how our book project is made). “At present, only Curvenote provides out-of-the-box support for deployment of MyST websites”. As a result, I found it difficult to use JB2 to build static websites that would work on AWS S3.
+JB2 and mystmd are being developed mainly by contributors from two companies: [Curvenote](https://curvenote.com/) and [2i2c](https://2i2c.org/). To quote the [documentation](https://web.archive.org/web/20250219074454/https://mystmd.org/guide/deployment): “MyST was designed to be deployed as an application” with MyST server underneath and not as a static site with services underneath (which is how our book project is made). “At present, only Curvenote provides out-of-the-box support for deployment of MyST websites”. As a result, I found it difficult to use JB2 to build static websites that would work on AWS S3.
 
 #### Problems with migration to JB2
 
 ##### Python vs TypeScript
 
-First, it is important to note the JB2 is just a thin wrapper around myst.md, which is written in TypeScript. I see 2 ways to use both Python and TypeScript in the `builder` microservice:
+First, it is important to note the JB2 is just a thin wrapper around myst.md, which is written in TypeScript. I see 2 ways to use both Python and TypeScript in the `builder` service:
 * use Python+TS Docker container,
-* split the `builder` into multiple microservices, e.g. `pre-builder` (Python), `builder` (TS) and `post-builder` (Python).
+* split the `builder` into multiple services, e.g. `pre-builder` (Python), `builder` (TS) and `post-builder` (Python).
 
 ##### Static websites with JB2
 
@@ -634,8 +665,3 @@ In GitLab, update "CI/CD Settings" > "Variables" > "PGP_KEY" with the new privat
 ### Accessing project email
 
 Please consult the internal documentation in the [c2dh backstage](https://c2dh.atlassian.net/wiki/spaces/DDRI/pages/162923897/Related+links) for more details about accessing and managing the emails connected with the project.
-
-## TODO
-
-[ ] make builder (verifier_book) to invoke builder_v1
-[ ] make builder (verifier_book) to invoke builder_v2

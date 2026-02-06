@@ -12,7 +12,7 @@ Tech stack for the frontend:
 - Next.js - as a build tool, _DO NOT_ use it for anything else than build or routing
 - S3 - for hosting
 
-API requests go to the "endpoint" microservice via the API Gateway. The endpoint makes appropriate calls to S3 buckets and Dynamodb noSQL database to fetch the data to pass it to the frontend.
+API requests go to the "endpoint" service via the API Gateway. The endpoint makes appropriate calls to S3 buckets and Dynamodb noSQL database to fetch the data to pass it to the frontend.
 
 ## Updating
 
