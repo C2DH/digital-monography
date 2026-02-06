@@ -5,7 +5,7 @@ from src._common.constants import TEMP_FOOTNOTES_TABLE
 from src._common.keys import KeyPath
 from src._common.metadata import DocumentMetadata
 from src._common.state import DocumentState
-from src.builder.main import RefsAndTargetsVerifier
+from src.builder.main import RefsAndTargetsVerifier  # TODO: fix
 from src.preparer.main import _convert_to_html
 from src.preparer.ref_footnotes import (
     extract_footnotes,

@@ -3,7 +3,6 @@
 -r src/preparer/requirements.txt
 -r src/verifier/requirements.txt
 -r src/github/requirements.txt
--r src/builder/requirements.txt
 -r src/builderv3/requirements.txt
 -r src/gpu/requirements.txt
 -r src/orm/requirements.txt
@@ -26,7 +25,3 @@ pillow==11.3.0
 mypy==1.15.*
 types-PyYAML==6.0.*
 types-beautifulsoup4==4.12.*
-
-# py2ts: Pydantic models to TS interfaces 
-# datamodel-code-generator==0.31.*
-# pydantic2-to-typescript==0.0.1

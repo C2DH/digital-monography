@@ -30,16 +30,6 @@ prep/book:
 		IR_APKG_MD_BUCKET_NAME=_s3_md \
 		METADATA_ASSETS_BUCKET_NAME=_s3_assets_state \
 		VERIFIER_MSGS=_s3_warnings \
-		python3.12 scripts/prepare_and_build.py book_path="tests/_fixtures/a_book/"
-
-prep/book2:
-	mkdir -p /tmp/efs/
-	make db/migrate
-	DGTMON_NO_WAIT=1 \
-		IR_APKG_HTML_BUCKET_NAME=_s3_html \
-		IR_APKG_MD_BUCKET_NAME=_s3_md \
-		METADATA_ASSETS_BUCKET_NAME=_s3_assets_state \
-		VERIFIER_MSGS=_s3_warnings \
 		python3.12 scripts/prepare_and_build_jb2.py book_path="tests/_fixtures/a_book/"
 	export BUILD_DIR=/tmp/efs/a_book/_build/html
 	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
@@ -165,10 +155,6 @@ dev/start:
 
 dev/test:
 	docker compose run main make test
-
-dev/draft:
-	# docker compose run main python3.12 scripts/prepare_and_build.py book_path=data/input/$(SLUG)
-	docker compose run make test/run
 
 entrypoint/build:
 	docker build -t dgtmon-dev-entrypoint src/entrypoint --build-context common=src/_common
