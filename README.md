@@ -27,7 +27,7 @@ What this project offers which other solutions do not provide?
 * [notes from workshop of 7th December 2023](https://docs.google.com/document/d/1DniLbpg7pNBygPI1s-L6i6DjEW4tjvXVBhYtyFm1wyg/edit?tab=t.0);
 * [author's guidelines for drafting manuscripts](https://cpy-dgtmon-dev-staticws-wip.s3.eu-west-1.amazonaws.com/read/guidelines-for-drafting-manuscripts/index.html).
 
-The development cycle is based on release cycles 4 months each. The direction of development is coordinated with project's partners during monthly meetings.
+The direction of development is coordinated with project's partners during monthly meetings.
 
 ## Technical documentation
 
