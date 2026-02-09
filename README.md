@@ -48,24 +48,29 @@ The project consists of the following main software components.
 
 | Name                                                        | Layer  | Description                                                                                                                                                             |
 | ----------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [pipeline](src/)                                            | BL     | services that process input manuscript, verify it, and build output for other apps to use. The pipeline includes multiple services that are described below. |
-| [mammoth](https://github.com/kaminski-pawel/python-mammoth) | BL     | Python library for transforming `.docx` into markdown.                                                                                                                  |
-| [CI/CD pipeline](./.gitlab-ci.yml)                          | DevOps | Set of scripts for applying changes to the infrastructure.                                                                                                              |
+| [pipeline](src/)                                            | Business Logic     | Services that process input manuscript, verify it, and build output for other apps to use. The pipeline includes multiple services that are described below. |
+| [CI pipeline](./.gitlab-ci.yml)                          | DevOps | Set of scripts for applying changes to the infrastructure.                                                                                                              |
 | [dashboard](staticws/dashboard/)                            | UI     | Dashboard with tools for authors and editors to help their work on the manuscript.                                                                                      |
 
 ![architecture_abstract](./arch_abstract.svg)
 
-_Image repo_ is the docker image repository from where the CI/CD pipeline pulls a specific service code.
+Image repo is the docker image repository from where the CI pipeline pulls a specific service code.
 
-The main workflow for generating digital monographies can be simplified as an interaction between the dropbox, entrypoint, preparer, verifier (on document and on book level) and builder services.
+The main workflow for generating digital monographies can be simplified as an interaction between the dropbox, entrypoint, preparer, verifier and builder services.
+
+**Digital book workflow**
 
 ![simplified_diagram_digital_book](./cartoon-book-digital.png)
 
-The workflow for generating docx for typesetting is not yet implemented. The most work here is made by the wordprocessor triggered by the endpoint service.
+**Paper book workflow**
 
 ![simplified_diagram_paper_book](./cartoon-book-paper.png)
 
 ### <a name="flexibility"></a>Flexibility among design options
+
+#### Dropbox dependency
+
+The document processing is triggered by a CLI call or an event coming from document collaboration software. The document collaboration software should enable authors and editors to freely work on author's package, including making some changes to chapters written in `.docx` and `.ipynb`, as well as uploading and removing files. Instead of polling, the document collaboration software should communicate events via webhooks. Temporarily, Dropbox was chosen as the document collaboration software, but we plan to change it to a self hosted solution that supports webhooks.
 
 #### Microservices vs running on a single virtual machine
 
@@ -91,6 +96,16 @@ Aim of the dashboard is to aid authors and editors in book preparation.
 
 The pipeline is the core of the project. It processes books, provides information about them to authors and editors, generates a version for typesetting for printing, as well as triggers Jupyter Book to build a static website to read a book from.
 
+**Single virtual machine**
+
+We are considering moving current microservice patterns to a single VM.
+
+![single_vm_architecture_diagram](./arch_single_vm.svg)
+
+Currently however, the software follows loosely-understood microservice pattern.
+
+**Microservices workflow**
+
 ![aws_architecture_diagram](./arch_details.svg)
 
 For the full architecture see [the instructions on generating an infrastrucutre visualisation](#generating-infrastrucutre-visualisation) and open the produced `graphviz.html` file.
@@ -102,11 +117,11 @@ The platform consists of the following services (Lambda functions):
 | ----------------- | ------- | ---------------------------------------------------------------------------- |
 | **entrypoint**    | false   | Exposes REST endpoints, incl. OAuth and webhooks to integrate with Dropbox.  |
 | **dashboard**     | false   | Experimentation with serving dashboard as a html templates.      |
-| **dropbox**       | false   | Calls Dropbox API to retrieve files from Dropbox and writes them to s3.      |
-| **preparer**      | true    | Does all the transformations of the files in the author package.             |
+| **dropbox**       | false   | Calls Dropbox API to retrieve files from Dropbox and writes them to s3. Dropbox is going to be replaced with other document collaboration software with webhooks.      |
+| **preparer**      | true    | Prepares a single document. Visibility limited to a current file. |
 | **verifier**      | true    | Checks the single uploaded document against the verification rules.          |
 | **github**        | false   | Pushes the processed documents to GitHub remote repository.                  |
-| **builder**       | true    | Runs Jupyter Book to build a book out of processed documents.                |
+| **builder**       | true    | Does final transformations with visibility covering ll of author's package. Afterwards, triggers Jupyter Book to build a book out of processed documents.                |
 | **gpu**           | false   | Generates pre-signed url from private S3 bucket.                             |
 | **orm**           | false   | Middleware between services and the shared database.                    |
 | **wordprocessor** | false   | Transforms docx files for the paper version.                                 |
@@ -115,7 +130,7 @@ Deployment of each service should be done in order:
 
 | Order | Stage name  | Command | Description |
 | ----- | ----------- | ------- | ----------- |
-| 1     | **version** | `vim .versions.json`        | In `.versions.json` appropriately increment _latest_ and _stable_ version numbers of a service you've made changes to in the `src/<service>` dir |
+| 1     | **version** | `vim .versions.json`        | In `.versions.json` appropriately increment _latest_ and/or _stable_ version numbers of a service you've made changes to in the `src/<service>` dir |
 | 2     | **apply**   | `git push`                  | As you push your changes to GitLab, the CI/CD pipeline is run, including deployment of changes to the infrastructure; if the image version has changed in the `.versions.json`, the Docker container will be updated on the cloud |
 | 3     | **build**   | `make <service>/build` | Builds Docker image |
 | 4     | **tag**     | `make <service>/tag`   | Tags the image with a tag specified in `.versions.json` |
@@ -182,6 +197,7 @@ When arranging imports from modules within a service and from code shared betwee
 To accomodate all those different modes, please follow this pattern.
 
 ##### In `src/<service>/Dockerfile`
+
 ```Dockerfile
 FROM public.ecr.aws/lambda/python:3.12
 
@@ -201,6 +217,7 @@ CMD [ "main.lambda_handler" ]
 ```
 
 ##### In `src/<service>/main.py`
+
 ```py
 # External dependencies
 import os
@@ -497,6 +514,7 @@ At the beginning of the project every service was type checked and linted. Howev
 | Name          | Implemented? | 
 | ------------- | ------------ | 
 | entrypoint    | true         | 
+| dahsboard     | false*       | 
 | dropbox       | false*       | 
 | preparer      | false        | 
 | verifier      | false        | 
