@@ -5,18 +5,10 @@ import pathlib
 import typing as t
 
 
-try:
-    from constants import (
-        CLS_METADATA_TABLE_JSONDATA,
-    )
-    from verif_warnings import MessagesJson, VerifierMessages
-    from metadata import DocumentMetadata
-except (ImportError, ModuleNotFoundError):
-    from .constants import (
-        CLS_METADATA_TABLE_JSONDATA,
-    )
-    from .verif_warnings import MessagesJson, VerifierMessages
-    from .metadata import DocumentMetadata
+from src._common.constants import CLS_METADATA_TABLE_JSONDATA
+from src._common.metadata import DocumentMetadata
+from verif_warnings import MessagesJson, VerifierMessages
+
 
 CAPTION_TYPES = ["Figure", "Table", "Graph"]
 IS_HEADING_TITLE_CASED_REQUIRED = True
@@ -83,6 +75,7 @@ class HtmlVerifier:
                     child.name == "script"
                     and CLS_METADATA_TABLE_JSONDATA in child.attrs.get("class", [])
                 ):
+                    # TODO: read document state form script tag
                     self._metadata.from_json(json.loads(child.text))
             self._mark_html_elements_recursively(child, lvl + 1)
 

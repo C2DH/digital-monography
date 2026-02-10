@@ -221,6 +221,14 @@ data "aws_iam_policy_document" "builder" {
       "sqs:GetQueueUrl"
     ]
   }
+  # statement {
+  #   sid       = "AllowInvokingAnotherLambda"
+  #   effect    = "Allow"
+  #   resources = [aws_lambda_function.builderv2_func.arn]
+  #   actions = [
+  #     "lambda:InvokeFunction",
+  #   ]
+  # }
   statement {
     sid    = "AllowReadAndWriteToDynamoDB"
     effect = "Allow"

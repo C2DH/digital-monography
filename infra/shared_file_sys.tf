@@ -48,21 +48,19 @@ resource "aws_subnet" "efs_public" {
 }
 
 resource "aws_efs_mount_target" "efs_mount" {
-  # count           = length(slice(local.az_names, 0, 2))
   file_system_id  = aws_efs_file_system.shared_file_sys.id
   subnet_id       = aws_subnet.efs_public.id
   security_groups = [aws_security_group.efs_access_sg.id]
-  # subnet_id       = aws_subnet.efs_public[count.index].id
-  # security_groups = ["${aws_security_group.efs_access_sg.id}"]
 }
 
 resource "aws_efs_file_system" "shared_file_sys" {
-  # creation_token   = "dgtmon_shared_file_system"
-  # creation_token   = "${var.project}-shared-${var.efs_creation_token}"
   creation_token   = "${var.project}-${var.env}-${var.efs_creation_token}"
   performance_mode = "generalPurpose"
   throughput_mode  = "bursting"
   encrypted        = true
+  lifecycle_policy {
+    transition_to_ia = "AFTER_365_DAYS"
+  }
 }
 
 resource "aws_efs_access_point" "efs_access_point" {

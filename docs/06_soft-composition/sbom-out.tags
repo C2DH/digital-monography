@@ -1,0 +1,1463 @@
+SPDXVersion: SPDX-2.3
+DataLicense: CC0-1.0
+SPDXID: SPDXRef-DOCUMENT
+DocumentName: Python-sbom-req.txt
+DocumentNamespace: http://spdx.org/spdxdocs/Python-sbom-req.txt-499ef314-db25-4850-b48e-f684c24cccfd
+LicenseListVersion: 3.27
+Creator: Tool: sbom4python-0.12.4
+Created: 2026-02-06T15:04:28Z
+CreatorComment: <text>SBOM Type: Source - This document has been automatically generated.</text>
+##### 
+
+PackageName: alembic
+SPDXID: SPDXRef-1-alembic
+PackageVersion: 1.16.5
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: SQLAlchemy
+PackageDownloadLocation: https://pypi.org/project/alembic/1.16.5/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://alembic.sqlalchemy.org
+PackageChecksum: SHA256: e845dfe090c5ffa7b92593ae6687c5cb1a101e91fa53868497dbd79847f9dbe3
+PackageLicenseDeclared: MIT
+PackageLicenseConcluded: MIT
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>A database migration tool for SQLAlchemy.</text>
+ReleaseDate: 2025-08-27T18:02:07Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/alembic@1.16.5
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:sqlalchemy:alembic:1.16.5:*:*:*:*:*:*:*
+##### 
+
+PackageName: annotated-types
+SPDXID: SPDXRef-2-annotated-types
+PackageVersion: 0.7.0
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: types
+PackageDownloadLocation: https://pypi.org/project/annotated-types/0.7.0/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/annotated-types/annotated-types
+PackageChecksum: SHA256: 1f02e8b43a8fbbc3f3e0d4f0f4bfc8131bcb4eebe8849b8e5c773f3a1c582a53
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: MIT
+PackageLicenseComments: <text>annotated-types declares MIT License which is not currently a valid SPDX License identifier or expression.</text>
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Reusable constraint types to use with typing.Annotated</text>
+ReleaseDate: 2024-05-20T21:33:24Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/annotated-types@0.7.0
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:types:annotated-types:0.7.0:*:*:*:*:*:*:*
+##### 
+
+PackageName: attrs
+SPDXID: SPDXRef-3-attrs
+PackageVersion: 25.4.0
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: NOASSERTION
+PackageDownloadLocation: https://pypi.org/project/attrs/25.4.0/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageChecksum: SHA256: adcf7e2a1fb3b36ac48d97835bb6d8ade15b8dcce26aba8bf1d14847b57a3373
+PackageLicenseDeclared: MIT
+PackageLicenseConcluded: MIT
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Classes Without Boilerplate</text>
+ReleaseDate: 2025-10-06T13:54:43Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/attrs@25.4.0
+##### 
+
+PackageName: aws_lambda_powertools
+SPDXID: SPDXRef-4-aws-lambda-powertools
+PackageVersion: 3.8.0
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Powertools for AWS
+PackageDownloadLocation: https://pypi.org/project/aws_lambda_powertools/3.8.0/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageChecksum: SHA256: 5c1c3c21695d4183ada1de56e5f3a67eb01ae79845b47bf9ad598dcd06b5d80d
+PackageLicenseDeclared: MIT
+PackageLicenseConcluded: MIT
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Powertools for AWS Lambda (Python) is a developer toolkit to implement Serverless best practices and increase developer velocity.</text>
+ReleaseDate: 2025-03-07T09:38:44Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/aws_lambda_powertools@3.8.0
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:powertools_for_aws:aws_lambda_powertools:3.8.0:*:*:*:*:*:*:*
+##### 
+
+PackageName: beautifulsoup4
+SPDXID: SPDXRef-5-beautifulsoup4
+PackageVersion: 4.12.3
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: NOASSERTION
+PackageDownloadLocation: https://pypi.org/project/beautifulsoup4/4.12.3/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://www.crummy.com/software/BeautifulSoup/bs4/
+PackageChecksum: SHA256: b80878c9f40111313e55da8ba20bdba06d8fa3969fc68304167741bbf9e082ed
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: MIT
+PackageLicenseComments: <text>beautifulsoup4 declares MIT License which is not currently a valid SPDX License identifier or expression.</text>
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Screen-scraping library</text>
+ReleaseDate: 2024-01-17T16:53:12Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/beautifulsoup4@4.12.3
+##### 
+
+PackageName: blinker
+SPDXID: SPDXRef-6-blinker
+PackageVersion: 1.9.0
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Pallets Ecosystem (contact@palletsprojects.com)
+PackageDownloadLocation: https://pypi.org/project/blinker/1.9.0/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageChecksum: SHA256: ba0efaa9080b619ff2f3459d1d500c57bddea4a6b424b60a91141db6fd2f08bc
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: MIT
+PackageLicenseComments: <text>blinker declares MIT License which is not currently a valid SPDX License identifier or expression.</text>
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Fast, simple object-to-object and broadcast signaling</text>
+ReleaseDate: 2024-11-08T17:25:46Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/blinker@1.9.0
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:pallets_ecosystem:blinker:1.9.0:*:*:*:*:*:*:*
+##### 
+
+PackageName: boto3
+SPDXID: SPDXRef-7-boto3
+PackageVersion: 1.34.162
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: the boto project
+PackageDownloadLocation: https://pypi.org/project/boto3/1.34.162/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/boto/boto3
+PackageChecksum: SHA256: d6f6096bdab35a0c0deff469563b87d184a28df7689790f7fe7be98502b7c590
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: Apache-2.0
+PackageLicenseComments: <text>boto3 declares Apache License 2.0 which is not currently a valid SPDX License identifier or expression.</text>
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>The AWS SDK for Python</text>
+ReleaseDate: 2024-08-15T19:25:35Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/boto3@1.34.162
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:the_boto_project:boto3:1.34.162:*:*:*:*:*:*:*
+##### 
+
+PackageName: boto3-stubs-lite
+SPDXID: SPDXRef-8-boto3-stubs-lite
+PackageVersion: 1.34.162
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: youtype (vlad.emelianov.nz@gmail.com)
+PackageDownloadLocation: https://pypi.org/project/boto3-stubs-lite/1.34.162/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/youtype/mypy_boto3_builder
+PackageChecksum: SHA256: 2e1f27a5d80bd50063822cefdb689d39e28be38dcb7cf740a8cb97acee2fb10c
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: NOASSERTION
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Lite type annotations for boto3 1.42.24 generated with mypy-boto3-builder 8.12.0</text>
+ReleaseDate: 2024-08-15T19:32:53Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/boto3-stubs-lite@1.34.162
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:youtype:boto3-stubs-lite:1.34.162:*:*:*:*:*:*:*
+##### 
+
+PackageName: botocore
+SPDXID: SPDXRef-9-botocore
+PackageVersion: 1.34.162
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: the boto project
+PackageDownloadLocation: https://pypi.org/project/botocore/1.34.162/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/boto/botocore
+PackageChecksum: SHA256: 2d918b02db88d27a75b48275e6fb2506e9adaaddbec1ffa6a8a0898b34e769be
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: Apache-2.0
+PackageLicenseComments: <text>botocore declares Apache License 2.0 which is not currently a valid SPDX License identifier or expression.</text>
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Low-level, data-driven core of boto 3.</text>
+ReleaseDate: 2024-08-15T19:25:18Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/botocore@1.34.162
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:the_boto_project:botocore:1.34.162:*:*:*:*:*:*:*
+##### 
+
+PackageName: botocore-stubs
+SPDXID: SPDXRef-10-botocore-stubs
+PackageVersion: 1.42.41
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: NOASSERTION
+PackageDownloadLocation: https://pypi.org/project/botocore-stubs/1.42.41/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: NOASSERTION
+PackageCopyrightText: NOASSERTION
+ReleaseDate: 2024-08-15T19:25:18Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/botocore-stubs@1.42.41
+##### 
+
+PackageName: certifi
+SPDXID: SPDXRef-11-certifi
+PackageVersion: 2026.1.4
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Certifi
+PackageDownloadLocation: https://pypi.org/project/certifi/2026.1.4/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/certifi/python-certifi
+PackageChecksum: SHA256: 9943707519e4add1115f44c2bc244f782c0249876bf51b6599fee1ffbedd685c
+PackageLicenseDeclared: MPL-2.0
+PackageLicenseConcluded: MPL-2.0
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Python package for providing Mozilla's CA Bundle.</text>
+ReleaseDate: 2026-01-04T02:42:40Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/certifi@2026.1.4
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:certifi:certifi:2026.1.4:*:*:*:*:*:*:*
+##### 
+
+PackageName: charset-normalizer
+SPDXID: SPDXRef-12-charset-normalizer
+PackageVersion: 3.4.4
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: TAHRI Ahmed R.
+PackageDownloadLocation: https://pypi.org/project/charset-normalizer/3.4.4/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageChecksum: SHA256: e824f1492727fa856dd6eda4f7cee25f8518a12f3c4a56a74e8095695089cf6d
+PackageLicenseDeclared: MIT
+PackageLicenseConcluded: MIT
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet.</text>
+ReleaseDate: 2025-10-14T04:40:11Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/charset-normalizer@3.4.4
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:tahri_ahmed_r.:charset-normalizer:3.4.4:*:*:*:*:*:*:*
+##### 
+
+PackageName: citeproc-py
+SPDXID: SPDXRef-13-citeproc-py
+PackageVersion: 0.6.0
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: NOASSERTION
+PackageDownloadLocation: https://pypi.org/project/citeproc-py/0.6.0/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/brechtm/citeproc-py
+PackageChecksum: SHA256: ca4c7a5158d6f68cb00a89bb47d9aa0eec7b89b18e574eb08a061b011b602bbe
+PackageLicenseDeclared: BSD-2-Clause-Views
+PackageLicenseConcluded: BSD-2-Clause-Views
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Citations and bibliography formatter</text>
+ReleaseDate: 2021-05-27T19:43:29Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/citeproc-py@0.6.0
+##### 
+
+PackageName: click
+SPDXID: SPDXRef-14-click
+PackageVersion: 8.3.1
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Pallets (contact@palletsprojects.com)
+PackageDownloadLocation: https://pypi.org/project/click/8.3.1/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageChecksum: SHA256: 981153a64e25f12d547d3426c367a4857371575ee7ad18df2a6183ab0545b2a6
+PackageLicenseDeclared: BSD-3-Clause
+PackageLicenseConcluded: BSD-3-Clause
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Composable command line interface toolkit</text>
+ReleaseDate: 2025-11-15T20:45:41Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/click@8.3.1
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:pallets:click:8.3.1:*:*:*:*:*:*:*
+##### 
+
+PackageName: cobble
+SPDXID: SPDXRef-15-cobble
+PackageVersion: 0.1.4
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Michael Williamson
+PackageDownloadLocation: https://pypi.org/project/cobble/0.1.4/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: http://github.com/mwilliamson/python-cobble
+PackageChecksum: SHA256: 36c91b1655e599fd428e2b95fdd5f0da1ca2e9f1abb0bc871dec21a0e78a2b44
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: BSD-3-Clause
+PackageLicenseComments: <text>cobble declares BSD License which is not currently a valid SPDX License identifier or expression.</text>
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Create data objects</text>
+ReleaseDate: 2024-06-01T18:11:07Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/cobble@0.1.4
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:michael_williamson:cobble:0.1.4:*:*:*:*:*:*:*
+##### 
+
+PackageName: docutils
+SPDXID: SPDXRef-16-docutils
+PackageVersion: 0.20.1
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: NOASSERTION
+PackageDownloadLocation: https://pypi.org/project/docutils/0.20.1/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://docutils.sourceforge.io
+PackageChecksum: SHA256: 96f387a2c5562db4476f09f13bbab2192e764cac08ebbf3a34a95d9b1e4a59d6
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseComments: <text>docutils declares BSD License AND GNU General Public License (GPL) AND Public Domain which is not currently a valid SPDX License identifier or expression.</text>
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Docutils -- Python Documentation Utilities</text>
+ReleaseDate: 2023-05-16T23:39:15Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/docutils@0.20.1
+##### 
+
+PackageName: dropbox
+SPDXID: SPDXRef-17-dropbox
+PackageVersion: 9.4.0
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Dropbox
+PackageDownloadLocation: https://pypi.org/project/dropbox/9.4.0/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: http://www.dropbox.com/developers
+PackageChecksum: SHA256: bf9ff242f487119449b2d8de12d463a3540c5a922e979f1bb00571af71190d19
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: MIT
+PackageLicenseComments: <text>dropbox declares MIT License which is not currently a valid SPDX License identifier or expression.</text>
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Official Dropbox API Client</text>
+ReleaseDate: 2019-06-13T23:55:17Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/dropbox@9.4.0
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:dropbox:dropbox:9.4.0:*:*:*:*:*:*:*
+##### 
+
+PackageName: fastjsonschema
+SPDXID: SPDXRef-18-fastjsonschema
+PackageVersion: 2.21.2
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Michal Horejsek
+PackageDownloadLocation: https://pypi.org/project/fastjsonschema/2.21.2/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/horejsek/python-fastjsonschema
+PackageChecksum: SHA256: 1c797122d0a86c5cace2e54bf4e819c36223b552017172f32c5c024a6b77e463
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: BSD-3-Clause
+PackageLicenseComments: <text>fastjsonschema declares BSD which is not currently a valid SPDX License identifier or expression.</text>
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Fastest Python implementation of JSON schema</text>
+ReleaseDate: 2025-08-14T18:49:34Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/fastjsonschema@2.21.2
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:michal_horejsek:fastjsonschema:2.21.2:*:*:*:*:*:*:*
+##### 
+
+PackageName: Flask
+SPDXID: SPDXRef-19-Flask
+PackageVersion: 3.0.3
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Pallets (contact@palletsprojects.com)
+PackageDownloadLocation: https://pypi.org/project/Flask/3.0.3/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageChecksum: SHA256: 34e815dfaa43340d1d15a5c3a02b8476004037eb4840b34910c6e21679d288f3
+PackageLicenseDeclared: BSD-3-Clause
+PackageLicenseConcluded: BSD-3-Clause
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>A simple framework for building complex web applications.</text>
+ReleaseDate: 2024-04-07T19:26:08Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/Flask@3.0.3
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:pallets:Flask:3.0.3:*:*:*:*:*:*:*
+##### 
+
+PackageName: Flask-Login
+SPDXID: SPDXRef-20-Flask-Login
+PackageVersion: 0.6.3
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Max Countryman (hello@maxcountryman.com)
+PackageDownloadLocation: https://pypi.org/project/Flask-Login/0.6.3/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/maxcountryman/flask-login
+PackageChecksum: SHA256: 849b25b82a436bf830a054e74214074af59097171562ab10bfa999e6b78aae5d
+PackageLicenseDeclared: MIT
+PackageLicenseConcluded: MIT
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>User authentication and session management for Flask.</text>
+ReleaseDate: 2023-10-30T14:53:19Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/Flask-Login@0.6.3
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:max_countryman:Flask-Login:0.6.3:*:*:*:*:*:*:*
+##### 
+
+PackageName: greenlet
+SPDXID: SPDXRef-21-greenlet
+PackageVersion: 3.3.1
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: greenlet (open-source@nextthought.com)
+PackageDownloadLocation: https://pypi.org/project/greenlet/3.3.1/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://greenlet.readthedocs.io
+PackageChecksum: SHA256: 04bee4775f40ecefcdaa9d115ab44736cd4b9c5fba733575bfe9379419582e13
+PackageLicenseDeclared: MIT AND Python-2.0
+PackageLicenseConcluded: MIT AND Python-2.0
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Lightweight in-process concurrent programming</text>
+ReleaseDate: 2026-01-23T15:30:37Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/greenlet@3.3.1
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:greenlet:greenlet:3.3.1:*:*:*:*:*:*:*
+##### 
+
+PackageName: idna
+SPDXID: SPDXRef-22-idna
+PackageVersion: 3.11
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Kim Davies
+PackageDownloadLocation: https://pypi.org/project/idna/3.11/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageChecksum: SHA256: 771a87f49d9defaf64091e6e6fe9c18d4833f140bd19464795bc32d966ca37ea
+PackageLicenseDeclared: BSD-3-Clause
+PackageLicenseConcluded: BSD-3-Clause
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Internationalized Domain Names in Applications (IDNA)</text>
+ReleaseDate: 2025-10-12T14:55:18Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/idna@3.11
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:kim_davies:idna:3.11:*:*:*:*:*:*:*
+##### 
+
+PackageName: iniconfig
+SPDXID: SPDXRef-23-iniconfig
+PackageVersion: 2.3.0
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: dev (pytest-dev@python.org)
+PackageDownloadLocation: https://pypi.org/project/iniconfig/2.3.0/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/pytest-dev/iniconfig
+PackageChecksum: SHA256: f631c04d2c48c52b84d0d0549c99ff3859c98df65b3101406327ecc7d53fbf12
+PackageLicenseDeclared: MIT
+PackageLicenseConcluded: MIT
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>brain-dead simple config-ini parsing</text>
+ReleaseDate: 2025-10-18T21:55:41Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/iniconfig@2.3.0
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:dev:iniconfig:2.3.0:*:*:*:*:*:*:*
+##### 
+
+PackageName: itsdangerous
+SPDXID: SPDXRef-24-itsdangerous
+PackageVersion: 2.2.0
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Pallets (contact@palletsprojects.com)
+PackageDownloadLocation: https://pypi.org/project/itsdangerous/2.2.0/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageChecksum: SHA256: c6242fc49e35958c8b15141343aa660db5fc54d4f13a1db01a3f5891b98700ef
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: BSD-3-Clause
+PackageLicenseComments: <text>itsdangerous declares BSD License which is not currently a valid SPDX License identifier or expression.</text>
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Safely pass data to untrusted environments and back.</text>
+ReleaseDate: 2024-04-16T21:28:14Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/itsdangerous@2.2.0
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:pallets:itsdangerous:2.2.0:*:*:*:*:*:*:*
+##### 
+
+PackageName: Jinja2
+SPDXID: SPDXRef-25-Jinja2
+PackageVersion: 3.1.6
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Pallets (contact@palletsprojects.com)
+PackageDownloadLocation: https://pypi.org/project/Jinja2/3.1.6/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageChecksum: SHA256: 85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: BSD-3-Clause
+PackageLicenseComments: <text>Jinja2 declares BSD License which is not currently a valid SPDX License identifier or expression.</text>
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>A very fast and expressive template engine.</text>
+ReleaseDate: 2025-03-05T20:05:00Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/Jinja2@3.1.6
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:pallets:Jinja2:3.1.6:*:*:*:*:*:*:*
+##### 
+
+PackageName: jmespath
+SPDXID: SPDXRef-26-jmespath
+PackageVersion: 1.1.0
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: jmespath
+PackageDownloadLocation: https://pypi.org/project/jmespath/1.1.0/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/jmespath/jmespath.py
+PackageChecksum: SHA256: a5663118de4908c91729bea0acadca56526eb2698e83de10cd116ae0f4e97c64
+PackageLicenseDeclared: MIT
+PackageLicenseConcluded: MIT
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>JSON Matching Expressions</text>
+ReleaseDate: 2026-01-22T16:35:24Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/jmespath@1.1.0
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:jmespath:jmespath:1.1.0:*:*:*:*:*:*:*
+##### 
+
+PackageName: jsonschema
+SPDXID: SPDXRef-27-jsonschema
+PackageVersion: 4.26.0
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Organization: Python + JSON Schema
+PackageDownloadLocation: https://pypi.org/project/jsonschema/4.26.0/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/python-jsonschema/jsonschema
+PackageChecksum: SHA256: d489f15263b8d200f8387e64b4c3a75f06629559fb73deb8fdfb525f2dab50ce
+PackageLicenseDeclared: MIT
+PackageLicenseConcluded: MIT
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>An implementation of JSON Schema validation for Python</text>
+ReleaseDate: 2026-01-07T13:41:05Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/jsonschema@4.26.0
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:python_\+_json_schema:jsonschema:4.26.0:*:*:*:*:*:*:*
+##### 
+
+PackageName: jsonschema-specifications
+SPDXID: SPDXRef-28-jsonschema-specifications
+PackageVersion: 2025.9.1
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Organization: Python + JSON Schema
+PackageDownloadLocation: https://pypi.org/project/jsonschema-specifications/2025.9.1/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/python-jsonschema/jsonschema-specifications
+PackageChecksum: SHA256: 98802fee3a11ee76ecaca44429fda8a41bff98b00a0f2838151b113f210cc6fe
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: MIT
+PackageLicenseComments: <text>jsonschema-specifications declares mit which is not currently a valid SPDX License identifier or expression.</text>
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>The JSON Schema meta-schemas and vocabularies, exposed as a Registry</text>
+ReleaseDate: 2025-09-08T01:34:57Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/jsonschema-specifications@2025.9.1
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:python_\+_json_schema:jsonschema-specifications:2025.9.1:*:*:*:*:*:*:*
+##### 
+
+PackageName: jupyter_core
+SPDXID: SPDXRef-29-jupyter-core
+PackageVersion: 5.9.1
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Project Jupyter (jupyter@googlegroups.com)
+PackageDownloadLocation: https://pypi.org/project/jupyter_core/5.9.1/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://jupyter.org
+PackageChecksum: SHA256: ebf87fdc6073d142e114c72c9e29a9d7ca03fad818c5d300ce2adc1fb0743407
+PackageLicenseDeclared: BSD-3-Clause
+PackageLicenseConcluded: BSD-3-Clause
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Jupyter core package. A base package on which Jupyter projects rely.</text>
+ReleaseDate: 2025-10-16T19:19:16Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/jupyter_core@5.9.1
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:project_jupyter:jupyter_core:5.9.1:*:*:*:*:*:*:*
+##### 
+
+PackageName: lxml
+SPDXID: SPDXRef-30-lxml
+PackageVersion: 6.0.2
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: lxml
+PackageDownloadLocation: https://pypi.org/project/lxml/6.0.2/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://lxml.de/
+PackageChecksum: SHA256: e77dd455b9a16bbd2a5036a63ddbd479c19572af81b624e79ef422f929eef388
+PackageLicenseDeclared: BSD-3-Clause
+PackageLicenseConcluded: BSD-3-Clause
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.</text>
+ReleaseDate: 2025-09-22T04:00:10Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/lxml@6.0.2
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:lxml:lxml:6.0.2:*:*:*:*:*:*:*
+##### 
+
+PackageName: Mako
+SPDXID: SPDXRef-31-Mako
+PackageVersion: 1.3.10
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: SQLAlchemy
+PackageDownloadLocation: https://pypi.org/project/Mako/1.3.10/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://www.makotemplates.org/
+PackageChecksum: SHA256: baef24a52fc4fc514a0887ac600f9f1cff3d82c61d4d700a1fa84d597b88db59
+PackageLicenseDeclared: MIT
+PackageLicenseConcluded: MIT
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>A super-fast templating language that borrows the best ideas from the existing templating languages.</text>
+ReleaseDate: 2025-04-10T12:50:53Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/Mako@1.3.10
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:sqlalchemy:Mako:1.3.10:*:*:*:*:*:*:*
+##### 
+
+PackageName: mammoth
+SPDXID: SPDXRef-32-mammoth
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Michael Williamson
+PackageDownloadLocation: https://pypi.org/project/mammoth/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/mwilliamson/python-mammoth
+PackageChecksum: SHA256: baef24a52fc4fc514a0887ac600f9f1cff3d82c61d4d700a1fa84d597b88db59
+PackageLicenseDeclared: BSD-2-Clause
+PackageLicenseConcluded: BSD-2-Clause
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Convert Word documents from docx to simple and clean HTML and Markdown</text>
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/mammoth
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:michael_williamson:mammoth::*:*:*:*:*:*:*
+##### 
+
+PackageName: markdownify
+SPDXID: SPDXRef-33-markdownify
+PackageVersion: 0.13.1
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Matthew Tretter
+PackageDownloadLocation: https://pypi.org/project/markdownify/0.13.1/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: http://github.com/matthewwithanm/python-markdownify
+PackageChecksum: SHA256: 1d181d43d20902bcc69d7be85b5316ed174d0dda72ff56e14ae4c95a4a407d22
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: MIT
+PackageLicenseComments: <text>markdownify declares MIT License which is not currently a valid SPDX License identifier or expression.</text>
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Convert HTML to markdown.</text>
+ReleaseDate: 2024-07-14T20:41:56Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/markdownify@0.13.1
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:matthew_tretter:markdownify:0.13.1:*:*:*:*:*:*:*
+##### 
+
+PackageName: MarkupSafe
+SPDXID: SPDXRef-34-MarkupSafe
+PackageVersion: 3.0.3
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Pallets (contact@palletsprojects.com)
+PackageDownloadLocation: https://pypi.org/project/MarkupSafe/3.0.3/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageChecksum: SHA256: 2f981d352f04553a7171b8e44369f2af4055f888dfb147d55e42d29e29e74559
+PackageLicenseDeclared: BSD-3-Clause
+PackageLicenseConcluded: BSD-3-Clause
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Safely add untrusted strings to HTML/XML markup.</text>
+ReleaseDate: 2025-09-27T18:36:05Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/MarkupSafe@3.0.3
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:pallets:MarkupSafe:3.0.3:*:*:*:*:*:*:*
+##### 
+
+PackageName: mypy
+SPDXID: SPDXRef-35-mypy
+PackageVersion: 1.15.0
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Python
+PackageDownloadLocation: https://pypi.org/project/mypy/1.15.0/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://www.mypy-lang.org/
+PackageChecksum: SHA256: 979e4e1a006511dacf628e36fadfecbcc0160a8af6ca7dad2f5025529e082c13
+PackageLicenseDeclared: MIT
+PackageLicenseConcluded: MIT
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Optional static typing for Python</text>
+ReleaseDate: 2025-02-05T03:49:29Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/mypy@1.15.0
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:python:mypy:1.15.0:*:*:*:*:*:*:*
+##### 
+
+PackageName: mypy-boto3-dynamodb
+SPDXID: SPDXRef-36-mypy-boto3-dynamodb
+PackageVersion: 1.34.148
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: youtype (vlad.emelianov.nz@gmail.com)
+PackageDownloadLocation: https://pypi.org/project/mypy-boto3-dynamodb/1.34.148/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/youtype/mypy_boto3_builder
+PackageChecksum: SHA256: f1a7aabff5c6e926b9b272df87251c9d6dfceb4c1fb159fb5a2df52062cd7e87
+PackageLicenseDeclared: MIT
+PackageLicenseConcluded: MIT
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Type annotations for boto3 DynamoDB 1.42.33 service generated with mypy-boto3-builder 8.12.0</text>
+ReleaseDate: 2024-07-24T19:47:42Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/mypy-boto3-dynamodb@1.34.148
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:youtype:mypy-boto3-dynamodb:1.34.148:*:*:*:*:*:*:*
+##### 
+
+PackageName: mypy-boto3-s3
+SPDXID: SPDXRef-37-mypy-boto3-s3
+PackageVersion: 1.34.162
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: youtype (vlad.emelianov.nz@gmail.com)
+PackageDownloadLocation: https://pypi.org/project/mypy-boto3-s3/1.34.162/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/youtype/mypy_boto3_builder
+PackageChecksum: SHA256: c7ab11369041a62c7d7f4c6dd1d3aab53470339df4b1e1da94df88914c25be29
+PackageLicenseDeclared: MIT
+PackageLicenseConcluded: MIT
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Type annotations for boto3 S3 1.42.37 service generated with mypy-boto3-builder 8.12.0</text>
+ReleaseDate: 2024-08-15T19:32:41Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/mypy-boto3-s3@1.34.162
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:youtype:mypy-boto3-s3:1.34.162:*:*:*:*:*:*:*
+##### 
+
+PackageName: mypy-boto3-secretsmanager
+SPDXID: SPDXRef-38-mypy-boto3-secretsmanager
+PackageVersion: 1.34.145
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: youtype (vlad.emelianov.nz@gmail.com)
+PackageDownloadLocation: https://pypi.org/project/mypy-boto3-secretsmanager/1.34.145/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/youtype/mypy_boto3_builder
+PackageChecksum: SHA256: 986511caa6626edfed7eb11b63c929801e9468c58e15927dc6fc0339c4eb34cb
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: MIT
+PackageLicenseComments: <text>mypy-boto3-secretsmanager declares MIT License which is not currently a valid SPDX License identifier or expression.</text>
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Type annotations for boto3 SecretsManager 1.35.93 service generated with mypy-boto3-builder 8.8.0</text>
+ReleaseDate: 2024-07-18T20:50:04Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/mypy-boto3-secretsmanager@1.34.145
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:youtype:mypy-boto3-secretsmanager:1.34.145:*:*:*:*:*:*:*
+##### 
+
+PackageName: mypy-boto3-sqs
+SPDXID: SPDXRef-39-mypy-boto3-sqs
+PackageVersion: 1.34.121
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: youtype (vlad.emelianov.nz@gmail.com)
+PackageDownloadLocation: https://pypi.org/project/mypy-boto3-sqs/1.34.121/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/youtype/mypy_boto3_builder
+PackageChecksum: SHA256: e92aefacfa08e7094b79002576ef261e4075f5af9c25219fc47fb8452f53fc5f
+PackageLicenseDeclared: MIT
+PackageLicenseConcluded: MIT
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Type annotations for boto3 SQS 1.42.3 service generated with mypy-boto3-builder 8.12.0</text>
+ReleaseDate: 2024-06-06T19:33:53Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/mypy-boto3-sqs@1.34.121
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:youtype:mypy-boto3-sqs:1.34.121:*:*:*:*:*:*:*
+##### 
+
+PackageName: mypy_extensions
+SPDXID: SPDXRef-40-mypy-extensions
+PackageVersion: 1.1.0
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Python
+PackageDownloadLocation: https://pypi.org/project/mypy_extensions/1.1.0/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/python/mypy_extensions
+PackageChecksum: SHA256: 1be4cccdb0f2482337c4743e60421de3a356cd97508abadd57d47403e94f5505
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseComments: <text>mypy_extensions declares other which is not currently a valid SPDX License identifier or expression.</text>
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Type system extensions for programs checked with the mypy type checker.</text>
+ReleaseDate: 2025-04-22T14:54:22Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/mypy_extensions@1.1.0
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:python:mypy_extensions:1.1.0:*:*:*:*:*:*:*
+##### 
+
+PackageName: mystmd
+SPDXID: SPDXRef-41-mystmd
+PackageVersion: 1.8.0
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: book
+PackageDownloadLocation: https://pypi.org/project/mystmd/1.8.0/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/jupyter-book/mystmd
+PackageChecksum: SHA256: 4df0957040172ebaec46825bd314ff7f158cae9950c58ce650dae03c3b633c5f
+PackageLicenseDeclared: MIT
+PackageLicenseConcluded: MIT
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Command line tools for MyST Markdown</text>
+ReleaseDate: 2026-01-21T21:16:57Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/mystmd@1.8.0
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:book:mystmd:1.8.0:*:*:*:*:*:*:*
+##### 
+
+PackageName: nbformat
+SPDXID: SPDXRef-42-nbformat
+PackageVersion: 5.10.4
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Project Jupyter (jupyter@googlegroups.com)
+PackageDownloadLocation: https://pypi.org/project/nbformat/5.10.4/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://jupyter.org
+PackageChecksum: SHA256: 3b48d6c8fbca4b299bf3982ea7db1af21580e4fec269ad087b9e81588891200b
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseComments: <text>nbformat declares BSD 3-Clause License - Copyright (c) 2001-2015 AND IPython Development Team - Copyright (c) 2015- AND Jupyter Development Team All rights reserved. Redistribution and use in source and binary forms AND with or without modification AND are permitted provided that the following conditions are met: 1. Redistributions of source code must retain the above copyright notice AND this list of conditions and the following disclaimer. 2. Redistributions in binary form must reproduce the above copyright notice AND this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution. 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES AND INCLUDING AND BUT NOT LIMITED TO AND THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT AND INDIRECT AND INCIDENTAL AND SPECIAL AND EXEMPLARY AND OR CONSEQUENTIAL DAMAGES (INCLUDING AND BUT NOT LIMITED TO AND PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE AND DATA AND OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY AND WHETHER IN CONTRACT AND STRICT LIABILITY AND OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE AND EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. which is not currently a valid SPDX License identifier or expression.</text>
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>The Jupyter Notebook format</text>
+ReleaseDate: 2024-04-04T11:20:34Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/nbformat@5.10.4
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:project_jupyter:nbformat:5.10.4:*:*:*:*:*:*:*
+##### 
+
+PackageName: nodeenv
+SPDXID: SPDXRef-43-nodeenv
+PackageVersion: 1.9.1
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Eugene Kalinin
+PackageDownloadLocation: https://pypi.org/project/nodeenv/1.9.1/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/ekalinin/nodeenv
+PackageChecksum: SHA256: ba11c9782d29c27c70ffbdda2d7415098754709be8a7056d79a737cd901155c9
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: BSD-3-Clause
+PackageLicenseComments: <text>nodeenv declares BSD which is not currently a valid SPDX License identifier or expression.</text>
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Node.js virtual environment builder</text>
+ReleaseDate: 2024-06-04T18:44:08Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/nodeenv@1.9.1
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:eugene_kalinin:nodeenv:1.9.1:*:*:*:*:*:*:*
+##### 
+
+PackageName: packaging
+SPDXID: SPDXRef-44-packaging
+PackageVersion: 26.0
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Organization: Python Packaging Authority (info@pypa.io)
+PackageDownloadLocation: https://pypi.org/project/packaging/26.0/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageChecksum: SHA256: b36f1fef9334a5588b4166f8bcd26a14e521f2b55e6b9de3aaa80d3ff7a37529
+PackageLicenseDeclared: Apache-2.0 OR BSD-2-Clause
+PackageLicenseConcluded: Apache-2.0 OR BSD-2-Clause
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Core utilities for Python packages</text>
+ReleaseDate: 2026-01-21T20:50:37Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/packaging@26.0
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:python_packaging_authority:packaging:26.0:*:*:*:*:*:*:*
+##### 
+
+PackageName: pillow
+SPDXID: SPDXRef-45-pillow
+PackageVersion: 11.3.0
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Pillow (aclark@python-pillow.org)
+PackageDownloadLocation: https://pypi.org/project/pillow/11.3.0/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://python-pillow.github.io
+PackageChecksum: SHA256: 1b9c17fd4ace828b3003dfd1e30bff24863e0eb59b535e8f80194d9cc7ecf860
+PackageLicenseDeclared: MIT-CMU
+PackageLicenseConcluded: MIT-CMU
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Python Imaging Library (fork)</text>
+ReleaseDate: 2025-07-01T09:13:39Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/pillow@11.3.0
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:pillow:pillow:11.3.0:*:*:*:*:*:*:*
+##### 
+
+PackageName: platformdirs
+SPDXID: SPDXRef-46-platformdirs
+PackageVersion: 4.2.2
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: platformdirs
+PackageDownloadLocation: https://pypi.org/project/platformdirs/4.2.2/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/tox-dev/platformdirs
+PackageChecksum: SHA256: 2d7a1657e36a80ea911db832a8a6ece5ee53d8de21edd5cc5879af6530b1bfee
+PackageLicenseDeclared: MIT
+PackageLicenseConcluded: MIT
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>A small Python package for determining appropriate platform-specific dirs, e.g. a `user data dir`.</text>
+ReleaseDate: 2024-05-15T03:18:21Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/platformdirs@4.2.2
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:platformdirs:platformdirs:4.2.2:*:*:*:*:*:*:*
+##### 
+
+PackageName: pluggy
+SPDXID: SPDXRef-47-pluggy
+PackageVersion: 1.6.0
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: dev (pytest-dev@python.org)
+PackageDownloadLocation: https://pypi.org/project/pluggy/1.6.0/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageChecksum: SHA256: e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746
+PackageLicenseDeclared: MIT
+PackageLicenseConcluded: MIT
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>plugin and hook calling mechanisms for python</text>
+ReleaseDate: 2025-05-15T12:30:06Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/pluggy@1.6.0
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:dev:pluggy:1.6.0:*:*:*:*:*:*:*
+##### 
+
+PackageName: pydantic
+SPDXID: SPDXRef-48-pydantic
+PackageVersion: 2.11.10
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Pydantic (hello@pydantic.dev)
+PackageDownloadLocation: https://pypi.org/project/pydantic/2.11.10/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/pydantic/pydantic
+PackageChecksum: SHA256: 802a655709d49bd004c31e865ef37da30b540786a46bfce02333e0e24b5fe29a
+PackageLicenseDeclared: MIT
+PackageLicenseConcluded: MIT
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Data validation using Python type hints</text>
+ReleaseDate: 2025-10-04T10:40:39Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/pydantic@2.11.10
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:pydantic:pydantic:2.11.10:*:*:*:*:*:*:*
+##### 
+
+PackageName: pydantic_core
+SPDXID: SPDXRef-49-pydantic-core
+PackageVersion: 2.33.2
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Pydantic (hello@pydantic.dev)
+PackageDownloadLocation: https://pypi.org/project/pydantic_core/2.33.2/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/pydantic/pydantic-core
+PackageChecksum: SHA256: 2b3d326aaef0c0399d9afffeb6367d5e26ddc24d351dbc9c636840ac355dc5d8
+PackageLicenseDeclared: MIT
+PackageLicenseConcluded: MIT
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Core functionality for Pydantic validation and serialization</text>
+ReleaseDate: 2025-04-23T18:30:43Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/pydantic_core@2.33.2
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:pydantic:pydantic_core:2.33.2:*:*:*:*:*:*:*
+##### 
+
+PackageName: pytest
+SPDXID: SPDXRef-50-pytest
+PackageVersion: 7.4.4
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: dev (pytest-dev@python.org)
+PackageDownloadLocation: https://pypi.org/project/pytest/7.4.4/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://docs.pytest.org/en/latest/
+PackageChecksum: SHA256: b090cdf5ed60bf4c45261be03239c2c1c22df034fbffe691abe93cd80cea01d8
+PackageLicenseDeclared: MIT
+PackageLicenseConcluded: MIT
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>pytest: simple powerful testing with Python</text>
+ReleaseDate: 2023-12-31T12:00:13Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/pytest@7.4.4
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:dev:pytest:7.4.4:*:*:*:*:*:*:*
+##### 
+
+PackageName: python-dateutil
+SPDXID: SPDXRef-51-python-dateutil
+PackageVersion: 2.9.0.post0
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: dateutil
+PackageDownloadLocation: https://pypi.org/project/python-dateutil/2.9.0.post0/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/dateutil/dateutil
+PackageChecksum: SHA256: a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseComments: <text>python-dateutil declares Dual License which is not currently a valid SPDX License identifier or expression.</text>
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Extensions to the standard Python datetime module</text>
+ReleaseDate: 2024-03-01T18:36:18Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/python-dateutil@2.9.0.post0
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:dateutil:python-dateutil:2.9.0.post0:*:*:*:*:*:*:*
+##### 
+
+PackageName: python-docx
+SPDXID: SPDXRef-52-python-docx
+PackageVersion: 1.1.2
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: openxml (stcanny@gmail.com)
+PackageDownloadLocation: https://pypi.org/project/python-docx/1.1.2/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/python-openxml/python-docx
+PackageChecksum: SHA256: 08c20d6058916fb19853fcf080f7f42b6270d89eac9fa5f8c15f691c0017fabe
+PackageLicenseDeclared: MIT
+PackageLicenseConcluded: MIT
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Create, read, and update Microsoft Word .docx files.</text>
+ReleaseDate: 2024-05-01T19:41:47Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/python-docx@1.1.2
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:openxml:python-docx:1.1.2:*:*:*:*:*:*:*
+##### 
+
+PackageName: referencing
+SPDXID: SPDXRef-53-referencing
+PackageVersion: 0.37.0
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Organization: Python + JSON Schema
+PackageDownloadLocation: https://pypi.org/project/referencing/0.37.0/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/python-jsonschema/referencing
+PackageChecksum: SHA256: 381329a9f99628c9069361716891d34ad94af76e461dcb0335825aecc7692231
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: MIT
+PackageLicenseComments: <text>referencing declares mit which is not currently a valid SPDX License identifier or expression.</text>
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>JSON Referencing + Python</text>
+ReleaseDate: 2025-10-13T15:30:47Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/referencing@0.37.0
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:python_\+_json_schema:referencing:0.37.0:*:*:*:*:*:*:*
+##### 
+
+PackageName: requests
+SPDXID: SPDXRef-54-requests
+PackageVersion: 2.31.0
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Python Software Foundation
+PackageDownloadLocation: https://pypi.org/project/requests/2.31.0/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://requests.readthedocs.io
+PackageChecksum: SHA256: 58cd2187c01e70e6e26505bca751777aa9f2ee0b7f4300988b709f44e013003f
+PackageLicenseDeclared: Apache-2.0
+PackageLicenseConcluded: Apache-2.0
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Python HTTP for Humans.</text>
+ReleaseDate: 2023-05-22T15:12:42Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/requests@2.31.0
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:python_software_foundation:requests:2.31.0:*:*:*:*:*:*:*
+##### 
+
+PackageName: rpds-py
+SPDXID: SPDXRef-55-rpds-py
+PackageVersion: 0.30.0
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: py
+PackageDownloadLocation: https://pypi.org/project/rpds-py/0.30.0/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/crate-py/rpds
+PackageChecksum: SHA256: 679ae98e00c0e8d68a7fda324e16b90fd5260945b45d3b824c892cec9eea3288
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: MIT
+PackageLicenseComments: <text>rpds-py declares mit which is not currently a valid SPDX License identifier or expression.</text>
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Python bindings to Rust's persistent data structures (rpds)</text>
+ReleaseDate: 2025-11-30T20:21:33Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/rpds-py@0.30.0
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:py:rpds-py:0.30.0:*:*:*:*:*:*:*
+##### 
+
+PackageName: s3transfer
+SPDXID: SPDXRef-56-s3transfer
+PackageVersion: 0.10.4
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: the boto project
+PackageDownloadLocation: https://pypi.org/project/s3transfer/0.10.4/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/boto/s3transfer
+PackageChecksum: SHA256: 244a76a24355363a68164241438de1b72f8781664920260c48465896b712a41e
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: Apache-2.0
+PackageLicenseComments: <text>s3transfer declares Apache License 2.0 which is not currently a valid SPDX License identifier or expression.</text>
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>An Amazon S3 Transfer Manager</text>
+ReleaseDate: 2024-11-20T21:06:03Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/s3transfer@0.10.4
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:the_boto_project:s3transfer:0.10.4:*:*:*:*:*:*:*
+##### 
+
+PackageName: setuptools
+SPDXID: SPDXRef-57-setuptools
+PackageVersion: 80.10.2
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: NOASSERTION
+PackageDownloadLocation: https://pypi.org/project/setuptools/80.10.2/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: NOASSERTION
+PackageCopyrightText: NOASSERTION
+ReleaseDate: 2024-11-20T21:06:03Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/setuptools@80.10.2
+##### 
+
+PackageName: six
+SPDXID: SPDXRef-58-six
+PackageVersion: 1.17.0
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Benjamin Peterson
+PackageDownloadLocation: https://pypi.org/project/six/1.17.0/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/benjaminp/six
+PackageChecksum: SHA256: 4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274
+PackageLicenseDeclared: MIT
+PackageLicenseConcluded: MIT
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Python 2 and 3 compatibility utilities</text>
+ReleaseDate: 2024-12-04T17:35:26Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/six@1.17.0
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:benjamin_peterson:six:1.17.0:*:*:*:*:*:*:*
+##### 
+
+PackageName: soupsieve
+SPDXID: SPDXRef-59-soupsieve
+PackageVersion: 2.8.3
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Isaac Muse
+PackageDownloadLocation: https://pypi.org/project/soupsieve/2.8.3/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/facelessuser/soupsieve
+PackageChecksum: SHA256: ed64f2ba4eebeab06cc4962affce381647455978ffc1e36bb79a545b91f45a95
+PackageLicenseDeclared: MIT
+PackageLicenseConcluded: MIT
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>A modern CSS selector implementation for Beautiful Soup.</text>
+ReleaseDate: 2026-01-20T04:27:01Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/soupsieve@2.8.3
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:isaac_muse:soupsieve:2.8.3:*:*:*:*:*:*:*
+##### 
+
+PackageName: SQLAlchemy
+SPDXID: SPDXRef-60-SQLAlchemy
+PackageVersion: 2.0.46
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: SQLAlchemy
+PackageDownloadLocation: https://pypi.org/project/SQLAlchemy/2.0.46/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://www.sqlalchemy.org
+PackageChecksum: SHA256: 895296687ad06dc9b11a024cf68e8d9d3943aa0b4964278d2553b86f1b267735
+PackageLicenseDeclared: MIT
+PackageLicenseConcluded: MIT
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Database Abstraction Library</text>
+ReleaseDate: 2026-01-21T18:27:28Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/SQLAlchemy@2.0.46
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:sqlalchemy:SQLAlchemy:2.0.46:*:*:*:*:*:*:*
+##### 
+
+PackageName: sqlmodel
+SPDXID: SPDXRef-61-sqlmodel
+PackageVersion: 0.0.24
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: FastAPI
+PackageDownloadLocation: https://pypi.org/project/sqlmodel/0.0.24/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/fastapi/sqlmodel
+PackageChecksum: SHA256: 6778852f09370908985b667d6a3ab92910d0d5ec88adcaf23dbc242715ff7193
+PackageLicenseDeclared: MIT
+PackageLicenseConcluded: MIT
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>SQLModel, SQL databases in Python, designed for simplicity, compatibility, and robustness.</text>
+ReleaseDate: 2025-03-07T05:43:30Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/sqlmodel@0.0.24
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:fastapi:sqlmodel:0.0.24:*:*:*:*:*:*:*
+##### 
+
+PackageName: traitlets
+SPDXID: SPDXRef-62-traitlets
+PackageVersion: 5.14.3
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: IPython
+PackageDownloadLocation: https://pypi.org/project/traitlets/5.14.3/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/ipython/traitlets
+PackageChecksum: SHA256: b74e89e397b1ed28cc831db7aea759ba6640cb3de13090ca145426688ff1ac4f
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseComments: <text>traitlets declares BSD 3-Clause License - Copyright (c) 2001- AND IPython Development Team All rights reserved. Redistribution and use in source and binary forms AND with or without modification AND are permitted provided that the following conditions are met: 1. Redistributions of source code must retain the above copyright notice AND this list of conditions and the following disclaimer. 2. Redistributions in binary form must reproduce the above copyright notice AND this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution. 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES AND INCLUDING AND BUT NOT LIMITED TO AND THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT AND INDIRECT AND INCIDENTAL AND SPECIAL AND EXEMPLARY AND OR CONSEQUENTIAL DAMAGES (INCLUDING AND BUT NOT LIMITED TO AND PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE AND DATA AND OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY AND WHETHER IN CONTRACT AND STRICT LIABILITY AND OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE AND EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. which is not currently a valid SPDX License identifier or expression.</text>
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Traitlets Python configuration system</text>
+ReleaseDate: 2024-04-19T11:11:46Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/traitlets@5.14.3
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:ipython:traitlets:5.14.3:*:*:*:*:*:*:*
+##### 
+
+PackageName: types-awscrt
+SPDXID: SPDXRef-63-types-awscrt
+PackageVersion: 0.31.1
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: NOASSERTION
+PackageDownloadLocation: https://pypi.org/project/types-awscrt/0.31.1/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: NOASSERTION
+PackageCopyrightText: NOASSERTION
+ReleaseDate: 2024-04-19T11:11:46Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/types-awscrt@0.31.1
+##### 
+
+PackageName: types-beautifulsoup4
+SPDXID: SPDXRef-64-types-beautifulsoup4
+PackageVersion: 4.12.0.20250516
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: internal
+PackageDownloadLocation: https://pypi.org/project/types-beautifulsoup4/4.12.0.20250516/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/python/typeshed
+PackageChecksum: SHA256: 5923399d4a1ba9cc8f0096fe334cc732e130269541d66261bb42ab039c0376ee
+PackageLicenseDeclared: Apache-2.0
+PackageLicenseConcluded: Apache-2.0
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Typing stubs for beautifulsoup4</text>
+ReleaseDate: 2025-05-16T03:09:09Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/types-beautifulsoup4@4.12.0.20250516
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:internal:types-beautifulsoup4:4.12.0.20250516:*:*:*:*:*:*:*
+##### 
+
+PackageName: types-html5lib
+SPDXID: SPDXRef-65-types-html5lib
+PackageVersion: 1.1.11.20251117
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: internal
+PackageDownloadLocation: https://pypi.org/project/types-html5lib/1.1.11.20251117/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/python/typeshed
+PackageChecksum: SHA256: 2a3fc935de788a4d2659f4535002a421e05bea5e172b649d33232e99d4272d08
+PackageLicenseDeclared: Apache-2.0
+PackageLicenseConcluded: Apache-2.0
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Typing stubs for html5lib</text>
+ReleaseDate: 2025-11-17T03:07:59Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/types-html5lib@1.1.11.20251117
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:internal:types-html5lib:1.1.11.20251117:*:*:*:*:*:*:*
+##### 
+
+PackageName: types-PyYAML
+SPDXID: SPDXRef-66-types-PyYAML
+PackageVersion: 6.0.12.20250915
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: internal
+PackageDownloadLocation: https://pypi.org/project/types-PyYAML/6.0.12.20250915/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/python/typeshed
+PackageChecksum: SHA256: e7d4d9e064e89a3b3cae120b4990cd370874d2bf12fa5f46c97018dd5d3c9ab6
+PackageLicenseDeclared: Apache-2.0
+PackageLicenseConcluded: Apache-2.0
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Typing stubs for PyYAML</text>
+ReleaseDate: 2025-09-15T03:00:59Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/types-PyYAML@6.0.12.20250915
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:internal:types-PyYAML:6.0.12.20250915:*:*:*:*:*:*:*
+##### 
+
+PackageName: types-s3transfer
+SPDXID: SPDXRef-67-types-s3transfer
+PackageVersion: 0.16.0
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: youtype (vlad.emelianov.nz@gmail.com)
+PackageDownloadLocation: https://pypi.org/project/types-s3transfer/0.16.0/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/youtype/types-s3transfer
+PackageChecksum: SHA256: 1c0cd111ecf6e21437cb410f5cddb631bfb2263b77ad973e79b9c6d0cb24e0ef
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: MIT
+PackageLicenseComments: <text>types-s3transfer declares mit which is not currently a valid SPDX License identifier or expression.</text>
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Type annotations and code completion for s3transfer</text>
+ReleaseDate: 2025-12-08T08:13:08Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/types-s3transfer@0.16.0
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:youtype:types-s3transfer:0.16.0:*:*:*:*:*:*:*
+##### 
+
+PackageName: types-webencodings
+SPDXID: SPDXRef-68-types-webencodings
+PackageVersion: 0.5.0.20251108
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: internal
+PackageDownloadLocation: https://pypi.org/project/types-webencodings/0.5.0.20251108/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/python/typeshed
+PackageChecksum: SHA256: e21f81ff750795faffddaffd70a3d8bfff77d006f22c27e393eb7812586249d8
+PackageLicenseDeclared: Apache-2.0
+PackageLicenseConcluded: Apache-2.0
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Typing stubs for webencodings</text>
+ReleaseDate: 2025-11-08T02:55:59Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/types-webencodings@0.5.0.20251108
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:internal:types-webencodings:0.5.0.20251108:*:*:*:*:*:*:*
+##### 
+
+PackageName: typing-inspection
+SPDXID: SPDXRef-69-typing-inspection
+PackageVersion: 0.4.2
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Pydantic (hello@pydantic.dev)
+PackageDownloadLocation: https://pypi.org/project/typing-inspection/0.4.2/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/pydantic/typing-inspection
+PackageChecksum: SHA256: 4ed1cacbdc298c220f1bd249ed5287caa16f34d44ef4e9c3d0cbad5b521545e7
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: MIT
+PackageLicenseComments: <text>typing-inspection declares mit which is not currently a valid SPDX License identifier or expression.</text>
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Runtime typing introspection tools</text>
+ReleaseDate: 2025-10-01T02:14:40Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/typing-inspection@0.4.2
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:pydantic:typing-inspection:0.4.2:*:*:*:*:*:*:*
+##### 
+
+PackageName: typing_extensions
+SPDXID: SPDXRef-70-typing-extensions
+PackageVersion: 4.15.0
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Python
+PackageDownloadLocation: https://pypi.org/project/typing_extensions/4.15.0/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/python/typing_extensions
+PackageChecksum: SHA256: f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548
+PackageLicenseDeclared: PSF-2.0
+PackageLicenseConcluded: PSF-2.0
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Backported and Experimental Type Hints for Python 3.9+</text>
+ReleaseDate: 2025-08-25T13:49:24Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/typing_extensions@4.15.0
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:python:typing_extensions:4.15.0:*:*:*:*:*:*:*
+##### 
+
+PackageName: urllib3
+SPDXID: SPDXRef-71-urllib3
+PackageVersion: 2.6.3
+PrimaryPackagePurpose: APPLICATION
+PackageDownloadLocation: https://pypi.org/project/urllib3/2.6.3/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageChecksum: SHA256: bf272323e553dfb2e87d9bfd225ca7b0f467b919d7bbd355436d3fd37cb0acd4
+PackageLicenseDeclared: MIT
+PackageLicenseConcluded: MIT
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>HTTP library with thread-safe connection pooling, file post, and more.</text>
+ReleaseDate: 2026-01-07T16:24:42Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/urllib3@2.6.3
+ExternalRef: SECURITY cpe23Type cpe:2.3:a::urllib3:2.6.3:*:*:*:*:*:*:*
+##### 
+
+PackageName: Werkzeug
+SPDXID: SPDXRef-72-Werkzeug
+PackageVersion: 3.1.5
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: Pallets (contact@palletsprojects.com)
+PackageDownloadLocation: https://pypi.org/project/Werkzeug/3.1.5/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageChecksum: SHA256: 5111e36e91086ece91f93268bb39b4a35c1e6f1feac762c9c822ded0a4e322dc
+PackageLicenseDeclared: BSD-3-Clause
+PackageLicenseConcluded: BSD-3-Clause
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>The comprehensive WSGI web application library.</text>
+ReleaseDate: 2026-01-08T17:49:21Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/Werkzeug@3.1.5
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:pallets:Werkzeug:3.1.5:*:*:*:*:*:*:*
+##### 
+
+PackageName: xxhash
+SPDXID: SPDXRef-73-xxhash
+PackageVersion: 3.6.0
+PrimaryPackagePurpose: APPLICATION
+PackageSupplier: Person: ifduyue
+PackageDownloadLocation: https://pypi.org/project/xxhash/3.6.0/#files
+FilesAnalyzed: false
+PackageFileName: sbom-req.txt
+PackageHomePage: https://github.com/ifduyue/python-xxhash
+PackageChecksum: SHA256: 87ff03d7e35c61435976554477a7f4cd1704c3596a89a8300d5ce7fc83874a71
+PackageLicenseDeclared: NOASSERTION
+PackageLicenseConcluded: BSD-3-Clause
+PackageLicenseComments: <text>xxhash declares BSD which is not currently a valid SPDX License identifier or expression.</text>
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>Python binding for xxHash</text>
+ReleaseDate: 2025-10-02T14:33:51Z
+ExternalRef: PACKAGE-MANAGER purl pkg:pypi/xxhash@3.6.0
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:ifduyue:xxhash:3.6.0:*:*:*:*:*:*:*
+##### 
+
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-1-alembic
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-2-annotated-types
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-3-attrs
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-4-aws-lambda-powertools
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-5-beautifulsoup4
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-6-blinker
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-7-boto3
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-8-boto3-stubs-lite
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-9-botocore
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-10-botocore-stubs
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-11-certifi
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-12-charset-normalizer
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-13-citeproc-py
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-14-click
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-15-cobble
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-16-docutils
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-17-dropbox
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-18-fastjsonschema
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-19-Flask
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-20-Flask-Login
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-21-greenlet
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-22-idna
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-23-iniconfig
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-24-itsdangerous
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-25-Jinja2
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-26-jmespath
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-27-jsonschema
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-28-jsonschema-specifications
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-29-jupyter-core
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-30-lxml
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-31-Mako
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-32-mammoth
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-33-markdownify
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-34-MarkupSafe
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-35-mypy
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-36-mypy-boto3-dynamodb
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-37-mypy-boto3-s3
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-38-mypy-boto3-secretsmanager
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-39-mypy-boto3-sqs
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-40-mypy-extensions
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-41-mystmd
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-42-nbformat
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-43-nodeenv
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-44-packaging
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-45-pillow
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-46-platformdirs
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-47-pluggy
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-48-pydantic
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-49-pydantic-core
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-50-pytest
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-51-python-dateutil
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-52-python-docx
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-53-referencing
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-54-requests
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-55-rpds-py
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-56-s3transfer
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-57-setuptools
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-58-six
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-59-soupsieve
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-60-SQLAlchemy
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-61-sqlmodel
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-62-traitlets
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-63-types-awscrt
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-64-types-beautifulsoup4
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-65-types-html5lib
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-66-types-PyYAML
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-67-types-s3transfer
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-68-types-webencodings
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-69-typing-inspection
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-70-typing-extensions
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-71-urllib3
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-72-Werkzeug
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-73-xxhash

@@ -32,6 +32,12 @@ class S3Event(enum.StrEnum):
     OBJ_REMOVED = "ObjectRemoved"
 
 
+class UserRole(enum.StrEnum):
+    Admin = "Admin"
+    Editor = "Editor"
+    Author = "Author"
+
+
 class DgtmonSecrets(t.TypedDict):
     github_api_token: str
     github_api_org: str
@@ -43,6 +49,26 @@ if IS_DEBUG:
     DEFAULT_SFS_DIR = "/tmp/efs"  # local execution
 else:
     DEFAULT_SFS_DIR = "/mnt/efs"  # AWS EFS
+JB_DIR = "_JB"
+PAPER_DIR = "_PAPER"
+STATE_DIR = "_STATE"
+INPUT_DIR = "_INPUT"
+CHAPTERS_DIR = "_CHAPTERS"
+WARNINGS_DIR = "_WARNINGS"
+FAKERS_INPUT_DIR = "_fakers_input"
+ASSETS_DIR = "assets"
+# database
+db_user = os.environ.get("DB_USER")
+db_pass = os.environ.get("DB_PASS")
+# db_path = os.environ.get("DB_PATH", DEFAULT_SFS_DIR + "/_database.db")
+db_path = os.environ.get(
+    "DB_PATH", "/home/ubuntu/Projects/digital-monography/_database.db"
+)
+db_driver = os.environ.get("DB_DRIVER", "sqlite")
+if db_user and db_pass:
+    DB_URL = "{}://{}:{}@/{}".format(db_driver, db_user, db_pass, db_path)
+else:
+    DB_URL = "{}:///{}".format(db_driver, db_path)
 # API endpoints
 BE_PATH_ASSET_METADATA = "assets-metadata"
 BE_PATH_ASSET_UPLOAD = "assets-s3-list"
@@ -60,12 +86,24 @@ p[style-name='Caption'] => p.{CLS_CAPTION}:fresh
 highlight[color='{COLOR_DIGITAL_ONLY}'] => span.{CLS_DIGITAL_ONLY}
 highlight[color='{COLOR_PAPER_ONLY}'] => span.{CLS_PAPER_ONLY}
 """
+# frontmatter fields
+FM_FIELD_FRONTMATTER_KEYPATH = "frontmatter_key"
+FM_FIELD_IS_SPLIT = "_split"
+FM_FIELD_TOC = "_toc"
 # html classes
+CLS_FRONTMATTER_TABLE = "dgt-mon-frontmatter-table"
 CLS_METADATA_TABLE = "dgt-mon-metadata-table"
 CLS_METADATA_TABLE_JSONDATA = "dgt-mon-hidden-metadata"
+CLS_STATE_TABLE_JSONDATA = "dgt-mon-hidden-state"
 ATTRIB_METADATA_UUID = "dgt-mon-metadata-uuid"
 # docx constants
 AUTONUMBER_PLACEHOLDER = "[auto]"
+AUTONUMBER_COUNT_CHAPTERS_SEPARATELY = (
+    True  # if True, autonumbering restarts from 1 in every chapter
+)
+REF_STRING_PREFIX = "REFSTR_"
+REF_PREFIX = "f"  # prefix to add before ref id in hrefs, e.g. f-01a-bookmarktofig so that we don't start with a number
+TEMP_FOOTNOTES_TABLE = "tmpf"
 # caption types
 CAPTION_ITEM_TYPE_FIGURE = "fig"
 CAPTION_ITEM_TYPE_TABLE = "tbl"

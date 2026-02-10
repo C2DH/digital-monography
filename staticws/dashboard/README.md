@@ -2,6 +2,8 @@
 
 The dashboard for authors and editors to help their work on manuscripts.
 
+This solution is meant to be hosted as a static website without a need for a separate server. An alternative solution we are experimenting with can be found in `src/dashboard`.
+
 ## Tech stack
 
 Tech stack for the frontend:
@@ -10,7 +12,7 @@ Tech stack for the frontend:
 - Next.js - as a build tool, _DO NOT_ use it for anything else than build or routing
 - S3 - for hosting
 
-API requests go to the "endpoint" microservice via the API Gateway. The endpoint makes appropriate calls to S3 buckets and Dynamodb noSQL database to fetch the data to pass it to the frontend.
+API requests go to the "endpoint" service via the API Gateway. The endpoint makes appropriate calls to S3 buckets and Dynamodb noSQL database to fetch the data to pass it to the frontend.
 
 ## Updating
 

@@ -1,13 +1,15 @@
 import bs4
 import mammoth
-import pathlib
+import pytest
 
+from src._common.state import DocumentState
+from src._common.models import CitationGroup, CitationItem
+from src._common.keys import KeyPath
 from src.preparer.citations import add_bibliography, prepare_citations, is_citation
-from src.preparer.metadata import DocumentMetadata
 
 
 class TestCitationsFromFields:
-    fp = pathlib.Path("tests") / "_fixtures" / "citation_in_fields.docx"
+    fp = KeyPath("tests") / "_fixtures" / "citation_in_fields.docx"
 
     @classmethod
     def setup_class(cls):
@@ -15,25 +17,29 @@ class TestCitationsFromFields:
             result = mammoth.convert_to_html(f)
         cls.html_soup = bs4.BeautifulSoup(result.value, "html.parser")
         citations = []
-        cls.metadata = DocumentMetadata()
+        cls.docstate = DocumentState(cls.fp)
         for node in cls.html_soup.descendants:
             if is_citation(node):
                 citations.append(node)
         cls.html_soup, cls.bib = prepare_citations(
-            cls.html_soup, cls.metadata, citations
+            cls.html_soup, cls.docstate, citations
         )
         cls.html_soup = add_bibliography(cls.html_soup, cls.bib)
 
     def test_extract_citations_finds_all_citations(self):
-        assert len(self.metadata.citation_groups) == 1
-        assert len(self.metadata.citation_items) == 1
+        assert self.docstate.len("citation_groups") == 1
+        assert self.docstate.len("citation_items") == 1
 
     def test_citation_groups_extracted(self):
-        group = self.metadata.get_citation_group("u4qVPMeE")
+        group = self.docstate.get("citation_groups", "u4qVPMeE", "id")
+        assert isinstance(
+            group, CitationGroup
+        ), "Expected to find CitationGroup instance"
         assert group.plainCitation == "(see Ce 2010, Abb. 13 for examples)"
 
     def test_citation_items_extracted(self):
-        item = self.metadata.get("citation_items", 43, "id")
+        item = self.docstate.get("citation_items", 43, "id")
+        assert isinstance(item, CitationItem), "Expected to find CitationItem instance"
         assert item.itemData["title"] == "I disagree"
         assert item.itemData["container-title"] == "We all agree"
         assert item.itemData["publisher"] == "Like Minded Publ"
@@ -62,7 +68,7 @@ class TestCitationsFromFields:
 
 
 class TestCitationsFromFootnotes:
-    fp = pathlib.Path("tests") / "_fixtures" / "citation_in_footnotes.docx"
+    fp = KeyPath("tests") / "_fixtures" / "citation_in_footnotes.docx"
 
     @classmethod
     def setup_class(cls):
@@ -70,48 +76,71 @@ class TestCitationsFromFootnotes:
             result = mammoth.convert_to_html(f)
         cls.html_soup = bs4.BeautifulSoup(result.value, "html.parser")
         citations = []
-        cls.metadata = DocumentMetadata()
+        cls.docstate = DocumentState(cls.fp)
         for node in cls.html_soup.descendants:
             if is_citation(node):
                 citations.append(node)
         cls.html_soup, cls.bib = prepare_citations(
-            cls.html_soup, cls.metadata, citations
+            cls.html_soup, cls.docstate, citations
         )
         cls.html_soup = add_bibliography(cls.html_soup, cls.bib)
 
     def test_extract_citations_finds_all_2_citations(self):
-        assert len(self.metadata.citation_groups) == 2
-        assert len(self.metadata.citation_items) == 3
-        items = self.metadata.filter("citation_items", "citationId", "a22p6p0ob48")
+        assert self.docstate.len("citation_groups") == 2
+        assert self.docstate.len("citation_items") == 3
+        items = self.docstate.filter("citation_items", "a22p6p0ob48", "citationId")
         assert len(items) == 2
+        assert isinstance(
+            items[0], CitationItem
+        ), "Expected to find CitationItem instance"
+        assert isinstance(
+            items[1], CitationItem
+        ), "Expected to find CitationItem instance"
 
-    def test_citation_groups_extracted(self):
-        group = self.metadata.get_citation_group("a1uqssb04e4")
-        assert group.plainCitation.startswith(
-            "Joe Schmoe, „Just no“, Opinions, 1, Nr. 1 (2035): 1–2."
-        )
-        group = self.metadata.get_citation_group("a22p6p0ob48")
-        assert group.plainCitation.startswith(
-            "see Abe Ce, „I disagree“, in We all agree (Like Minded Publ, 2010), 12;"
-        )
+    @pytest.mark.parametrize(
+        "group_id, plain_citation",
+        [
+            ("a1uqssb04e4", "Joe Schmoe, „Just no“, Opinions, 1, Nr. 1 (2035): 1–2."),
+            (
+                "a22p6p0ob48",
+                "see Abe Ce, „I disagree“, in We all agree (Like Minded Publ, 2010), 12;",
+            ),
+        ],
+    )
+    def test_citation_groups_extracted(self, group_id: str, plain_citation: str):
+        group = self.docstate.get("citation_groups", group_id, "id")
+        assert isinstance(
+            group, CitationGroup
+        ), "Expected to find CitationGroup instance"
+        assert group.plainCitation.startswith(plain_citation)
 
-    def test_citation_items_extracted(self):
-        joe_schmoe = self.metadata.get("citation_items", 42, "id")
-        abe_ce = self.metadata.get("citation_items", 43, "id")
-        with_nonascii = self.metadata.get("citation_items", 41, "id")
-
-        assert joe_schmoe.itemData["type"] == "article-journal"
-        assert joe_schmoe.itemData["title"] == "Just no"
-        assert joe_schmoe.itemData["author"][0]["family"] == "Schmoe"
-
-        assert abe_ce.itemData["type"] == "chapter"
-        assert abe_ce.itemData["title"] == "I disagree"
-        assert abe_ce.itemData["author"][0]["family"] == "Ce"
-
-        assert with_nonascii.itemData["type"] == "book"
-        assert with_nonascii.itemData["title"] == "Zażółć gęślą jaźń"
-        assert with_nonascii.itemData["author"][0]["family"] == "Ce"
-        assert with_nonascii.itemData["event-place"] == "안돌이지돌이다래미한숨바우"
+    @pytest.mark.parametrize(
+        "item_id, typ, title, author_family, event_place",
+        [
+            (42, "article-journal", "Just no", "Schmoe", None),
+            (43, "chapter", "I disagree", "Ce", None),
+            (41, "book", "Zażółć gęślą jaźń", "Ce", "안돌이지돌이다래미한숨바우"),
+        ],
+    )
+    def test_citation_items_extracted(
+        self,
+        item_id: int,
+        typ: str,
+        title: str,
+        author_family: str,
+        event_place: str | None,
+    ):
+        cit_item = self.docstate.get("citation_items", item_id, "id")
+        assert isinstance(
+            cit_item, CitationItem
+        ), "Expected to find CitationItem instance"
+        assert cit_item.itemData["type"] == typ
+        assert cit_item.itemData["title"] == title
+        assert cit_item.itemData["author"][0]["family"] == author_family
+        if event_place is None:
+            assert "event-place" not in cit_item.itemData
+        else:
+            assert cit_item.itemData["event-place"] == event_place
 
     def test_citation_was_added(self):
         expected_html_start = (

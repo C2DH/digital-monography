@@ -1,0 +1,25 @@
+{
+  "description": "Unprocessed data from a Metadata table that describes an asset.",
+  "properties": {
+    "pk": {
+      "title": "Pk",
+      "type": "string"
+    },
+    "schema_v": {
+      "default": 1,
+      "title": "Schema V",
+      "type": "integer"
+    },
+    "kwargs": {
+      "additionalProperties": true,
+      "title": "Kwargs",
+      "type": "object"
+    }
+  },
+  "required": [
+    "pk",
+    "kwargs"
+  ],
+  "title": "MetadataTableDatapoint",
+  "type": "object"
+}

@@ -11,11 +11,11 @@ import re
 import typing as t
 
 try:
-    from constants import CLS_DIGITAL_ONLY
-    from metadata import DocumentMetadata
+    from constants import CLS_DIGITAL_ONLY, CLS_FRONTMATTER_TABLE
+    from state import DocumentState
 except (ImportError, ModuleNotFoundError):
-    from .constants import CLS_DIGITAL_ONLY
-    from .metadata import DocumentMetadata  # type: ignore
+    from .constants import CLS_DIGITAL_ONLY, CLS_FRONTMATTER_TABLE
+    from .state import DocumentState
 
 
 line_beginning_re = re.compile(r"^", re.MULTILINE)
@@ -44,10 +44,10 @@ def sub_inline_conversion(markup_fn):
 
 class MystMdConverter(markdownify.MarkdownConverter):
 
-    def __init__(self, metadata: t.Optional[DocumentMetadata], **options):
-        if metadata is None:
-            metadata = DocumentMetadata()
-        self._metadata: DocumentMetadata = metadata
+    def __init__(self, docstate: t.Optional[DocumentState], **options):
+        if docstate is None:
+            docstate = DocumentState()
+        self._docstate: DocumentState = docstate
         self._soup = bs4.BeautifulSoup("", "html.parser")
         super().__init__(**options)
 
@@ -56,8 +56,6 @@ class MystMdConverter(markdownify.MarkdownConverter):
         autolinks = True
         escape_underscores = False
         escape_misc = False
-        sub_symbol = "{sub}"
-        sup_symbol = "{sup}"
 
     def escape(self, text):
         if not text:
@@ -116,6 +114,8 @@ class MystMdConverter(markdownify.MarkdownConverter):
     def convert_span(self, el, text, convert_as_inline):
         if text.startswith("% :::{") and text.endswith(":::"):
             return "\n%s\n\n" % text
+        elif CLS_FRONTMATTER_TABLE in el.get("class", []):
+            return el.text
         elif CLS_DIGITAL_ONLY in el.get("class", []):
             return text
         return super().convert_p(el, text, convert_as_inline)
@@ -171,10 +171,11 @@ class MystMdConverter(markdownify.MarkdownConverter):
             end = "\n\n"
         return "" + (line_beginning_re.sub("> ", text) + end) if text else ""
 
-    convert_sub = sub_inline_conversion(lambda self: self.options["sub_symbol"])
+    def convert_sub(self, el, text, convert_as_inline):
+        prefix, suffix, text = markdownify.chomp(text)
+        return "%s<sub>%s</sub>%s" % (prefix, text, suffix)
 
     def convert_sup(self, el, text, convert_as_inline):
-        markup_tag = self.options["sup_symbol"]
         prefix, suffix, text = markdownify.chomp(text)
         if not text:
             return ""
@@ -182,7 +183,7 @@ class MystMdConverter(markdownify.MarkdownConverter):
             return text
         if text.startswith("[^endnote-ref-"):
             return text
-        return "%s%s`%s`%s" % (prefix, markup_tag, text, suffix)
+        return "%s<sup>%s</sup>%s" % (prefix, text, suffix)
 
     def convert_iframe(
         self, el: bs4.element.Tag, text: str, convert_as_inline: bool
@@ -208,8 +209,8 @@ class MystMdConverter(markdownify.MarkdownConverter):
 
 def convert_to_md(
     soup: bs4.BeautifulSoup,
-    metadata: t.Optional[DocumentMetadata] = None,
+    docstate: t.Optional[DocumentState] = None,
     **options,
 ) -> str:
     # TODO: change custom options to be passed to convert_to_md(**options <==)
-    return MystMdConverter(metadata, **options).convert_soup(soup)
+    return MystMdConverter(docstate, **options).convert_soup(soup)

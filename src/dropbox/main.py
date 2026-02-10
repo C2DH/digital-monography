@@ -11,29 +11,16 @@ import os
 import requests
 import logging
 import typing as t
-
 from mypy_boto3_dynamodb.service_resource import (
     DynamoDBServiceResource as boto3_DynamoDBServiceResource,
 )
 from mypy_boto3_s3.client import S3Client as boto3_S3Client
 
 
-try:
-    from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
-    from constants import (
-        ModuleEnum,
-        IS_DEBUG,
-    )
-    from keys import KeyPath
-    from logins import LoginEvent, LoginStatus
-except (ImportError, ModuleNotFoundError):
-    from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
-    from .constants import (
-        ModuleEnum,
-        IS_DEBUG,
-    )
-    from .keys import KeyPath
-    from .logins import LoginEvent, LoginStatus
+from src._common.audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
+from src._common.constants import ModuleEnum, IS_DEBUG
+from src._common.keys import KeyPath
+from logins import LoginEvent, LoginStatus
 
 
 if IS_DEBUG:
@@ -50,13 +37,6 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 dynamodb: boto3_DynamoDBServiceResource = boto3.resource("dynamodb")
 s3: boto3_S3Client = boto3.client("s3")
-# if IS_DEBUG:
-#     # TODO: add fakers
-#     dynamodb = None
-#     s3 = None
-# else:
-#     dynamodb = boto3.resource("dynamodb")
-#     s3 = boto3.client("s3")
 
 
 def lambda_handler(event, context):
@@ -85,18 +65,19 @@ def process_user(account: str, trace_id: str):
     """Call /files/list_folder for the given user ID and process any changes."""
     logger.info("process_user function was invoked with account " + str(account))
     # OAuth token for the user
-    table = os.environ.get("DYNAMODB_TOKENS_TBL", "")
-    tokens_resp = dynamodb_get(table, {"account": account})
-    logger.info("tokens_resp == " + json.dumps(tokens_resp, default=str))
-    token = tokens_resp.get("Item", {}).get("access_token")
-    logger.info(f"token == {token}")
-    # token = TOKEN
+    # table = os.environ.get("DYNAMODB_TOKENS_TBL", "")
+    # tokens_resp = dynamodb_get(table, {"account": account})
+    # logger.info("tokens_resp == " + json.dumps(tokens_resp, default=str))
+    # token = tokens_resp.get("Item", {}).get("access_token")
+    # logger.info(f"token == {token}")
+    token = _fetch_OAuth_token(account)
+    cursor = _fetch_cursor(account)
 
     # cursor for the user (None the first time)
-    table = os.environ.get("DYNAMODB_CURSORS_TBL", "")
-    cursors_resp = dynamodb_get(table, {"account": account})
-    cursor = cursors_resp.get("Item", {}).get("cursor")
-    logger.info(f"cursor == {cursor}")
+    # table = os.environ.get("DYNAMODB_CURSORS_TBL", "")
+    # cursors_resp = dynamodb_get(table, {"account": account})
+    # cursor = cursors_resp.get("Item", {}).get("cursor")
+    # logger.info(f"cursor == {cursor}")
     msg, slug = "", ""
     filenames = []
 
@@ -202,7 +183,6 @@ def process_user(account: str, trace_id: str):
 def dynamodb_set(tbl: str, **kwargs) -> None:
     expire_at = int((datetime.datetime.now() + datetime.timedelta(hours=4)).timestamp())
     table = dynamodb.Table(tbl)
-    # logger.info(f"{json.dumps({"expire_at": expire_at, **kwargs}, default=str)}")
     resp = table.put_item(Item={"expire_at": expire_at, **kwargs})
     logger.info(
         f"Response from dynamodb.Table({tbl}).put_item: {json.dumps(resp, default=str)}"
@@ -216,6 +196,38 @@ def dynamodb_get(tbl: str, pk: dict[str, str]) -> dict[str, t.Any]:
         f"Response from dynamodb.Table({tbl}).get_item: {json.dumps(resp, default=str)}"
     )
     return resp
+
+
+def _fetch_OAuth_token(account: str) -> str:
+    """
+    Fetch an OAuth token for the user from the DynamoDB table.
+    """
+    table = os.environ.get("DYNAMODB_TOKENS_TBL", "")
+    tokens_resp = dynamodb_get(table, {"account": account})
+    logger.info("tokens_resp == " + json.dumps(tokens_resp, default=str))
+    item: dict[str, t.Any] = tokens_resp.get("Item", {})
+    token = item.get("access_token", "")
+    logger.info(f"token == {token}")
+    assert type(token) == str
+    return token
+
+
+def _fetch_cursor(account: str) -> t.Optional[str]:
+    """
+    Fetch a cursor for the Dropbox user from the DynamoDB table.
+    A cursor is a pointer to a record within a result set,
+    which can be updated to point to the next record.
+    See this blog post for a better understanding of cursors in Dropbox:
+    https://web.archive.org/web/20250115190804/https://developers.dropbox.com/detecting-changes-guide
+
+    When retrieving for the first time, the cursor is None.
+    """
+    table = os.environ.get("DYNAMODB_CURSORS_TBL", "")
+    cursors_resp = dynamodb_get(table, {"account": account})
+    item: dict[str, t.Any] = cursors_resp.get("Item", {})
+    cursor: t.Optional[str] = item.get("cursor")
+    logger.info(f"cursor == {cursor}")
+    return cursor
 
 
 def _put_file_from_dbx_to_s3(body: bytes, key: KeyPath) -> None:
@@ -241,11 +253,27 @@ def _put_file_from_dbx_to_s3(body: bytes, key: KeyPath) -> None:
         raise
 
 
-def _delete_file_from_dbx_to_s3(key: KeyPath) -> None:
-    # This lambda cannot remove from EFS because it is outside of the VPC.
-    # To remedy that, I write to S3 and the next Lambda in the pipeline
-    # downloads it from there.
+def _remove_file(entry: dropbox.files.DeletedMetadata) -> None:
+    """
+    When a file is removed from the Dropbox dir it should also be removed from
+        * EFS - the file system attached to the workflow,
+        * S3 bucket where the author's package is uploaded,
+        * S3 buckets where intermediate representations, verification warnings
+        and metadata are stored (the logs should be kept, at least for outstanding TTL),
+        * DynamoDB tables where the file metadata is stored,
+        * GitHub repository.
+    Afterwards, the builder microservice should be triggered to build the manuscript
+    from the remaining files, if any.
+
+    Note that this microservice is outside the VPC and it does not have access to EFS,
+    so it should send a request  to S3, which will be processed by the next microservice
+    in the pipeline. Similarly, it should trigger the github microservice to remove the file
+    from the GitHub repo.
+    """
     try:
+        key = KeyPath(
+            entry.path_lower[1:] if entry.path_lower[0] == "/" else entry.path_lower
+        )
         dst = os.environ.get("APKG_UPLOAD_BUCKET_NAME", "")
         resp = s3.delete_object(Bucket=dst, Key=str(key))
         logger.info(
@@ -260,14 +288,6 @@ def _delete_file_from_dbx_to_s3(key: KeyPath) -> None:
         alert = AlertLog(slug=key.slug, status=AlertStatus.FAIL.value)
         alert.send(dynamodb)
         raise
-
-
-def _remove_file(entry: dropbox.files.DeletedMetadata) -> None:
-    logger.info("_remove_file")
-    p = entry.path_lower[1:] if entry.path_lower[0] == "/" else entry.path_lower
-    logger.info(f"path: {p}")
-    key = KeyPath(p)
-    _delete_file_from_dbx_to_s3(key)
 
 
 def _download_file(dbx: dropbox.Dropbox, entry: dropbox.files.FileMetadata) -> None:

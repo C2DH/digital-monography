@@ -9,17 +9,27 @@ import docx.oxml.text.parfmt
 import docx.oxml.text.paragraph
 import docx.oxml.text.run
 import docx.oxml.xmlchemy
+import typing as t
 
-try:
-    from constants import CAPTION_ALLOWED_ITEMS
-    from metadata import DocumentMetadata
-except (ImportError, ModuleNotFoundError):
-    from .constants import CAPTION_ALLOWED_ITEMS  # type: ignore
-    from .metadata import DocumentMetadata  # type: ignore
+from src._common.constants import CAPTION_ALLOWED_ITEMS
+from src._common.models import File, FileService
+from src._common.keys import KeyPath
+from src._common.state import BookState
+
+# try:
+#     from constants import CAPTION_ALLOWED_ITEMS
+#     from models import File, FileService
+#     from state import DocumentState  # type: ignore
+# except (ImportError, ModuleNotFoundError):
+#     from .constants import CAPTION_ALLOWED_ITEMS  # type: ignore
+#     from .models import File, FileService  # type: ignore
+#     from .state import DocumentState  # type: ignore
 
 
 def add_chapter_number_to_captions(
-    doc: docx.document.Document, metadata: DocumentMetadata
+    key: KeyPath,
+    doc: docx.document.Document,
+    bookstate: BookState,
 ) -> None:
     """
     Find caption paragraphs and add chapter number to the automatic numbering.
@@ -53,7 +63,7 @@ def add_chapter_number_to_captions(
             <fldChar w:fldCharType="begin" />
         </r>
     ```
-    Note that only complex fields are supported (fildChar) and not fldSimple.
+    Note that only complex fields are supported (fldChar) and not fldSimple.
     Once a begin of fieldChar has been found in a caption-styled paragraph,
     the number of a chapter is concatenated to the text of a previous run,
     which should be the caption type (e.g. "Figure" or "Table").
@@ -63,6 +73,7 @@ def add_chapter_number_to_captions(
         "//w:p/w:pPr/w:pStyle[@w:val='Caption']"
     )
     for caption_pstyle_el in captions_pstyle_elems:
+        assert isinstance(caption_pstyle_el, docx.oxml.shared.CT_String)
         pPr: docx.oxml.text.parfmt.CT_PPr = caption_pstyle_el.getparent()
         p: docx.oxml.text.paragraph.CT_P = pPr.getparent()
         assert isinstance(p, docx.oxml.text.paragraph.CT_P)
@@ -72,15 +83,30 @@ def add_chapter_number_to_captions(
             prev: docx.oxml.text.run.CT_R = field.getprevious()
             if _is_caption_item(prev):
                 assert isinstance(prev, docx.oxml.text.run.CT_R)
-                try:
-                    file_dp = next(
-                        f for f in metadata.files if f.stem == metadata.filepath.stem
-                    )
-                    prev.text = f"{prev.text}{file_dp.prefix}."
-                except StopIteration:
-                    num = metadata.get_chapter_number()
-                    if num is not None:
-                        prev.text = f"{prev.text}{num}."
+                file = _find_file(key, bookstate)
+                num = FileService.get_number_from_filename(key.stem)
+                if isinstance(file, File):
+                    prev.text = f"{prev.text}{file.prefix}."
+                elif num is not None:
+                    prev.text = f"{prev.text}{num}."
+
+                # try:
+                #     file_dp = next(
+                #         f for f in docstate["files"] if f.stem == docstate.key.stem
+                #     )
+                #     prev.text = f"{prev.text}{file_dp.prefix}."
+                # except StopIteration:
+                #     num = metadata.get_chapter_number()
+                #     if num is not None:
+                #         prev.text = f"{prev.text}{num}."
+
+
+def _find_file(key: KeyPath, bookstate: BookState) -> t.Iterator[File | None]:
+    files: list[File] = bookstate.all("files")
+    for f in files:
+        if f.stem == key.stem:
+            yield f
+    yield None
 
 
 def _is_caption_item(node: str) -> bool:

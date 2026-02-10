@@ -1,3 +1,12 @@
+"""
+NOTE: This module is in dire need of refactoring.
+It is a mess of functions and classes that do not follow any particular pattern.
+Dear future me, please refactor it at the next time you need to touch referencing logic.
+"""
+
+# This module handles references and targets compliant with the old
+# Jupyter Book v1 specification.
+
 import pathlib
 import bs4
 import docutils.nodes
@@ -6,410 +15,295 @@ import secrets
 import string
 import functools
 import typing as t
+import uuid
 
-try:
-    from metadata import (
-        DocumentMetadata,
-        HeadingDatapoint,
-        RefDatapoint,
-        SubstitutionDatapoint,
-        TargetDatapoint,
-    )
-    from keys import KeyPath
-    from constants import (
-        AUTONUMBER_PLACEHOLDER,
-        CAPTION_ITEM_TYPE_FIGURE,
-        CAPTION_ITEM_TYPE_TABLE,
-        CAPTION_ITEM_TYPE_GRAPH,
-        CAPTION_ITEM_TYPE_OTHER,
-        CLS_CAPTION,
-        CLS_DIGITAL_ONLY,
-        CLS_PAPER_ONLY,
-    )
-except (ImportError, ModuleNotFoundError):
-    from .metadata import (
-        DocumentMetadata,
-        HeadingDatapoint,
-        RefDatapoint,
-        SubstitutionDatapoint,
-        TargetDatapoint,
-    )
-    from .keys import KeyPath
-    from .constants import (
-        AUTONUMBER_PLACEHOLDER,
-        CAPTION_ITEM_TYPE_FIGURE,
-        CAPTION_ITEM_TYPE_TABLE,
-        CAPTION_ITEM_TYPE_GRAPH,
-        CAPTION_ITEM_TYPE_OTHER,
-        CLS_CAPTION,
-        CLS_DIGITAL_ONLY,
-        CLS_PAPER_ONLY,
-    )
-
-
-def is_header(tag: bs4.element.Tag) -> bool:
-    return bool(re.match(r"^h[1-6]$", tag.name))
-
-
-def is_caption(tag: bs4.element.Tag) -> bool:
-    # "p", {"class": "dgt-mon-caption"}
-    # return bool(tag.name == "p" and "dgt-mon-caption" in tag.attrs.get("class", []))
-    return bool(tag.name == "p" and CLS_CAPTION in tag.attrs.get("class", []))
-
-
-def is_footnote(tag: bs4.element.Tag) -> bool:
-    return bool(tag.name == "li" and tag.attrs.get("id", "").startswith("footnote-"))
+from src._common.constants import (
+    AUTONUMBER_PLACEHOLDER,
+    CAPTION_ITEM_TYPE_FIGURE,
+    CAPTION_ITEM_TYPE_TABLE,
+    CAPTION_ITEM_TYPE_GRAPH,
+    CAPTION_ITEM_TYPE_OTHER,
+    CLS_CAPTION,
+    CLS_DIGITAL_ONLY,
+    CLS_PAPER_ONLY,
+)
+from src._common.metadata import (
+    DocumentMetadata,
+    HeadingDatapoint,
+    RefDatapoint,
+    SubstitutionDatapoint,
+    TargetDatapoint,
+)
+from src._common.models import Heading, Ref, RefTarget, Substitution, Target
+from src._common.keys import KeyPath
+from src._common.state import DocumentState
 
 
 def is_reference(tag: bs4.element.Tag) -> bool:
     # "a", href=True
     return bool(tag.name == "a" and tag.attrs.get("href"))
+    # return bool(
+    #     tag.name == "a"
+    #     and tag.attrs.get("href")
+    #     and tag.attrs.get("id", "").startswith("footnote")
+    # )
 
 
-# targets ############
+# def print(*args, **kwargs):
+#     # disable all print statements in the module
+#     pass
+#     # __builtins__.print(*args, **kwargs)
 
 
-def prepare_ref_targets_in_headers(
-    html_soup: bs4.BeautifulSoup,
-    metadata: DocumentMetadata,
-    headers: list[bs4.element.Tag],
-) -> bs4.BeautifulSoup:
-    for tag in headers:
-        tag: bs4.element.Tag
-        anchors = []
-        link = None
-        for child in tag.children:
-            if child.name == "a":
-                target_tag = html_soup.new_tag("pre")
-                link = LinkMystifier()
-                link.set_filepath(metadata.filepath)
-                link.set_from_id(child["id"])
-                target_tag.string = link.mystify_target()
-                tag.insert_before(target_tag)
-                anchors.append(child)
-                is_digital, is_paper = _get_isdigital_and_ispaper(tag, "")
+"""
+===INFILE=========================================================
+Say a_tag in file "05_conditional-rendering.docx" is
+`<a href="#_Ref193102947">Figure 1</a>`
 
-                # print("metadata.filepath", metadata.filepath)
-                # print("link.FRAGMENT????", link)
-                # print("-" * 50)
+Link
+id # f-05-conditional-rendering-ref193102947 # USED to be target_id
+unique_id # f05conditionalrenderingref193102947 # substitution_id
+text_to_replace # "1" extracted from prev_string="Figure 1" ("was" in Substitution)
+make_text() # get text to put into [text](...)
+make_destination() # ..to put into [...](destination)
 
-                target = TargetDatapoint(
-                    pk=link.id,
-                    html=str(tag),
-                    # text=link.id,
-                    text=tag.text,
-                    elem=str(tag),
-                    item_type="heading",
-                    is_digital=is_digital,
-                    is_paper=is_paper,
-                    filename=metadata.filepath.name if metadata.filepath else None,
-                    fragment=child["id"],
-                    prefix="",
-                    file_count=metadata.get_chapter_number(),
-                    prev_item_num=None,
-                )
-                metadata.add_target(target)
-        h_lvl = "".join(ch for ch in tag.name if ch.isdigit())
-        heading = HeadingDatapoint(
-            file_name=metadata.filepath.name if metadata.filepath else "",
-            text=tag.text,
-            target=link.fragment if link else "",
-            word_count=metadata.word_count,
-            char_count=metadata.char_count,
-            level=h_lvl,
-            elem=str(tag),
-        )
-        metadata.add_heading(heading)
-        for a in anchors:
-            a.extract()
-    return html_soup
+<a href="#f-05-conditional-rendering-ref193102947">Figure {{ f05conditionalrenderingref193102947 }}</a>
 
+text=Figure {{ f05conditionalrenderingref193102947 }}
+dest=#f-05-conditional-rendering-ref193102947
+     ^  fragment
+===F2F============================================================
+Say a_tag in file "01_a.docx" is
+<a href="02_b.docx#tblSimpleTable">link in caption to a table in chapter 2</a>
 
-def prepare_ref_targets_in_captions(
-    html_soup: bs4.BeautifulSoup,
-    metadata: DocumentMetadata,
-    captions: list[bs4.element.Tag],
-) -> bs4.BeautifulSoup:
-    for caption in captions:
-        anchors = _extract_anchor_tags(html_soup, caption)
-        item_type = _get_item_type(caption)
-        unique_id = []
-        ref_stack = []
+Link
+id # f-02-b-tblsimpletable # USED to be target_id
+unique_id # 02bdocxf02btblsimpletable # substitution_id
+text_to_replace # "2" extracted from prev_string="link in caption to a table in chapter 2" ("was" in Substitution)
+make_text() # get text to put into [text](...)
+make_destination() # ..to put into [...](destination)
 
-        def _replace_data_tag(
-            tag: bs4.element.PageElement,
-            prev: t.Optional[bs4.element.PageElement],
-            sep: str,
-            a_id: str,
-        ) -> None:
-            """
-            Recurse over the caption's elements to replace bookmarks
-            e.g. `<data value=" SEQ Figure \\* ARABIC ">1</data>`
-            with `{{ _Ref123456789 }}`, incl. numbering separated with a char.
-            Replace the n-th
-            """
-            if not hasattr(tag, "children"):
-                return
-            for child in tag.children:
-                if child.name == "data" and not ref_stack:
-                    # handle 1-st <data> tag
-                    escaped_id = (
-                        a_id.replace("-", "")
-                        .replace(".", "")
-                        .replace("#", "")
-                        .replace("_", "")
-                    )
-                    child.replace_with("{{ %s }}" % escaped_id)
-                    unique_id.append(escaped_id)
-                    sep = ""
-                    ref_stack.append(child)
-                elif child.name == "data":
-                    # handle separator
-                    if len(sep) > 0 and len(sep) < 3:
-                        prev.extract()
-                        ref_stack.append(sep)
-                    # handle n-th <data> tag to the stack
-                    ref_stack.append(child)
-                    child.extract()
-                elif prev and prev.name == "data":
-                    sep += child.string
-                prev = child
-                _replace_data_tag(child, prev, sep, a_id)
+<a href="./02_b.md#f-02-b-tblsimpletable">link in caption to a table in chapter {{ 02bdocxf02btblsimpletable }}</a>
 
-        link = LinkMystifier()
-        link.set_filepath(metadata.filepath)
-        link.set_from_id(anchors[0]["id"])
-        _replace_data_tag(caption, None, "", link.id)
-
-        # TODO: maybe there should be some id for the caption
-        # to group bookmarks that relate to the same object
-        # breakpoint()
-        for a in anchors:
-            link = LinkMystifier()
-            link.set_filepath(metadata.filepath)
-            link.set_from_id(a["id"])
-            identifier = link.id.replace("-", "") if not unique_id else unique_id[0]
-            is_digital, is_paper = _get_isdigital_and_ispaper(caption, identifier)
-            # plain_text_num = _get_plain_text_numbering(ref_stack)
-
-            # print("metadata.filepath", metadata.filepath)
-            # print('a["id"]', a["id"])
-            # print("caption", caption)
-            # # print("link.FRAGMENT????", link)
-            # print("-" * 50)
-
-            seq = TargetDatapoint.parse_ref_stack(ref_stack)
-            target = TargetDatapoint(
-                # html="".join(str(elem) for elem in ref_stack),
-                pk=link.id,
-                html=seq["html"],
-                text=seq["plain_text_num"],  # calc from ref_stack
-                elem=str(caption),
-                item_type=seq["item_type"],
-                is_digital=is_digital,  # calc from caption and identifier
-                is_paper=is_paper,  # calc from caption and identifier
-                filename=metadata.filepath.name if metadata.filepath else None,
-                fragment=a["id"],
-                file_count=metadata.get_chapter_number(),
-                prefix=seq["prefix"],  # calc from ref_stack
-                prev_item_num=seq["prev_item_num"],  # calc from ref_stack
-            )
-            metadata.add_target(target)
-            if unique_id and metadata.get_substitution(unique_id[0]) is None:
-                target_fn = metadata.filepath.name if metadata.filepath else None
-                # print("target_fn", target_fn, type(target_fn))
-                # assert isinstance(target_fn, str)
-                metadata.add_substitution(
-                    SubstitutionDatapoint(
-                        pk=unique_id[0],
-                        was=target.text,
-                        placeholder=target.pk,
-                        # placeholder=unique_id[0],
-                        # item_type=item_type,
-                        item_type=target.item_type,
-                        is_digital=is_digital,
-                        is_paper=is_paper,
-                        file_count=metadata.get_chapter_number(),
-                        # new
-                        target_fn=target_fn,
-                        prefix=target.prefix,
-                        prev_item_num=target.prev_item_num,
-                    )
-                )
-            target_tag = html_soup.new_tag("pre")
-            target_tag.string = link.mystify_target()
-            try:
-                caption.insert_before(target_tag)
-            except ValueError:
-                caption.insert(0, target_tag)
-    return html_soup
-
-
-def _extract_anchor_tags(
-    html_soup: bs4.BeautifulSoup, caption: bs4.element.Tag
-) -> list[bs4.element.Tag]:
-    """
-    Return an anchor tag like `<a id="_Ref178606187">`
-    or `<a id="_Unref723089458">` if a caption had no bookmark
-    extracted from a caption (after this func anchor is not in caption).
-    In later functs, the contents of anchor tag will be wrapped into this anchor.
-    """
-    anchors = caption.find_all("a", id=True)
-    if not anchors:
-        a = html_soup.new_tag("a")
-        a_id = "".join(secrets.choice(string.digits) for i in range(9))
-        a["id"] = "_Unref" + a_id
-        return [a]
-    else:
-        for a in anchors:
-            a = a.extract()
-    return anchors
-
-
-def _get_item_type(caption: bs4.element.Tag) -> str:
-    caption_match = re.match(r"^\s*(\w+) (\d+)", caption.text)
-    if caption_match is not None:
-        item = caption_match.group(1)
-        item = item.lower() if item else item
-    else:
-        return CAPTION_ITEM_TYPE_OTHER
-    item_types_mapping = {
-        "fig": CAPTION_ITEM_TYPE_FIGURE,
-        "figure": CAPTION_ITEM_TYPE_FIGURE,
-        "table": CAPTION_ITEM_TYPE_TABLE,
-        "tbl": CAPTION_ITEM_TYPE_TABLE,
-        "graph": CAPTION_ITEM_TYPE_GRAPH,
-    }
-    if item not in item_types_mapping.keys():
-        return CAPTION_ITEM_TYPE_OTHER
-    return item_types_mapping[item]
-
-
-# def _get_plain_text_numbering(ref_stack: list[bs4.element.PageElement]) -> str:
-#     res = ""
-#     for el in ref_stack:
-#         if hasattr(el, "string"):
-#             res += el.string
-#         else:
-#             res += str(el)
-#     return res
-
-
-def _get_isdigital_and_ispaper(caption: bs4.Tag, identifier: str) -> tuple[bool, bool]:
-    css_classes = [
-        tag.get("class", [])
-        for tag in caption.descendants
-        if isinstance(tag, bs4.element.Tag) and (identifier in tag.text)
-    ]
-    css_classes: list[str] = [item for sublist in css_classes for item in sublist]
-    is_digital = is_paper = True
-    if CLS_DIGITAL_ONLY in css_classes and CLS_PAPER_ONLY in css_classes:
-        is_digital = is_paper = None
-    elif CLS_DIGITAL_ONLY in css_classes:
-        is_paper = False
-    elif CLS_PAPER_ONLY in css_classes:
-        is_digital = False
-    return is_digital, is_paper
-
-
-def prepare_ref_targets_in_footnotes(
-    html_soup: bs4.BeautifulSoup,
-    metadata: DocumentMetadata,
-    footnotes: list[bs4.element.Tag],
-) -> bs4.BeautifulSoup:
-    for li_tag in footnotes:
-        li_tag: bs4.element.Tag
-        footnote = FootnoteMystifier()
-        footnote.set_filepath(metadata.filepath)
-        footnote.from_target(li_tag["id"])
-        li_tag["id"] = footnote.id
-        for tag in li_tag.descendants:
-            if isinstance(tag, bs4.element.Tag) and tag.attrs.get(
-                "href", ""
-            ).startswith("#footnote-ref-"):
-                tag["href"] = footnote.href
-                break
-    return html_soup
-
-
-# references ############
+text=link in caption to a table in chapter {{ 02bdocxf02btblsimpletable }}
+dest=./02_b.md#f-02-b-tblsimpletable
+        path  ^  fragment
+=================================================================
+"""
 
 
 def prepare_references(
     html_soup: bs4.BeautifulSoup,
     metadata: DocumentMetadata,
-    references: list[bs4.element.Tag],
+    docstate: DocumentState,
+    references: list[bs4.Tag],
 ) -> bs4.BeautifulSoup:
+    """
+    There are 4 types of references:
+    * footnotes, handled in footnotes.py
+    * external, e.g. email or http link
+    * internal in-file, e.g. #some-id
+    * internal file-to-file, e.g. otherfile.md#some-id
+
+    Input for external:
+        <a href="http:/example.com">link to a website</a>
+    Expected output (no change):
+        <a href="http:/example.com">link to a website</a>
+
+    Input for internal in-file:
+        <a href="#_Ref193102947">Figure 1</a>
+    Expected output:
+        <a href="#f-01-my-file-ref193102947">Figure {{ f01myfileref193102947 }}</a>
+
+    Input for internal file-to-file:
+        <a href="01_a.docx#bookmarkToTbl">link to a table in chapter 1</a>
+    Expected output:
+        <a href="./01_a.md#f-01-a-bookmarktotbl">link to a table in chapter {{ 01adocxf01abookmarktotbl }}</a>
+    """
+    for chpt in docstate.__dict__.get("chapters"):
+        print("chapter in docstate", chpt)
+
     for a_tag in references:
-        a_tag: bs4.element.Tag
-        if _is_ref_footnote(a_tag):
-            footnote = FootnoteMystifier()
-            footnote.set_filepath(metadata.filepath)
-            footnote.from_ref(a_tag["id"])
-            a_tag["href"] = footnote.href
-            a_tag["id"] = footnote.id
-            a_tag.string = footnote.string
-        elif _is_target_footnote(a_tag):
-            pass
-        else:
-            if _check_if_link_marked_as_paper_only(a_tag):
-                # a_tag.extract()
-                tag_class = a_tag.get("class", [])
-                tag_class.append(CLS_PAPER_ONLY)
-                a_tag["class"] = tag_class
+        print("=" * 75)
+        print("a_tag", a_tag)
+        if _is_ref_footnote(a_tag) or _is_target_footnote(a_tag):
+            # handled in footnotes.py
+            continue
+        # print(
+        #     "_check_if_link_marked_as_paper_only(a_tag)",
+        #     _check_if_link_marked_as_paper_only(a_tag),
+        # )
+        # if _check_if_link_marked_as_paper_only(a_tag):
 
-            link = LinkMystifier()
-            link.set_filepath(metadata.filepath)
-            link.set_from_href(a_tag["href"])
-            target = metadata.get_target(link.id) if link.is_inner_reference() else None
-            link_text = link.make_text(a_tag.text, target)
-            link_dest = link.make_destination()
-            prev_string = a_tag.string if a_tag.string is not None else ""
-            prev_href = a_tag["href"]
-            a_tag.string = link_text
-            a_tag["href"] = link_dest
-            ref = RefDatapoint(
-                target_id=target.pk if target else "",
-                fn=metadata.filepath.name,
-                text=link_text,
-                href=link_dest,
-                prev_string=prev_string,
-                prev_href=prev_href,
-                elem=str(a_tag.parent),
+        #     tag_class = a_tag.get("class", [])
+        #     tag_class.append(CLS_PAPER_ONLY)
+        #     a_tag["class"] = tag_class
+
+        _mark_paper_only_tag(a_tag)
+        print("POST_a_tag", a_tag)
+
+        fn, fragment = _get_fn_and_fragment_from_href(a_tag["href"])
+        # fragment = docutils.nodes.make_id(fragment)  # slugify consistently with targets
+        # is_internal = _is_internal(a_tag["href"], fn, fragment)
+        print("/n/n===")
+        print(f"fn={fn}, fragment={fragment}")
+        ref_targets = _find_ref_targets(docstate, a_tag["href"], fn, fragment)
+        print("ref_targets", ref_targets)
+
+        print(
+            "a_tag > after paperonly handling", a_tag
+        )  # <a class="dgt-mon-paper-only" href="#figForPaper"><span class="dgt-mon-paper-only">link to figForPaper bookmark</span></a>
+        link = LinkMystifier()
+        # take current file and href from <a> tag
+        # use urllib.urlsplit to parse href
+        print("metadata.filepath", metadata.filepath)
+        link.set_filepath(metadata.filepath)
+        print('a_tag["href"]', a_tag["href"])
+        link.set_from_href(a_tag["href"])
+        print("link.id", link.id)
+        # if is inner reference, get a target
+        # target = metadata.get_target(link.id) if link.is_inner_reference() else None
+        target = docstate.get("targets", link.id) if link.is_inner_reference() else None
+        print("target", target)
+
+        # ref_target = docstate.get("ref_targets", link.id, "proc_href")
+        # print(">.> ref_target", ref_target)
+
+        # get text to put into [text](...)
+        link_text = link.make_text(a_tag.text, target)
+        print("link_text", link_text)
+        # get dest to put into [...](destination)
+        link_dest = link.make_destination()
+        print("link_dest", link_dest)
+        prev_string = a_tag.string if a_tag.string is not None else ""
+
+        print("prev_string", prev_string)
+        print("a_tag.string", a_tag.string)
+        print('a_tag["href"]', a_tag["href"])
+        print(
+            "a_tag > before string replacement", a_tag
+        )  # <a class="dgt-mon-paper-only" href="#figForPaper"><span class="dgt-mon-paper-only">link to figForPaper bookmark</span></a>
+        prev_href = a_tag["href"]
+        a_tag.string = link_text
+        a_tag["href"] = link_dest
+        print(
+            "a_tag > after string replacement", a_tag
+        )  # <a class="dgt-mon-paper-only" href="#f-05-conditional-rendering-figforpaper">link to figForPaper bookmark</a>
+        ref = RefDatapoint(
+            target_id=target.pk if target else "",
+            fn=metadata.filepath.name,
+            text=link_text,
+            href=link_dest,
+            prev_string=prev_string,
+            prev_href=prev_href,
+            elem=str(a_tag.parent),
+        )
+        print("RefDatapoint", ref)
+        metadata.add_ref(ref)
+        data = Ref(
+            loc=docstate.key,
+            target_id=target.pk if target else "",
+            fn=docstate.key.name if docstate.key else "",
+            text=link_text,
+            href=link_dest,
+            prev_string=prev_string,
+            prev_href=prev_href,
+            elem=str(a_tag.parent),
+        )
+        print("Ref", data.model_dump())
+        docstate.add(data)
+        # Ref(
+        #     loc=dstate.key,
+        #     target_id=target.pk if target else "",
+        #     fn=dstate.key.name if dstate.key else "",
+        #     text=link_text,
+        #     href=link_dest,
+        #     prev_string=prev_string,
+        #     prev_href=prev_href,
+        #     elem=str(a_tag.parent),
+        # )
+        # )
+        print("link.unique_id", link.unique_id)  # f05conditionalrenderingref193102988
+        print(
+            "metadata.get_substitution(link.unique_id)",
+            metadata.get_substitution(link.unique_id),
+        )
+        # TODO: get substitution from docstate
+        # if link.unique_id and metadata.get_substitution(link.unique_id) is None:
+        if link.unique_id and docstate.get("substitutions", link.unique_id) is None:
+            # get chapter number from the href if f2f else number from current file
+            # TODO: more logic to take the chapter number AFTER the split
+            target_chapter_number = (
+                metadata.get_chapter_number(link.path)
+                if link.path and link.is_cross_file_reference()
+                else metadata.get_chapter_number()
             )
-            metadata.add_ref(ref)
-            if link.unique_id and metadata.get_substitution(link.unique_id) is None:
-                # get chapter number from the href if f2f else number from current file
-                target_chapter_number = (
-                    metadata.get_chapter_number(link.path)
-                    if link.path and link.is_cross_file_reference()
-                    else metadata.get_chapter_number()
+            print("target_chapter_number", target_chapter_number)
+            print("link.path", link.path)
+            if link.path and link.is_cross_file_reference():
+                target_fn = KeyPath(link.path).name
+                print("KeyPath(link.path).name", target_fn)
+            elif metadata.filepath and link.is_inner_reference():
+                target_fn = metadata.filepath.name
+                # TODO: get from docstate
+                print("metadata.filepath.name", target_fn)
+            else:
+                target_fn = None
+            # target_fn = (
+            #     link.path if link.path and link.is_cross_file_reference() else None
+            # )
+            metadata.add_substitution(
+                SubstitutionDatapoint(
+                    pk=link.unique_id,
+                    was=link.text_to_replace,
+                    # placeholder=link.unique_id,
+                    placeholder=link.id,
+                    item_type="ref",
+                    is_digital=None,
+                    is_paper=None,
+                    location=metadata.filepath,
+                    target_fn=target_fn,
+                    file_count=target_chapter_number,
+                    prefix="",
+                    prev_item_num=None,
                 )
-
-                if link.path and link.is_cross_file_reference():
-                    target_fn = KeyPath(link.path).name
-                elif metadata.filepath and link.is_inner_reference():
-                    target_fn = metadata.filepath.name
-                else:
-                    target_fn = None
-                # target_fn = (
-                #     link.path if link.path and link.is_cross_file_reference() else None
-                # )
-                metadata.add_substitution(
-                    SubstitutionDatapoint(
-                        pk=link.unique_id,
-                        was=link.text_to_replace,
-                        # placeholder=link.unique_id,
-                        placeholder=link.id,
-                        item_type="ref",
-                        is_digital=None,
-                        is_paper=None,
-                        target_fn=target_fn,
-                        file_count=target_chapter_number,
-                        prefix="",
-                        prev_item_num=None,
-                    )
-                )
+            )
+            data = Substitution(
+                loc=docstate.key,
+                pk=link.unique_id,
+                hash="",
+                was=link.text_to_replace,
+                # placeholder=link.unique_id,
+                placeholder=link.id,
+                item_type="ref",
+                is_digital=None,
+                is_paper=None,
+                location=metadata.filepath,
+                target_fn=target_fn,
+                file_count=target_chapter_number,
+                prefix="",
+                prev_item_num=None,
+            )
+            print("S>", data.model_dump())
+            docstate.add(data)
+            # docstate.add(
+            #     Substitution(
+            #         loc=docstate.key,
+            #         pk=link.unique_id,
+            #         was=link.text_to_replace,
+            #         # placeholder=link.unique_id,
+            #         placeholder=link.id,
+            #         item_type="ref",
+            #         is_digital=None,
+            #         is_paper=None,
+            #         location=metadata.filepath,
+            #         target_fn=target_fn,
+            #         file_count=target_chapter_number,
+            #         prefix="",
+            #         prev_item_num=None,
+            #     )
+            # )
+        print("post a_tag", a_tag)
     return html_soup
 
 
@@ -421,6 +315,37 @@ def _is_ref_footnote(a_tag: bs4.element.Tag) -> bool:
 
 def _is_target_footnote(a_tag: bs4.element.Tag) -> bool:
     return bool(a_tag.attrs.get("href", "").startswith("#footnote-ref-"))
+
+
+def _mark_paper_only_tag(a_tag: bs4.Tag) -> None:
+    """
+    The way it is implemented now, "paper-only" css class will mark only
+    descendants of the hyperlink tag and not the hyperlink tag itself.
+    `<a href="https://example.com"><span class="dgt-mon-paper-only">text</span></a>`
+    This is because in OOXML, highlight is a property of runs inside of hyperlink tag,
+    while the hyperlink tag itself is not considered highlited. This enables .docx users
+    to have different highlights in the same hyperlink element, but requires additional
+    processing from the preparer microservice.
+
+    To mitigate that, iterate over descendents and check if all of them are marked
+    as paper-only.
+    If yes, mark the hyperlink tag as paper-only as well.
+    """
+    res = set()
+    for tag in a_tag.descendants:
+        if isinstance(tag, bs4.Tag) and tag.get("class", []) == [CLS_PAPER_ONLY]:
+            res.add(True)
+        elif isinstance(tag, bs4.NavigableString):
+            pass
+        else:
+            res.add(False)
+    if not res:
+        return
+    is_paper_only = all(res)
+    if is_paper_only:
+        tag_class = a_tag.get("class", [])
+        tag_class.append(CLS_PAPER_ONLY)
+        a_tag["class"] = tag_class
 
 
 def _check_if_link_marked_as_paper_only(a_tag: bs4.Tag) -> bool:
@@ -674,61 +599,93 @@ class LinkMystifier:
         # r"(?:\s)(([ivxlcdm]+|[a-z]{1}|\d+)[.:—-]{1}\d)", tag_text.lower()
 
 
-class FootnoteMystifier:
+def _get_fragment_from_anchor_href(a_tag: bs4.Tag) -> str:
     """
-    After translation, the html should follow MyST/pandoc syntax:
-        ```html
-        <p> Ref of a footnote
-            <sup>
-                <a href="#footnote-$ID" id="footnote-ref-$ID">[footnote-$ID]</a>
-            </sup>
-        .</p>
-        <ol>
-            <li id="footnote-$ID">
-              <p> Target of a footnote. <a href="#footnote-ref-$ID">↑</a></p>
-            </li>
-        </ol>
-        ```
-    where $ID is the unique_id of an instance of a footnote.
-
-    This should be transformed by `html2md` to
-        ```md
-        Ref of a footnote[^footnote-$ID].
-        [^footnote-$ID]: Target of a footnote.
-        ```
-
-    For more info see [docs](https://myst-parser.readthedocs.io/en/latest/syntax/typography.html#syntax-footnotes)
+    Given an anchor tag id like `<a id="_Ref193102947"></a>` or `<a id="a_Heading"></a>`,
+    return the fragment identifier, e.g. `ref193102947` or `a-heading`.
+    Make sure fragment slugification is consistent with reference preparation.
     """
+    tag_href = a_tag.get("href", "")
+    return tag_href
+    # return docutils.nodes.make_id(tag_href) # maybe slugification is not needed since we are using hash as id anyway?
 
-    # TODO: handle endnotes the same way as footnotes
 
-    def __init__(self):
-        self.filepath: t.Optional[KeyPath] = None
-        self.href: str = ""
-        self.id: str = ""
-        self.string: str = ""
+def _get_fn_and_fragment_from_href(href: str) -> tuple[str, str]:
+    """
+    Extracts filename and fragment identifier from an URI.
+    If a value is not present, an empty string is returned instead.
 
-    def set_filepath(self, fn: t.Optional[KeyPath]) -> None:
-        self.filepath = fn
+    E.g. "manuscript.docx" and "fragment" from:
+        "https://sharepoint.com/some/path/manuscript.docx#fragment"
+        "./manuscript.docx#fragment"
+    """
+    # 'A fragment identifier component is indicated by the presence of a number sign ("#")'
+    # so it should always be an index of #.
+    # See https://www.rfc-editor.org/rfc/rfc3986#section-3.5
+    if "#" in href:
+        fragment_idx = href.index("#")
+    else:
+        fragment_idx = len(href)
+    path = href[:fragment_idx]
+    fragment = href[fragment_idx + 1 :]
+    if "." not in path:
+        return "", fragment
+    for scheme in ["tel:", "mailto:", "sms:", "javascript:"]:
+        if path.startswith(scheme):
+            return "", fragment
+    if "/" not in path:
+        return path, fragment
+    filename = ""
+    for i in range(len(path) - 1, -1, -1):
+        ch = path[i]
+        # if ch == ".":
+        #     suffix = path[i + 1 :]
+        if ch == "/":
+            filename = path[i + 1 :]
+            break
+    if "." not in filename:
+        return "", fragment
+    return filename, fragment
 
-    def _get_unique_id(self, old_id: str) -> str:
-        return docutils.nodes.make_id(f"fn-{self.filepath.stem}-{old_id}")
 
-    def from_ref(self, a_id: str):
-        assert a_id.startswith("footnote-ref-") == True
-        unique_id = self._get_unique_id(a_id[len("footnote-ref-") :])
-        self.href = f"#footnote-{unique_id}"
-        self.string = f"[{unique_id}]"
-        # only for going back from target to ref in html, irrelevant in md
-        self.id = f"footnote-ref-{unique_id}"
+def _is_internal(href: str, filename: str, fragment: str) -> bool:
+    """
+    Returns if a resource is internal (either in the same file or f2f).
+    By internal, we mean there is some particular fragment in some particular file.
+    Does not matter is the file is hosted remotely in some external source (e.g. SharePoint).
 
-    def from_target(self, li_id: str):
-        assert li_id.startswith("footnote-ref-") == False
-        assert li_id.startswith("footnote-") == True
-        unique_id = self._get_unique_id(li_id[len("footnote-") :])
-        self.id = f"footnote-{unique_id}"
-        # only for going back from target to ref in html, irrelevant in md
-        self.href = f"#footnote-ref-{unique_id}"
+    NOTE: Consider checking if current file is the same as file in href
+    to check if the link is in-file or f2f.
+    """
+    if fragment and not filename:
+        return len(href) == len(fragment) + 1  # href is just "#fragment"
+    return filename != "" and fragment != ""
 
-    def __str__(self) -> str:
-        return f"FootnoteMystifier(href={self.href}, id={self.id})"
+
+def _find_ref_targets(
+    docstate: DocumentState, href: str, fn: str, fragment: str
+) -> list[RefTarget]:
+    """
+    Find RefTarget objects for a given anchor tag.
+    It relies on the fact that in DOCX, a target reference identifier is unique,
+    but only inside the same DOCX file. Therefore, we have to find a RefTarget
+    linked to some source document (i.e. a document before eventual  split
+    into multiple chapters).
+    """
+    is_internal = _is_internal(href, fn, fragment)
+    if not is_internal:
+        return []  # external
+    rt_all: list[RefTarget] = docstate.__dict__.get("ref_targets", [])
+    if is_internal and fn == "":
+        # internal in-file reference
+        print("TEMP", [rt for rt in rt_all if rt.fragment == fragment])
+
+        return [
+            rt
+            for rt in rt_all
+            if str(rt.fm_key) == str(docstate.key) and rt.fragment == fragment
+        ]
+    elif is_internal and fn != "":
+        # internal in-file or f2f reference, check by name where to look for
+        print("TEMP", [rt for rt in rt_all if rt.fragment == fragment])
+        return [rt for rt in rt_all if rt.fm_key.name == fn and rt.fragment == fragment]

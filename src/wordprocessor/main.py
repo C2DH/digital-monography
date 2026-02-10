@@ -4,34 +4,28 @@ import datetime
 import docx.document
 import json
 import logging
+import os
 import pathlib
+import sys
 import typing as t
-import yaml
-
 from mypy_boto3_dynamodb.service_resource import (
     DynamoDBServiceResource as boto3_DynamoDBServiceResource,
 )
 
-try:
-    from audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
-    from constants import IS_DEBUG, ModuleEnum
-    from conditional_rendering import (
-        remove_parts_and_highlights_due_to_conditional_rendering,
-    )
-    from numbering_captions import add_chapter_number_to_captions
-    from numbering_refs import prepare_refs
-    from metadata import DocumentMetadata, FileDatapoint
-    from keys import KeyPath
-    from remove_images import remove_images
-except (ImportError, ModuleNotFoundError):
-    from .audit import AuditEvent, AuditStatus, AlertLog, AlertStatus  # type: ignore
-    from .constants import IS_DEBUG, ModuleEnum  # type: ignore
-    from .conditional_rendering import remove_parts_and_highlights_due_to_conditional_rendering  # type: ignore
-    from .numbering_captions import add_chapter_number_to_captions  # type: ignore
-    from .numbering_refs import prepare_refs  # type: ignore
-    from .metadata import DocumentMetadata, FileDatapoint  # type: ignore
-    from .keys import KeyPath  # type: ignore
-    from .remove_images import remove_images  # type: ignore
+# Get the current directory and add it to sys.path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
+
+from src._common.audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
+from src._common.constants import IS_DEBUG, ModuleEnum
+from src._common.keys import KeyPath
+from src._common.state import BookState
+from numbering_captions import add_chapter_number_to_captions
+from numbering_refs import prepare_refs, update_targets_for_substitutions
+from remove_images import remove_images
+from wpr_conditional_rendering import (
+    remove_parts_and_highlights_due_to_conditional_rendering,
+)
 
 
 parser = argparse.ArgumentParser(description="...")
@@ -61,35 +55,33 @@ else:
 def lambda_handler(event, context) -> None:
     logger.info("Event: " + json.dumps(event, default=str))
     logger.info("Context: " + json.dumps(context, default=str))
-    config_key = _get_config_key(event)
-    book_metadata = _read_book_metadata(config_key)
-    config = _prepare_config(config_key)
-    _update_file_count(config, book_metadata)
-    # TODO: read config file
-    # TODO: update file_count from values in _config
-    for key in config_key.efs_slug_dir.glob("*.docx"):
-        doc = wordprocess_docx(key, book_metadata)
-        doc.save(key.efs_slug_paper_path)
+    cfg_key = _get_config_key(event)
+    bookstate = _load_book_state(cfg_key)
+    update_targets_for_substitutions(bookstate)
+    for key in cfg_key.efs_input_dir.glob("*.docx"):
+        doc = wordprocess_docx(key, bookstate)
+        doc.save(key.efs_paper_path)
 
 
-def wordprocess_docx(
-    key: KeyPath, book_metadata: dict[str, DocumentMetadata]
-) -> docx.document.Document:
+def wordprocess_docx(key: KeyPath, bookstate: BookState) -> docx.document.Document:
     doc = _read_document(key)
-    metadata = book_metadata[key.stem]
     _remove_parts_and_highlights_due_to_conditional_rendering(key, doc)
-    _add_chapter_number_to_captions(key, doc, metadata)
-    _prepare_refs(key, doc, book_metadata)
-    _remove_images(key, doc, metadata)
+    _add_chapter_number_to_captions(key, doc, bookstate)
+    _prepare_refs(key, doc, bookstate)
+    _remove_images(key, doc)
     return doc
 
 
 def _get_config_key(event) -> KeyPath:
     try:
         slug = event["Records"][0]["body"]
-        pth = KeyPath(slug).efs_slug_dir / "_config.yml"
+        pth = KeyPath(slug).efs_input_dir / "_config.yml"
         if not pth.exists():
-            pth = KeyPath(slug).efs_slug_dir / "_config.yaml"
+            pth = KeyPath(slug).efs_input_dir / "_config.yaml"
+        if not pth.exists():
+            pth = KeyPath(slug).efs_input_dir / "myst.yaml"
+        if not pth.exists():
+            pth = KeyPath(slug).efs_input_dir / "myst.yml"
         if not pth.exists():
             raise FileNotFoundError(f"Config file not found. File: {pth}")
         return KeyPath(pth)
@@ -101,34 +93,15 @@ def _get_config_key(event) -> KeyPath:
         raise
 
 
-def _prepare_config(key: KeyPath) -> t.Any:
-    with open(key) as f:
-        config = yaml.safe_load(f)
-    return config
-
-
-def _update_file_count(
-    config: dict[str, t.Any], book_metadata: dict[str, DocumentMetadata]
-) -> None:
-    if "dgtmon" not in config or "prefixes" not in config["dgtmon"]:
-        return
-    prefixes = config["dgtmon"]["prefixes"]
-    if type(prefixes) == list and type(prefixes[0]) == dict:
-        prefixes = {k: v for kv in prefixes for k, v in kv.items()}
-    if type(prefixes) != dict or len(prefixes) == 0:
-        return
-    ###
-    for metadata in book_metadata.values():
-        for stem, prefix in prefixes.items():
-            metadata.add_file(FileDatapoint(stem=stem, prefix=str(prefix)))
-
-    # for metadata in book_metadata.values():
-    #     for dp in metadata.substitutions:
-    #         if dp.target_fn is None:
-    #             continue
-    #         stem = KeyPath(dp.target_fn).stem
-    #         if stem in prefixes:
-    #             dp.fprefix = prefixes[stem]
+def _load_book_state(key: KeyPath) -> BookState:
+    try:
+        return BookState(key)
+    except Exception as e:
+        logging.exception(f"Loading book state failed. Error: {repr(e)}")
+        _log_audit_event(
+            key, AuditStatus.FAILED.value, "Error while loading book state."
+        )
+        raise
 
 
 # def prepare_references(
@@ -206,29 +179,6 @@ def _update_file_count(
 #     ### targets
 
 
-def _read_book_metadata(key: KeyPath) -> dict[str, DocumentMetadata]:
-    """
-    Read JSON metadata stored in Elastic File System (EFS) and return a dict
-    with all DocumentMetadata objects for a specific book.
-
-    Similar to the src/builder/main/_read_book_metadata function
-    """
-    book_metadata: dict[str, DocumentMetadata] = {}
-    # for meta_file in (key / "_metadata").glob("**/*.json"):
-    for meta_file in (key.efs_slug_dir / "_metadata").glob("**/*.json"):
-        with meta_file.open("r") as f:
-            metadata = DocumentMetadata(meta_file)
-            try:
-                metadata.from_json(json.load(f))
-                book_metadata[meta_file.stem] = metadata
-            except KeyError as e:
-                logger.info(
-                    f"Invalid or obsolete metadata's Datapoint structure. Skipping "
-                    f"metadata file {meta_file}. KeyError: {repr(e)}"
-                )
-    return book_metadata
-
-
 def _read_document(key: KeyPath) -> docx.document.Document:
     try:
         return docx.Document(key)
@@ -262,10 +212,13 @@ def _remove_parts_and_highlights_due_to_conditional_rendering(
 
 
 def _add_chapter_number_to_captions(
-    key: KeyPath, doc: docx.document.Document, metadata: DocumentMetadata
+    key: KeyPath,
+    doc: docx.document.Document,
+    bookstate: BookState,
+    # docstate: DocumentState,
 ) -> None:
     try:
-        return add_chapter_number_to_captions(doc, metadata)
+        return add_chapter_number_to_captions(key, doc, bookstate)
     except Exception as e:
         logger.exception(
             f"Adding chapter number to captions failed. " f"Error: {repr(e)}"
@@ -281,10 +234,10 @@ def _add_chapter_number_to_captions(
 def _prepare_refs(
     key: KeyPath,
     doc: docx.document.Document,
-    book_metadata: dict[str, DocumentMetadata],
+    bookstate: BookState,
 ) -> None:
     try:
-        return prepare_refs(key, doc, book_metadata)
+        return prepare_refs(key, doc, bookstate)
     except Exception as e:
         logger.exception(f"Preparing references failed. " f"Error: {repr(e)}")
         _log_audit_event(
@@ -296,10 +249,11 @@ def _prepare_refs(
 
 
 def _remove_images(
-    key: KeyPath, doc: docx.document.Document, metadata: DocumentMetadata
+    key: KeyPath,
+    doc: docx.document.Document,
 ) -> None:
     try:
-        return remove_images(doc, metadata)
+        return remove_images(doc)
     except Exception as e:
         logger.exception(f"Removing images from .docx failed. " f"Error: {repr(e)}")
         _log_audit_event(

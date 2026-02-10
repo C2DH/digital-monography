@@ -1,0 +1,43 @@
+{
+  "properties": {
+    "pk": {
+      "title": "Pk",
+      "type": "string"
+    },
+    "schema_v": {
+      "default": 1,
+      "title": "Schema V",
+      "type": "integer"
+    },
+    "file_name": {
+      "title": "File Name",
+      "type": "string"
+    },
+    "citation_schema": {
+      "title": "Citation Schema",
+      "type": "string"
+    },
+    "formattedCitation": {
+      "title": "Formattedcitation",
+      "type": "string"
+    },
+    "noteIndex": {
+      "title": "Noteindex",
+      "type": "integer"
+    },
+    "plainCitation": {
+      "title": "Plaincitation",
+      "type": "string"
+    }
+  },
+  "required": [
+    "pk",
+    "file_name",
+    "citation_schema",
+    "formattedCitation",
+    "noteIndex",
+    "plainCitation"
+  ],
+  "title": "CitationGroupDatapoint",
+  "type": "object"
+}

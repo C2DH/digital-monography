@@ -7,3 +7,4 @@ docutils==0.20.*
 markdownify==0.13.*
 nbformat==5.10.*
 pydantic==2.11.*
+xxhash==3.6.0

@@ -1,27 +1,35 @@
 import bs4
-import pathlib
 import mammoth
 
-from src.preparer.constants import MAMMOTH_STYLE_MAP
-from src.preparer.conditional_rendering import is_paper_only, remove_paper_only
-from src.preparer.keys import KeyPath
-from src.preparer.html2md import convert_to_md
-from src.preparer.metadata import DocumentMetadata
-from src.preparer.refs import (
-    is_header,
-    is_caption,
-    is_footnote,
-    is_reference,
-    prepare_ref_targets_in_headers,
-    prepare_ref_targets_in_captions,
-    prepare_ref_targets_in_footnotes,
-    prepare_references,
-)
+from src._common.constants import MAMMOTH_STYLE_MAP, INPUT_DIR, TEMP_FOOTNOTES_TABLE
+from src._common.keys import KeyPath
+from src._common.html2md import convert_to_md
+from src._common.state import DocumentState
+from src._common.models import ChapterService
+from src.preparer.main import prepare_docx
+
+# from src.preparer.conditional_prep import is_paper_only, remove_paper_only
+# from src.preparer.ref_footnotes import (
+#     extract_footnotes,
+#     is_ref_footnote,
+#     is_target_footnote,
+#     prepare_refs_in_footnotes,
+# )
+# from src.preparer.refs import (
+#     is_reference,
+#     prepare_references,
+# )
+# from src.preparer.targets import (
+#     is_header,
+#     is_caption,
+#     prepare_ref_targets_in_headers,
+#     prepare_ref_targets_in_captions,
+# )
 
 
 class TestConditionalRendering:
-    fp = KeyPath(
-        pathlib.Path("/tmp") / "efs" / "a_book" / "05_conditional_rendering.docx"
+    fp = (
+        KeyPath("/tmp") / "efs" / INPUT_DIR / "a_book" / "05_conditional_rendering.docx"
     )
 
     @classmethod
@@ -34,37 +42,11 @@ class TestConditionalRendering:
         cls.before_soup = bs4.BeautifulSoup(result.value, "html.parser")
         cls.before_md = convert_to_md(cls.before_soup)
         cls.after_soup = bs4.BeautifulSoup(result.value, "html.parser")
-        cls.metadata = DocumentMetadata(cls.fp.relative_to(cls.fp.parent.parent))
-        headers = []
-        captions = []
-        footnotes = []
-        references = []
-        paper_only = []
-        classifiers = [
-            (is_header, headers),
-            (is_caption, captions),
-            (is_footnote, footnotes),
-            (is_reference, references),
-            (is_paper_only, paper_only),
-        ]
-        for node in cls.after_soup.descendants:
-            for check_if_meets_criteria, container in classifiers:
-                if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
-                    container.append(node)
-        cls.after_soup = prepare_ref_targets_in_headers(
-            cls.after_soup, cls.metadata, headers
-        )
-        cls.after_soup = prepare_ref_targets_in_captions(
-            cls.after_soup, cls.metadata, captions
-        )
-        cls.after_soup = prepare_ref_targets_in_footnotes(
-            cls.after_soup, cls.metadata, footnotes
-        )
-        cls.after_soup = prepare_references(cls.after_soup, cls.metadata, references)
-        # html_soup = prepare_metadata_tables(html_soup, metadata, tables)
-        cls.after_soup = remove_paper_only(cls.after_soup, cls.metadata, paper_only)
-        # html_soup = remove_empty_tables(html_soup, metadata, tables)
-        cls.after_md = convert_to_md(cls.after_soup, cls.metadata)
+        key = cls.fp.relative_to(cls.fp.parent.parent)
+        cls.dstate = DocumentState(key)
+        cls.dstate.add(ChapterService.generate_chapter_from_key(key))
+        cls.after_soup, cls.dstate, _ = prepare_docx(cls.after_soup, cls.dstate)
+        cls.after_md = convert_to_md(cls.after_soup, cls.dstate)
 
     def test_removal_of_parts_of_paragraph(self):
         expected_before = (

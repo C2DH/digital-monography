@@ -3,10 +3,7 @@ import datetime
 import typing as t
 import uuid
 
-try:
-    from html2md import convert_to_md
-except (ImportError, ModuleNotFoundError):
-    from .html2md import convert_to_md
+from src._common.html2md import convert_to_md
 
 
 type MessagesJson = list[
@@ -176,8 +173,11 @@ class GeneralVerificationMessage:
         return self.to_json()
 
 
+VerifMessage = t.Union[FileVerificationMessage, GeneralVerificationMessage]
+
+
 class VerifierMessages:
-    _messages: list[t.Union[FileVerificationMessage, GeneralVerificationMessage]]
+    _messages: list[VerifMessage]
 
     def __init__(self):
         self._messages = []

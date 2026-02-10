@@ -4,6 +4,11 @@ COPY requirements.txt  .
 RUN  pip3 install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
 
 COPY ./*.py ${LAMBDA_TASK_ROOT}
-COPY /templates ${LAMBDA_TASK_ROOT}/templates
+COPY /dbx ${LAMBDA_TASK_ROOT}/dbx
+
+# Copy contents of the shared "src/_common" directory to /var/task/src/_common/
+RUN mkdir -p ${LAMBDA_TASK_ROOT}/src/_common
+RUN --mount=from=common,target=common \
+    cp -r common/* ${LAMBDA_TASK_ROOT}/src/_common/
 
 CMD [ "main.lambda_handler" ]

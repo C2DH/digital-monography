@@ -1,23 +1,22 @@
+UPDATING_WAS_MOVED_TO_BUILDERV3_AND_WORDPROCESSOR = '''
 import bs4
 
-try:
-    from metadata import DocumentMetadata, SubstitutionDatapoint, TargetDatapoint
-except (ImportError, ModuleNotFoundError):
-    from .metadata import DocumentMetadata, SubstitutionDatapoint, TargetDatapoint
+from src._common.metadata import DocumentMetadata
+from src._common.models import Substitution, Target
+from src._common.state import DocumentState
 
 
-def count_targets_for_substitutions(
-    soup: bs4.BeautifulSoup, metadata: DocumentMetadata
+def update_targets_for_substitutions(
+    soup: bs4.BeautifulSoup, metadata: DocumentMetadata, dstate: DocumentState
 ) -> bs4.BeautifulSoup:
-    update_datapoints_for_targets(soup, metadata.substitutions)
-    update_datapoints_for_targets(soup, metadata.targets)
+    _update_state_records_for_substitution(soup, dstate["substitutions"])
+    _update_state_records_for_substitution(soup, dstate["targets"])
     return soup
 
 
-def update_datapoints_for_targets(
+def _update_state_records_for_substitution(
     soup: bs4.BeautifulSoup,
-    # metadata: DocumentMetadata,
-    datapoints: list[SubstitutionDatapoint | TargetDatapoint],
+    datapoints: list[Substitution | Target],
 ) -> bs4.BeautifulSoup:
     """
     This function is similar (but not identic) to
@@ -50,3 +49,4 @@ def update_datapoints_for_targets(
             dp.new_item_num = dp.prev_item_num - ommited_count[dp.item_type]
         prev_item_num[dp.item_type] = dp.prev_item_num
     return soup
+'''

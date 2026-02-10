@@ -1,7 +1,7 @@
 import bs4
 
 from src.preparer.replace_alt_texts import prepare_alt_texts
-from src.preparer.metadata import DocumentMetadata
+from src._common.state import DocumentState
 
 
 HTML_STR = f"""<h1>Book Title</h1>
@@ -21,8 +21,8 @@ class TestReplacingLineBreaksInAltTexts:
     def setup_class(cls):
         cls.html_soup = bs4.BeautifulSoup(HTML_STR, "html.parser")
         images = cls.html_soup.find_all("img", alt=True)
-        metadata = DocumentMetadata()
-        cls.html_soup = prepare_alt_texts(cls.html_soup, metadata, images)
+        dstate = DocumentState()
+        cls.html_soup = prepare_alt_texts(cls.html_soup, dstate, images)
 
     def test_line_break_was_removed_from_alttext(self):
         img = self.html_soup.find_all("img")[0]

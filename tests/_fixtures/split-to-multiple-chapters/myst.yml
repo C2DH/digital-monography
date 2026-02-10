@@ -1,0 +1,22 @@
+version: 1
+project:
+  title: Split Document Example
+  authors:
+    - name: Pawel Kaminski
+      affiliations: Luxembourg Centre for Contemporary and Digital History (C²DH)
+      orcid: 0009-0000-0000-0000
+    - name: Elisabeth Guerard
+      affiliations: Luxembourg Centre for Contemporary and Digital History (C²DH)
+      orcid: 0000-0001-7742-4141
+  license: CC-BY-NC-ND-4.0
+  open_access: true
+  copyright: '2026'
+  banner: ./assets/banner.jpeg
+  thumbnail: ./assets/thumbnail.svg
+  keywords:
+    - test
+    - e2e
+site:
+  options:
+    folders: true
+  template: book-theme

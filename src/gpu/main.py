@@ -3,6 +3,7 @@ import boto3
 import json
 import logging
 import os
+import sys
 from mypy_boto3_s3.client import S3Client as boto3_S3Client
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from aws_lambda_powertools.utilities.data_classes import (
@@ -10,19 +11,15 @@ from aws_lambda_powertools.utilities.data_classes import (
     APIGatewayProxyEventV2,
 )
 
+# Get the current directory and add it to sys.path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
 
-try:
-    from constants import (
-        BE_PATH_ASSET_METADATA,
-        BE_PATH_ASSET_RETRIEVE,
-        BE_PATH_REF_METADATA,
-    )
-except (ImportError, ModuleNotFoundError):
-    from .constants import (  # type: ignore
-        BE_PATH_ASSET_METADATA,
-        BE_PATH_ASSET_RETRIEVE,
-        BE_PATH_REF_METADATA,
-    )
+from src._common.constants import (
+    BE_PATH_ASSET_METADATA,
+    BE_PATH_ASSET_RETRIEVE,
+    BE_PATH_REF_METADATA,
+)
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)

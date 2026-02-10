@@ -41,7 +41,7 @@ export default function DynamicTable() {
         try {
             setLoading(true);
             // const endpoint = "https://20cks5gkc3.execute-api.eu-west-1.amazonaws.com";
-            const resp = await fetch(`${API_ENDPOINT}/${API_STAGE}/events?slug=${pk}`);
+            const resp = await fetch(`${API_ENDPOINT}/${API_STAGE}/api/events?slug=${pk}`);
             const respJson = await resp.json();
             const records = (respJson.Items || []).map((rec) => {
                 const timestamp = rec.timestamp.S ? new Date(rec.timestamp.S) : new Date(1970);

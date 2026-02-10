@@ -8,46 +8,64 @@ import re
 import typing as t
 
 
-try:
-    from constants import (
-        IS_DEBUG,
-        METADATA_FIELDS,
-        METADATA_FIELDS_KEYS,
-        CLS_METADATA_TABLE,
-        CLS_METADATA_TABLE_JSONDATA,
-        FIELD_LICENSE_NAME,
-        FIELD_DIGITAL_SOURCE,
-        FIELD_PAPER_SOURCE,
-        CAPTION_ITEM_TYPE_FIGURE,
-        CAPTION_ITEM_TYPE_TABLE,
-        CAPTION_ITEM_TYPE_GRAPH,
-        CAPTION_ITEM_TYPE_OTHER,
-        CLS_CAPTION,
-    )
-    from local_constants import RECOGNIZED_LICENSE_NAMES
-    from path_handler import PathHandler, SUPPORTED_SUFFIXES
-    from verif_warnings import VerifierMessages
-    from metadata import DocumentMetadata, MetadataTableDatapoint
-except (ImportError, ModuleNotFoundError):
-    from .constants import (
-        IS_DEBUG,
-        METADATA_FIELDS,
-        METADATA_FIELDS_KEYS,
-        CLS_METADATA_TABLE,
-        CLS_METADATA_TABLE_JSONDATA,
-        FIELD_LICENSE_NAME,
-        FIELD_DIGITAL_SOURCE,
-        FIELD_PAPER_SOURCE,
-        CAPTION_ITEM_TYPE_FIGURE,
-        CAPTION_ITEM_TYPE_TABLE,
-        CAPTION_ITEM_TYPE_GRAPH,
-        CAPTION_ITEM_TYPE_OTHER,
-        CLS_CAPTION,
-    )
-    from .local_constants import RECOGNIZED_LICENSE_NAMES
-    from .path_handler import PathHandler, SUPPORTED_SUFFIXES
-    from .verif_warnings import VerifierMessages
-    from .metadata import DocumentMetadata, MetadataTableDatapoint
+from src._common.constants import (
+    IS_DEBUG,
+    METADATA_FIELDS,
+    METADATA_FIELDS_KEYS,
+    CLS_METADATA_TABLE,
+    CLS_METADATA_TABLE_JSONDATA,
+    CLS_STATE_TABLE_JSONDATA,
+    FIELD_LICENSE_NAME,
+    FIELD_DIGITAL_SOURCE,
+    FIELD_PAPER_SOURCE,
+    CLS_CAPTION,
+)
+from src._common.metadata import DocumentMetadata, MetadataTableDatapoint
+from src._common.state import DocumentState
+from local_constants import RECOGNIZED_LICENSE_NAMES
+from path_handler import PathHandler, SUPPORTED_SUFFIXES
+from verif_warnings import VerifierMessages
+
+# try:
+#     from constants import (
+#         IS_DEBUG,
+#         METADATA_FIELDS,
+#         METADATA_FIELDS_KEYS,
+#         CLS_METADATA_TABLE,
+#         CLS_METADATA_TABLE_JSONDATA,
+#         FIELD_LICENSE_NAME,
+#         FIELD_DIGITAL_SOURCE,
+#         FIELD_PAPER_SOURCE,
+#         CAPTION_ITEM_TYPE_FIGURE,
+#         CAPTION_ITEM_TYPE_TABLE,
+#         CAPTION_ITEM_TYPE_GRAPH,
+#         CAPTION_ITEM_TYPE_OTHER,
+#         CLS_CAPTION,
+#     )
+#     from local_constants import RECOGNIZED_LICENSE_NAMES
+#     from path_handler import PathHandler, SUPPORTED_SUFFIXES
+#     from verif_warnings import VerifierMessages
+#     from metadata import DocumentMetadata, MetadataTableDatapoint
+# except (ImportError, ModuleNotFoundError):
+#     from .constants import (
+#         IS_DEBUG,
+#         METADATA_FIELDS,
+#         METADATA_FIELDS_KEYS,
+#         CLS_METADATA_TABLE,
+#         CLS_METADATA_TABLE_JSONDATA,
+#         FIELD_LICENSE_NAME,
+#         FIELD_DIGITAL_SOURCE,
+#         FIELD_PAPER_SOURCE,
+#         CAPTION_ITEM_TYPE_FIGURE,
+#         CAPTION_ITEM_TYPE_TABLE,
+#         CAPTION_ITEM_TYPE_GRAPH,
+#         CAPTION_ITEM_TYPE_OTHER,
+#         CLS_CAPTION,
+#     )
+#     from .local_constants import RECOGNIZED_LICENSE_NAMES
+#     from .path_handler import PathHandler, SUPPORTED_SUFFIXES
+#     from .verif_warnings import VerifierMessages
+#     from .metadata import DocumentMetadata, MetadataTableDatapoint
 
 CAPTION_TYPES = ["Figure", "Table", "Graph"]
 IS_HEADING_TITLE_CASED_REQUIRED = True
@@ -132,6 +150,7 @@ class HtmlVerifier:
         self._comments = {}
         self._messages = VerifierMessages()
         self._metadata = DocumentMetadata()
+        self._docstate = DocumentState()
         self._logs = []
 
     def summary(self):
@@ -148,7 +167,8 @@ class HtmlVerifier:
         return self._messages.to_json(md)
 
     def sort(self) -> None:
-        self._messages.sort(key=lambda msg: (msg["line"], msg["pos"]))
+        self._messages.sort(key=lambda msg: (msg.line, msg.pos))
+        # self._messages.sort(key=lambda msg: (msg["line"], msg["pos"]))
 
     def verify(
         self, html: str, fp: pathlib.Path, slug: str, timestamp: datetime.datetime
@@ -202,6 +222,12 @@ class HtmlVerifier:
                     and CLS_METADATA_TABLE_JSONDATA in child.attrs.get("class", [])
                 ):
                     self._metadata.from_json(json.loads(child.text))
+                elif (
+                    child.name == "script"
+                    and CLS_STATE_TABLE_JSONDATA in child.attrs.get("class", [])
+                ):
+                    self._docstate.from_dict(json.loads(child.text))
+                    # TODO: read document state form script tag
                 if child.name == "p":
                     self._paragraphs.append(child)
             self._mark_html_elements_recursively(child, lvl + 1)

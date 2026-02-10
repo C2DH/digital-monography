@@ -1,24 +1,17 @@
 import bs4
+import json
 import mammoth
 import pathlib
+import pytest
+import typing as t
 
-from src.preparer.constants import MediumEnum, MAMMOTH_STYLE_MAP
-from src.preparer.digital_prep import remove_metadata_tables
-from src.preparer.html2md import convert_to_md
-from src.preparer.metadata import DocumentMetadata, AssetDatapoint
-from src.preparer.metadata_extraction import prepare_metadata_tables
-from src.preparer.keys import KeyPath
-from src.preparer.refs import (
-    prepare_ref_targets_in_captions,
-    prepare_references,
-    is_caption,
-    is_reference,
-)
-
+from src._common.constants import MediumEnum, MAMMOTH_STYLE_MAP
+from src._common.keys import KeyPath
+from src._common.state import DocumentState
+from src._common.models import Asset, ChapterService
+from src.preparer.main import prepare_docx
 
 SLUG = "book-content-examples"
-
-# TODO: add metadata table tests
 
 
 class TestMetadataTablesExtraction:
@@ -30,124 +23,130 @@ class TestMetadataTablesExtraction:
     def setup_class(cls):
         with open(cls.fp, "rb") as f:
             result = mammoth.convert_to_html(f, style_map=MAMMOTH_STYLE_MAP)
-        cls.soup = bs4.BeautifulSoup(result.value, "html.parser")
-        cls.metadata = DocumentMetadata(cls.fp.relative_to(cls.fp.parent.parent))
-        tables = cls.soup.find_all("table")
-        captions = []
-        references = []
-        classifiers = [
-            (is_caption, captions),
-            (is_reference, references),
-        ]
-        for node in cls.soup.descendants:
-            for check_if_meets_criteria, container in classifiers:
-                if isinstance(node, bs4.element.Tag) and check_if_meets_criteria(node):
-                    container.append(node)
-        cls.soup = prepare_ref_targets_in_captions(cls.soup, cls.metadata, captions)
-        cls.soup = prepare_references(cls.soup, cls.metadata, references)
-        cls.soup = prepare_metadata_tables(cls.soup, cls.metadata, tables)
-        cls.soup = remove_metadata_tables(cls.soup, cls.metadata, tables)
-        cls.md = convert_to_md(cls.soup, cls.metadata)
-        cls.asset_0 = cls.metadata.assets[0]
-        cls.asset_1 = cls.metadata.assets[1]
-        cls.asset_2 = cls.metadata.assets[2]
-        cls.asset_3 = cls.metadata.assets[3]
-
-    def test_all_metadata_tables_were_extracted(self):
-        assert len(self.metadata.metadata_tables) == 3
+        cls.html_soup = bs4.BeautifulSoup(result.value, "html.parser")
+        key = cls.fp.relative_to(cls.fp.parent.parent)
+        cls.docstate = DocumentState(key)
+        cls.docstate.add(ChapterService.generate_chapter_from_key(key))
+        cls.html_soup, cls.docstate, _ = prepare_docx(cls.html_soup, cls.docstate)
 
     def test_all_assets_were_extracted(self):
-        assert len(self.metadata.assets) == 4
+        assert self.docstate.len("assets") == 4
 
-    def test_all_metadata_rows_were_extracted(self):
-        assert len(self.metadata.metadata_tables[0].kwargs) == 7
-        assert len(self.metadata.metadata_tables[1].kwargs) == 5
-        assert len(self.metadata.metadata_tables[2].kwargs) == 6
-
-    def test_asset_0__1_asset_from_1_metadata_table(self):
-        assert self.asset_0.fp == pathlib.Path("assets/tiny-picture.png")
-        assert self.asset_0.metadata_table == self.metadata.metadata_tables[0].pk
-        assert self.asset_0.medium == MediumEnum.PAPER
-        assert self.asset_0.slug == SLUG
-        assert self.asset_0.author == "Unknown"
+    @pytest.mark.parametrize(
+        "asset_data",
+        [
+            {
+                "i": 0,
+                "fp": KeyPath(f"assets/tiny-picture.png"),
+                "location": KeyPath(f"{SLUG}/metadata_extraction.docx"),
+                "medium": MediumEnum.PAPER,  # TODO: this might be wrong
+                "alttext": "Red square",
+                "caption": r"Figure {{ cd437c444ce8fc0d }}: Red square.",
+                "comments": "",
+                "target": "cd437c444ce8fc0d",
+                "source": "https://unsplash.com/photos/beige-concrete-house-2d-RL-xa4mk",
+                "author": "Unknown",
+                "is_color": False,
+                "is_ready": False,
+                "is_on_paper": True,
+                "rest": {"license": "copyleft", "deleteprevious": True},
+                "height": None,
+            },
+            {
+                "i": 1,
+                "fp": KeyPath(f"assets/10x10px-img.png"),
+                "location": KeyPath(f"{SLUG}/metadata_extraction.docx"),
+                "medium": MediumEnum.PAPER_AND_DIGITAL,
+                "alttext": "Yellow square - alt text written in MS Word",
+                "caption": r"Figure {{ 6de3fd2e3ea2ee2f }}: Yellow square.",
+                "comments": "",
+                "target": "6de3fd2e3ea2ee2f",
+                "source": "",
+                "author": "Jan Sobiepan",
+                "is_color": True,
+                "is_ready": False,
+                "is_on_paper": True,
+                "rest": {"deleteprevious": False},
+                "height": None,
+            },
+            {
+                "i": 2,
+                "fp": KeyPath(f"assets/tiny-picture.png"),
+                "location": KeyPath(f"{SLUG}/metadata_extraction.docx"),
+                "medium": MediumEnum.PAPER,
+                "alttext": "",
+                "caption": r"",
+                "comments": "Looks good",
+                "target": "",
+                "source": "",
+                "author": "",
+                "is_color": None,
+                "is_ready": True,
+                "is_on_paper": True,
+                "rest": {"deleteprevious": True},
+                "height": None,
+            },
+            {
+                "i": 3,
+                "fp": KeyPath(f"assets/10x10px-img.png"),
+                "location": KeyPath(f"{SLUG}/metadata_extraction.docx"),
+                "medium": MediumEnum.DIGITAL,
+                "alttext": "",
+                "caption": r"",
+                "comments": "Looks good",
+                "target": "",
+                "source": "",
+                "author": "",
+                "is_color": None,
+                "is_ready": True,
+                "is_on_paper": False,
+                "rest": {"deleteprevious": True},
+                "height": None,
+            },
+        ],
+    )
+    def test_assets_were_extracted_from_metadata_tables(
+        self, asset_data: dict[str, int | str | KeyPath | bool]
+    ):
+        asset = self.docstate.all("assets")[asset_data["i"]]
+        print("asset", asset)
+        assert isinstance(asset, Asset), "Expected asset to be an instance of Asset"
+        assert asset.fp == asset_data["fp"], "Asset.fp does not match"
+        assert asset.location == asset_data["location"], "Asset.location does not match"
+        assert asset.medium == asset_data["medium"], "Asset.medium does not match"
+        assert asset.alttext == asset_data["alttext"], "Asset.alttext does not match"
+        assert asset.caption == asset_data["caption"], "Asset.caption does not match"
+        assert asset.comments == asset_data["comments"], "Asset.comments does not match"
+        assert asset.target == asset_data["target"], "Asset.target does not match"
+        assert asset.source == asset_data["source"], "Asset.source does not match"
+        assert asset.author == asset_data["author"], "Asset.author does not match"
+        assert asset.height == asset_data["height"], "Asset.height does not match"
+        assert asset.is_color == asset_data["is_color"], "Asset.is_color does not match"
+        assert asset.is_ready == asset_data["is_ready"], "Asset.is_ready does not match"
         assert (
-            self.asset_0.source
-            == "https://unsplash.com/photos/beige-concrete-house-2d-RL-xa4mk"
-        )
-        assert self.asset_0.location == KeyPath(f"{SLUG}/metadata_extraction.docx")
-        assert self.asset_0.alttext == "Red square"
-        assert self.asset_0.caption.startswith("Figure ")
-        assert self.asset_0.caption.endswith(": Red square.")
-        assert self.asset_0.comments == ""
-        assert self.asset_0.target == "f-metadata-extraction-fig1redsquare"  # bookmark
-        assert self.asset_0.is_color == False
-        assert self.asset_0.is_ready == False
-        assert self.asset_0.is_on_paper == True
-
-    def test_asset_1__digital_and_paper_asset(self):
-        assert self.asset_1.fp == pathlib.Path("assets/10x10px-img.png")
-        assert self.asset_1.metadata_table == self.metadata.metadata_tables[1].pk
-        assert self.asset_1.medium == MediumEnum.PAPER_AND_DIGITAL
-        assert self.asset_1.slug == SLUG
-        assert self.asset_1.author == "Jan Sobiepan"
-        assert self.asset_1.source == ""
-        assert self.asset_1.location == KeyPath(f"{SLUG}/metadata_extraction.docx")
-        assert self.asset_1.alttext == "Yellow square - alt text written in MS Word"
-        assert self.asset_1.caption.startswith("Figure ")
-        assert self.asset_1.caption.endswith(": Yellow square.")
-        assert self.asset_1.comments == ""
-        assert self.asset_1.target == "f-metadata-extraction-ref191564298"  # auto ref
-        assert self.asset_1.is_color == True
-        assert self.asset_1.is_ready == False
-        assert self.asset_1.is_on_paper == True
-
-    def test_asset_2__2_assets_from_1_metadata_table__paper_one(self):
-        assert self.asset_2.fp == pathlib.Path("assets/tiny-picture.png")
-        assert self.asset_2.metadata_table == self.metadata.metadata_tables[2].pk
-        assert self.asset_2.medium == MediumEnum.PAPER
-        assert self.asset_2.slug == SLUG
-        assert self.asset_2.author == ""
-        assert self.asset_2.source == ""
-        assert self.asset_2.location == KeyPath(f"{SLUG}/metadata_extraction.docx")
-        assert self.asset_2.alttext == ""
-        assert self.asset_2.caption == ""
-        assert self.asset_2.comments == "Looks good"
-        assert self.asset_2.target == ""  # no caption, no target
-        assert self.asset_2.is_color == None
-        assert self.asset_2.is_ready == True
-        assert self.asset_2.is_on_paper == True
-
-    def test_asset_3__2_assets_from_1_metadata_table__digital_one(self):
-        assert self.asset_3.fp == pathlib.Path("assets/10x10px-img.png")
-        assert self.asset_3.metadata_table == self.metadata.metadata_tables[2].pk
-        assert self.asset_3.medium == MediumEnum.DIGITAL
-        assert self.asset_3.slug == SLUG
-        assert self.asset_3.author == ""
-        assert self.asset_3.source == ""
-        assert self.asset_3.location == KeyPath(f"{SLUG}/metadata_extraction.docx")
-        assert self.asset_3.alttext == ""
-        assert self.asset_3.caption == ""
-        assert self.asset_3.comments == "Looks good"
-        assert self.asset_3.target == ""  # no caption, no target
-        assert self.asset_3.is_color == None
-        assert self.asset_3.is_ready == True
-        assert self.asset_3.is_on_paper == False
+            asset.is_on_paper == asset_data["is_on_paper"]
+        ), "Asset.is_on_paper does not match"
+        asset_rest: dict[str, t.Any] = json.loads(asset.rest)
+        assert len(asset_rest) == len(
+            asset_data["rest"]
+        ), "Asset.rest length does not match"
+        for k in asset_rest.keys():
+            assert (
+                asset_rest[k] == asset_data["rest"][k]
+            ), f"Asset.rest[{k}] does not match"
 
     def test_asset_to_json_handling(self):
-        jsonified = self.asset_3.to_json()
-        assert jsonified["fp"] == pathlib.PurePath("assets/10x10px-img.png")
-        # assert jsonified["fp"] == "assets/10x10px-img.png"
-        assert jsonified["metadata_table"] == self.metadata.metadata_tables[2].pk
-        assert type(jsonified["metadata_table"]) == str
-        assert jsonified["medium"] == MediumEnum.DIGITAL
-        # assert jsonified["medium"] == "D"
-        assert type(jsonified["medium"]) == MediumEnum
-        # assert type(jsonified["medium"]) == str
+        asset = self.docstate.all("assets")[3]
+        assert isinstance(asset, Asset)
+        jsonified = asset.model_dump(mode="json")
+        assert jsonified["fp"] == "assets/10x10px-img.png"
+        assert jsonified["medium"] == MediumEnum.DIGITAL.value
+        assert jsonified["medium"] == "D"
+        assert type(jsonified["medium"]) == str
         assert jsonified["slug"] == SLUG
         assert jsonified["author"] == ""
         assert jsonified["source"] == ""
-        assert jsonified["location"] == KeyPath(f"{SLUG}/metadata_extraction.docx")
-        # assert jsonified["location"] == f"{SLUG}/metadata_extraction.docx"
+        assert jsonified["location"] == f"{SLUG}/metadata_extraction.docx"
         assert jsonified["alttext"] == ""
         assert jsonified["caption"] == ""
         assert jsonified["comments"] == "Looks good"
@@ -157,11 +156,11 @@ class TestMetadataTablesExtraction:
         assert jsonified["is_on_paper"] == False
 
     def test_asset_from_json_handling(self):
-        jsonified = self.asset_3.to_json()
-        asset = AssetDatapoint.from_json(jsonified)
+        asset = self.docstate.all("assets")[3]
+        assert isinstance(asset, Asset)
+        jsonified = asset.model_dump(mode="json")
+        asset: Asset = Asset(**jsonified)
         assert asset.fp == pathlib.Path("assets/10x10px-img.png")
-        assert asset.metadata_table == self.metadata.metadata_tables[2].pk
-        assert type(asset.metadata_table) == str
         assert asset.medium == MediumEnum.DIGITAL
         assert asset.slug == SLUG
         assert asset.author == ""

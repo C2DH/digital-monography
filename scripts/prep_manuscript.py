@@ -5,13 +5,21 @@ import datetime
 import docx
 import io
 import docx.oxml
+import docx.document
 import mammoth
 import pathlib
 from PIL import Image
+import sys
 import os
 import typing as t
 
-from constants import (
+
+# Get the parent directory and add it to sys.path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
+
+from src._common.constants import (
     MAMMOTH_STYLE_MAP,
     METADATA_FIELDS,
     FIELD_DIGITAL_SOURCE,
@@ -87,8 +95,14 @@ def _extract_img_from_docx(
     fn = "{i:03}.{suffix}".format(i=i, suffix=suffix)
     img_fn: str = "/".join((target_dir / fn).parts[-3:])
     pil_img = Image.open(io.BytesIO(base64.b64decode(encodded_img)))
-    pil_img.save(target_dir / fn, quality=100, subsampling=0)
-    print(f"saved {(target_dir / fn)}")
+    try:
+        pil_img.save(target_dir / fn, quality=100, subsampling=0)
+        # print(f"saved {(target_dir / fn)}")
+    except (KeyError, ValueError) as e:
+        print(f"Error saving image {(target_dir / fn)}: {e}")
+        # new_fp = (target_dir / fn).with_suffix(".png")
+        # img_fn: str = "/".join(new_fp.parts[-3:])
+        # pil_img.save(new_fp, quality=100, subsampling=0)
     return img_fn, encodded_img, alttext
 
 
@@ -155,7 +169,7 @@ def add_hyperlink(
 
 
 def _write_metadata_tables_to_docx(
-    doc: docx.Document, metadata_tables: dict[str, dict[str, str]]
+    doc: docx.document.Document, metadata_tables: dict[str, dict[str, str]]
 ) -> None:
     doc.add_heading("Figures metadata", level=1)
     metadata_descs = {}
@@ -168,9 +182,12 @@ def _write_metadata_tables_to_docx(
         for table_data in tables_data:
             table_data: dict
             _img = table_data.pop("img")
-            doc.add_picture(
-                io.BytesIO(base64.b64decode(_img)), width=docx.shared.Inches(2)
-            )
+            try:
+                doc.add_picture(
+                    io.BytesIO(base64.b64decode(_img)), width=docx.shared.Inches(2)
+                )
+            except Exception as e:
+                doc.add_paragraph("Error")
             tbl = doc.add_table(len(table_data), cols=2, style="Table Grid")
             for i, (key, value) in enumerate(table_data.items()):
                 tbl.cell(i, 0).text = key

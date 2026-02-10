@@ -83,6 +83,11 @@ variable "upload_apkg_bucket_name" {
   description = "Name of the bucket for uploading authors' packages (apkg) to AWS cloud."
 }
 
+variable "admin_data_bucket_name" {
+  type        = string
+  description = "Name of the bucket for sharing data from VPC, such as db backups."
+}
+
 variable "metadata_assets_bucket_name" {
   type        = string
   description = "Name of the bucket for storing metadata of assets."
@@ -111,6 +116,11 @@ variable "cidr_block" {
 variable "builder_repo_name" {
   type        = string
   description = "Name of the ECR repository for the book builder image"
+}
+
+variable "builderv2_repo_name" {
+  type        = string
+  description = "Name of the ECR repository for the builder with JupyterBook_v2 image"
 }
 
 variable "entrypoint_repo_name" {
@@ -163,6 +173,11 @@ variable "lambda_builder_func" {
   description = "Name of the builder Lambda function"
 }
 
+variable "lambda_builderv2_func" {
+  type        = string
+  description = "Name of the builder Lambda function with JupyterBook_v2"
+}
+
 variable "lambda_github_func" {
   type        = string
   description = "Name of the github Lambda function"
@@ -176,6 +191,11 @@ variable "lambda_preparer_func" {
 variable "lambda_gpu_func" {
   type        = string
   description = "Name of the gpu Lambda function"
+}
+
+variable "lambda_orm_func" {
+  type        = string
+  description = "Name of the orm Lambda function"
 }
 
 variable "lambda_verifier_func" {
@@ -198,6 +218,11 @@ variable "microservice_builder" {
   description = "Name of the builder microservice"
 }
 
+variable "microservice_builderv2" {
+  type        = string
+  description = "Name of the builder microservice with JupyterBook_v2"
+}
+
 variable "microservice_github" {
   type        = string
   description = "Name of the github microservice"
@@ -211,6 +236,11 @@ variable "microservice_preparer" {
 variable "microservice_gpu" {
   type        = string
   description = "Name of the gpu microservice"
+}
+
+variable "microservice_orm" {
+  type        = string
+  description = "Name of the orm microservice"
 }
 
 variable "microservice_verifier" {
@@ -233,6 +263,11 @@ variable "policy_builder" {
   description = "Name of the IAM policy to be assumed by the builder IAM role"
 }
 
+variable "policy_builderv2" {
+  type        = string
+  description = "Name of the IAM policy to be assumed by the builderv2 IAM role"
+}
+
 variable "policy_github" {
   type        = string
   description = "Name of the IAM policy to be assumed by the github IAM role"
@@ -246,6 +281,11 @@ variable "policy_preparer" {
 variable "policy_gpu" {
   type        = string
   description = "Name of the IAM policy to be assumed by the gpu IAM role"
+}
+
+variable "policy_orm" {
+  type        = string
+  description = "Name of the IAM policy to be assumed by the orm IAM role"
 }
 
 variable "policy_verifier" {
@@ -283,6 +323,11 @@ variable "role_builder" {
   description = "Name of the IAM role for the builder Lambda function"
 }
 
+variable "role_builderv2" {
+  type        = string
+  description = "Name of the IAM role for the builderv2 Lambda function"
+}
+
 variable "role_github" {
   type        = string
   description = "Name of the IAM role for the github Lambda function"
@@ -296,6 +341,11 @@ variable "role_preparer" {
 variable "role_gpu" {
   type        = string
   description = "Name of the IAM role for the gpu Lambda function"
+}
+
+variable "role_orm" {
+  type        = string
+  description = "Name of the IAM role for the orm Lambda function"
 }
 
 variable "role_verifier" {
