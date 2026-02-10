@@ -1,6 +1,8 @@
 import flask
 import flask_login
+import flask_wtf
 import sqlmodel
+import wtforms
 
 from src._common.models import User
 from src._common.constants import UserRole
@@ -46,26 +48,56 @@ def create_user():
     return flask.jsonify({"message": f"User {username} created with role {role}."}), 201
 
 
-# @admin_bp.route("/api/admin/hi", methods=["GET"])
-# @admin_bp.route("/api/admin/hi/", methods=["GET"])
-# def admin_hi() -> flask.Response:
-#     slug = flask.request.args.get("slug", "None")
+@admin_bp.route("/hi", methods=["GET"])
+@admin_bp.route("/hi/", methods=["GET"])
+def admin_hi() -> flask.Response:
+    return flask.jsonify({"message": f"I'm a teapot."}), 418
 
 
-# @admin_bp.route("/login", methods=["GET", "POST"])
-# def login():
-#     if flask.request.method == "POST":
-#         # TODO: add login logic
-#         if authenticated:
-#             flask.session["logged_in"] = True
-#             flask.session["username"] = username
-#             next_url = flask.request.args.get("next") or "/"
-#             return flask.redirect(next_url)
-#         return flask.render_template("login.html", error="Invalid credentials")
-#     return flask.render_template("login.html")
+@admin_bp.route("/secret", methods=["GET"])
+@admin_bp.route("/secret/", methods=["GET"])
+@flask_login.login_required
+def admin_secret() -> flask.Response:
+    return flask.jsonify({"message": f"SECRET. I'm a teapot."}), 418
 
 
-# @admin_bp.route("/logout")
-# def logout():
-#     flask.session.clear()
-#     return flask.redirect(flask.url_for("admin.login"))
+class LoginForm(flask_wtf.FlaskForm):
+    username = wtforms.StringField(
+        "Username", validators=[wtforms.validators.DataRequired()]
+    )
+    password = wtforms.PasswordField(
+        "Password", validators=[wtforms.validators.DataRequired()]
+    )
+
+
+@admin_bp.route("/login", methods=["GET", "POST"])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        username = flask.request.form.get("username")
+        password = flask.request.form.get("password")
+        next_url = flask.request.args.get("next") or "/"
+        if not username or not password:
+            return flask.render_template(
+                "admin/login.html", error="Missing username or password"
+            )
+        print("flask.request.host", flask.request.host)
+        # TODO: check if next_url is safe to redirect to (i.e. same host)
+        # to prevent open redirect vulnerabilities
+        # if not url_has_allowed_host_and_scheme(next, request.host):
+        #     return flask.abort(400)
+        with sqlmodel.Session(db_engine) as session:
+            stmt = sqlmodel.select(User).where(User.username == username)
+            user = session.exec(stmt).first()
+            if user and user.check_password(password):
+                flask_login.login_user(user)
+                return flask.redirect(next_url)
+        return flask.render_template("admin/login.html", error="Invalid credentials")
+    return flask.render_template("admin/login.html", form=form)
+
+
+@flask_login.login_required
+@admin_bp.route("/logout")
+def logout():
+    flask_login.logout_user()
+    return flask.redirect(flask.url_for("admin.login"))

@@ -28,3 +28,24 @@ class User(sqlmodel.SQLModel, table=True):
     # TODO: maybe make it into service function?
     def has_role(self, role_name: str) -> bool:
         return self.role == role_name
+
+
+# class UsersRepository:
+#     def __init__(self):
+#         self.users: dict[str, User] = dict()
+#         self.users_id_dict = dict()
+#         self.identifier = 0
+
+#     def save_user(self, user: User) -> None:
+#         self.users_id_dict.setdefault(user.id, user)
+#         self.users.setdefault(user.username, user)
+
+#     def get_user(self, username: str) -> User | None:
+#         return self.users.get(username)
+
+#     def get_user_by_id(self, userid: int | None) -> User | None:
+#         return self.users_id_dict.get(userid)
+
+#     def next_index(self) -> int:
+#         self.identifier += 1
+#         return self.identifier
