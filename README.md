@@ -36,4 +36,4 @@ The direction of development is coordinated with project's partners during month
 - [Development](./docs/03_development/index.md)
 - [Infrastracture setup](./docs/04_infra-setup/index.md)
 - [Jupyter Book](./docs/05_jupyter-book/index.md)
-- [Software composition analysis](./docs/06_audit/index.md)
+- [Software composition analysis](./docs/06_soft-composition/index.md)

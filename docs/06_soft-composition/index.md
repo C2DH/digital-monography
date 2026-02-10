@@ -2,6 +2,8 @@
 
 ## Generating Software Bill of Materials
 
+Below are the instructions used to generate Software Bill of Materials (SBOM). The commands start from the project root.
+
 ### Python
 
 ```sh
@@ -28,9 +30,11 @@ Dashboard was written in JavaScript/TypeScript. Two experimental versions exist,
 ```sh
 cd staticws/dashboard/
 npm install
-cp package.json ../../docs/06_audit/package.json
-cp package-lock.json ../../docs/06_audit/package-lock.json
+cp package.json ../../docs/06_soft-composition/package.json
+cp package-lock.json ../../docs/06_soft-composition/package-lock.json
 ```
+
+See [`package.json`](./package.json) and [`package-lock.json`](./package-lock.json) for JavaScript SBOM.
 
 #### Flask html templates + Tailwindcss + htmx
 
