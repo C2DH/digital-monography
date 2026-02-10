@@ -32,10 +32,13 @@ def remove_images(doc: docx.document.Document) -> None:
         assert isinstance(drawing, docx.oxml.drawing.CT_Drawing)
         r_elem = drawing.getparent()
         print("type(r_elem)", type(r_elem))
-        assert isinstance(r_elem, docx.oxml.text.run.CT_R)
+        # assert isinstance(r_elem, docx.oxml.text.run.CT_R) # fails on Jana's book
         p_elem = r_elem.getparent()
-        assert isinstance(p_elem, docx.oxml.text.paragraph.CT_P)
-        if len(p_elem.r_lst) == 1:
+        # assert isinstance(p_elem, docx.oxml.text.paragraph.CT_P) # fails on Jana's book
+        if not hasattr(p_elem, "r_lst"):
+            # in this case the assertions above fail
+            pass
+        elif len(p_elem.r_lst) == 1:
             p_parent = p_elem.getparent()
             # TODO
             print("TODO: CHeck type of p_parent")
