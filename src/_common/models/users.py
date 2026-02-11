@@ -13,6 +13,9 @@ class User(sqlmodel.SQLModel, table=True):
     """
 
     __tablename__ = "users"
+    __hash__ = (
+        object.__hash__
+    )  # Otherwise Python 3 implicitly set __hash__ to None if we override __eq__.
 
     id: int | None = sqlmodel.Field(default=None, primary_key=True)
     username: str = sqlmodel.Field(index=True, nullable=False, unique=True)
@@ -29,23 +32,30 @@ class User(sqlmodel.SQLModel, table=True):
     def has_role(self, role_name: str) -> bool:
         return self.role == role_name
 
+    @property
+    def is_active(self):
+        return True
 
-# class UsersRepository:
-#     def __init__(self):
-#         self.users: dict[str, User] = dict()
-#         self.users_id_dict = dict()
-#         self.identifier = 0
+    @property
+    def is_authenticated(self):
+        return self.is_active
 
-#     def save_user(self, user: User) -> None:
-#         self.users_id_dict.setdefault(user.id, user)
-#         self.users.setdefault(user.username, user)
+    @property
+    def is_anonymous(self):
+        return False
 
-#     def get_user(self, username: str) -> User | None:
-#         return self.users.get(username)
+    def get_id(self) -> str:
+        return str(self.id)
 
-#     def get_user_by_id(self, userid: int | None) -> User | None:
-#         return self.users_id_dict.get(userid)
+    def __eq__(self, other: "User") -> bool:
+        """Checks the equality of two Users using `get_id`."""
+        if isinstance(other, User):
+            return self.get_id() == other.get_id()
+        raise NotImplementedError("Cannot compare User with non-User type.")
 
-#     def next_index(self) -> int:
-#         self.identifier += 1
-#         return self.identifier
+    def __ne__(self, other: "User") -> bool:
+        """Checks the inequality of two Users using `get_id`."""
+        equal = self.__eq__(other)
+        if equal is NotImplemented:
+            raise NotImplementedError("Cannot compare User with non-User type.")
+        return not equal
