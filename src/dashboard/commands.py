@@ -21,6 +21,10 @@ app = create_app()
 @click.argument("password")
 @flask.cli.with_appcontext
 def create_superuser(username: str, password: str) -> None:
+    """
+    Run with
+    FLASK_APP=src.dashboard.commands python -m flask create_superuser <username> <pass>
+    """
     user = User(username=username)
     user.set_password(password)
     user.role = UserRole.Admin
