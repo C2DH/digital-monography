@@ -31,7 +31,12 @@ def _import_blueprint(module_path: str) -> types.ModuleType:
 
 def create_app():
     """Defined in app.py so that both main.py and tests can import it."""
-    app = flask.Flask(__name__, template_folder="./_templates")
+    app = flask.Flask(
+        __name__,
+        template_folder="./_templates",
+        static_folder="./_static",
+        static_url_path="/static",
+    )
     login_manager = flask_login.LoginManager()
     app.debug = IS_DEBUG
     app.secret_key = os.environ["FLASK_SECRET_KEY"]

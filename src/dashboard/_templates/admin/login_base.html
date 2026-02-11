@@ -41,7 +41,23 @@
 
     <main class="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="bg-white shadow-sm rounded-lg p-6 border border-gray-100 min-h-[400px]">
-            {% block content %}{% endblock %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center min-h-[320px]">
+                <div class="px-4">
+                    {% block content %}{% endblock %}
+                </div>
+                <div class="hidden md:flex items-center justify-center">
+                    <div class="w-full h-80 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center">
+                        <img src="{{ url_for('static', filename='admin/Books_and_Apparatus_for_Writing_1836_TIMEA.jpg') }}"
+                            alt="decorative" class="w-full h-full object-cover" />
+                    </div>
+                </div>
+                <a hidden target="_blank"
+                    href="https://commons.wikimedia.org/wiki/File:Books,_and_Apparatus_for_Writing._(1836)_-_TIMEA.jpg">Source:
+                    Lane, Edward William. "An Account of the Manners and Customs of the Modern Egyptians, Written in
+                    Egypt During the Years 1833, -34, and -35, Partly from Notes Made During a Former Visit to that
+                    Country in the Years 1825, -26, -27, and -28. Volume 1". Charles Knight & Co.: London, 1836. p
+                    265.</a>
+            </div>
         </div>
     </main>
 
