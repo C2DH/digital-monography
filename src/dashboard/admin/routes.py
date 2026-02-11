@@ -79,7 +79,7 @@ def login():
         next_url = flask.request.args.get("next") or "/"
         if not username or not password:
             return flask.render_template(
-                "admin/login.html", error="Missing username or password"
+                "admin/login.html", error="Missing username or password", form=form
             )
         print("flask.request.host", flask.request.host)
         # TODO: check if next_url is safe to redirect to (i.e. same host)
@@ -92,7 +92,9 @@ def login():
             if user and user.check_password(password):
                 flask_login.login_user(user)
                 return flask.redirect(next_url)
-        return flask.render_template("admin/login.html", error="Invalid credentials")
+        return flask.render_template(
+            "admin/login.html", error="Invalid credentials", form=form
+        )
     return flask.render_template("admin/login.html", form=form)
 
 

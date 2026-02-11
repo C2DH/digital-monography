@@ -5,6 +5,9 @@
 
 
 <form class="w-full max-w-sm" method="POST" action="{{ url_for('admin.login') }}">
+    {% if error %}
+    <div class="mb-4 text-red-600 font-semibold">{{ error }}</div>
+    {% endif %}
     {{ form.hidden_tag() }}
     <div class="mb-4 w-75">
         <label class="block text-gray-700 text-sm font-bold mb-2" for="username">

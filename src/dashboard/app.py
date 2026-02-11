@@ -40,6 +40,10 @@ def create_app():
 
     @login_manager.user_loader
     def load_user(user_id) -> User | None:
+        """
+        Flask-Login user loader callback.
+        https://flask-login.readthedocs.io/en/latest/#flask_login.LoginManager.user_loader
+        """
         try:
             uid = int(user_id)
         except (ValueError, TypeError):
@@ -61,5 +65,5 @@ def create_app():
                     f"Module '{module_path}' should have a blueprint named '{blueprint_name}'."
                 )
             app.register_blueprint(bp)
-    csrf = flask_wtf.CSRFProtect(app)
+    flask_wtf.CSRFProtect(app)
     return app
