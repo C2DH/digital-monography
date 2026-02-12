@@ -1,9 +1,62 @@
+import dataclasses
 import datetime
+import enum
 import logging
 import typing as t
 import yaml
 
 from src._common.keys import KeyPath
+
+
+class ConfigAuthor(t.TypedDict, total=False):
+    """https://mystmd.org/guide/frontmatter#frontmatter-authors"""
+
+    name: t.Any  # a TODO string OR CSL-JSON author object
+    id: str | None = None
+    orcid: str | None = None
+    corresponding: bool | None = None
+    email: str | None = None
+    roles: list[str] | None = None
+    # TODO: a list of strings or a full Affiliation object
+    affiliations: list[str | dict] | None = None
+    equal_contributor: bool | None = None
+    deceased: bool | None = None
+    note: str | None = None
+    phone: str | None = None
+    fax: str | None = None
+    url: str | None = None
+
+
+class ConfigProject(t.TypedDict, total=False):
+    authors: list[ConfigAuthor | str] = []
+    open_access: bool = True
+    date: str = datetime.date.today().isoformat()
+
+
+class ConfigSite(t.TypedDict, total=False):
+    template: str = "book-theme"
+
+
+class AutonumberOptions(enum.StrEnum):
+    SKIP = "skip"  # skip autonumbering and leave as written in source file
+    BOOK = "book"  # increment autonumbering across the whole book
+    CHAPTERS = "chapters"  # reset autonumbering at the start of each chapter
+
+
+@dataclasses.dataclass
+class ConfigDgtmon:
+    autonumber: AutonumberOptions = AutonumberOptions.CHAPTERS
+
+
+@dataclasses.dataclass
+class Config:
+    version: int = 1
+    project: ConfigProject
+    site: ConfigSite
+    dgtmon: ConfigDgtmon
+
+
+type LegacyConfig = dict[str, t.Any]
 
 
 def create_myst_config_file(key: KeyPath) -> dict[str, t.Any]:
