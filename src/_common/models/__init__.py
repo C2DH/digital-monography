@@ -3,6 +3,7 @@ import sqlalchemy.orm
 import sqlmodel
 from .assets import Asset, AssetService  # noqa
 from .authors import Author, Book, LinkAuthorsBooks  # noqa
+from .config import Config, ConfigService  # noqa
 from .citation_groups import CitationGroup
 from .citation_items import CitationItem
 from .chapters import Chapter, ChapterService  # noqa
@@ -23,6 +24,7 @@ __all__ = [
     "Asset",
     "Author",
     "Book",
+    "Config",
     "CitationGroup",
     "CitationItem",
     "Chapter",

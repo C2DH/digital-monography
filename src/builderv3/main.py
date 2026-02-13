@@ -44,7 +44,7 @@ from src._common.html2md import convert_to_md
 from src._common.keys import KeyPath
 from src._common.state import BookState
 from fakers import Faker
-from prep_config import create_myst_config_file
+from prep_config import init_myst_config
 
 
 if IS_DEBUG:
@@ -79,7 +79,8 @@ def lambda_handler(event, context) -> None:
     _copy_manuscript(key)
     bookstate = _load_book_state(key)
     update_targets_for_substitutions(bookstate)
-    _create_myst_config_file(key)
+    _init_myst_config(key, bookstate)
+    print("\n\nbookstate.config", bookstate.config, "\n\n")
     # enrich_html_from_docx(key, bookstate)
     for key in sorted(key.efs_chapters_dir.glob("**/*")):
         assert key.suffix.lower() in (".html", ".ipynb")
@@ -169,19 +170,21 @@ def _load_book_state(key: KeyPath) -> BookState:
         raise
 
 
-def _create_myst_config_file(key: KeyPath) -> None:
+def _init_myst_config(key: KeyPath, bookstate: BookState) -> None:
     """
-    Write "myst.yml" config file for Jupyter Book v2 build.
+    Read and update "myst.yml" config file.
     """
     try:
-        create_myst_config_file(key)
-        logger.info(f"Successfully created myst config file.")
+        init_myst_config(key, bookstate)
+        logger.info(f"Successfully initialized myst config file.")
     except Exception as e:
-        logging.exception(f'Creating "myst.yml" config file failed. Error: {repr(e)}')
+        logging.exception(
+            f'Initializing "myst.yml" config file failed. Error: {repr(e)}'
+        )
         _log_audit_event(
             key,
             AuditStatus.FAILED.value,
-            "Error while creating Jupyter Book config file.",
+            "Error while initializing Jupyter Book config file.",
         )
         raise
 
@@ -215,9 +218,8 @@ def update_targets_for_substitutions(bookstate: BookState) -> None:
     else:
         sorted_targets = _sort_all_targets(bookstate)
         for t in sorted_targets:
-            t.file_count = (
-                None  # No file count prefix when autonumbering accross the whole book.
-            )
+            # No file count prefix when autonumbering accross the whole book.
+            t.file_count = None
         _update_state_records_for_substitution(sorted_targets)
 
 

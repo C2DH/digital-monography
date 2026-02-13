@@ -6,11 +6,11 @@ import typing as t
 
 try:
     from keys import KeyPath
-    from models import Chapter, DocumentMetadata, tables_to_models
+    from models import Config, Chapter, DocumentMetadata, tables_to_models
     from models._base import ChapterSQLModel
 except (ImportError, ModuleNotFoundError):
     from .keys import KeyPath  # type: ignore
-    from .models import Chapter, DocumentMetadata, tables_to_models  # type: ignore
+    from .models import Config, Chapter, DocumentMetadata, tables_to_models  # type: ignore
     from .models._base import ChapterSQLModel  # type: ignore
 
 
@@ -210,6 +210,7 @@ class BookState(collections.abc.MutableMapping):
     """
 
     def __init__(self, key: KeyPath) -> None:
+        self.config: Config | None = None
         self.all_records = DocumentState(key)
         docstates = collections.defaultdict(list)
         for statef in key.efs_state_dir.glob("**/*.json"):
