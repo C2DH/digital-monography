@@ -209,19 +209,39 @@ def update_targets_for_substitutions(bookstate: BookState) -> None:
     and call _update_datapoints_for_targets() for each group.
     """
     if AUTONUMBER_COUNT_CHAPTERS_SEPARATELY:
-        grouped_targets = _group_targets_by_chapter(bookstate)
-        for group in grouped_targets.values():
+        sorted_targets = _group_and_sort_targets_by_chapter(bookstate)
+        for group in sorted_targets.values():
             _update_state_records_for_substitution(group)
     else:
-        raise NotImplementedError(
-            "Implement autonumbering where numbers do not start at 1 with each chapter."
-        )
+        sorted_targets = _sort_all_targets(bookstate)
+        for t in sorted_targets:
+            t.file_count = (
+                None  # No file count prefix when autonumbering accross the whole book.
+            )
+        _update_state_records_for_substitution(sorted_targets)
 
 
-def _group_targets_by_chapter(
+def _sort_all_targets(
+    bookstate: BookState,
+) -> list[Target]:
+    """
+    Ordering when we can to increment autonumbering across the whole book, not by chapters.
+    Sort all targets in a bookstate first by file count and then by number in that file.
+    E.g. Fig 1 in file 02_chpt2.docx should be AFTER Fig 2 in file 01_chpt1.docx.
+    """
+
+    def _get_file_count(t: Target) -> int | None:
+        return t.file_count
+
+    all_targets: list[Target] = sorted(bookstate.all("targets"), key=_get_file_count)
+    return sorted(all_targets, key=lambda t: (t.prev_item_num or 0))
+
+
+def _group_and_sort_targets_by_chapter(
     bookstate: BookState,
 ) -> collections.OrderedDict[int, list[Target]]:
     """
+    Ordering when we can to increment autonumbering by chapters.
     To do that, group all targets by loc_key (key after split).
     Then, order targets by prev_item_num within each group.
     """
@@ -249,6 +269,9 @@ def _group_targets_by_chapter(
         # taken from incremental numbering done in "preparer/targets.py".
         group: list[Target] = sorted(group, key=lambda t: (t.prev_item_num or 0))
         if len(group) > 0:
+            assert (
+                group[0].file_count is not None
+            ), "Return key can be None only if autonumbering is not by chapters"
             grouped_and_sorted_targets[group[0].file_count] = group
     return grouped_and_sorted_targets
 
@@ -276,9 +299,11 @@ def _update_state_records_for_substitution(
         "": 0,
     }
     for dp in datapoints:
+        assert isinstance(dp, Target)
         if dp.item_type == "ref":
-            # check assumption that in every ref prev_item_num is None
-            assert dp.prev_item_num is None
+            assert (
+                dp.prev_item_num is None
+            ), "Check assumption that in every ref prev_item_num is None"
             pass
         elif dp.is_digital == False:
             # increment omitted count
