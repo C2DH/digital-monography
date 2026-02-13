@@ -229,9 +229,11 @@ def _group_targets_by_chapter(
         collections.OrderedDict()
     )
     grouped_targets: dict[int, list[Target]] = collections.defaultdict(list)
-    all_targets: list[Target] = sorted(
-        bookstate.all("targets"), key=lambda t: t.file_count
-    )
+
+    def _get_file_count(t: Target) -> int | None:
+        return t.file_count
+
+    all_targets: list[Target] = sorted(bookstate.all("targets"), key=_get_file_count)
     for target in all_targets:
         assert (
             target.file_count is not None
