@@ -218,12 +218,16 @@ def update_targets_for_substitutions(bookstate: BookState) -> None:
         )
 
 
-def _group_targets_by_chapter(bookstate: BookState) -> dict[str, list[Target]]:
+def _group_targets_by_chapter(
+    bookstate: BookState,
+) -> collections.OrderedDict[int, list[Target]]:
     """
     To do that, group all targets by loc_key (key after split).
     Then, order targets by prev_item_num within each group.
     """
-    grouped_and_sorted_targets: dict[int, list[Target]] = {}
+    grouped_and_sorted_targets: collections.OrderedDict[int, list[Target]] = (
+        collections.OrderedDict()
+    )
     grouped_targets: dict[int, list[Target]] = collections.defaultdict(list)
     all_targets: list[Target] = sorted(
         bookstate.all("targets"), key=lambda t: t.file_count
