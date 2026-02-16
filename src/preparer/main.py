@@ -184,7 +184,9 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
             # TODO: prepare_docx shouldn't have to return "state"
             html_soup, dstate, tables = prepare_docx(html_soup, dstate)
             del dstate.__dict__[TEMP_FOOTNOTES_TABLE]
-            html_soup = hide_metadata_in_html(html_soup, dstate)  # last step
+            html_soup = hide_metadata_in_html(
+                html_soup, dstate
+            )  # last step TODO: can this be the last step at prepare_docx() ?
             # IMPORTANT NOTE: other services depend on html produced at this stage, make sure that:
             # 1) all reversible transformations are made before saving html file;
             # 2) irreversible transformations are omited to avoid not being able to recreate a book

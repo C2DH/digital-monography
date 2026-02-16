@@ -114,7 +114,7 @@ def prepare_metadata_tables(
                 #         rest=unused_kwargs,
                 #     )
                 # )
-            if asset_digital and asset_paper and asset_digital.fp != asset_paper.fp:
+            if asset_digital and asset_digital.fp != getattr(asset_paper, "fp", None):
                 dstate.add(asset_digital)
                 # document_metadata.add_asset(asset_digital)
                 # dstate.add(
