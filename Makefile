@@ -55,15 +55,14 @@ prep/split:
 	echo 'npx serve /tmp/efs/_JB/split-to-multiple-chapters/_build/html'
 
 test/unit:
-	DGTMON_DEBUG=1 python3.12 -m pytest tests/entrypoint tests/orm tests/common/ tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
+	DGTMON_DEBUG=1 python3.12 -m pytest tests/common/ tests/dashboard tests/entrypoint/ tests/orm tests/preparer/ tests/verifier/ tests/wordprocessor/
 
 test/snapshot:
 	DGTMON_DEBUG=1 python3.12 -m pytest tests/snapshot/
 
-test:
-	DGTMON_DEBUG=1 python3.12 -m pytest tests/entrypoint tests/orm tests/common/ tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
+test: test/unit test/snapshot
 
-test/e2e: prep/book test/snapshot
+test/e2e: prep/book prep/split test/snapshot
 
 typecheck:
 	mypy src/entrypoint/ --check-untyped-defs
