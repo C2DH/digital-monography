@@ -34,7 +34,8 @@ def insert_digital_objects(
             # TODO: improve conditions and verification, current method is too naive
             if digitalsrc[-5:].lower() == ".html":
                 new_tag = html_soup.new_tag("iframe")
-                new_tag["src"] = digitalsrc
+                # "./../assets/fig2.html" instead of "assets/fig2.html"
+                new_tag["src"] = f"./../{digitalsrc}"
                 new_tag["width"] = "100%"
                 new_tag["height"] = height
                 new_tag["frameborder"] = "0"
