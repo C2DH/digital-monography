@@ -65,8 +65,8 @@ class TestDocumentState:
         new_state.from_dict(data)
         assert new_state.metadata.key == KeyPath("foo/bar/1.docx")
         assert new_state.metadata.slug == "foo"
-        assert new_state.metadata.word_count == 0
-        assert new_state.metadata.char_count == 0
+        assert new_state.metadata.word_count == 30
+        assert new_state.metadata.char_count == 100
         asset1: Asset = new_state.get("assets", self.asset1.pk)
         assert asset1.fp == pathlib.PosixPath("foo/bar/1.txt")
         assert asset1.metadata_table == "0a7bf8c-0a7b-4b8c-0a7b-f8c0a7bf8c0a"
