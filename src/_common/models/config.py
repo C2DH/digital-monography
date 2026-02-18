@@ -1,7 +1,6 @@
 import dataclasses
 import datetime
 import enum
-import logging
 import typing as t
 import yaml
 
@@ -9,6 +8,12 @@ try:
     from keys import KeyPath
 except (ImportError, ModuleNotFoundError):
     from ..keys import KeyPath  # type: ignore
+
+
+##################################
+# NOTE: Is it common or maybe just builder-specific?
+# If the latter, move it to builder.
+##################################
 
 
 class ConfigAuthor(t.TypedDict, total=False):
@@ -55,6 +60,11 @@ class ConfigDgtmon:
 
 @dataclasses.dataclass
 class Config:
+    """
+    Representation of the Jupyter Book v2 configuration + custom dgtmon fields.
+    See mystmd docs: https://mystmd.org/guide/configuration
+    """
+
     version: int = 1
     dgtmon: ConfigDgtmon = dataclasses.field(default_factory=ConfigDgtmon)
     project: ConfigProject = dataclasses.field(default_factory=ConfigProject)
@@ -85,24 +95,23 @@ class ConfigService:
 
     @staticmethod
     def load_from_file(key: KeyPath) -> Config:
-        """
-        Load jupyterbook config from a file. If no file is found, return default config.
-        See mystmd docs: https://mystmd.org/guide/configuration
-        """
+        with open(key, "r") as f:
+            prev_cfg = yaml.safe_load(f)
+            if not isinstance(prev_cfg, dict):
+                prev_cfg = {}
+            cfg = Config(**prev_cfg)
+            cfg.dgtmon = ConfigDgtmon(**prev_cfg.get("dgtmon", {}))
+            return cfg
+        return Config()
+
+    @staticmethod
+    def find_config_file(key: KeyPath) -> KeyPath | None:
         potential_files = ["myst.yml", "myst.yaml"]
         for fn in potential_files:
             config_fp = key.efs_jb_dir / fn
-            if not config_fp.exists():
-                continue
-            with open(config_fp, "r") as f:
-                prev_cfg = yaml.safe_load(f)
-                if not isinstance(prev_cfg, dict):
-                    logging.warning(
-                        f"Previous myst config file {fn} is not a dict. Ignoring."
-                    )
-                    prev_cfg = {}
-                return Config(**prev_cfg)
-        return Config()
+            if config_fp.exists():
+                return config_fp
+        return None
 
     @staticmethod
     def save_myst_config(key: KeyPath, cfg: Config) -> None:

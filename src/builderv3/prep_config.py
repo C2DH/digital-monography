@@ -1,6 +1,4 @@
-import dataclasses
 import datetime
-import enum
 import logging
 import typing as t
 import yaml
@@ -14,8 +12,21 @@ type LegacyConfig = dict[str, t.Any]
 
 
 def init_myst_config(key: KeyPath, bookstate: BookState) -> None:
-    bookstate.config = ConfigService.load_from_file(key)
-    ConfigService.save_myst_config(key, bookstate.config)
+    config_key = ConfigService.find_config_file(key)
+    if config_key is None:
+        bookstate.config = Config()
+    else:
+        bookstate.config = ConfigService.load_from_file(config_key)
+    ConfigService.save_myst_config(config_key, bookstate.config)
+
+
+# def _find_myst_config_file(key: KeyPath) -> KeyPath | None:
+#     potential_files = ["myst.yml", "myst.yaml"]
+#     for fn in potential_files:
+#         config_key = key.efs_jb_dir / fn
+#         if config_key.exists():
+#             return config_key
+#     return None
 
 
 # legacy

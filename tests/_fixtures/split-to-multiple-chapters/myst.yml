@@ -20,3 +20,5 @@ site:
   options:
     folders: true
   template: book-theme
+dgtmon:
+  autonumber: chapters
