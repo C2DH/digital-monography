@@ -56,6 +56,7 @@ class ConfigDgtmon:
     autonumber: AutonumberOptions = dataclasses.field(
         default=AutonumberOptions.CHAPTERS
     )
+    prefixes: dict[str, str] = dataclasses.field(default_factory=dict)
 
 
 @dataclasses.dataclass
