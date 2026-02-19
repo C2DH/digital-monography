@@ -518,7 +518,6 @@ def prepare_docx(
     captions = []
     citations = []
     ref_footnotes = []
-    # target_footnotes = []
     references = []
     paper_only = []
     dstate.metadata.char_count, dstate.metadata.word_count = _get_char_and_word_count(
@@ -532,9 +531,7 @@ def prepare_docx(
         (is_caption, captions),
         (is_reference, references),
         (is_ref_footnote, ref_footnotes),
-        # (is_target_footnote, target_footnotes),
         (is_paper_only, paper_only),
-        # is_ref_footnote, is_target_footnote, prepare_refs_in_footnotes, prepare_targets_in_footnotes
     ]
     """
     Before applying the processing, this subprocedure traverses the tree
@@ -549,11 +546,7 @@ def prepare_docx(
     html_soup = add_bibliography(html_soup, bibliography)
     html_soup = prepare_ref_targets_in_headers(html_soup, dstate, headers)
     html_soup = prepare_ref_targets_in_captions(html_soup, dstate, captions)
-    # html_soup = prepare_targets_in_footnotes(html_soup, dstate, target_footnotes)
-    # html_soup = prepare_ref_targets_in_footnotes(html_soup,dstate, footnotes)
     html_soup = prepare_refs_in_footnotes(html_soup, dstate, ref_footnotes)
-    # with open(f"/tmp/efs/output_{dstate.key.name}.html", "w", encoding="utf-8") as f:
-    #     f.write(str(html_soup))
     html_soup = prepare_references(html_soup, dstate, references)
     html_soup = prepare_metadata_tables(html_soup, dstate, tables)
     html_soup = remove_paper_only(html_soup, dstate, paper_only)
