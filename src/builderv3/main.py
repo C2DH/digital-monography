@@ -28,7 +28,6 @@ from src._common.audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
 from src._common.constants import (
     ASSETS_DIR,
     AUTONUMBER_PLACEHOLDER,
-    AUTONUMBER_COUNT_CHAPTERS_SEPARATELY,
     DB_URL,
     IS_DEBUG,
     ModuleEnum,
@@ -78,8 +77,8 @@ def lambda_handler(event, context) -> None:
     _copy_assets(key)
     _copy_manuscript(key)
     bookstate = _load_book_state(key)
-    update_targets_for_substitutions(bookstate)
     _init_myst_config(key, bookstate)
+    update_targets_for_substitutions(bookstate)
     print("\n\nbookstate.config", bookstate.config, "\n\n")
     # enrich_html_from_docx(key, bookstate)
     for key in sorted(key.efs_chapters_dir.glob("**/*")):
@@ -211,7 +210,7 @@ def update_targets_for_substitutions(bookstate: BookState) -> None:
     Then, order targets by prev_item_num within each group
     and call _update_datapoints_for_targets() for each group.
     """
-    if AUTONUMBER_COUNT_CHAPTERS_SEPARATELY:
+    if bookstate.config and bookstate.config.dgtmon.per_chapter_numbering:
         sorted_targets = _group_and_sort_targets_by_chapter(bookstate)
         for group in sorted_targets.values():
             _update_state_records_for_substitution(group)

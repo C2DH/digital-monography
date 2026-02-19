@@ -51,10 +51,19 @@ class AutonumberOptions(enum.StrEnum):
     CHAPTERS = "chapters"  # reset autonumbering at the start of each chapter
 
 
+# TODO: after move to Python 3.14, replace `metadata` with `doc`
+# https://docs.python.org/3/library/dataclasses.html#dataclasses.field
+META = {
+    "per_chapter_numbering": {
+        "desc": "If true, reset autonumbering at the start of each chapter. Otherwise, increment across the whole book.",
+    },
+}
+
+
 @dataclasses.dataclass
 class ConfigDgtmon:
-    autonumber: AutonumberOptions = dataclasses.field(
-        default=AutonumberOptions.CHAPTERS
+    per_chapter_numbering: bool = dataclasses.field(
+        default=True, metadata=META["per_chapter_numbering"]
     )
     prefixes: dict[str, str] = dataclasses.field(default_factory=dict)
 

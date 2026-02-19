@@ -21,4 +21,4 @@ site:
     folders: true
   template: book-theme
 dgtmon:
-  autonumber: chapters
+  per_chapter_numbering: true

@@ -3,10 +3,10 @@ from src._common.keys import KeyPath
 
 
 class TestConfigHandling:
+    multidoc_cfg_key = KeyPath("tests") / "_fixtures" / "a_book" / "myst.yml"
     splitdoc_cfg_key = (
         KeyPath("tests") / "_fixtures" / "split-to-multiple-chapters" / "myst.yml"
     )
-    multidoc_cfg_key = KeyPath("tests") / "_fixtures" / "a_book" / "myst.yml"
 
     def test_load_config__splitdoc(self):
         cfg = ConfigService.load_from_file(self.splitdoc_cfg_key)
@@ -18,7 +18,8 @@ class TestConfigHandling:
             == "Luxembourg Centre for Contemporary and Digital History (C²DH)"
         )
         assert cfg.site["template"] == "book-theme"
-        assert cfg.dgtmon.autonumber == "chapters"
+        assert cfg.dgtmon.per_chapter_numbering == True
+        assert len(cfg.dgtmon.prefixes) == 0
         assert cfg.dgtmon.prefixes == {}
 
     def test_load_config__multidoc(self):
@@ -27,7 +28,7 @@ class TestConfigHandling:
         assert len(cfg.project["authors"]) == 1
         assert cfg.project["authors"][0]["name"] == "Pawel Kaminski"
         assert cfg.site["template"] == "book-theme"
-        assert cfg.dgtmon.autonumber == "chapters"  # default, not in config
+        assert cfg.dgtmon.per_chapter_numbering == True  # default, not in config
         assert len(cfg.dgtmon.prefixes) == 6
         assert cfg.dgtmon.prefixes["00_index"] == "I"
         assert cfg.dgtmon.prefixes["01_a"] == 1

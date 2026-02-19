@@ -98,9 +98,6 @@ CLS_STATE_TABLE_JSONDATA = "dgt-mon-hidden-state"
 ATTRIB_METADATA_UUID = "dgt-mon-metadata-uuid"
 # docx constants
 AUTONUMBER_PLACEHOLDER = "[auto]"
-AUTONUMBER_COUNT_CHAPTERS_SEPARATELY = (
-    True  # if True, autonumbering restarts from 1 in every chapter
-)
 REF_STRING_PREFIX = "REFSTR_"
 REF_PREFIX = "f"  # prefix to add before ref id in hrefs, e.g. f-01a-bookmarktofig so that we don't start with a number
 TEMP_FOOTNOTES_TABLE = "tmpf"
