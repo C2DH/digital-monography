@@ -7,6 +7,7 @@ from .config import Config, ConfigService  # noqa
 from .citation_groups import CitationGroup
 from .citation_items import CitationItem
 from .chapters import Chapter, ChapterService  # noqa
+from .DOIs import DOI, DOIService  # noqa
 from .footnotes import Footnote  # noqa
 from .files import File, FileService  # noqa
 from .headings import Heading, HeadingService  # noqa
@@ -28,6 +29,7 @@ __all__ = [
     "CitationGroup",
     "CitationItem",
     "Chapter",
+    "DOI",
     "File",
     "Footnote",
     "Heading",
@@ -45,6 +47,7 @@ tables_to_models: dict[str, ModelMeta] = {
     CitationGroup.__tablename__: CitationGroup,
     CitationItem.__tablename__: CitationItem,
     Chapter.__tablename__: Chapter,
+    DOI.__tablename__: DOI,
     File.__tablename__: File,
     Footnote.__tablename__: Footnote,
     Heading.__tablename__: Heading,

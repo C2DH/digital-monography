@@ -61,6 +61,7 @@ from ref_footnotes import (
     extract_footnotes,
     prepare_refs_in_footnotes,
 )
+from search_for_entities_in_text import search_for_entities_in_text
 from targets import (
     is_header,
     is_caption,
@@ -552,6 +553,7 @@ def prepare_docx(
     html_soup = remove_paper_only(html_soup, dstate, paper_only)
     html_soup = remove_empty_tables(html_soup, dstate, tables)
     html_soup = prepare_alt_texts(html_soup, dstate, images_with_alttxt)
+    html_soup = search_for_entities_in_text(html_soup, dstate)
     return html_soup, dstate, tables
 
 
