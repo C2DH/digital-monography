@@ -6,11 +6,11 @@ import typing as t
 
 try:
     from keys import KeyPath
-    from models import Config, Chapter, DocumentMetadata, tables_to_models
+    from models import Config, DocumentMetadata, tables_to_models
     from models._base import ChapterSQLModel
 except (ImportError, ModuleNotFoundError):
     from .keys import KeyPath  # type: ignore
-    from .models import Config, Chapter, DocumentMetadata, tables_to_models  # type: ignore
+    from .models import Config, DocumentMetadata, tables_to_models  # type: ignore
     from .models._base import ChapterSQLModel  # type: ignore
 
 
@@ -31,6 +31,7 @@ class DocumentState:
         a) metadata and
         b) a collection of records (lists of models) about:
             * assets: data from the Metadata tables describing assets
+            * dois: DOI identifiers found in a text
             * refs: references (links and cross-references)
             * targets: reference targets (e.g. headings, captions)
             * substitutions: used to replace text with other text
@@ -136,23 +137,15 @@ class DocumentState:
         Send a sql INSERT command with all records that have a ChapterSQLModel db table assigned.
         Book-level models (e.g. Author, Book) are not inserted here, only chapter-level ones.
         """
-        records = [
-            v
-            for k, v in self.__dict__.items()
-            if (isinstance(v, ChapterSQLModel) and has_db_table(v))
-        ]
+        records = []
+        for _, val in self.__dict__.items():
+            if not isinstance(val, list):
+                continue
+            for v in val:
+                if isinstance(v, ChapterSQLModel) and has_db_table(v):
+                    records.append(v)
         session.add_all(records)
         session.commit()
-        # for _, records in self.__dict__.items():
-        #     if _ == "doc_metadata":
-        #         continue
-        #     if (
-        #         records
-        #         and isinstance(records[0], ChapterSQLModel)
-        #         and has_db_table(records[0])
-        #     ):
-        #         session.add_all(records)
-        # session.commit()
 
     def sql_delete_by_key(self, session: sqlmodel.Session, key: KeyPath) -> None:
         """
