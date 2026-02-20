@@ -1,8 +1,8 @@
 """10_add_dois_tbl
 
-Revision ID: fbe642b8561a
+Revision ID: e4e42d73648b
 Revises: b17111330845
-Create Date: 2026-02-19 18:27:07.070268
+Create Date: 2026-02-20 12:27:24.149500
 
 """
 from typing import Sequence, Union
@@ -15,7 +15,7 @@ import sqlmodel.sql.sqltypes
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'fbe642b8561a'
+revision: str = 'e4e42d73648b'
 down_revision: Union[str, Sequence[str], None] = 'b17111330845'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -27,6 +27,7 @@ def upgrade() -> None:
     op.create_table('dois',
     sa.Column('pk', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('x_loc', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('slug', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('proxy', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('doi', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('parent', sqlmodel.sql.sqltypes.AutoString(), nullable=False),

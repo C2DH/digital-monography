@@ -8,6 +8,7 @@ except (ImportError, ModuleNotFoundError):
 
 
 DESC = {
+    "slug": "Book's slug.",
     "proxy": "The web-based service that resolves DOI identifiers.",
     "doi": "DOI identifier, e.g. '10.1234/example'.",
     "parent": "The parent element that contains the DOI. Usually the quotation.",
@@ -22,6 +23,7 @@ class DOI(ChapterSQLModel, table=True):
 
     __tablename__ = "dois"
 
+    slug: str = sqlmodel.Field(description=DESC["slug"])
     proxy: str | None = sqlmodel.Field(default=None, description=DESC["proxy"])
     doi: str = sqlmodel.Field(description=DESC["doi"])
     parent: str = sqlmodel.Field(description=DESC["parent"])
