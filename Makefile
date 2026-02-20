@@ -16,13 +16,10 @@ MAIN_DOCKER_ECR = 875551125547.dkr.ecr.eu-central-1.amazonaws.com
 DOCKER_HUB = c2dhunilu
 
 prep/copy:
-	# rm -r tests/_fixtures/a_book/
-	cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/a_book/' tests/_fixtures/
-	# echo 'maybe book-content-examples dir can be better utilized'
-	cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/book-content-examples/' tests/_fixtures/
-	cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/split-to-multiple-chapters/' tests/_fixtures/
+	rsync -r '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/book-content-examples/' tests/_fixtures/
 
 prep/book:
+	rsync -r '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/a_book/' tests/_fixtures/a_book/
 	mkdir -p /tmp/efs/
 	make db/migrate
 	DGTMON_NO_WAIT=1 \
@@ -39,6 +36,7 @@ prep/book:
 	echo 'npx serve /tmp/efs/_JB/a_book/_build/html'
 
 prep/split:
+	rsync -r '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/split-to-multiple-chapters/' tests/_fixtures/split-to-multiple-chapters/
 	mkdir -p /tmp/efs/
 	make db/migrate
 	DGTMON_NO_WAIT=1 \
