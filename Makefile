@@ -17,6 +17,7 @@ DOCKER_HUB = c2dhunilu
 
 prep/copy:
 	rsync -r '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/book-content-examples/' tests/_fixtures/
+	cp _database.db /mnt/c/Users/Pawel.kaminski/Downloads/_database.db
 
 prep/book:
 	rsync -r '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/a_book/' tests/_fixtures/a_book/
