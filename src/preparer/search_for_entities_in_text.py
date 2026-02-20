@@ -39,14 +39,16 @@ def search_for_entities_in_text(
         # )  # The actual DOI (e.g., "10.1234/example")
         proxy_candidate = _match.group(1) if _match.group(1) else ""
         doi = DOI(
+            loc=docstate.key,
+            slug=docstate.metadata.slug,
             proxy=proxy_candidate if DOIService.is_proxy(proxy_candidate) else None,
             doi=_match.group(2),
             parent=elem.parent.text if elem.parent else None,
         )
-        # print("doi", doi)
         docstate.add(doi)
 
         # TODO: Currently DOI.doi can end with "."
+        # TODO: If the user edits text label the href target stays!!!
 
     return html_soup
 

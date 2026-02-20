@@ -1,4 +1,5 @@
 import bs4
+import pytest
 import sqlmodel
 
 from src._common.constants import (
@@ -8,9 +9,7 @@ from src._common.constants import (
 )
 from src._common.keys import KeyPath
 from src._common.state import DocumentState
-from src._common.models import (
-    Book,
-)
+from src._common.models import Book, DOI
 
 _CHAPTERS_DIR = KeyPath(DEFAULT_SFS_DIR) / CHAPTERS_DIR
 db_engine = sqlmodel.create_engine(DB_URL)
@@ -43,6 +42,39 @@ class TestDbRowsAfterPreparer_MultipleDocsExample:
         assert len(books[0].authors) == 1, "Book should have one author."
         assert books[0].authors[0].name == "Pawel Kaminski"
         assert books[0].authors[0].orcid == None
+
+    @pytest.mark.parametrize(
+        "proxy, doi_id, desc",
+        [
+            (None, "10.1287/isre.7.1.111", "(DOI with 'DOI:' prefix)"),
+            ("https://doi.org/", "10.1093/llc/fqy085", "(doi.org)"),
+            (
+                "",
+                "10.1234/example.",
+                "(raw DOI)",
+            ),  # TODO: handle trailing dot and not-None proxy
+            (
+                "https://dx.doi.org/",
+                "10.1000/182",
+                "(DOI in the footer with dot at the end)",
+            ),
+        ],
+    )
+    def test_doi_properly_registered(self, proxy: str | None, doi_id: str, desc: str):
+        with sqlmodel.Session(db_engine) as session:
+            stmt = sqlmodel.select(DOI).where(DOI.slug == MULTI_DOCS_SLUG)
+            results = session.exec(stmt)
+            dois = results.all()
+        description = f'DOI with id "{proxy}{doi_id}"'
+        doi = next((doi for doi in dois if doi.doi == doi_id), None)
+        assert doi is not None, f"{description} was not saved to the database."
+        assert (
+            doi.proxy == proxy
+        ), f"{description} has incorrect proxy. Expected: {proxy}, Found: {doi.proxy}"
+        assert (
+            doi.doi == doi_id
+        ), f"{description} has incorrect DOI. Expected: {doi_id}, Found: {doi.doi}"
+        assert len(dois) == 4
 
 
 class TestDbRowsAfterPreparer_SplitDocExample:
