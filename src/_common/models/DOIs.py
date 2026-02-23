@@ -1,4 +1,6 @@
 import sqlmodel
+import pydantic
+import typing as t
 
 
 try:
@@ -22,16 +24,33 @@ class DOI(ChapterSQLModel, table=True):
     """
 
     __tablename__ = "dois"
+    model_config = pydantic.ConfigDict(validate_assignment=True)
 
     slug: str = sqlmodel.Field(description=DESC["slug"])
     proxy: str | None = sqlmodel.Field(default=None, description=DESC["proxy"])
     doi: str = sqlmodel.Field(description=DESC["doi"])
     parent: str = sqlmodel.Field(description=DESC["parent"])
 
+    @pydantic.field_validator("doi", mode="before")
+    @classmethod
+    def normalize_doi(cls, value: t.Any) -> t.Any:
+        if not isinstance(value, str):
+            return value
+        normalized = DOIService.normalize(value)
+        if not normalized:
+            raise ValueError("DOI cannot be empty")
+        return normalized
+
 
 class DOIService:
+    TRAILING_PUNCTUATION = ".,;:!?)]}\"'”’»"
+
     @staticmethod
     def is_proxy(s: str) -> bool:
         if s.lower() == "doi:":
             return False
         return True
+
+    @classmethod
+    def normalize(cls, s: str) -> str:
+        return s.strip().rstrip(cls.TRAILING_PUNCTUATION)
