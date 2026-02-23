@@ -33,9 +33,9 @@ class DOI(ChapterSQLModel, table=True):
 
     @pydantic.field_validator("doi", mode="before")
     @classmethod
-    def normalize_doi(cls, value: t.Any) -> t.Any:
+    def normalize_doi(cls, value: str) -> str:
         if not isinstance(value, str):
-            return value
+            raise ValueError("DOI must be a string")
         normalized = DOIService.normalize(value)
         if not normalized:
             raise ValueError("DOI cannot be empty")
