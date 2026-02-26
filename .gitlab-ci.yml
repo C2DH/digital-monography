@@ -91,6 +91,16 @@ init:
 
 list-resources:
   stage: pre-deploy
+  dependencies:
+    - init
+  only:
+    - develop
+  image:
+    name: hashicorp/terraform:light
+    entrypoint: [""]
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://gitlab.com
   script:
     - terraform init -backend-config="key=${CI_COMMIT_BRANCH}.tfstate" -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH" -reconfigure
     - terraform state list
