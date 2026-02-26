@@ -125,17 +125,17 @@ data "aws_iam_policy" "efs_full_access" {
   arn = "arn:aws:iam::aws:policy/AmazonElasticFileSystemFullAccess"
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_execute_policy" {
-  role       = aws_iam_role.preparer_iam.name
-  policy_arn = data.aws_iam_policy.lambda_execute.arn
-}
+# resource "aws_iam_role_policy_attachment" "lambda_execute_policy" {
+#   role       = aws_iam_role.preparer_iam.name
+#   policy_arn = data.aws_iam_policy.lambda_execute.arn
+# }
 
-resource "aws_iam_role_policy_attachment" "lambda_vpc_policy" {
-  role       = aws_iam_role.preparer_iam.name
-  policy_arn = data.aws_iam_policy.lambda_vpc.arn
-}
+# resource "aws_iam_role_policy_attachment" "lambda_vpc_policy" {
+#   role       = aws_iam_role.preparer_iam.name
+#   policy_arn = data.aws_iam_policy.lambda_vpc.arn
+# }
 
-resource "aws_iam_role_policy_attachment" "lambda_efs_full_policy" {
-  role       = aws_iam_role.preparer_iam.name
-  policy_arn = data.aws_iam_policy.efs_full_access.arn
-}
+# resource "aws_iam_role_policy_attachment" "lambda_efs_full_policy" {
+#   role       = aws_iam_role.preparer_iam.name
+#   policy_arn = data.aws_iam_policy.efs_full_access.arn
+# }
