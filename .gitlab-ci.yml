@@ -1,10 +1,10 @@
 stages:
   - init
   - pre-deploy
-  # - deploy
-  # - post-deploy
-  # - e2e-tests
-  # - destroy
+  - deploy
+  - post-deploy
+  - e2e-tests
+  - destroy
 
 init:
   stage: init
