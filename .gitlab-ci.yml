@@ -1,10 +1,10 @@
 stages:
   - init
   - pre-deploy
-  - deploy
-  - post-deploy
-  - e2e-tests
-  - destroy
+  # - deploy
+  # - post-deploy
+  # - e2e-tests
+  # - destroy
 
 init:
   stage: init
@@ -89,152 +89,8 @@ init:
   # tags:
   #   - local
 
-build-dashboard:
+list-resources:
   stage: pre-deploy
-  # NOTE: make sure rules are in sync with upload-dashboard job
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"
-      changes:
-        - staticws/dashboard/**/*
-  image: node:20
-  before_script:
-    - cd staticws/dashboard/
-    # - touch .env
-    # - echo "NEXT_PUBLIC_GIT_BRANCH=${CI_COMMIT_BRANCH}" >> .env
-    # - cat .env
-    - npm install
-  script:
-    - npm run build:${CI_COMMIT_BRANCH}
-  after_script:
-    - ls -la staticws/dashboard/out
-  cache:
-    key: ${CI_COMMIT_REF_SLUG}
-    paths:
-      - staticws/dashboard/node_modules/
-      - staticws/dashboard/.next/cache/
-  artifacts:
-    untracked: true
-    paths:
-      - staticws/dashboard/.next
-      - staticws/dashboard/out
-  # tags:
-  #   - local
-
-deploy:
-  stage: deploy
-  dependencies:
-    - init
-    - build-dashboard
-  only:
-    - main
-    - develop
-  image:
-    name: hashicorp/terraform:light
-    entrypoint: [""]
-  id_tokens:
-    GITLAB_OIDC_TOKEN:
-      aud: https://gitlab.com
-  before_script:
-    - cp -a infra/. .
-    - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
-    - mkdir ~/.aws
-    # NOTE: This seems suboptinimal, but it works for now.
-    # If the number of env-specific variables or no. of environments keeps growing,
-    # consider using [GitLab's environments](https://docs.gitlab.com/ci/environments/).
-    - export ROLE_DEPL_ARN=`[ $CI_COMMIT_BRANCH = "main" ] && echo $MAIN_ROLE_DEPL_ARN || echo $DEV_ROLE_DEPL_ARN`
-    - echo -e "[profile oidc]\nrole_arn=${ROLE_DEPL_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
-    - cat ~/.aws/config
-    - cat main.tf
-    - echo $ROLE_DEPL_ARN
   script:
     - terraform init -backend-config="key=${CI_COMMIT_BRANCH}.tfstate" -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH" -reconfigure
-    - terraform apply -auto-approve -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH"
-    - terraform output -json > tf_output.json
-  artifacts:
-    expire_in: 1 day
-    paths:
-      - tf_output.json
-  # tags:
-  #   - local
-
-upload-dashboard:
-  stage: post-deploy
-  dependencies:
-    - build-dashboard
-    - deploy
-  # NOTE: make sure rules are in sync with build-dashboard job
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"
-      changes:
-        - staticws/dashboard/**/*
-  image:
-    name: amazon/aws-cli
-    entrypoint: [""]
-  id_tokens:
-    GITLAB_OIDC_TOKEN:
-      aud: https://gitlab.com
-  before_script:
-    - yum update -y && yum install -y jq
-    - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
-    - mkdir ~/.aws
-    # NOTE: This seems suboptinimal, but it works for now.
-    # If the number of env-specific variables or no. of environments keeps growing,
-    # consider using [GitLab's environments](https://docs.gitlab.com/ci/environments/).
-    - export ROLE_POSTDEPL_ARN=`[ $CI_COMMIT_BRANCH = "main" ] && echo $MAIN_ROLE_POSTDEPL_ARN || echo $DEV_ROLE_POSTDEPL_ARN`
-    - echo -e "[profile oidc]\nrole_arn=${ROLE_POSTDEPL_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
-  script:
-    - export STATICWS_DASHBOARD_S3=$(jq -r '.staticws_dashboard_bucket_name.value' tf_output.json)
-    - export AWS_CONFIG_FILE=~/.aws/config
-    - aws s3 sync staticws/dashboard/out s3://$STATICWS_DASHBOARD_S3 --delete --profile oidc
-  when: on_success
-  # tags:
-  #   - local
-
-# test-dashboard:
-#   stage: e2e-tests
-#   dependencies:
-#     - deploy
-#     - post-deploy
-#   only:
-#     - main
-#     - develop
-#   # image: node:20
-#   image: cypress/browsers:22.15.0
-#   before_script:
-#     - export STATICWS_DASHBOARD_S3=$(jq -r '.staticws_dashboard_bucket_name.value' tf_output.json)
-#     - cd tests/dashboard/
-#     # - touch .env
-#     # - echo "STATICWS_DASHBOARD_S3=${STATICWS_DASHBOARD_S3}" >> .env
-#     # - echo .env
-#     # - echo "STATICWS_DASHBOARD_S3=${STATICWS_DASHBOARD_S3}"
-#     - npm ci
-#   script:
-#     - npm start &
-#     - CYPRESS_BASE_URL=https://${STATICWS_DASHBOARD_S3} npx cypress run --browser chrome --headless
-
-destroy:
-  stage: destroy
-  only:
-    - main
-    - develop
-  image:
-    name: hashicorp/terraform:light
-    entrypoint: [""]
-  id_tokens:
-    GITLAB_OIDC_TOKEN:
-      aud: https://gitlab.com
-  before_script:
-    - cp -a infra/. .
-    - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
-    - mkdir ~/.aws
-    # NOTE: This seems suboptinimal, but it works for now.
-    # If the number of env-specific variables or no. of environments keeps growing,
-    # consider using [GitLab's environments](https://docs.gitlab.com/ci/environments/).
-    - export ROLE_DEPL_ARN=`[ $CI_COMMIT_BRANCH = "main" ] && echo $MAIN_ROLE_DEPL_ARN || echo $DEV_ROLE_DEPL_ARN`
-    - echo -e "[profile oidc]\nrole_arn=${ROLE_DEPL_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
-  script:
-    - terraform init -backend-config="key=${CI_COMMIT_BRANCH}.tfstate" -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH" -reconfigure
-    - terraform destroy -auto-approve -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH"
-  when: manual
-  # tags:
-  #   - local
+    - terraform state list
