@@ -110,9 +110,11 @@ list-resources:
     # consider using [GitLab's environments](https://docs.gitlab.com/ci/environments/).
     - export ROLE_DEPL_ARN=`[ $CI_COMMIT_BRANCH = "main" ] && echo $MAIN_ROLE_DEPL_ARN || echo $DEV_ROLE_DEPL_ARN`
     - echo -e "[profile oidc]\nrole_arn=${ROLE_DEPL_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
+    - cat ~/.aws/config
+    - cat main.tf
+    - echo $ROLE_DEPL_ARN
   script:
     - terraform init -backend-config="key=${CI_COMMIT_BRANCH}.tfstate" -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH" -reconfigure
     - terraform show
     - echo "key=${CI_COMMIT_BRANCH}.tfstate"
-    - ls -la "key=${CI_COMMIT_BRANCH}.tfstate"
     - terraform state list -state=path="key=${CI_COMMIT_BRANCH}.tfstate"
