@@ -112,4 +112,7 @@ list-resources:
     - echo -e "[profile oidc]\nrole_arn=${ROLE_DEPL_ARN}\nweb_identity_token_file=/tmp/web_identity_token" >> ~/.aws/config
   script:
     - terraform init -backend-config="key=${CI_COMMIT_BRANCH}.tfstate" -var-file=secrets/decrypted.tfvars.json -var="env=$CI_COMMIT_BRANCH" -reconfigure
-    - terraform state list
+    - terraform show
+    - echo "key=${CI_COMMIT_BRANCH}.tfstate"
+    - ls -la "key=${CI_COMMIT_BRANCH}.tfstate"
+    - terraform state list -state=path="key=${CI_COMMIT_BRANCH}.tfstate"
