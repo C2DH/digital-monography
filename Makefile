@@ -114,6 +114,13 @@ show/janakeck:
 	(cd /tmp/efs/_JB/migration-and-HERitage && \
 		myst build --html && \
 		cp -r ./assets _build/html/assets)
+	echo 'Copying files, please wait...'
+	cp -r ~/Projects/deepzoom.py/examples/newspapers-jp2/output/fig2_files/* /tmp/efs/_JB/migration-and-HERitage/_build/html/assets/fig2_files/ &
+	cp -r ~/Projects/deepzoom.py/examples/newspapers-jp2/output/fig16_files/* /tmp/efs/_JB/migration-and-HERitage/_build/html/assets/fig16_files/ &
+	cp -r ~/Projects/deepzoom.py/examples/newspapers-jp2/output/fig17_files/* /tmp/efs/_JB/migration-and-HERitage/_build/html/assets/fig17_files/ &
+	cp -r ~/Projects/deepzoom.py/examples/newspapers-jp2/output/fig18_files/* /tmp/efs/_JB/migration-and-HERitage/_build/html/assets/fig18_files/ &
+	wait
+	echo 'Copying finished.'
 	echo 'npx serve /tmp/efs/_JB/migration-and-HERitage/_build/html'
 	npx serve /tmp/efs/_JB/migration-and-HERitage/_build/html
 
