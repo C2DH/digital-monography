@@ -1,24 +1,91 @@
 import flask
+import pathlib
+import werkzeug
+import werkzeug.utils
 
 # import flask_login
 # import sqlmodel
 # from src._common.models import Book
 
+from src._common.constants import DEFAULT_SFS_DIR
+
 try:
     # in microservices, db and fetchers are part of the root dir
     from db import db_engine
+    from decorators import login_required
 except (ImportError, ModuleNotFoundError):
     # in local testing, db and decorators are one directory up
     from ..db import db_engine
+    from ..decorators import login_required
 
 
 home_bp = flask.Blueprint("home", __name__)
 # home_bp.template_folder = home_bp.root_path + "/templates"
 
 
+SLUG = "migration-and-HERitage"
+HTML_BUILD_DIR = pathlib.Path(DEFAULT_SFS_DIR) / "_JB" / SLUG / "_build" / "html"
+
+
 @home_bp.route("/", methods=["GET"])
 def index() -> flask.Response:
     return flask.render_template("home/index.html")
+
+
+@home_bp.route("/migration-and-heritage", methods=["GET"])
+@login_required
+def migration_and_heritage() -> flask.Response:
+    iframe_src = flask.url_for(
+        "home.migration_and_heritage_site", site_path="index.html"
+    )
+    return flask.render_template(
+        "home/migration_and_heritage.html",
+        iframe_src=iframe_src,
+    )
+
+
+@home_bp.route(
+    "/migration-and-heritage/site/",
+    defaults={"site_path": "index.html"},
+    methods=["GET"],
+)
+@home_bp.route("/migration-and-heritage/site/<path:site_path>", methods=["GET"])
+@login_required
+def migration_and_heritage_site(site_path: str) -> flask.Response:
+    print("\n", "=" * 25)
+    print("HTML_BUILD_DIR", HTML_BUILD_DIR)
+    print("site_path", site_path)
+    safe_path = werkzeug.utils.safe_join(str(HTML_BUILD_DIR), site_path)
+    if safe_path is None:
+        flask.abort(404)
+    requested_path = pathlib.Path(safe_path)
+    print("requested_path", requested_path)
+    if requested_path.is_dir():
+        requested_path = requested_path / "index.html"
+    if not requested_path.exists():
+        flask.abort(404)
+    if not requested_path.is_file():
+        flask.abort(404)
+
+    if requested_path.suffix.lower() == ".html":
+        html = requested_path.read_text(encoding="utf-8")
+        print("html", html[:2000])
+        prefix = flask.url_for("home.migration_and_heritage_site", site_path="")
+        if not prefix.endswith("/"):
+            prefix = f"{prefix}/"
+        html = html.replace(' href="/', f' href="{prefix}')
+        html = html.replace(" href='/", f" href='{prefix}")
+        html = html.replace(' src="/', f' src="{prefix}')
+        html = html.replace(" src='/", f" src='{prefix}")
+        html = html.replace(' content="/', f' content="{prefix}')
+        html = html.replace(" content='/", f" content='{prefix}")
+        html = html.replace('url("/', f'url("{prefix}')
+        html = html.replace("url('/", f"url('{prefix}")
+        return flask.Response(html, mimetype="text/html")
+    else:
+        relative_file = requested_path.relative_to(HTML_BUILD_DIR)
+        print("relative_file", relative_file)
+        return flask.send_from_directory(HTML_BUILD_DIR, str(relative_file))
 
 
 # @admin_bp.route("/api/admin/create_user", methods=["POST"])
