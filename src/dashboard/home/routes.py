@@ -32,17 +32,6 @@ def index() -> flask.Response:
     return flask.render_template("home/index.html")
 
 
-# # def migration_and_heritage() -> flask.Response:
-# @home_bp.route("/b/migration-and-heritage", methods=["GET"])
-# @login_required
-# def read_book() -> flask.Response:
-#     iframe_src = flask.url_for("home.serve_static_site", site_path="index.html")
-#     return flask.render_template(
-#         "home/read.html",
-#         iframe_src=iframe_src,
-#     )
-
-
 @home_bp.route("/b/<slug>/read/", defaults={"site_path": "index.html"}, methods=["GET"])
 @home_bp.route("/b/<slug>/read/<path:site_path>", methods=["GET"])
 @login_required
