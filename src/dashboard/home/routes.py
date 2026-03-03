@@ -3,24 +3,18 @@ import pathlib
 import werkzeug
 import werkzeug.utils
 
-# import flask_login
-# import sqlmodel
-# from src._common.models import Book
-
 from src._common.constants import DEFAULT_SFS_DIR
+
 
 try:
     # in microservices, db and fetchers are part of the root dir
-    from db import db_engine
     from decorators import login_required
 except (ImportError, ModuleNotFoundError):
     # in local testing, db and decorators are one directory up
-    from ..db import db_engine
     from ..decorators import login_required
 
 
 home_bp = flask.Blueprint("home", __name__)
-# home_bp.template_folder = home_bp.root_path + "/templates"
 
 
 SLUG = "migration-and-HERitage"
@@ -32,6 +26,7 @@ def index() -> flask.Response:
     return flask.render_template("home/index.html")
 
 
+# TODO: move to separate blueprint for books or /read endpoint
 @home_bp.route("/b/<slug>/read/", defaults={"site_path": "index.html"}, methods=["GET"])
 @home_bp.route("/b/<slug>/read/<path:site_path>", methods=["GET"])
 @login_required
