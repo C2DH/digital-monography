@@ -8,16 +8,19 @@
 'title': 'Guidelines for Drafting Manuscripts',
 'authors': 'Pawel Kaminski',
 'updated': 'Oct 24, 2025',
+'slug': 'guidelines-for-drafting-manuscripts',
 },
 {
 'title': 'Migration and HERitage',
 'authors': 'Jana Sina Dunz-Keck',
 'updated': 'Jan 23, 2026',
+'slug': 'migration-and-HERitage',
 },
 {
 'title': 'A Colônia Luxemburguesa',
 'authors': 'Dominique Santana',
 'updated': 'Feb 02, 2024',
+'slug': 'a-colonia-luxemburguesa',
 }
 ] %}
 
@@ -35,13 +38,32 @@
             class="group relative flex flex-col bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden h-full">
 
             <div class="p-6 flex flex-col flex-grow">
-                <h3
-                    class="text-lg font-bold text-gray-900 leading-tight mb-1 group-hover:text-indigo-600 transition-colors">
-                    {{ book.title }}
-                </h3>
-                <p class="text-sm text-gray-500 font-medium mb-4">
-                    by {{ book.authors }}
-                </p>
+                <div class="flex items-start justify-between gap-4 mb-4">
+                    <div>
+                        <h3
+                            class="text-lg font-bold text-gray-900 leading-tight mb-1 group-hover:text-indigo-600 transition-colors">
+                            {{ book.title }}
+                        </h3>
+                        <p class="text-sm text-gray-500 font-medium">
+                            by {{ book.authors }}
+                        </p>
+                    </div>
+
+                    <div class="inline-flex rounded-lg shadow-2xs shrink-0">
+                        <a href=""
+                            class="py-3 px-4 -ms-px first:rounded-s-lg first:ms-0 last:rounded-e-lg inline-flex items-center gap-x-2 text-sm font-medium focus:z-10 bg-layer border border-layer-line text-layer-foreground shadow-2xs hover:bg-layer-hover focus:outline-hidden focus:bg-layer-focus disabled:opacity-50 disabled:pointer-events-none">
+                            Info
+                        </a>
+                        <a href="{{ url_for('home.serve_static_site', slug=book.slug) }}"
+                            class="py-3 px-4 -ms-px first:rounded-s-lg first:ms-0 last:rounded-e-lg inline-flex items-center gap-x-2 text-sm font-medium focus:z-10 bg-layer border border-layer-line text-layer-foreground shadow-2xs hover:bg-layer-hover focus:outline-hidden focus:bg-layer-focus disabled:opacity-50 disabled:pointer-events-none">
+                            Read
+                        </a>
+                        <a href=""
+                            class="py-3 px-4 -ms-px first:rounded-s-lg first:ms-0 last:rounded-e-lg inline-flex items-center gap-x-2 text-sm font-medium focus:z-10 bg-layer border border-layer-line text-layer-foreground shadow-2xs hover:bg-layer-hover focus:outline-hidden focus:bg-layer-focus disabled:opacity-50 disabled:pointer-events-none">
+                            Check
+                        </a>
+                    </div>
+                </div>
 
                 <div class="mt-auto pt-4 border-t border-gray-100 flex items-center text-xs text-gray-400">
                     <svg class="mr-1.5 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -50,6 +72,7 @@
                     </svg>
                     Last edited: {{ book.updated }}
                 </div>
+
             </div>
         </article>
         {% endfor %}
