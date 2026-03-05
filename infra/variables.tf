@@ -451,3 +451,35 @@ variable "usr_cli_ELG" {
   type        = string
   description = "Name of the IAM User behind the CLI for the SSO user 'ELG'"
 }
+
+variable "static_assets_bucket_name" {
+  type        = string
+  description = "Name of the public-read S3 bucket serving static assets"
+}
+
+variable "role_websvr" {
+  type        = string
+  description = "IAM role name attached to the web server EC2 instance"
+}
+
+variable "policy_websvr" {
+  type        = string
+  description = "IAM policy name attached to the web server EC2 instance"
+}
+
+variable "websvr_profile_name" {
+  type        = string
+  description = "IAM instance profile name attached to the web server EC2 instance"
+}
+
+# variable "static_site_ec2_name" {
+#   type        = string
+#   description = "Name tag of the EC2 instance hosting static websites"
+#   default     = "static-site-node"
+# }
+
+# variable "static_site_ec2_key_name" {
+#   type        = string
+#   description = "Optional EC2 key pair name for SSH access"
+#   default     = null
+# }

@@ -1,3 +1,34 @@
+data "aws_default_vpc" "default" {}
+
+data "aws_subnets" "default_vpc_subnets" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_default_vpc.default.id]
+  }
+}
+
+data "aws_security_group" "default" {
+  filter {
+    name   = "group-name"
+    values = ["default"]
+  }
+
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_default_vpc.default.id]
+  }
+}
+
+resource "aws_security_group_rule" "default_sg_http_ingress" {
+  type              = "ingress"
+  from_port         = 80
+  to_port           = 80
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = data.aws_security_group.default.id
+  description       = "Allow public HTTP traffic"
+}
+
 data "aws_availability_zones" "azs" {
   state = "available"
 }

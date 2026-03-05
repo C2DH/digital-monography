@@ -34,3 +34,23 @@ output "github_api_token" {
   value     = data.aws_secretsmanager_secret_version.github_api_token.secret_string
   sensitive = true
 }
+
+output "websvr_instance_id" {
+  value = aws_instance.websvr.id
+}
+
+output "websvr_public_ip" {
+  value = aws_instance.websvr.public_ip
+}
+
+output "websvr_public_dns" {
+  value = aws_instance.websvr.public_dns
+}
+
+output "static_assets_bucket_name" {
+  value = aws_s3_bucket.static_assets.bucket
+}
+
+output "static_assets_bucket_url" {
+  value = "https://${aws_s3_bucket.static_assets.bucket}.s3.${var.region}.amazonaws.com"
+}
