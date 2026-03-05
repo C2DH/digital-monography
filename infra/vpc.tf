@@ -8,7 +8,7 @@ resource "aws_default_vpc" "default" {}
 data "aws_subnets" "default_vpc_subnets" {
   filter {
     name   = "vpc-id"
-    values = [data.aws_default_vpc.default.id]
+    values = [aws_default_vpc.default.id]
   }
 }
 
@@ -20,7 +20,7 @@ data "aws_security_group" "default" {
 
   filter {
     name   = "vpc-id"
-    values = [data.aws_default_vpc.default.id]
+    values = [aws_default_vpc.default.id]
   }
 }
 
