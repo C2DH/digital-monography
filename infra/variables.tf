@@ -158,6 +158,12 @@ variable "group_devs" {
   description = "Name of the IAM group for developers working on the source code"
 }
 
+variable "group_sysadmins" {
+  type        = string
+  description = "Name of the IAM group for system administrators"
+  default     = "sysadmins"
+}
+
 variable "lambda_entrypoint_func" {
   type        = string
   description = "Name of the entrypoint Lambda function"
@@ -301,6 +307,11 @@ variable "policy_general_dev_ecr" {
 variable "policy_general_dev_apkg_upload" {
   type        = string
   description = "Name of the IAM policy to be assumed by the devs IAM group for uploading authors' packages (apkg) to S3"
+}
+
+variable "policy_sysadmins_vm_connect" {
+  type        = string
+  description = "Name of the IAM policy to be assumed by the sysadmins IAM group for connecting to VMs"
 }
 
 variable "role_dashboard" {

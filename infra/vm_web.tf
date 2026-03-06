@@ -1,4 +1,3 @@
-
 data "aws_ami" "amazon_linux_2023" {
   most_recent = true
   owners      = ["amazon"]
@@ -60,6 +59,11 @@ resource "aws_iam_role_policy" "websvr_get_staticassets_policy" {
       }
     ]
   })
+}
+
+resource "aws_iam_role_policy_attachment" "websvr_ssm_core" {
+  role       = aws_iam_role.role_websvr.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
 resource "aws_iam_instance_profile" "websvr" {
