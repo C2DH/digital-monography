@@ -77,7 +77,6 @@ resource "aws_instance" "websvr" {
   subnet_id              = sort(data.aws_subnets.default_vpc_subnets.ids)[0]
   vpc_security_group_ids = [data.aws_security_group.default.id]
   iam_instance_profile   = aws_iam_instance_profile.websvr.name
-  # key_name               = var.static_site_ec2_key_name
 
   # Cloud-init script to install Docker, Docker Compose, and run the container
   # user_data = <<-EOF

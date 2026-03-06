@@ -63,6 +63,15 @@ resource "aws_iam_policy" "dev_apkg_upload" {
   })
 }
 
+# Users part of the sysadmins group are able to connect to the web server
+# via SSM Session Manager. This approach has a couple of benefits:
+# * it allows to avoid key pair management (sharing among users, rotation, revoking, etc.)
+# * it allows for better auditing of access.
+# To connect to the web server by member of sysadmin group, run: 
+#     `aws ssm start-session --target i-<websvr_instance_id>`
+# See more SSM Session Manager options with `aws ssm help`.
+# You can use CloudShell or AWS CLI installed locally
+# (in that case make sure to have credentials in ~/.aws/credentials).
 resource "aws_iam_policy" "sysadmins_vm_connect" {
   name = "${var.project}-${var.env}-${var.policy_sysadmins_vm_connect}"
   path = "/"
@@ -138,48 +147,3 @@ resource "aws_iam_user_group_membership" "cli_PAK" {
     aws_iam_group.sysadmins.name,
   ]
 }
-
-# resource "aws_iam_user_policy" "cli_PAK_ssm_websvr" {
-#   name = "${var.project}-${var.env}-cli-pak-ssm-websvr"
-#   user = aws_iam_user.cli_PAK.name
-#   policy = jsonencode({
-#     "Version" : "2012-10-17",
-#     "Statement" : [
-#       {
-#         "Sid" : "AllowStartSessionToWebServer",
-#         "Effect" : "Allow",
-#         "Action" : [
-#           "ssm:StartSession"
-#         ],
-#         "Resource" : [
-#           aws_instance.websvr.arn,
-#           "arn:aws:ssm:*:*:document/SSM-SessionManagerRunShell",
-#           "arn:aws:ssm:*:*:document/AWS-StartSSHSession"
-#         ]
-#       },
-#       {
-#         "Sid" : "AllowManageOwnSessions",
-#         "Effect" : "Allow",
-#         "Action" : [
-#           "ssm:ResumeSession",
-#           "ssm:TerminateSession"
-#         ],
-#         "Resource" : [
-#           "arn:aws:ssm:*:*:session/$${aws:username}-*"
-#         ]
-#       },
-#       {
-#         "Sid" : "AllowSessionDiscovery",
-#         "Effect" : "Allow",
-#         "Action" : [
-#           "ec2:DescribeInstances",
-#           "ssm:DescribeInstanceInformation",
-#           "ssm:DescribeSessions",
-#           "ssm:GetConnectionStatus"
-#         ],
-#         "Resource" : "*"
-#       }
-#     ]
-#   })
-# }
-
