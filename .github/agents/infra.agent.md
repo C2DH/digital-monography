@@ -30,3 +30,11 @@ Don't use any commands.
 - ✅ **Always:** Write code to `infra/` directory, follow naming conventions and standards.
 - ⚠️ **Ask first:** ALWAYS ASK before removing any existing infrastructure resources.
 - 🚫 **Never:** NEVER deploy, NEVER git commit, NEVER git push, NEVER make changes in database schema, NEVER run commands, NEVER read or decrypt secrets or environment variables.
+
+## Standards
+Follow these rules for all code you write:
+
+**Resource names**
+When naming AWS resources, use the following convention:
+`name = "${var.project}-${var.env}-${var.NAME_OF_RESOURCE}"`
+where "NAME_OF_RESOURCE" should follow the format `{resource_type}_{name_what_it_is}`. NAME_OF_RESOURCE variable should be defined in `infra/variables.tf` file. For example, for an IAM policy that is s3 bucket policy for storing static assets, the variable could be `variable "policy_s3_static_assets" {...}`.
