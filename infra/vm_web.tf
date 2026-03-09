@@ -87,51 +87,19 @@ resource "aws_instance" "websvr" {
     yum update -y
     yum install -y git
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
-    export NVM_DIR="/root/.nvm"
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    export NVM_DIR="$HOME/.nvm"
+    source $NVM_DIR/nvm.sh
     echo "NVM version: $(nvm --version)"
     nvm install 24.12.0
     nvm use 24.12.0
-    npm install -g mystmd
-    echo "mystmd version: $(mystmd --version)"
+    npm install -g npm@11.11.0
+    npm install -g mystmd@1.8.0
+    echo "mystmd version: $(myst --version)"
 
   EOF
 
-  # Cloud-init script to install Docker, Docker Compose, and run the container
-  # user_data = <<-EOF
-  #             #!/bin/bash
-  #             # 1. Update packages and install prerequisites
-  #             apt-get update -y
-  #             apt-get install -y ca-certificates curl gnupg lsb-release
-
-  #             # 2. Install Docker and Docker Compose
-  #             apt-get install -y docker.io docker-compose
-
-  #             # 3. Start and enable Docker service
-  #             systemctl start docker
-  #             systemctl enable docker
-
-  #             # 4. Add the default ubuntu user to the docker group
-  #             usermod -aG docker ubuntu
-
-  #             # 5. Set up the application directory
-  #             mkdir -p /home/ubuntu/app
-  #             cd /home/ubuntu/app
-
-  #             # 6. Generate the docker-compose.yml file dynamically
-  #             cat <<EOT > docker-compose.yml
-  #             version: '3.8'
-  #             services:
-  #               webapp:
-  #                 image: ${var.docker_image}
-  #                 ports:
-  #                   - "80:80"
-  #                 restart: always
-  #             EOT
-
-  #             # 7. Start the container
-  #             docker-compose up -d
-  #             EOF
+  ## export NVM_DIR="/root/.nvm"
+  ## [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
   # user_data = <<-EOT
   #   #!/bin/bash
   #   set -euxo pipefail
