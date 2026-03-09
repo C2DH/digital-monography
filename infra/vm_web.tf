@@ -78,6 +78,26 @@ resource "aws_instance" "websvr" {
   vpc_security_group_ids = [data.aws_security_group.default.id]
   iam_instance_profile   = aws_iam_instance_profile.websvr.name
 
+  user_data = <<-EOF
+    #!/bin/bash
+    set -e # stop execution immediately if any cmd fails
+    exec > >(tee /var/log/user-data.log) # log output to file
+    exec 2>&1 # stderr to stdout
+
+    yum update -y
+    yum install -y git
+    yum install -y curl
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
+    export NVM_DIR="/root/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    echo "NVM version: $(nvm --version)"
+    nvm install 24.12.0
+    nvm use 24.12.0
+    npm install -g mystmd
+    echo "mystmd version: $(mystmd --version)"
+
+  EOF
+
   # Cloud-init script to install Docker, Docker Compose, and run the container
   # user_data = <<-EOF
   #             #!/bin/bash
