@@ -92,7 +92,6 @@ resource "aws_instance" "websvr" {
     echo "NVM version: $(nvm --version)"
     nvm install 24.12.0
     nvm use 24.12.0
-    npm install -g npm@11.11.0
     npm install -g mystmd@1.8.0
     echo "mystmd version: $(myst --version)"
 
