@@ -86,7 +86,6 @@ resource "aws_instance" "websvr" {
 
     yum update -y
     yum install -y git
-    yum install -y curl
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
     export NVM_DIR="/root/.nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
