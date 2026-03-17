@@ -126,20 +126,20 @@ show/janakeck:
 
 show/guidelines:
 	make db/migrate
-	(cd "/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/guidelines-for-drafting-manuscripts-v2/" && cp *.docx assets/source_chapters/)
-	(cd "/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/guidelines-for-drafting-manuscripts-v2/" && cp *.ipynb assets/source_chapters/)
+	(cd "/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/guidelines-for-drafting-manuscripts/" && cp *.docx assets/source_chapters/)
+	(cd "/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/guidelines-for-drafting-manuscripts/" && cp *.ipynb assets/source_chapters/)
 	DGTMON_NO_WAIT=1 \
 		IR_APKG_HTML_BUCKET_NAME=_s3_html \
 		IR_APKG_MD_BUCKET_NAME=_s3_md \
 		METADATA_ASSETS_BUCKET_NAME=_s3_assets_state \
 		VERIFIER_MSGS=_s3_warnings \
-		python3.12 scripts/prepare_and_build_jb2.py book_path="/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/guidelines-for-drafting-manuscripts-v2/"
-	export BUILD_DIR=/tmp/efs/_JB/guidelines-for-drafting-manuscripts-v2/_build/html
+		python3.12 scripts/prepare_and_build_jb2.py book_path="/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/guidelines-for-drafting-manuscripts/"
+	export BUILD_DIR=/tmp/efs/_JB/guidelines-for-drafting-manuscripts/_build/html
 	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
-	(cd /tmp/efs/_JB/guidelines-for-drafting-manuscripts-v2 && \
+	(cd /tmp/efs/_JB/guidelines-for-drafting-manuscripts && \
 		myst build --html && \
 		cp -r ./assets _build/html/assets)
-	echo 'npx serve /tmp/efs/_JB/guidelines-for-drafting-manuscripts-v2/_build/html'
+	echo 'npx serve /tmp/efs/_JB/guidelines-for-drafting-manuscripts/_build/html'
 
 login:
 	aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin ${MAIN_DOCKER_ECR}
