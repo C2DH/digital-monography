@@ -126,6 +126,8 @@ show/janakeck:
 
 show/guidelines:
 	make db/migrate
+	(cd "/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/guidelines-for-drafting-manuscripts-v2/" && cp *.docx assets/source_chapters/)
+	(cd "/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/guidelines-for-drafting-manuscripts-v2/" && cp *.ipynb assets/source_chapters/)
 	DGTMON_NO_WAIT=1 \
 		IR_APKG_HTML_BUCKET_NAME=_s3_html \
 		IR_APKG_MD_BUCKET_NAME=_s3_md \
