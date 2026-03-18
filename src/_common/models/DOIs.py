@@ -11,7 +11,7 @@ except (ImportError, ModuleNotFoundError):
 
 DESC = {
     "slug": "Book's slug.",
-    "proxy": "The web-based service that resolves DOI identifiers.",
+    "proxy": "The web-based service that resolves DOI identifiers, e.g. 'https://doi.org/'.",
     "doi": "DOI identifier, e.g. '10.1234/example'.",
     "parent": "The parent element that contains the DOI. Usually the quotation.",
 }
@@ -47,6 +47,8 @@ class DOIService:
 
     @staticmethod
     def is_proxy(s: str) -> bool:
+        if not s:
+            return False
         if s.lower() == "doi:":
             return False
         return True
