@@ -25,6 +25,7 @@ def search_for_entities_in_text(
         # print("type(elem)", type(elem))
         assert isinstance(elem, bs4.NavigableString)
         # print("elem.text", elem.text)
+        # print("elem.string", elem.string)
         # print("elem.parent", elem.parent)
         # print("elem.parent.name", elem.parent.name)
         # print("elem.parent.attrs", elem.parent.attrs)
@@ -47,9 +48,12 @@ def search_for_entities_in_text(
         )
         docstate.add(doi)
 
-        # TODO: Currently DOI.doi can end with "."
-        # TODO: If the user edits text label the href target stays!!!
+        if doi.proxy:
+            assert isinstance(elem.string, str)
+            elem.replace_with(elem.string.replace(doi.proxy, "doi:"))
+            # NOTE: Watch out: after replacement html_soup is updated but the "elem" is detached from the tree
 
+        # TODO: If the user edits text label the href target stays!!!
     return html_soup
 
 
