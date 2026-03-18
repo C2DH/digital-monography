@@ -35,21 +35,21 @@ output "github_api_token" {
   sensitive = true
 }
 
-output "websvr_vm_connect" {
-  value = "aws ssm start-session --target ${aws_instance.websvr.id}"
-}
+# output "websvr_vm_connect" {
+#   value = "aws ssm start-session --target ${aws_instance.websvr.id}"
+# }
 
-output "websvr_instance_id" {
-  value = aws_instance.websvr.id
-}
+# output "websvr_instance_id" {
+#   value = aws_instance.websvr.id
+# }
 
-output "websvr_public_ip" {
-  value = aws_instance.websvr.public_ip
-}
+# output "websvr_public_ip" {
+#   value = aws_instance.websvr.public_ip
+# }
 
-output "websvr_public_dns" {
-  value = aws_instance.websvr.public_dns
-}
+# output "websvr_public_dns" {
+#   value = aws_instance.websvr.public_dns
+# }
 
 output "static_assets_bucket_name" {
   value = aws_s3_bucket.static_assets.bucket
