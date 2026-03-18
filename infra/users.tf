@@ -72,38 +72,38 @@ resource "aws_iam_policy" "dev_apkg_upload" {
 # See more SSM Session Manager options with `aws ssm help`.
 # You can use CloudShell or AWS CLI installed locally
 # (in that case make sure to have credentials in ~/.aws/credentials).
-resource "aws_iam_policy" "sysadmins_vm_connect" {
-  name = "${var.project}-${var.env}-${var.policy_sysadmins_vm_connect}"
-  path = "/"
-  policy = jsonencode({
-    "Version" : "2012-10-17",
-    "Statement" : [
-      {
-        "Sid" : "AllowStartSessionToWebServer",
-        "Effect" : "Allow",
-        "Action" : [
-          "ssm:StartSession"
-        ],
-        "Resource" : [
-          aws_instance.websvr.arn,
-          "arn:aws:ssm:*:*:document/SSM-SessionManagerRunShell",
-          "arn:aws:ssm:*:*:document/AWS-StartSSHSession"
-        ]
-      },
-      {
-        "Sid" : "AllowManageOwnSessions",
-        "Effect" : "Allow",
-        "Action" : [
-          "ssm:ResumeSession",
-          "ssm:TerminateSession"
-        ],
-        "Resource" : [
-          "arn:aws:ssm:*:*:session/$${aws:username}-*"
-        ]
-      }
-    ]
-  })
-}
+# resource "aws_iam_policy" "sysadmins_vm_connect" {
+#   name = "${var.project}-${var.env}-${var.policy_sysadmins_vm_connect}"
+#   path = "/"
+#   policy = jsonencode({
+#     "Version" : "2012-10-17",
+#     "Statement" : [
+#       {
+#         "Sid" : "AllowStartSessionToWebServer",
+#         "Effect" : "Allow",
+#         "Action" : [
+#           "ssm:StartSession"
+#         ],
+#         "Resource" : [
+#           aws_instance.websvr.arn,
+#           "arn:aws:ssm:*:*:document/SSM-SessionManagerRunShell",
+#           "arn:aws:ssm:*:*:document/AWS-StartSSHSession"
+#         ]
+#       },
+#       {
+#         "Sid" : "AllowManageOwnSessions",
+#         "Effect" : "Allow",
+#         "Action" : [
+#           "ssm:ResumeSession",
+#           "ssm:TerminateSession"
+#         ],
+#         "Resource" : [
+#           "arn:aws:ssm:*:*:session/$${aws:username}-*"
+#         ]
+#       }
+#     ]
+#   })
+# }
 
 resource "aws_iam_group_policy_attachment" "dev_ecr" {
   group      = aws_iam_group.devs.name
@@ -115,10 +115,10 @@ resource "aws_iam_group_policy_attachment" "dev_apkg_upload" {
   policy_arn = aws_iam_policy.dev_apkg_upload.arn
 }
 
-resource "aws_iam_group_policy_attachment" "vm_connect" {
-  group      = aws_iam_group.sysadmins.name
-  policy_arn = aws_iam_policy.sysadmins_vm_connect.arn
-}
+# resource "aws_iam_group_policy_attachment" "vm_connect" {
+#   group      = aws_iam_group.sysadmins.name
+#   policy_arn = aws_iam_policy.sysadmins_vm_connect.arn
+# }
 
 ## Specific users
 
@@ -144,6 +144,6 @@ resource "aws_iam_user_group_membership" "cli_PAK" {
   user = aws_iam_user.cli_PAK.name
   groups = [
     aws_iam_group.devs.name,
-    aws_iam_group.sysadmins.name,
+    # aws_iam_group.sysadmins.name,
   ]
 }
