@@ -39,6 +39,7 @@ def insert_digital_objects(
                 new_tag["width"] = "100%"
                 new_tag["height"] = height
                 new_tag["frameborder"] = "0"
+                new_tag["loading"] = "lazy"
                 table.replace_with(new_tag)
             elif (
                 digitalsrc[:7].lower() == "https:/"
@@ -49,6 +50,7 @@ def insert_digital_objects(
                 new_tag["width"] = "100%"
                 new_tag["height"] = height
                 new_tag["frameborder"] = "0"
+                new_tag["loading"] = "lazy"
                 table.replace_with(new_tag)
     return html_soup
 
