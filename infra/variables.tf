@@ -494,3 +494,15 @@ variable "websvr_profile_name" {
 #   description = "Optional EC2 key pair name for SSH access"
 #   default     = null
 # }
+
+variable "built_jb_bucket_arn" {
+  type        = string
+  description = "ARN of the external S3 bucket for uploading built Jupyter Books"
+  default     = "arn:aws:s3:::external-bucket"
+}
+
+variable "built_jb_bucket_name" {
+  type        = string
+  description = "Name of the external S3 bucket for uploading built Jupyter Books"
+  default     = "external-bucket"
+}
