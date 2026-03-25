@@ -7,7 +7,7 @@ data "aws_caller_identity" "current_aws_acc" {}
 
 # Never change the name of the role, as the ARN will be shared with the external organization
 resource "aws_iam_role" "access_built_jb" {
-  name        = "${var.project}-${var.env}-role-external-s3-built-jb"
+  name        = "${var.project}-role-external-s3-built-jb"
   description = "IAM Role to allow access an external S3 bucket for uploading built Jupyter Books"
 
   assume_role_policy = jsonencode({
