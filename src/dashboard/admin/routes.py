@@ -48,19 +48,6 @@ def create_user():
     return flask.jsonify({"message": f"User {username} created with role {role}."}), 201
 
 
-@admin_bp.route("/hi", methods=["GET"])
-@admin_bp.route("/hi/", methods=["GET"])
-def admin_hi() -> flask.Response:
-    return flask.jsonify({"message": f"I'm a teapot."}), 418
-
-
-@admin_bp.route("/secret", methods=["GET"])
-@admin_bp.route("/secret/", methods=["GET"])
-@flask_login.login_required
-def admin_secret() -> flask.Response:
-    return flask.jsonify({"message": f"SECRET. I'm a teapot."}), 418
-
-
 class LoginForm(flask_wtf.FlaskForm):
     username = wtforms.StringField(
         "Username", validators=[wtforms.validators.DataRequired()]

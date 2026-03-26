@@ -469,6 +469,7 @@ def _write_project_data_to_db(key: KeyPath, project_data: ProjectData) -> None:
                 book = Book(
                     title=project_data["title"],
                     slug=key.slug,
+                    # note this is more created than updated
                     updated=datetime.datetime.now(datetime.timezone.utc),
                 )
                 session.add(book)
