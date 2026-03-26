@@ -19,6 +19,7 @@ SERVICE_NAME = "dashboard"
 BLUEPRINT_MODULES: list[str] = [
     "admin.routes",
     "home.routes",
+    "read.routes",
 ]
 
 
