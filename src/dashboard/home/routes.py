@@ -2,8 +2,12 @@ import flask
 import flask_login
 import sqlmodel
 from sqlalchemy.orm import selectinload
+import random
+import time
 
+from src._common.constants import DEFAULT_SFS_DIR, JB_DIR
 from src._common.models import Book
+from src._common.keys import KeyPath
 
 try:
     # in microservices, db and fetchers are part of the root dir
@@ -18,12 +22,14 @@ except (ImportError, ModuleNotFoundError):
 home_bp = flask.Blueprint("home", __name__)
 
 
-@flask_login.login_required
 @home_bp.route("/", methods=["GET"])
 def book_index() -> flask.Response:
     """
     Displays a list of books and their authors.
     """
+    if not flask_login.current_user.is_authenticated:
+        return flask.render_template("home/index.html", books=[])
+    jb_dir = KeyPath(DEFAULT_SFS_DIR) / JB_DIR
     with sqlmodel.Session(db_engine) as session:
         stmt = sqlmodel.select(Book).options(selectinload(Book.authors))
         books = session.exec(stmt).all()
@@ -36,3 +42,18 @@ def book_index() -> flask.Response:
         ]
         books_json.append(book_data)
     return flask.render_template("home/index.html", books=books_json)
+
+
+@home_bp.route("/b/<slug>/process", methods=["GET"])
+@login_required
+def process_book(slug: str) -> flask.Response:
+    """
+    Simulates an async task that fetches additional data for a book.
+    """
+    wait_time = random.uniform(0.5, 3.0)
+    time.sleep(wait_time)
+    # with sqlmodel.Session(db_engine) as session:
+    #     book = session.get(Book, book_id)
+    #     if not book:
+    #         return flask.Response("Book not found", status=404)
+    return flask.Response(f"Processed in {wait_time:.2f}s")
