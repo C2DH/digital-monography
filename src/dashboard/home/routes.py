@@ -57,3 +57,12 @@ def process_book(slug: str) -> flask.Response:
     #     if not book:
     #         return flask.Response("Book not found", status=404)
     return flask.Response(f"Processed in {wait_time:.2f}s")
+
+
+@home_bp.route("/b/<slug>/home/static_site", methods=["GET"])
+def get_jb_link(slug: str) -> flask.Response:
+    built_jb_dir = KeyPath(DEFAULT_SFS_DIR) / JB_DIR / slug / "_build" / "html"
+    if built_jb_dir.exists():
+        url = flask.url_for("read.serve_static_site", slug=slug)
+        return f'<a href="{url}" target="_blank" class="text-indigo-600 hover:text-indigo-800 underline">▶️</a>'
+    return "❌"
