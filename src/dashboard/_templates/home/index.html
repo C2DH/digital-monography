@@ -3,26 +3,6 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-{% set books = [
-{
-'title': 'Guidelines for Drafting Manuscripts',
-'authors': 'Pawel Kaminski',
-'updated': 'Oct 24, 2025',
-'slug': 'guidelines-for-drafting-manuscripts',
-},
-{
-'title': 'Migration and HERitage',
-'authors': 'Jana Sina Dunz-Keck',
-'updated': 'Jan 23, 2026',
-'slug': 'migration-and-HERitage',
-},
-{
-'title': 'A Colônia Luxemburguesa',
-'authors': 'Dominique Santana',
-'updated': 'Feb 02, 2024',
-'slug': 'a-colonia-luxemburguesa',
-}
-] %}
 
 {% if current_user.is_authenticated %}
 <div class="space-y-6">

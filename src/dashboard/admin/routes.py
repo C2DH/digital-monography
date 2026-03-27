@@ -21,7 +21,6 @@ admin_bp = flask.Blueprint("admin", __name__)
 
 
 @admin_bp.route("/api/admin/create_user", methods=["POST"])
-@login_required
 @admin_required
 def create_user():
     username = flask.request.args.get("username")
