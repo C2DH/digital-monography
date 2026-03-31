@@ -12,11 +12,11 @@ from src._common.keys import KeyPath
 try:
     # in microservices, db and fetchers are part of the root dir
     from db import db_engine
-    from decorators import admin_required, login_required
+    from decorators import login_required
 except (ImportError, ModuleNotFoundError):
     # in local testing, db and decorators are one directory up
     from ..db import db_engine
-    from ..decorators import admin_required, login_required
+    from ..decorators import login_required
 
 
 home_bp = flask.Blueprint("home", __name__)
@@ -59,15 +59,17 @@ def process_book(slug: str) -> flask.Response:
     return flask.Response(f"Processed in {wait_time:.2f}s")
 
 
+# TODO: consider moving to /read
 @home_bp.route("/b/<slug>/home/static_site", methods=["GET"])
 def get_jb_link(slug: str) -> flask.Response:
     built_jb_dir = KeyPath(DEFAULT_SFS_DIR) / JB_DIR / slug / "_build" / "html"
     if built_jb_dir.exists():
         url = flask.url_for("read.serve_static_site", slug=slug)
-        return f'<a href="{url}" target="_blank" class="text-indigo-600 hover:text-indigo-800 underline">▶️</a>'
+        return f'<a href="{url}" target="_blank" class="text-indigo-600 hover:text-indigo-800">▶️</a>'
     return "❌"
 
 
+# TODO: consider moving to /info
 @home_bp.route("/b/<slug>/home/input_exists", methods=["GET"])
 def get_input_exists(slug: str) -> flask.Response:
     input_dir = KeyPath(DEFAULT_SFS_DIR) / INPUT_DIR / slug

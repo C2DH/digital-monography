@@ -34,6 +34,10 @@
                         </th>
                         <th scope="col"
                             class="sticky top-0 z-10 border-b border-gray-200 bg-gray-50 px-6 py-3 font-semibold">
+                            Build
+                        </th>
+                        <th scope="col"
+                            class="sticky top-0 z-10 border-b border-gray-200 bg-gray-50 px-6 py-3 font-semibold">
                             Read
                         </th>
                     </tr>
@@ -54,6 +58,11 @@
                         <td class="px-6 py-4" hx-get="{{ url_for('home.get_input_exists', slug=book.slug) }}"
                             hx-trigger="load" hx-swap="innerHTML" class="text-sm text-gray-500">
                             {% include "_components/spinner.html" %}
+                        </td>
+                        <!-- Build -->
+                        <td class="px-6 py-4">
+                            <a href="{{ url_for('build.build_book', slug=book.slug) }}"
+                                class="text-indigo-600 hover:text-indigo-800">▶️</a>
                         </td>
                         <!-- Read -->
                         <td class="px-6 py-4" hx-get="{{ url_for('home.get_jb_link', slug=book.slug) }}"

@@ -18,6 +18,7 @@ except (ImportError, ModuleNotFoundError):
 SERVICE_NAME = "dashboard"
 BLUEPRINT_MODULES: list[str] = [
     "admin.routes",
+    "build.routes",
     "check.routes",
     "home.routes",
     "info.routes",
