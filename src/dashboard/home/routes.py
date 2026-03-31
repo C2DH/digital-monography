@@ -5,7 +5,7 @@ from sqlalchemy.orm import selectinload
 import random
 import time
 
-from src._common.constants import DEFAULT_SFS_DIR, JB_DIR
+from src._common.constants import DEFAULT_SFS_DIR, INPUT_DIR, JB_DIR
 from src._common.models import Book
 from src._common.keys import KeyPath
 
@@ -65,4 +65,15 @@ def get_jb_link(slug: str) -> flask.Response:
     if built_jb_dir.exists():
         url = flask.url_for("read.serve_static_site", slug=slug)
         return f'<a href="{url}" target="_blank" class="text-indigo-600 hover:text-indigo-800 underline">▶️</a>'
+    return "❌"
+
+
+@home_bp.route("/b/<slug>/home/input_exists", methods=["GET"])
+def get_input_exists(slug: str) -> flask.Response:
+    input_dir = KeyPath(DEFAULT_SFS_DIR) / INPUT_DIR / slug
+    if input_dir.exists():
+        # # TODO: consider showing the last mod time
+        # timestamp = input_dir.stat().st_mtime  # time of last modification
+        # datetime_str = time.strftime("%Y-%m-%d %H:%M", time.localtime(timestamp))
+        return "✅"
     return "❌"
