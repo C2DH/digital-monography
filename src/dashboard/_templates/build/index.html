@@ -9,8 +9,124 @@
         <h2 class="text-2xl font-bold text-gray-800 tracking-tight">Prepare manuscript</h2>
     </div>
 
-    <div class="overflow-hidden rounded-xl bg-white">
-        Hello
+    <div class="overflow-hidden rounded-xl bg-white space-y-6">
+        <div>
+            <h3 class="text-xl font-bold text-gray-800">
+                Is manuscript ready?
+            </h3>
+            <ul class="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <li class="rounded-md border border-gray-200 bg-white">
+                    <details class="group p-3">
+                        <summary class="flex cursor-pointer list-none items-start justify-between gap-3">
+                            <div class="flex min-w-0 items-start gap-3">
+                                <span
+                                    class="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700"
+                                    aria-hidden="true">
+                                    <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                                        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"
+                                            opacity="0.25"></circle>
+                                        <path d="M12 3a9 9 0 0 1 9 9" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round"></path>
+                                    </svg>
+                                </span>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-semibold text-gray-900">Is manuscript accessible?</p>
+                                    <p class="text-xs text-amber-700">Ongoing</p>
+                                </div>
+                            </div>
+                        </summary>
+                        <p class="mt-2 pl-9 text-sm text-gray-600">
+                            Checks whether the manuscript directory is present and accessible.
+                        </p>
+                    </details>
+                </li>
+
+                <li class="rounded-md border border-gray-200 bg-white">
+                    <details class="group p-3">
+                        <summary class="flex cursor-pointer list-none items-start justify-between gap-3">
+                            <div class="flex min-w-0 items-start gap-3">
+                                <span
+                                    class="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"
+                                    aria-hidden="true">
+                                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none">
+                                        <path d="M6 12.5l4 4L18 8" stroke="currentColor" stroke-width="2.2"
+                                            stroke-linecap="round" stroke-linejoin="round"></path>
+                                    </svg>
+                                </span>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-semibold text-gray-900">Is configuration file found?</p>
+                                    <p class="text-xs text-emerald-700">Success</p>
+                                </div>
+                            </div>
+                        </summary>
+                        <p class="mt-2 pl-9 text-sm text-gray-600">
+                            Verifies whether `myst.yml` is present and non-empty.
+                        </p>
+                    </details>
+                </li>
+
+                <li class="rounded-md border border-gray-200 bg-white">
+                    <details class="group p-3">
+                        <summary class="flex cursor-pointer list-none items-start justify-between gap-3">
+                            <div class="flex min-w-0 items-start gap-3">
+                                <span
+                                    class="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-700"
+                                    aria-hidden="true">
+                                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none">
+                                        <path d="M8 8l8 8M16 8l-8 8" stroke="currentColor" stroke-width="2.2"
+                                            stroke-linecap="round"></path>
+                                    </svg>
+                                </span>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-semibold text-gray-900">Is assets directory found?</p>
+                                    <p class="text-xs text-rose-700">Failed</p>
+                                </div>
+                            </div>
+                        </summary>
+                        <p class="mt-2 pl-9 text-sm text-gray-600">
+                            Checks whether the assets directory is present. Every author's package should include an
+                            `assets/` folder.
+                        </p>
+                    </details>
+                </li>
+
+                <li class="rounded-md border border-gray-200 bg-white">
+                    <details class="group p-3">
+                        <summary class="flex cursor-pointer list-none items-start justify-between gap-3">
+                            <div class="flex min-w-0 items-start gap-3">
+                                <span
+                                    class="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"
+                                    aria-hidden="true">
+                                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none">
+                                        <path d="M6 12.5l4 4L18 8" stroke="currentColor" stroke-width="2.2"
+                                            stroke-linecap="round" stroke-linejoin="round"></path>
+                                    </svg>
+                                </span>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-semibold text-gray-900">Are chapters present?</p>
+                                    <p class="text-xs text-emerald-700">Success</p>
+                                </div>
+                            </div>
+                        </summary>
+                        <p class="mt-2 pl-9 text-sm text-gray-600">
+                            Checks whether the manuscript contains at least one chapter.
+                        </p>
+                    </details>
+                </li>
+            </ul>
+        </div>
+        <div>
+            <h3 class="text-xl font-bold text-gray-800">
+                Build digital book
+            </h3>
+            <p class="mt-2">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+        </div>
+        <div>
+            <h3 class="text-xl font-bold text-gray-800">
+                Events
+            </h3>
+            <p class="mt-2">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+        </div>
     </div>
 </div>
 {% endblock %}
