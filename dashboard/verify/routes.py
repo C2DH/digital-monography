@@ -42,11 +42,14 @@ def verify_config(slug: str) -> flask.Response:
             flask.render_template(
                 "verify/_config_validity_check.html",
                 is_config_valid=is_config_valid,
-                message=msg,
+                is_config_valid_msg=msg,
             ),
             200,
         )
-    return flask.jsonify({"is_config_valid": is_config_valid, "message": msg}), 200
+    return (
+        flask.jsonify({"is_config_valid": is_config_valid, "is_config_valid_msg": msg}),
+        200,
+    )
 
 
 def mock_verif_cfg(slug: str) -> tuple[bool, str]:

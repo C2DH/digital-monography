@@ -42,26 +42,15 @@
             <h3 class="text-xl font-bold text-gray-800">
                 Build the digital book
             </h3>
-            {% if is_config_valid and result.is_manuscript_accessible and result.is_config_found and
-            result.is_assets_dir_found and
-            result.is_chapter_found %}
-            <p>The manuscript is ready to be built. Click the button below to start the preparation process.</p>
-            <div class="mt-6 mb-6 flex flex-col items-center text-center space-y-3">
-                <button type="button"
-                    class="rounded-lg bg-emerald-100 px-4 py-2 text-lg hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2">
-                    Prepare book
-                </button>
+            <div id="to-be-replaced-by-verification-result">
+                {% if result.is_manuscript_accessible and result.is_config_found and
+                result.is_assets_dir_found and
+                result.is_chapter_found %}
+                <p class="mt-2">Waiting for verification result...</p>
+                {% else %}
+                <p class="mt-2">Author's package is not valid. Please fix it before proceeding.</p>
+                {% endif %}
             </div>
-            {% else %}
-            <!-- add wait for verify_config to resolve -->
-            <!-- add disclaimer that you cannot proceed -->
-            {% endif %}
-        </div>
-        <div>
-            <h3 class="text-xl font-bold text-gray-800">
-                Events
-            </h3>
-            <p class="mt-2">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
         </div>
     </div>
 </div>
