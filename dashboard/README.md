@@ -1,5 +1,10 @@
 # Project's Dashboard
 
+Remember to publish useful tools:
+* high resolution screenshots
+* DPI checker
+* make images into openseadragon deepzoom format
+
 ## Url layout
 
 ### Home
