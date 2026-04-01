@@ -12,7 +12,7 @@ sys.path.append(parent_dir)
 
 # from src.entrypoint.main import app
 # from src.orm.main import app
-from src.dashboard.main import app
+from dashboard.main import app
 
 
 if __name__ == "__main__":
