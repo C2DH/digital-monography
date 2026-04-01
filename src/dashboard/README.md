@@ -15,11 +15,11 @@ Home - index, filters, error msg pages
 /b/<slug>/build
 /b/<slug>/info
 /b/<slug>/read
-/b/<slug>/check
+/b/<slug>/verify
 
 <!--
 read
-check
+verify
 correct
 review
 revise

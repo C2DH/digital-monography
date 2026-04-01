@@ -1,5 +1,4 @@
 import flask
-import random
 import typing as t
 
 from src._common.constants import ASSETS_DIR, DEFAULT_SFS_DIR, INPUT_DIR
@@ -39,7 +38,7 @@ def build_book(slug: str) -> flask.Response:
         "chapters": [],
     }
     if not input_dir.exists() or not input_dir.is_dir():
-        return flask.render_template("build/index.html", result=res)
+        return flask.render_template("build/index.html", result=res, slug=slug)
     for path in input_dir.iterdir():
         if path.is_file() and path.suffix.lower() in {".docx", ".ipynb"}:
             res["chapters"].append(path.name)
@@ -49,17 +48,4 @@ def build_book(slug: str) -> flask.Response:
             res["is_assets_dir_found"] = True
     res["is_chapter_found"] = any(res["chapters"])
     res["is_manuscript_accessible"] = True
-    return flask.render_template("build/index.html", result=res)
-
-
-def verify_config(slug: str) -> bool:
-    input_dir = KeyPath(DEFAULT_SFS_DIR) / INPUT_DIR / slug
-    config_path = None
-    for path in input_dir.iterdir():
-        if path.is_file() and path.name.lower() in {"myst.yml", "myst.yaml"}:
-            config_path = path
-            break
-    if config_path is None:
-        return False
-    # TODO: add actual YAML parsing and validation here
-    return random.choice([True, False])
+    return flask.render_template("build/index.html", result=res, slug=slug)

@@ -13,7 +13,7 @@
     <div class="overflow-hidden rounded-xl bg-white space-y-6">
         <div>
             <h3 class="text-xl font-bold text-gray-800">
-                Is manuscript available?
+                Is manuscript available? {{ slug }}
             </h3>
             <ul class="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
                 {{ verif_dropdown("Is manuscript accessible?", result.is_manuscript_accessible, "Checks whether the
@@ -34,7 +34,15 @@
             <h3 class="text-xl font-bold text-gray-800">
                 Is configuration valid?
             </h3>
-            <!-- ... -->
+            {% if result.is_manuscript_accessible and result.is_config_found and result.is_assets_dir_found and
+            result.is_chapter_found %}
+            <div id="config-validity-check" hx-get="{{ url_for('verify.verify_config', slug=slug) }}" hx-trigger="load"
+                hx-swap="outerHTML">
+                {{ verif_dropdown("Is configuration valid?", None, "Checking configuration validity...") }}
+            </div>
+            {% else %}
+            {{ verif_dropdown("Is configuration valid?", False, "Could not validate configuration.") }}
+            {% endif %}
         </div>
         <div>
             <h3 class="text-xl font-bold text-gray-800">
