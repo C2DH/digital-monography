@@ -1,5 +1,2 @@
 {% from '_macros/verif_dropdown.html' import verif_dropdown %}
-<div id="config-validity-check">
-    {{ verif_dropdown("Is configuration valid?", is_config_valid, "Validation result returned by verify.verify_config.")
-    }}
-</div>
+{{ verif_dropdown("Is configuration valid?", is_config_valid, message)}}

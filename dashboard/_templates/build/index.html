@@ -13,21 +13,14 @@
     <div class="overflow-hidden rounded-xl bg-white space-y-6">
         <div>
             <h3 class="text-xl font-bold text-gray-800">
-                Is manuscript available? {{ slug }}
+                Is manuscript available?
             </h3>
             <ul class="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
-                {{ verif_dropdown("Is manuscript accessible?", result.is_manuscript_accessible, "Checks whether the
-                manuscript directory is
-                present and accessible.") }}
-                {{ verif_dropdown("Is configuration file found?", result.is_config_found, "Verifies whether `myst.yml`
-                is present and
-                non-empty.") }}
-                {{ verif_dropdown("Is assets directory found?", result.is_assets_dir_found, "Checks whether the assets
-                directory is
-                present. Every author's package should include an `assets/` folder.") }}
-                {{ verif_dropdown("Are chapters present?", result.is_chapter_found, "Checks whether the manuscript
-                contains at least
-                one chapter.") }}
+                {{ verif_dropdown("Is manuscript accessible?", result.is_manuscript_accessible,
+                msgs.is_manuscript_accessible) }}
+                {{ verif_dropdown("Is configuration file found?", result.is_config_found, msgs.is_config_found) }}
+                {{ verif_dropdown("Is assets directory found?", result.is_assets_dir_found, msgs.is_assets_dir_found) }}
+                {{ verif_dropdown("Are chapters present?", result.is_chapter_found, msgs.is_chapter_found) }}
             </ul>
         </div>
         <div>
@@ -36,25 +29,33 @@
             </h3>
             {% if result.is_manuscript_accessible and result.is_config_found and result.is_assets_dir_found and
             result.is_chapter_found %}
-            <div id="config-validity-check" hx-get="{{ url_for('verify.verify_config', slug=slug) }}" hx-trigger="load"
-                hx-swap="outerHTML">
+            <ul class="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3" id="config-validity-check"
+                hx-get="{{ url_for('verify.verify_config', slug=slug) }}" hx-trigger="load" hx-swap="innerHTML">
                 {{ verif_dropdown("Is configuration valid?", None, "Checking configuration validity...") }}
-            </div>
+            </ul>
             {% else %}
-            {{ verif_dropdown("Is configuration valid?", False, "Could not validate configuration.") }}
+            {{ verif_dropdown("Is configuration valid?", False, "Could not validate configuration. Make sure that
+            previous verification steps pass before proceeding.") }}
             {% endif %}
         </div>
         <div>
             <h3 class="text-xl font-bold text-gray-800">
-                Build digital book
+                Build the digital book
             </h3>
-            {% if result.is_manuscript_accessible and result.is_config_found and result.is_assets_dir_found and
+            {% if is_config_valid and result.is_manuscript_accessible and result.is_config_found and
+            result.is_assets_dir_found and
             result.is_chapter_found %}
-            <button>
-                Build Book
-            </button>
+            <p>The manuscript is ready to be built. Click the button below to start the preparation process.</p>
+            <div class="mt-6 mb-6 flex flex-col items-center text-center space-y-3">
+                <button type="button"
+                    class="rounded-lg bg-emerald-100 px-4 py-2 text-lg hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2">
+                    Prepare book
+                </button>
+            </div>
+            {% else %}
+            <!-- add wait for verify_config to resolve -->
+            <!-- add disclaimer that you cannot proceed -->
             {% endif %}
-            <p class="mt-2">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
         </div>
         <div>
             <h3 class="text-xl font-bold text-gray-800">
