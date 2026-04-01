@@ -13,23 +13,39 @@
     <div class="overflow-hidden rounded-xl bg-white space-y-6">
         <div>
             <h3 class="text-xl font-bold text-gray-800">
-                Is manuscript ready?
+                Is manuscript available?
             </h3>
             <ul class="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
-                {{ verif_dropdown("Is manuscript accessible?", "Ongoing", "Checks whether the manuscript directory is
+                {{ verif_dropdown("Is manuscript accessible?", result.is_manuscript_accessible, "Checks whether the
+                manuscript directory is
                 present and accessible.") }}
-                {{ verif_dropdown("Is configuration file found?", "Ongoing", "Verifies whether `myst.yml` is present and
+                {{ verif_dropdown("Is configuration file found?", result.is_config_found, "Verifies whether `myst.yml`
+                is present and
                 non-empty.") }}
-                {{ verif_dropdown("Is assets directory found?", "Success", "Checks whether the assets directory is
+                {{ verif_dropdown("Is assets directory found?", result.is_assets_dir_found, "Checks whether the assets
+                directory is
                 present. Every author's package should include an `assets/` folder.") }}
-                {{ verif_dropdown("Are chapters present?", "Failed", "Checks whether the manuscript contains at least
+                {{ verif_dropdown("Are chapters present?", result.is_chapter_found, "Checks whether the manuscript
+                contains at least
                 one chapter.") }}
             </ul>
         </div>
         <div>
             <h3 class="text-xl font-bold text-gray-800">
+                Is configuration valid?
+            </h3>
+            <!-- ... -->
+        </div>
+        <div>
+            <h3 class="text-xl font-bold text-gray-800">
                 Build digital book
             </h3>
+            {% if result.is_manuscript_accessible and result.is_config_found and result.is_assets_dir_found and
+            result.is_chapter_found %}
+            <button>
+                Build Book
+            </button>
+            {% endif %}
             <p class="mt-2">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
         </div>
         <div>
