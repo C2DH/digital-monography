@@ -47,6 +47,10 @@ def create_app():
     login_manager.init_app(app)
     login_manager.login_view = "admin.login"
 
+    @login_manager.unauthorized_handler
+    def unauthorized():
+        flask.abort(401)
+
     @login_manager.user_loader
     def load_user(user_id) -> User | None:
         """
@@ -74,5 +78,18 @@ def create_app():
                     f"Module '{module_path}' should have a blueprint named '{blueprint_name}'."
                 )
             app.register_blueprint(bp)
+
+    @app.errorhandler(401)
+    def unauthorized_access(_error):
+        return flask.render_template("401_unauthorized.html"), 401
+
+    @app.errorhandler(403)
+    def forbidden_access(_error):
+        return flask.render_template("403_forbidden.html"), 403
+
+    @app.errorhandler(404)
+    def page_not_found(_error):
+        return flask.render_template("404_not_found.html"), 404
+
     flask_wtf.CSRFProtect(app)
     return app
