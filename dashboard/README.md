@@ -17,10 +17,22 @@ Home - index, filters, error msg pages
 /b/
 
 /b/<slug>/
-/b/<slug>/build
-/b/<slug>/info
+/b/<slug>/build/1/pre-check
+/b/<slug>/build/2/chapters
+/b/<slug>/build/3/assets
+/b/<slug>/build/4/links
+
 /b/<slug>/read
-/b/<slug>/verify
+
+/b/<slug>/info
+
+/b/<slug>/verify/config
+/b/<slug>/verify/assets
+/b/<slug>/verify/links
+/b/<slug>/verify/formatting
+
+/b/<slug>/delete/book
+/b/<slug>/delete/build
 
 <!--
 read

@@ -9,11 +9,11 @@ from src._common.keys import KeyPath
 try:
     # in microservices, db and fetchers are part of the root dir
     from db import db_engine
-    from decorators import admin_required, login_required
+    from decorators import login_required
 except (ImportError, ModuleNotFoundError):
     # in local testing, db and decorators are one directory up
     from ..db import db_engine
-    from ..decorators import admin_required, login_required
+    from ..decorators import login_required
 
 
 verify_bp = flask.Blueprint("verify", __name__)
@@ -41,6 +41,7 @@ def verify_config(slug: str) -> flask.Response:
         return (
             flask.render_template(
                 "verify/_config_validity_check.html",
+                slug=slug,
                 is_config_valid=is_config_valid,
                 is_config_valid_msg=msg,
             ),
@@ -52,6 +53,7 @@ def verify_config(slug: str) -> flask.Response:
     )
 
 
+# TODO: actual config verif
 def mock_verif_cfg(slug: str) -> tuple[bool, str]:
     input_dir = KeyPath(DEFAULT_SFS_DIR) / INPUT_DIR / slug
     config_path = None
