@@ -38,7 +38,11 @@
                         </th>
                         <th scope="col"
                             class="sticky top-0 z-10 border-b border-gray-200 bg-gray-50 px-6 py-3 font-semibold">
-                            Read
+                            Digital
+                        </th>
+                        <th scope="col"
+                            class="sticky top-0 z-10 border-b border-gray-200 bg-gray-50 px-6 py-3 font-semibold">
+                            Paper
                         </th>
                     </tr>
                 </thead>
@@ -64,8 +68,13 @@
                             <a href="{{ url_for('build.pre_check', slug=book.slug) }}"
                                 class="text-indigo-600 hover:text-indigo-800">▶️</a>
                         </td>
-                        <!-- Read -->
+                        <!-- Digital -->
                         <td class="px-6 py-4" hx-get="{{ url_for('home.get_jb_link', slug=book.slug) }}"
+                            hx-trigger="load" hx-swap="innerHTML" class="text-sm text-gray-500">
+                            {% include "_components/spinner.html" %}
+                        </td>
+                        <!-- Paper -->
+                        <td class="px-6 py-4" hx-get="{{ url_for('home.get_paper_pkg', slug=book.slug) }}"
                             hx-trigger="load" hx-swap="innerHTML" class="text-sm text-gray-500">
                             {% include "_components/spinner.html" %}
                         </td>
