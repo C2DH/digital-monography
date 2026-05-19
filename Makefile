@@ -32,7 +32,7 @@ prep/book:
 	export BUILD_DIR=/tmp/efs/a_book/_build/html
 	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
 	(cd /tmp/efs/_JB/a_book && \
-		myst build --html && \
+		myst build --html --debug && \
 		cp -r ./assets _build/html/assets)
 	echo 'npx serve /tmp/efs/_JB/a_book/_build/html'
 
@@ -49,7 +49,7 @@ prep/split:
 	export BUILD_DIR=/tmp/efs/_JB/split-to-multiple-chapters/_build/html
 	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
 	(cd /tmp/efs/_JB/split-to-multiple-chapters && \
-		myst build --html && \
+		myst build --html --debug && \
 		cp -r ./assets _build/html/assets)
 	echo 'npx serve /tmp/efs/_JB/split-to-multiple-chapters/_build/html'
 
@@ -95,7 +95,7 @@ show/dominique:
 	export BUILD_DIR=/tmp/efs/_JB/a-colonia-luxemburguesa/_build/html
 	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
 	(cd /tmp/efs/_JB/a-colonia-luxemburguesa && \
-		myst build --html && \
+		myst build --html --debug && \
 		cp -r ./assets _build/html/assets)
 	echo 'npx serve /tmp/efs/_JB/a-colonia-luxemburguesa/_build/html'
 	npx serve /tmp/efs/_JB/a-colonia-luxemburguesa/_build/html
@@ -112,7 +112,7 @@ show/janakeck:
 	export BUILD_DIR=/tmp/efs/_JB/migration-and-HERitage/_build/html
 	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
 	(cd /tmp/efs/_JB/migration-and-HERitage && \
-		myst build --html && \
+		myst build --html --debug && \
 		cp -r ./assets _build/html/assets)
 	echo 'Copying files, please wait...'
 	cp -r ~/Projects/deepzoom.py/examples/newspapers-jp2/output/fig2_files/* /tmp/efs/_JB/migration-and-HERitage/_build/html/assets/fig2_files/ &
@@ -137,7 +137,7 @@ show/guidelines:
 	export BUILD_DIR=/tmp/efs/_JB/guidelines-for-drafting-manuscripts/_build/html
 	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
 	(cd /tmp/efs/_JB/guidelines-for-drafting-manuscripts && \
-		myst build --html && \
+		myst build --html --debug && \
 		cp -r ./assets _build/html/assets)
 	echo 'npx serve /tmp/efs/_JB/guidelines-for-drafting-manuscripts/_build/html'
 
