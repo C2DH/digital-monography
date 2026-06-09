@@ -123,6 +123,7 @@ show/janakeck:
 	echo 'Copying finished.'
 	echo 'npx serve /tmp/efs/_JB/migration-and-HERitage/_build/html'
 	npx serve /tmp/efs/_JB/migration-and-HERitage/_build/html
+	echo 'GIT_AUTHOR_NAME="Jana Keck" GIT_AUTHOR_EMAIL="keck@ghi-dc.org" GIT_COMMITTER_NAME="Pawel Kaminski" GIT_COMMITTER_EMAIL="pawel.kaminski@uni.lu" git commit -m ""'
 
 show/guidelines:
 	make db/migrate
