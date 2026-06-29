@@ -1,0 +1,17 @@
+{% from '_macros/verif_dropdown.html' import verif_dropdown %}
+{{ verif_dropdown("Is configuration valid?", is_config_valid, is_config_valid_msg)}}
+
+<div id="to-be-replaced-by-verification-result" hx-swap-oob="true">
+    {% if is_config_valid %}
+    <p>The manuscript is ready to be built into a digital book. Click the button below to start the preparation process.
+    </p>
+    <div class="mt-6 mb-6 flex flex-col items-center text-center space-y-3">
+        <a type="button" href="{{ url_for('build.trigger_build', slug=slug) }}"
+            class="rounded-lg bg-emerald-100 px-4 py-2 text-lg hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2">
+            Prepare the digital book
+        </a>
+    </div>
+    {% else %}
+    <p class="mt-2">Configuration is not valid. Please fix it before proceeding.</p>
+    {% endif %}
+</div>

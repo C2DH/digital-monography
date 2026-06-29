@@ -16,13 +16,11 @@ MAIN_DOCKER_ECR = 875551125547.dkr.ecr.eu-central-1.amazonaws.com
 DOCKER_HUB = c2dhunilu
 
 prep/copy:
-	# rm -r tests/_fixtures/a_book/
-	cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/a_book/' tests/_fixtures/
-	# echo 'maybe book-content-examples dir can be better utilized'
-	cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/book-content-examples/' tests/_fixtures/
-	cp -R '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/split-to-multiple-chapters/' tests/_fixtures/
+	rsync -r '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/book-content-examples/' tests/_fixtures/
+	cp _database.db /mnt/c/Users/Pawel.kaminski/Downloads/_database.db
 
 prep/book:
+	rsync -r '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/a_book/' tests/_fixtures/a_book/
 	mkdir -p /tmp/efs/
 	make db/migrate
 	DGTMON_NO_WAIT=1 \
@@ -34,11 +32,12 @@ prep/book:
 	export BUILD_DIR=/tmp/efs/a_book/_build/html
 	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
 	(cd /tmp/efs/_JB/a_book && \
-		myst build --html && \
+		myst build --html --debug && \
 		cp -r ./assets _build/html/assets)
 	echo 'npx serve /tmp/efs/_JB/a_book/_build/html'
 
 prep/split:
+	rsync -r '/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/split-to-multiple-chapters/' tests/_fixtures/split-to-multiple-chapters/
 	mkdir -p /tmp/efs/
 	make db/migrate
 	DGTMON_NO_WAIT=1 \
@@ -50,20 +49,32 @@ prep/split:
 	export BUILD_DIR=/tmp/efs/_JB/split-to-multiple-chapters/_build/html
 	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
 	(cd /tmp/efs/_JB/split-to-multiple-chapters && \
-		myst build --html && \
+		myst build --html --debug && \
 		cp -r ./assets _build/html/assets)
 	echo 'npx serve /tmp/efs/_JB/split-to-multiple-chapters/_build/html'
 
+prep/front:
+	mkdir -p /tmp/efs/
+	make db/migrate
+	DGTMON_NO_WAIT=1 \
+		IR_APKG_HTML_BUCKET_NAME=_s3_html \
+		IR_APKG_MD_BUCKET_NAME=_s3_md \
+		METADATA_ASSETS_BUCKET_NAME=_s3_assets_state \
+		VERIFIER_MSGS=_s3_warnings \
+		python3.12 scripts/prepare_and_build_jb2.py book_path="/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/machine-code-for-beginners/"
+	export BUILD_DIR=/tmp/efs/_JB/machine-code-for-beginners/_build/html
+	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
+	# (cd /tmp/efs/_JB/machine-code-for-beginners && myst build --html --debug && cp -r ./assets _build/html/assets)
+
 test/unit:
-	DGTMON_DEBUG=1 python3.12 -m pytest tests/entrypoint tests/orm tests/common/ tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
+	DGTMON_DEBUG=1 python3.12 -m pytest tests/common/ tests/dashboard tests/entrypoint/ tests/orm tests/preparer/ tests/verifier/ tests/wordprocessor/
 
 test/snapshot:
 	DGTMON_DEBUG=1 python3.12 -m pytest tests/snapshot/
 
-test:
-	DGTMON_DEBUG=1 python3.12 -m pytest tests/entrypoint tests/orm tests/common/ tests/preparer/ tests/verifier/ tests/builder/ tests/wordprocessor/
+test: test/unit test/snapshot
 
-test/e2e: prep/book test/snapshot
+test/e2e: prep/book prep/split test/snapshot
 
 typecheck:
 	mypy src/entrypoint/ --check-untyped-defs
@@ -97,7 +108,7 @@ show/dominique:
 	export BUILD_DIR=/tmp/efs/_JB/a-colonia-luxemburguesa/_build/html
 	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
 	(cd /tmp/efs/_JB/a-colonia-luxemburguesa && \
-		myst build --html && \
+		myst build --html --debug && \
 		cp -r ./assets _build/html/assets)
 	echo 'npx serve /tmp/efs/_JB/a-colonia-luxemburguesa/_build/html'
 	npx serve /tmp/efs/_JB/a-colonia-luxemburguesa/_build/html
@@ -114,25 +125,35 @@ show/janakeck:
 	export BUILD_DIR=/tmp/efs/_JB/migration-and-HERitage/_build/html
 	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
 	(cd /tmp/efs/_JB/migration-and-HERitage && \
-		myst build --html && \
+		myst build --html --debug && \
 		cp -r ./assets _build/html/assets)
+	echo 'Copying files, please wait...'
+	cp -r ~/Projects/deepzoom.py/examples/newspapers-jp2/output/fig2_files/* /tmp/efs/_JB/migration-and-HERitage/_build/html/assets/fig2_files/ &
+	cp -r ~/Projects/deepzoom.py/examples/newspapers-jp2/output/fig16_files/* /tmp/efs/_JB/migration-and-HERitage/_build/html/assets/fig16_files/ &
+	cp -r ~/Projects/deepzoom.py/examples/newspapers-jp2/output/fig17_files/* /tmp/efs/_JB/migration-and-HERitage/_build/html/assets/fig17_files/ &
+	cp -r ~/Projects/deepzoom.py/examples/newspapers-jp2/output/fig18_files/* /tmp/efs/_JB/migration-and-HERitage/_build/html/assets/fig18_files/ &
+	wait
+	echo 'Copying finished.'
 	echo 'npx serve /tmp/efs/_JB/migration-and-HERitage/_build/html'
 	npx serve /tmp/efs/_JB/migration-and-HERitage/_build/html
+	echo 'GIT_AUTHOR_NAME="Jana Keck" GIT_AUTHOR_EMAIL="keck@ghi-dc.org" GIT_COMMITTER_NAME="Pawel Kaminski" GIT_COMMITTER_EMAIL="pawel.kaminski@uni.lu" git commit -m ""'
 
 show/guidelines:
 	make db/migrate
+	(cd "/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/guidelines-for-drafting-manuscripts/" && cp *.docx assets/source_chapters/)
+	(cd "/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/guidelines-for-drafting-manuscripts/" && cp *.ipynb assets/source_chapters/)
 	DGTMON_NO_WAIT=1 \
 		IR_APKG_HTML_BUCKET_NAME=_s3_html \
 		IR_APKG_MD_BUCKET_NAME=_s3_md \
 		METADATA_ASSETS_BUCKET_NAME=_s3_assets_state \
 		VERIFIER_MSGS=_s3_warnings \
-		python3.12 scripts/prepare_and_build_jb2.py book_path="/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/guidelines-for-drafting-manuscripts-v2/"
-	export BUILD_DIR=/tmp/efs/_JB/guidelines-for-drafting-manuscripts-v2/_build/html
+		python3.12 scripts/prepare_and_build_jb2.py book_path="/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books/guidelines-for-drafting-manuscripts/"
+	export BUILD_DIR=/tmp/efs/_JB/guidelines-for-drafting-manuscripts/_build/html
 	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
-	(cd /tmp/efs/_JB/guidelines-for-drafting-manuscripts-v2 && \
-		myst build --html && \
+	(cd /tmp/efs/_JB/guidelines-for-drafting-manuscripts && \
+		myst build --html --debug && \
 		cp -r ./assets _build/html/assets)
-	echo 'npx serve /tmp/efs/_JB/guidelines-for-drafting-manuscripts-v2/_build/html'
+	echo 'npx serve /tmp/efs/_JB/guidelines-for-drafting-manuscripts/_build/html'
 
 login:
 	aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin ${MAIN_DOCKER_ECR}

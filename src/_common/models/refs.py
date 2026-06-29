@@ -48,7 +48,26 @@ class RefService:
             return False
         return "#" in href
 
+    @staticmethod
+    def remove_docx_syntax_from_href(href: str) -> str:
+        prev = href
+        href = _remove_switch(href)
+        return href
+
 
 #     @staticmethod
 #     def get_s3_key(slug: str, stem: str) -> str:
 #         return f"{slug}/{stem}.json"
+
+
+def _remove_switch(href: str) -> str:
+    """
+    In ECMA-376 specification, a switch `\\l` is used to indicate a location,
+    such as bookmark, where a hyperlink will jump. This has to be replaced
+    with a hash symbol to be recognized as a link to a specific element (bookmark).
+    """
+    if "' \\l '" in href:
+        href = href.replace("' \\l '", "#")
+    if '" \\l "' in href:
+        href = href.replace('" \\l "', "#")
+    return href

@@ -12,12 +12,15 @@ python -m venv .sbom
 source .sbom/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt 
-python -m pip freeze > sbom-req.txt
-python -m pip install sbom4python
-sbom4python -r sbom-req.txt -o sbom-out.tags
+python -m pip install cyclonedx-bom
+cyclonedx-py environment .sbom > "python-sbom-cyclonedx.json"
+mv python-sbom-cyclonedx.json ./docs/06_soft-composition/python-sbom-cyclonedx.json
+# python -m pip freeze > sbom-req.txt
+# python -m pip install sbom4python
+# sbom4python -r sbom-req.txt -o sbom-out.tags
 ```
 
-See [`sbom-out.tags`](./sbom-out.tags) for Python SBOM.
+See [`python-sbom-cyclonedx.json`](./python-sbom-cyclonedx.json) for Python SBOM.
 
 ### JS/TS
 
@@ -30,11 +33,11 @@ Dashboard was written in JavaScript/TypeScript. Two experimental versions exist,
 ```sh
 cd staticws/dashboard/
 npm install
-cp package.json ../../docs/06_soft-composition/package.json
-cp package-lock.json ../../docs/06_soft-composition/package-lock.json
+npm install --save-dev @cyclonedx/cyclonedx-npm
+npx cyclonedx-npm --ignore-npm-errors > ../../docs/06_soft-composition/js-sbom-react.json
 ```
 
-See [`package.json`](./package.json) and [`package-lock.json`](./package-lock.json) for JavaScript SBOM.
+See [`js-sbom-react.json`](./js-sbom-react.json) re. SBOM for React-based dashboard.
 
 #### Flask html templates + Tailwindcss + htmx
 
@@ -42,12 +45,19 @@ The dependencies are fetched from jsdelivr CDN server.
 
 ```sh
 grep -R '<script' src/dashboard/_templates/*.html
+npm init
+npm install tailwindcss@4.1.18
+npm install htmx.org@2.0.7
+npm install --save-dev @cyclonedx/cyclonedx-npm
+npx cyclonedx-npm --ignore-npm-errors --omit dev > ../../docs/06_soft-composition/js-sbom-preferred.json
 ```
+
+See [`js-sbom-preferred.json`](./js-sbom-preferred.json) re. SBOM for htmx-based dashboard.
 
 * tailwindcss@4.1.18
     - https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.1.18/dist/index.global.js
     - [MIT](https://github.com/tailwindlabs/tailwindcss/blob/v4.1.18/LICENSE)
-    - [No dependencies found other than dev dependencies](https://github.com/tailwindlabs/tailwindcss/blob/v4.1.18/package.json):
+    - [No dependencies found other than dev dependencies](https://github.com/tailwindlabs/tailwindcss/blob/v4.1.18/package.json)
 * htmx@2.0.7
     - https://cdn.jsdelivr.net/npm/htmx.org@2.0.7/dist/htmx.min.js
     - [Zero-Clause BSD](https://github.com/bigskysoftware/htmx/blob/v2.0.7/LICENSE)

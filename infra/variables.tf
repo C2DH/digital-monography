@@ -158,6 +158,12 @@ variable "group_devs" {
   description = "Name of the IAM group for developers working on the source code"
 }
 
+variable "group_sysadmins" {
+  type        = string
+  description = "Name of the IAM group for system administrators"
+  default     = "sysadmins"
+}
+
 variable "lambda_entrypoint_func" {
   type        = string
   description = "Name of the entrypoint Lambda function"
@@ -301,6 +307,11 @@ variable "policy_general_dev_ecr" {
 variable "policy_general_dev_apkg_upload" {
   type        = string
   description = "Name of the IAM policy to be assumed by the devs IAM group for uploading authors' packages (apkg) to S3"
+}
+
+variable "policy_sysadmins_vm_connect" {
+  type        = string
+  description = "Name of the IAM policy to be assumed by the sysadmins IAM group for connecting to VMs"
 }
 
 variable "role_dashboard" {
@@ -450,4 +461,48 @@ variable "usr_cli_PAK" {
 variable "usr_cli_ELG" {
   type        = string
   description = "Name of the IAM User behind the CLI for the SSO user 'ELG'"
+}
+
+variable "static_assets_bucket_name" {
+  type        = string
+  description = "Name of the public-read S3 bucket serving static assets"
+}
+
+variable "role_websvr" {
+  type        = string
+  description = "IAM role name attached to the web server EC2 instance"
+}
+
+variable "policy_websvr" {
+  type        = string
+  description = "IAM policy name attached to the web server EC2 instance"
+}
+
+variable "websvr_profile_name" {
+  type        = string
+  description = "IAM instance profile name attached to the web server EC2 instance"
+}
+
+# variable "static_site_ec2_name" {
+#   type        = string
+#   description = "Name tag of the EC2 instance hosting static websites"
+#   default     = "static-site-node"
+# }
+
+# variable "static_site_ec2_key_name" {
+#   type        = string
+#   description = "Optional EC2 key pair name for SSH access"
+#   default     = null
+# }
+
+variable "built_jb_bucket_arn" {
+  type        = string
+  description = "ARN of the external S3 bucket for uploading built Jupyter Books"
+  default     = "arn:aws:s3:::external-bucket"
+}
+
+variable "built_jb_bucket_name" {
+  type        = string
+  description = "Name of the external S3 bucket for uploading built Jupyter Books"
+  default     = "external-bucket"
 }

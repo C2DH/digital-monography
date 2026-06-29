@@ -4,7 +4,6 @@ from src._common.constants import ATTRIB_METADATA_UUID, CLS_METADATA_TABLE
 from src._common.models import Asset, AssetService
 from src._common.state import DocumentState
 
-
 DEFAULT_HEIGHT = "100%"
 
 
@@ -23,9 +22,11 @@ def insert_digital_objects(
             if asset is None:
                 height = DEFAULT_HEIGHT
                 digitalsrc = ""
+                alttext = ""
             else:
                 height = asset.height
                 digitalsrc = str(asset.fp)
+                alttext = asset.alttext
             # assets: list[Asset] = docstate.filter("assets", pk, attrib="metadata_table")
             # print("\nassets", len(assets), assets, "\n")
             # tablename: str, val: str | int, attrib: str = "pk"
@@ -34,10 +35,13 @@ def insert_digital_objects(
             # TODO: improve conditions and verification, current method is too naive
             if digitalsrc[-5:].lower() == ".html":
                 new_tag = html_soup.new_tag("iframe")
-                new_tag["src"] = digitalsrc
+                # "./../assets/fig2.html" instead of "assets/fig2.html"
+                new_tag["src"] = f"./../{digitalsrc}"
+                new_tag["title"] = alttext
                 new_tag["width"] = "100%"
                 new_tag["height"] = height
                 new_tag["frameborder"] = "0"
+                new_tag["loading"] = "lazy"
                 table.replace_with(new_tag)
             elif (
                 digitalsrc[:7].lower() == "https:/"
@@ -45,9 +49,11 @@ def insert_digital_objects(
             ):
                 new_tag = html_soup.new_tag("iframe")
                 new_tag["src"] = digitalsrc
+                new_tag["title"] = alttext
                 new_tag["width"] = "100%"
                 new_tag["height"] = height
                 new_tag["frameborder"] = "0"
+                new_tag["loading"] = "lazy"
                 table.replace_with(new_tag)
     return html_soup
 

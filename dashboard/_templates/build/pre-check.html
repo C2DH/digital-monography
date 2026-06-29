@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Build{% endblock %}
+
+{% block content %}
+
+{% from '_macros/verif_dropdown.html' import verif_dropdown %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-gray-800 tracking-tight">Prepare manuscript</h2>
+    </div>
+
+    <div class="overflow-hidden rounded-xl bg-white space-y-6">
+        <div>
+            <h3 class="text-xl font-bold text-gray-800">
+                Is manuscript available?
+            </h3>
+            <ul class="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                {{ verif_dropdown("Is manuscript accessible?", result.is_manuscript_accessible,
+                msgs.is_manuscript_accessible) }}
+                {{ verif_dropdown("Is configuration file found?", result.is_config_found, msgs.is_config_found) }}
+                {{ verif_dropdown("Is assets directory found?", result.is_assets_dir_found, msgs.is_assets_dir_found) }}
+                {{ verif_dropdown("Are chapters present?", result.is_chapter_found, msgs.is_chapter_found) }}
+            </ul>
+        </div>
+        <div>
+            <h3 class="text-xl font-bold text-gray-800">
+                Is configuration valid?
+            </h3>
+            {% if result.is_manuscript_accessible and result.is_config_found and result.is_assets_dir_found and
+            result.is_chapter_found %}
+            <ul class="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3" id="config-validity-check"
+                hx-get="{{ url_for('verify.verify_config', slug=slug) }}" hx-trigger="load" hx-swap="innerHTML">
+                {{ verif_dropdown("Is configuration valid?", None, "Checking configuration validity...") }}
+            </ul>
+            {% else %}
+            {{ verif_dropdown("Is configuration valid?", False, "Could not validate configuration. Make sure that
+            previous verification steps pass before proceeding.") }}
+            {% endif %}
+        </div>
+        <div>
+            <h3 class="text-xl font-bold text-gray-800">
+                Build the digital book
+            </h3>
+            <div id="to-be-replaced-by-verification-result">
+                {% if result.is_manuscript_accessible and result.is_config_found and
+                result.is_assets_dir_found and
+                result.is_chapter_found %}
+                <p class="mt-2">Waiting for verification result...</p>
+                {% else %}
+                <p class="mt-2">Author's package is not valid. Please fix it before proceeding.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

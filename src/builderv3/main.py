@@ -28,7 +28,6 @@ from src._common.audit import AuditEvent, AuditStatus, AlertLog, AlertStatus
 from src._common.constants import (
     ASSETS_DIR,
     AUTONUMBER_PLACEHOLDER,
-    AUTONUMBER_COUNT_CHAPTERS_SEPARATELY,
     DB_URL,
     IS_DEBUG,
     ModuleEnum,
@@ -44,7 +43,7 @@ from src._common.html2md import convert_to_md
 from src._common.keys import KeyPath
 from src._common.state import BookState
 from fakers import Faker
-from prep_config import create_myst_config_file
+from prep_config import init_myst_config
 
 
 if IS_DEBUG:
@@ -78,8 +77,9 @@ def lambda_handler(event, context) -> None:
     _copy_assets(key)
     _copy_manuscript(key)
     bookstate = _load_book_state(key)
+    _init_myst_config(key, bookstate)
     update_targets_for_substitutions(bookstate)
-    _create_myst_config_file(key)
+    print("\n\nbookstate.config", bookstate.config, "\n\n")
     # enrich_html_from_docx(key, bookstate)
     for key in sorted(key.efs_chapters_dir.glob("**/*")):
         assert key.suffix.lower() in (".html", ".ipynb")
@@ -169,19 +169,21 @@ def _load_book_state(key: KeyPath) -> BookState:
         raise
 
 
-def _create_myst_config_file(key: KeyPath) -> None:
+def _init_myst_config(key: KeyPath, bookstate: BookState) -> None:
     """
-    Write "myst.yml" config file for Jupyter Book v2 build.
+    Read and update "myst.yml" config file.
     """
     try:
-        create_myst_config_file(key)
-        logger.info(f"Successfully created myst config file.")
+        init_myst_config(key, bookstate)
+        logger.info(f"Successfully initialized myst config file.")
     except Exception as e:
-        logging.exception(f'Creating "myst.yml" config file failed. Error: {repr(e)}')
+        logging.exception(
+            f'Initializing "myst.yml" config file failed. Error: {repr(e)}'
+        )
         _log_audit_event(
             key,
             AuditStatus.FAILED.value,
-            "Error while creating Jupyter Book config file.",
+            "Error while initializing Jupyter Book config file.",
         )
         raise
 
@@ -208,26 +210,51 @@ def update_targets_for_substitutions(bookstate: BookState) -> None:
     Then, order targets by prev_item_num within each group
     and call _update_datapoints_for_targets() for each group.
     """
-    if AUTONUMBER_COUNT_CHAPTERS_SEPARATELY:
-        grouped_targets = _group_targets_by_chapter(bookstate)
-        for group in grouped_targets.values():
+    if bookstate.config and bookstate.config.dgtmon.per_chapter_numbering:
+        sorted_targets = _group_and_sort_targets_by_chapter(bookstate)
+        for group in sorted_targets.values():
             _update_state_records_for_substitution(group)
     else:
-        raise NotImplementedError(
-            "Implement autonumbering where numbers do not start at 1 with each chapter."
-        )
+        sorted_targets = _sort_all_targets(bookstate)
+        for t in sorted_targets:
+            # No file count prefix when autonumbering accross the whole book.
+            t.file_count = None
+        _update_state_records_for_substitution(sorted_targets)
 
 
-def _group_targets_by_chapter(bookstate: BookState) -> dict[str, list[Target]]:
+def _sort_all_targets(
+    bookstate: BookState,
+) -> list[Target]:
     """
+    Ordering when we can to increment autonumbering across the whole book, not by chapters.
+    Sort all targets in a bookstate first by file count and then by number in that file.
+    E.g. Fig 1 in file 02_chpt2.docx should be AFTER Fig 2 in file 01_chpt1.docx.
+    """
+
+    def _get_file_count(t: Target) -> int | None:
+        return t.file_count
+
+    all_targets: list[Target] = sorted(bookstate.all("targets"), key=_get_file_count)
+    return sorted(all_targets, key=lambda t: (t.prev_item_num or 0))
+
+
+def _group_and_sort_targets_by_chapter(
+    bookstate: BookState,
+) -> collections.OrderedDict[int, list[Target]]:
+    """
+    Ordering when we can to increment autonumbering by chapters.
     To do that, group all targets by loc_key (key after split).
     Then, order targets by prev_item_num within each group.
     """
-    grouped_and_sorted_targets: dict[int, list[Target]] = {}
-    grouped_targets: dict[int, list[Target]] = collections.defaultdict(list)
-    all_targets: list[Target] = sorted(
-        bookstate.all("targets"), key=lambda t: t.file_count
+    grouped_and_sorted_targets: collections.OrderedDict[int, list[Target]] = (
+        collections.OrderedDict()
     )
+    grouped_targets: dict[int, list[Target]] = collections.defaultdict(list)
+
+    def _get_file_count(t: Target) -> int | None:
+        return t.file_count
+
+    all_targets: list[Target] = sorted(bookstate.all("targets"), key=_get_file_count)
     for target in all_targets:
         assert (
             target.file_count is not None
@@ -243,6 +270,9 @@ def _group_targets_by_chapter(bookstate: BookState) -> dict[str, list[Target]]:
         # taken from incremental numbering done in "preparer/targets.py".
         group: list[Target] = sorted(group, key=lambda t: (t.prev_item_num or 0))
         if len(group) > 0:
+            assert (
+                group[0].file_count is not None
+            ), "Return key can be None only if autonumbering is not by chapters"
             grouped_and_sorted_targets[group[0].file_count] = group
     return grouped_and_sorted_targets
 
@@ -270,9 +300,11 @@ def _update_state_records_for_substitution(
         "": 0,
     }
     for dp in datapoints:
+        assert isinstance(dp, Target)
         if dp.item_type == "ref":
-            # check assumption that in every ref prev_item_num is None
-            assert dp.prev_item_num is None
+            assert (
+                dp.prev_item_num is None
+            ), "Check assumption that in every ref prev_item_num is None"
             pass
         elif dp.is_digital == False:
             # increment omitted count

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Build - Chapters{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-gray-800 tracking-tight">Build chapters</h2>
+    </div>
+
+    <div class="overflow-hidden rounded-xl bg-white space-y-6">
+        <div id="chapters-status" hx-get="{{ url_for('build.get_chapters', slug=slug) }}" hx-trigger="load, every 2s"
+            hx-swap="outerHTML">
+            <p class="flex items-center gap-2 text-amber-700">
+                <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" opacity="0.25"></circle>
+                    <path d="M12 3a9 9 0 0 1 9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                </svg>
+                Waiting for task...
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

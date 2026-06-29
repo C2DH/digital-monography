@@ -61,6 +61,7 @@ from ref_footnotes import (
     extract_footnotes,
     prepare_refs_in_footnotes,
 )
+from search_for_entities_in_text import search_for_entities_in_text
 from targets import (
     is_header,
     is_caption,
@@ -184,7 +185,9 @@ def lambda_handler(event, context) -> dict[str, t.Union[str, int]]:
             # TODO: prepare_docx shouldn't have to return "state"
             html_soup, dstate, tables = prepare_docx(html_soup, dstate)
             del dstate.__dict__[TEMP_FOOTNOTES_TABLE]
-            html_soup = hide_metadata_in_html(html_soup, dstate)  # last step
+            html_soup = hide_metadata_in_html(
+                html_soup, dstate
+            )  # last step TODO: can this be the last step at prepare_docx() ?
             # IMPORTANT NOTE: other services depend on html produced at this stage, make sure that:
             # 1) all reversible transformations are made before saving html file;
             # 2) irreversible transformations are omited to avoid not being able to recreate a book
@@ -466,6 +469,7 @@ def _write_project_data_to_db(key: KeyPath, project_data: ProjectData) -> None:
                 book = Book(
                     title=project_data["title"],
                     slug=key.slug,
+                    # note this is more created than updated
                     updated=datetime.datetime.now(datetime.timezone.utc),
                 )
                 session.add(book)
@@ -516,7 +520,6 @@ def prepare_docx(
     captions = []
     citations = []
     ref_footnotes = []
-    # target_footnotes = []
     references = []
     paper_only = []
     dstate.metadata.char_count, dstate.metadata.word_count = _get_char_and_word_count(
@@ -530,9 +533,7 @@ def prepare_docx(
         (is_caption, captions),
         (is_reference, references),
         (is_ref_footnote, ref_footnotes),
-        # (is_target_footnote, target_footnotes),
         (is_paper_only, paper_only),
-        # is_ref_footnote, is_target_footnote, prepare_refs_in_footnotes, prepare_targets_in_footnotes
     ]
     """
     Before applying the processing, this subprocedure traverses the tree
@@ -547,16 +548,13 @@ def prepare_docx(
     html_soup = add_bibliography(html_soup, bibliography)
     html_soup = prepare_ref_targets_in_headers(html_soup, dstate, headers)
     html_soup = prepare_ref_targets_in_captions(html_soup, dstate, captions)
-    # html_soup = prepare_targets_in_footnotes(html_soup, dstate, target_footnotes)
-    # html_soup = prepare_ref_targets_in_footnotes(html_soup,dstate, footnotes)
     html_soup = prepare_refs_in_footnotes(html_soup, dstate, ref_footnotes)
-    # with open(f"/tmp/efs/output_{dstate.key.name}.html", "w", encoding="utf-8") as f:
-    #     f.write(str(html_soup))
     html_soup = prepare_references(html_soup, dstate, references)
     html_soup = prepare_metadata_tables(html_soup, dstate, tables)
     html_soup = remove_paper_only(html_soup, dstate, paper_only)
     html_soup = remove_empty_tables(html_soup, dstate, tables)
     html_soup = prepare_alt_texts(html_soup, dstate, images_with_alttxt)
+    html_soup = search_for_entities_in_text(html_soup, dstate)
     return html_soup, dstate, tables
 
 

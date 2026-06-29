@@ -1,4 +1,3 @@
-import click
 import os
 import sys
 
@@ -13,10 +12,8 @@ sys.path.append(parent_dir)
 
 # from src.entrypoint.main import app
 # from src.orm.main import app
-from src.dashboard.main import app
+from dashboard.main import app
 
 
-@click.command(name="run")
-@click.argument("port")
-def run(port="8001"):
-    app.run(port=port)
+if __name__ == "__main__":
+    app.run(port=8001)

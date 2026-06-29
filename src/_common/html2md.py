@@ -111,6 +111,18 @@ class MystMdConverter(markdownify.MarkdownConverter):
             text = text.replace(">", "", 1)
         return super().convert_p(el, text, convert_as_inline)
 
+    def convert_img(self, el, text, convert_as_inline):
+        alt = el.attrs.get("alt", None) or ""
+        src = el.attrs.get("src", None) or ""
+        title = el.attrs.get("title", None) or ""
+        title_part = ' "%s"' % title.replace('"', r"\"") if title else ""
+        if (
+            convert_as_inline
+            and el.parent.name not in self.options["keep_inline_images_in"]
+        ):
+            return alt
+        return "![%s](%s%s)\n\n" % (alt, src, title_part)
+
     def convert_span(self, el, text, convert_as_inline):
         if text.startswith("% :::{") and text.endswith(":::"):
             return "\n%s\n\n" % text

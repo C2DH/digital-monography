@@ -1,0 +1,26 @@
+version: 1
+project:
+  title: Examples of book contents
+  authors:
+    - name: Pawel Kaminski
+  copyright: '2024'
+  github: monograph-prototypes/book-content-examples
+  toc:
+    - file: 00_index.md
+    - file: 01_a.md
+    - file: 02_b.md
+    - file: 03_c.ipynb
+    - file: 04_d.ipynb
+    - file: 05_conditional_rendering.md
+site:
+  options:
+    folders: true
+  template: book-theme
+dgtmon:
+  prefixes:
+    00_index: I
+    01_a: 1
+    02_b: 2
+    03_c: 3
+    04_d: 4
+    05_conditional_rendering: 5

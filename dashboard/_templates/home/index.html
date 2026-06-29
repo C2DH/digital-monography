@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+
+{% if current_user.is_authenticated %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-gray-800 tracking-tight">Manuscripts available</h2>
+    </div>
+
+    <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div class="max-h-[65vh] overflow-auto">
+            <table class="min-w-full divide-y divide-gray-200 text-left text-sm">
+                <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
+                    <tr>
+                        <th scope="col"
+                            class="sticky top-0 z-10 border-b border-gray-200 bg-gray-50 px-6 py-3 font-semibold">
+                            Title
+                        </th>
+                        <th scope="col"
+                            class="sticky top-0 z-10 border-b border-gray-200 bg-gray-50 px-6 py-3 font-semibold">
+                            Authors
+                        </th>
+                        <th scope="col"
+                            class="sticky top-0 z-10 border-b border-gray-200 bg-gray-50 px-6 py-3 font-semibold">
+                            Do something
+                        </th>
+                        <th scope="col"
+                            class="sticky top-0 z-10 border-b border-gray-200 bg-gray-50 px-6 py-3 font-semibold">
+                            Input
+                        </th>
+                        <th scope="col"
+                            class="sticky top-0 z-10 border-b border-gray-200 bg-gray-50 px-6 py-3 font-semibold">
+                            Build
+                        </th>
+                        <th scope="col"
+                            class="sticky top-0 z-10 border-b border-gray-200 bg-gray-50 px-6 py-3 font-semibold">
+                            Digital
+                        </th>
+                        <th scope="col"
+                            class="sticky top-0 z-10 border-b border-gray-200 bg-gray-50 px-6 py-3 font-semibold">
+                            Paper
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 bg-white text-gray-700">
+                    {% for book in books %}
+                    <tr class="transition-colors hover:bg-gray-50">
+                        <td class="px-6 py-4 font-medium text-gray-900">{{ book.title }}</td>
+                        <td class="px-6 py-4">{% for author in book.authors %}{{ author.name }}{% if not loop.last %},
+                            {% endif %}{% endfor %}
+                        </td>
+                        <!-- Do something -->
+                        <td class="px-6 py-4" hx-get="{{ url_for('home.process_book', slug=book.slug) }}"
+                            hx-trigger="load" hx-swap="innerHTML" class="text-sm text-gray-500">
+                            {% include "_components/spinner.html" %}
+                        </td>
+                        <!-- Input -->
+                        <td class="px-6 py-4" hx-get="{{ url_for('home.get_input_exists', slug=book.slug) }}"
+                            hx-trigger="load" hx-swap="innerHTML" class="text-sm text-gray-500">
+                            {% include "_components/spinner.html" %}
+                        </td>
+                        <!-- Build -->
+                        <td class="px-6 py-4">
+                            <a href="{{ url_for('build.pre_check', slug=book.slug) }}"
+                                class="text-indigo-600 hover:text-indigo-800">▶️</a>
+                        </td>
+                        <!-- Digital -->
+                        <td class="px-6 py-4" hx-get="{{ url_for('home.get_jb_link', slug=book.slug) }}"
+                            hx-trigger="load" hx-swap="innerHTML" class="text-sm text-gray-500">
+                            {% include "_components/spinner.html" %}
+                        </td>
+                        <!-- Paper -->
+                        <td class="px-6 py-4" hx-get="{{ url_for('home.get_paper_pkg', slug=book.slug) }}"
+                            hx-trigger="load" hx-swap="innerHTML" class="text-sm text-gray-500">
+                            {% include "_components/spinner.html" %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="text-center py-20">
+    <h2 class="text-3xl font-bold text-gray-900 mb-4">Welcome to Living Books Dashboard</h2>
+    <p class="text-gray-600 text-lg mb-6">Please log in to access your manuscripts and manage your projects.</p>
+    <a href="{{ url_for('admin.login') }}"
+        class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all shadow-sm">
+        Sign in
+    </a>
+</div>
+{% endif %}
+{% endblock %}

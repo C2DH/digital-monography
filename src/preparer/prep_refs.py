@@ -7,7 +7,7 @@ from src._common.constants import (
     CLS_PAPER_ONLY,
     REF_PREFIX,
 )
-from src._common.models import Ref
+from src._common.models import Ref, RefService
 from src._common.state import DocumentState
 
 
@@ -35,6 +35,7 @@ def prepare_references(
         if _is_ref_footnote(a_tag) or _is_target_footnote(a_tag):
             # handled in footnotes.py
             continue
+        a_tag["href"] = RefService.remove_docx_syntax_from_href(a_tag["href"])
         _mark_paper_only_tag(a_tag)
         prev_href = a_tag["href"]
         fn, fragment = _get_fn_and_fragment_from_href(a_tag["href"])
