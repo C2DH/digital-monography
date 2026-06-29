@@ -1,6 +1,5 @@
-import subprocess
-
 import flask
+import subprocess
 import typing as t
 
 from src._common.constants import ASSETS_DIR, DEFAULT_SFS_DIR, INPUT_DIR
@@ -8,9 +7,11 @@ from src._common.keys import KeyPath
 
 try:
     # in microservices, db and fetchers are part of the root dir
+    from db import db_engine
     from decorators import login_required
 except (ImportError, ModuleNotFoundError):
     # in local testing, db and decorators are one directory up
+    from ..db import db_engine
     from ..decorators import login_required
 
 
@@ -102,6 +103,12 @@ _WAITING_FRAGMENT = """
 </div>
 """
 
+_ERROR_FRAGMENT = """
+<div id="chapters-status" class="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
+    {{ message }}
+</div>
+"""
+
 _RESULT_FRAGMENT = """
 <div id="chapters-status">
     <ul class="space-y-2">
@@ -124,19 +131,31 @@ _RESULT_FRAGMENT = """
 def trigger_build(slug: str) -> flask.Response:
     """
     Start a background sleep task and return the chapters page.
-    HTMX polls /list-of-chapters until the task completes, then shows EXAMPLE_LIST.
+    HTMX polls /poll-chapters until the task completes, then shows EXAMPLE_LIST.
     """
     _tasks[slug] = subprocess.Popen(["sleep", "5"])
-    print("_tasks", _tasks)
     return flask.render_template("build/chapters.html", slug=slug)
 
 
-@build_bp.route("/b/<slug>/build/2/list-of-chapters", methods=["GET"])
+@build_bp.route("/b/<slug>/build/2/poll-chapters", methods=["GET"])
 @login_required
 def get_chapters(slug: str) -> flask.Response:
+    """
+    Start a background task and render html template with htmx
+    `hx-trigger="load, every Xs"` that polls for the status of the task.
+    """
     proc = _tasks.get(slug)
-    print("proc", proc)
-    print("proc.poll()", proc.poll())  # if proc.poll() == 0, process completed
-    if proc is None or proc.poll() is None:
+    if proc is None:
+        return flask.render_template_string(
+            _ERROR_FRAGMENT,
+            message="No build task was found for this manuscript. Start the preparation step again.",
+        )
+    return_code = proc.poll()
+    if return_code is None:
         return flask.render_template_string(_WAITING_FRAGMENT, slug=slug)
+    if return_code != 0:
+        return flask.render_template_string(
+            _ERROR_FRAGMENT,
+            message=f"The build task failed with exit code {return_code}.",
+        )
     return flask.render_template_string(_RESULT_FRAGMENT, chapters=EXAMPLE_LIST)
