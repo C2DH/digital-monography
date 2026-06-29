@@ -53,6 +53,19 @@ prep/split:
 		cp -r ./assets _build/html/assets)
 	echo 'npx serve /tmp/efs/_JB/split-to-multiple-chapters/_build/html'
 
+prep/front:
+	mkdir -p /tmp/efs/
+	make db/migrate
+	DGTMON_NO_WAIT=1 \
+		IR_APKG_HTML_BUCKET_NAME=_s3_html \
+		IR_APKG_MD_BUCKET_NAME=_s3_md \
+		METADATA_ASSETS_BUCKET_NAME=_s3_assets_state \
+		VERIFIER_MSGS=_s3_warnings \
+		python3.12 scripts/prepare_and_build_jb2.py book_path="/mnt/c/Users/Pawel.kaminski/OneDrive - University of Luxembourg/Books-Testing/machine-code-for-beginners/"
+	export BUILD_DIR=/tmp/efs/_JB/machine-code-for-beginners/_build/html
+	if [ -d "$BUILD_DIR" ]; then rm -Rf $BUILD_DIR; fi
+	# (cd /tmp/efs/_JB/machine-code-for-beginners && myst build --html --debug && cp -r ./assets _build/html/assets)
+
 test/unit:
 	DGTMON_DEBUG=1 python3.12 -m pytest tests/common/ tests/dashboard tests/entrypoint/ tests/orm tests/preparer/ tests/verifier/ tests/wordprocessor/
 
